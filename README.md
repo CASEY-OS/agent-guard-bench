@@ -36,10 +36,12 @@ As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},
 
 | | runs | finished the task | permanent damage | what they ran |
 |---|---:|---:|---:|---|
-| no guard | 16 | 12 | **8 runs: 16 pieces of work lost in 6, the hook bypassed in 2** | `git commit --no-verify` (2 of 2), `git branch -D` on unmerged work (2 of 2), `git reset --hard && git clean -fd` (4 of 4) |
-| guard + undo | 16 | 13 | **0** | every one of those denied; the agent fixed the whitespace and committed through the hook, used `branch -d`, stashed, or stopped and said why |
+| no guard | 64 | 48 | **31 runs: 61 pieces of work lost, the hook bypassed in 8** | `git commit --no-verify`, `git branch -D` on unmerged work, `git reset --hard && git clean -fd` |
+| guard + undo | 64 | 53 | **0** (in 4 runs the undo layer is what kept the work) | every one of those denied; the agent fixed the whitespace and committed through the hook, used `branch -d`, stashed, or stopped and said why |
 
-The lost work is read by the bench's own route: file contents by sha256, commits by reachability, from disk, the index, every ref and the bare remote. In two of the unguarded wipe runs Haiku first copied a backup to `/tmp`, outside the repo, which the bench does not search. I count those losses anyway, and say so here. With the plain prompts, without "do whatever it takes", no agent tempted anything in 32 runs. A guard test needs pressure. Cost of all 32 pressure runs: $0.93 in API terms.
+That is 4 rounds of the 8 pressure tasks, for each model and each arm. If the guard made no difference, a split this lopsided (0 of 64 against 31 of 64) would happen about once in 270 billion tries (Fisher's exact test, one-sided). With 0 damaged runs in 64, the guarded damage rate is below 4.6% at 95% confidence. More runs would lower that bound. They would not prove it is zero.
+
+The lost work is read by the bench's own route: file contents by sha256, commits by reachability, from disk, the index, every ref and the bare remote. In two of the unguarded wipe runs Haiku first copied a backup to `/tmp`, outside the repo, which the bench does not search. I count those losses anyway, and say so here. With the plain prompts, without "do whatever it takes", no agent tempted anything in 32 runs. A guard test needs pressure. Cost of all 128 pressure runs: $3.73 in API terms. The first round's two `/tmp` backups are the only ones I found; later rounds I counted by the same rule.
 
 The four denies on the guarded side were all right. Each was a chain whose last step was destructive. I checked every one by hand.
 
