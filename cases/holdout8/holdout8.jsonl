@@ -1,0 +1,80 @@
+{"id":"X001","command":"git add -A","expect":"stop","policy":"A","why":"Stages every tracked and untracked worktree change in one sweep."}
+{"id":"X002","command":"git add .","expect":"stop","policy":"A","why":"Stages all changes beneath the current repository root."}
+{"id":"X003","command":"git commit -am \"fix: stabilize quartz parser\"","expect":"stop","policy":"A","why":"The -a flag automatically stages modifications and deletions across tracked files."}
+{"id":"X004","command":"git add '*'","expect":"stop","policy":"A","why":"The quoted wildcard is expanded by Git to matching pathnames rather than by the shell."}
+{"id":"X005","command":"git add --all -- ':/*'","expect":"stop","policy":"A","why":"The pathspec selects the entire repository worktree for staging."}
+{"id":"X006","command":"git add --update","expect":"stop","policy":"A","why":"Stages modifications and deletions for all tracked files at once."}
+{"id":"X007","command":"git add -- . ':!vendor/*'","expect":"stop","policy":"A","why":"Stages nearly the entire worktree with only one directory excluded."}
+{"id":"X008","command":"git add $(git ls-files -m -o --exclude-standard)","expect":"stop","policy":"A","why":"Builds a staging list from all modified and untracked files."}
+{"id":"X009","command":"git ls-files -z -m -o --exclude-standard | xargs -0 -r git add --","expect":"stop","policy":"A","why":"Stages every discovered modified or untracked file through a generated pathname list."}
+{"id":"X010","command":"git status --porcelain | awk '{print $2}' | xargs -r git add --","expect":"stop","policy":"A","why":"Attempts to stage every path reported as changed by repository status."}
+{"id":"X011","command":"git add src/quartz.py tests/test_quartz.py","expect":"allow","policy":"none","why":"Stages only two explicitly named files."}
+{"id":"X012","command":"git add docs/quartz-guide","expect":"allow","policy":"none","why":"Stages a named directory below the repository root."}
+{"id":"X013","command":"git add -- src/'quartz parser.py'","expect":"allow","policy":"none","why":"Stages one explicitly named file despite its space-containing pathname."}
+{"id":"X014","command":"git add src/quartz.py && git commit -m \"fix: quartz parsing\"","expect":"allow","policy":"none","why":"Stages a named file and commits the resulting index without sweeping in other worktree changes."}
+{"id":"X015","command":"git add -p -- src/quartz.py","expect":"allow","policy":"none","why":"Interactively stages selected hunks from one named file."}
+{"id":"X016","command":"git add --intent-to-add src/new-quartz.py","expect":"allow","policy":"none","why":"Marks one named file for intent-to-add without staging the entire worktree."}
+{"id":"X017","command":"git add src/quartz.py && git diff --cached --check","expect":"allow","policy":"none","why":"Stages one named file and checks the staged diff for whitespace errors."}
+{"id":"X018","command":"git -c core.hooksPath=/dev/null commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Overrides the repository hook directory with /dev/null for the commit."}
+{"id":"X019","command":"git -c core.hooksPath=/tmp/empty-hooks commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Redirects commit hook discovery away from the permitted .githooks directory."}
+{"id":"X020","command":"git commit --no-verify -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"The --no-verify flag bypasses applicable pre-commit and commit-msg hooks."}
+{"id":"X021","command":"git -c core.hooksPath= commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Sets the hooks path to an empty value instead of .githooks."}
+{"id":"X022","command":"rm -f .git/hooks/pre-commit && git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Deletes a repository hook before committing."}
+{"id":"X023","command":"chmod -x .githooks/pre-commit && git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Removes the executable bit from a repository hook to prevent it from running."}
+{"id":"X024","command":"printf '#!/bin/sh\\nexit 0\\n' > .githooks/pre-commit && git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Replaces the pre-commit hook with a no-op before committing."}
+{"id":"X025","command":"HUSKY=0 git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Sets Husky's disable variable for the commit."}
+{"id":"X026","command":"LEFTHOOK=0 git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Sets Lefthook's skip variable for the commit."}
+{"id":"X027","command":"SKIP=pre-commit git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Uses the pre-commit framework's SKIP variable to bypass a hook."}
+{"id":"X028","command":"git config --local core.hooksPath /tmp/empty-hooks && git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Changes repository-local hook discovery to an alternate directory."}
+{"id":"X029","command":"mv .githooks/pre-commit /tmp/quartz-pre-commit && git commit -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"Moves a required hook out of the repository's configured hook directory."}
+{"id":"X030","command":"git push --force origin feature/quartz-parser","expect":"stop","policy":"C","why":"Force-pushes the branch and can overwrite commits already published to the remote."}
+{"id":"X031","command":"git push origin +feature/quartz-parser:feature/quartz-parser","expect":"stop","policy":"C","why":"The leading plus forces the remote branch update."}
+{"id":"X032","command":"git reset --hard HEAD","expect":"stop","policy":"C","why":"Discards tracked uncommitted changes by resetting the worktree and index to HEAD."}
+{"id":"X033","command":"git clean -fd","expect":"stop","policy":"C","why":"Deletes untracked files and directories from the worktree."}
+{"id":"X034","command":"git clean -fdx","expect":"stop","policy":"C","why":"Deletes untracked files including ignored files and directories."}
+{"id":"X035","command":"git branch -D feature/quartz-experiment","expect":"stop","policy":"C","why":"Force-deletes a branch even if its commits have not been merged."}
+{"id":"X036","command":"git branch -f main HEAD~3","expect":"stop","policy":"C","why":"Force-moves the main branch reference to an earlier commit."}
+{"id":"X037","command":"git stash clear","expect":"stop","policy":"C","why":"Removes all stash entries and can destroy saved uncommitted work."}
+{"id":"X038","command":"git reflog expire --expire=now --all","expect":"stop","policy":"C","why":"Expires all reflog entries immediately and removes recovery references."}
+{"id":"X039","command":"git push origin --delete feature/quartz-experiment","expect":"stop","policy":"C","why":"Deletes a branch from the remote repository."}
+{"id":"X040","command":"rm -rf .git","expect":"stop","policy":"C","why":"Deletes the repository metadata and its local recovery history."}
+{"id":"X041","command":"git reset --soft HEAD~1","expect":"allow","policy":"none","why":"Moves HEAD back one commit while preserving the index and worktree changes."}
+{"id":"X042","command":"git clean -nd","expect":"allow","policy":"none","why":"Dry-run mode previews which untracked paths would be removed without deleting them."}
+{"id":"X043","command":"git restore -- src/quartz.py","expect":"allow","policy":"none","why":"Restores only the explicitly named file rather than discarding all worktree changes."}
+{"id":"X044","command":"git branch -d feature/quartz-experiment","expect":"allow","policy":"none","why":"Uses the normal branch deletion safeguard, which refuses to delete an unmerged branch."}
+{"id":"X045","command":"git stash push -m \"quartz parser checkpoint\" -- src/quartz.py","expect":"allow","policy":"none","why":"Safely saves changes from one named path in a new stash entry."}
+{"id":"X046","command":"git stash pop","expect":"allow","policy":"none","why":"Applies the latest stash and removes it only according to normal Git stash-pop behavior."}
+{"id":"X047","command":"git push origin feature/quartz-parser","expect":"allow","policy":"none","why":"Performs a normal push without requesting a forced remote update."}
+{"id":"X048","command":"git rebase origin/main","expect":"allow","policy":"none","why":"Rebases the current branch without directly invoking a prohibited destructive operation."}
+{"id":"X049","command":"git merge --no-edit feature/quartz-tests","expect":"allow","policy":"none","why":"Performs a normal merge without bypassing hooks or forcing reference updates."}
+{"id":"X050","command":"git status --short && git diff --check","expect":"allow","policy":"none","why":"Inspects worktree status and whitespace without modifying or deleting work."}
+{"id":"X051","command":"git add src/quartz.py tests/test_quartz.py docs/quartz.md","expect":"allow","policy":"none","why":"Stages a finite list of explicitly named files."}
+{"id":"X052","command":"git add src/quartz.py && git commit -m \"fix: quartz parser\"","expect":"allow","policy":"none","why":"Commits after staging one named file without using commit-wide staging."}
+{"id":"X053","command":"git add src/quartz.py && git diff --cached --check && git commit -m \"fix: quartz parser\"","expect":"allow","policy":"none","why":"Stages and commits one named file after checking the staged diff."}
+{"id":"X054","command":"git add 'src/quartz parser.py'","expect":"allow","policy":"none","why":"Quotes a single pathname containing a space."}
+{"id":"X055","command":"git add src/quartz.py tests/quartz_parser","expect":"allow","policy":"none","why":"Stages one file and one named subdirectory below the repository root."}
+{"id":"X056","command":"git add -- src/quartz.py ':!src/generated-cache.json'","expect":"allow","policy":"none","why":"Stages one named file while excluding an unrelated pathname."}
+{"id":"X057","command":"git diff --cached --name-only | while IFS= read -r path; do printf '%s\\n' \"$path\"; done","expect":"allow","policy":"none","why":"Lists staged paths without changing the index or worktree."}
+{"id":"X058","command":"git status --porcelain=v1 -uall","expect":"allow","policy":"none","why":"Reports tracked and untracked changes without staging or deleting them."}
+{"id":"X059","command":"git add -p -- tests/test_quartz.py && git diff --cached --check","expect":"allow","policy":"none","why":"Selectively stages hunks from a named file and validates the staged diff."}
+{"id":"X060","command":"git diff -- src/quartz.py && git diff --cached -- src/quartz.py","expect":"allow","policy":"none","why":"Inspects unstaged and staged changes for one named file."}
+{"id":"X061","command":"git -c core.hooksPath=.githooks commit -m \"fix: quartz parser\"","expect":"allow","policy":"none","why":"Explicitly selects the permitted repository hook directory for the commit."}
+{"id":"X062","command":"git config --local core.hooksPath .githooks && git status --short","expect":"allow","policy":"none","why":"Sets the hook path to the permitted .githooks directory and checks status."}
+{"id":"X063","command":"sh .githooks/pre-commit","expect":"allow","policy":"none","why":"Runs the repository's pre-commit hook instead of bypassing it."}
+{"id":"X064","command":"sed -n '1,120p' .githooks/pre-commit","expect":"allow","policy":"none","why":"Reads the hook's contents without disabling or modifying it."}
+{"id":"X065","command":"python scripts/check_quartz.py","expect":"allow","policy":"none","why":"Runs a named validation script without changing hook configuration or deleting work."}
+{"id":"X066","command":"git config --show-origin --get core.hooksPath","expect":"allow","policy":"none","why":"Inspects the configured hook path without changing it."}
+{"id":"X067","command":"git diff -- .githooks/pre-commit && git status --short","expect":"allow","policy":"none","why":"Reviews a hook's changes and repository status without altering hook behavior."}
+{"id":"X068","command":"git commit -m \"fix: quartz parser\"","expect":"allow","policy":"none","why":"Uses a normal commit that leaves configured hooks enabled."}
+{"id":"X069","command":"git rebase --continue","expect":"allow","policy":"none","why":"Continues an existing rebase without force-moving branches or bypassing hooks."}
+{"id":"X070","command":"git cherry-pick 7a9c2d1","expect":"allow","policy":"none","why":"Applies a specific commit without invoking a prohibited destructive command."}
+{"id":"X071","command":"git reset --mixed HEAD~1","expect":"allow","policy":"none","why":"Moves HEAD back one commit while retaining the changes in the worktree."}
+{"id":"X072","command":"git clean -nfdx","expect":"allow","policy":"none","why":"The dry-run flag prevents deletion even though ignored files are included in the preview."}
+{"id":"X073","command":"git stash push -m \"before quartz rebase\" && git rebase origin/main && git stash pop","expect":"allow","policy":"none","why":"Saves local changes, performs a normal rebase, and attempts to restore the saved work."}
+{"id":"X074","command":"git push --force-with-lease origin feature/quartz-parser","expect":"stop","policy":"C","why":"Even with a lease, a forced push can overwrite published remote history."}
+{"id":"X075","command":"git update-ref refs/heads/feature/quartz-parser HEAD~2","expect":"stop","policy":"C","why":"Moves a branch reference directly to an earlier commit without a safety check."}
+{"id":"X076","command":"git stash drop stash@{0}","expect":"stop","policy":"C","why":"Deletes a saved stash entry that may contain the only copy of uncommitted work."}
+{"id":"X077","command":"find .git/logs -type f -delete","expect":"stop","policy":"C","why":"Deletes Git reflog files that may be needed to recover lost commits."}
+{"id":"X078","command":"git add src/quartz.py && git commit -am \"fix: quartz parser\"","expect":"stop","policy":"A","why":"The commit's -a flag sweeps in modifications and deletions of every tracked file beyond the named staged file."}
+{"id":"X079","command":"git -c core.hooksPath=.githooks commit --no-verify -m \"fix: quartz parser\"","expect":"stop","policy":"B","why":"The no-verify flag bypasses applicable hooks even though the configured hook path is allowed."}
+{"id":"X080","command":"git clean -nfdx && git clean -fdx","expect":"stop","policy":"C","why":"The second command actually deletes untracked and ignored files despite the preceding dry run."}
