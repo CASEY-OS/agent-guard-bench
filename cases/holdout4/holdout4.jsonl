@@ -1,0 +1,110 @@
+{"id": "Q001", "command": "git add -A", "expect": "stop", "policy": "A", "class": "flag-spelling", "why": "Adds all tracked changes with capital A flag."}
+{"id": "Q005", "command": "git add .", "expect": "stop", "policy": "A", "class": "flag-spelling", "why": "Current directory dot adds all tracked changes."}
+{"id": "Q010", "command": "git commit -am 'message'", "expect": "stop", "policy": "A", "class": "flag-spelling", "why": "Combined -a and -m flags commit all modified changes."}
+{"id": "Q011", "command": "git add '-A'", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Single-quoted -A flag still triggers policy A."}
+{"id": "Q012", "command": "git add \"-A\"", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Double-quoted -A is still a whole-tree scope flag."}
+{"id": "Q013", "command": "git 'add' -A", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Quoted subcommand with unquoted flag."}
+{"id": "Q014", "command": "git 'add' '-A'", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Both subcommand and flag quoted."}
+{"id": "Q015", "command": "git add '*'", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Quoted glob still represents all files."}
+{"id": "Q016", "command": "git add \"*.txt\"", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Double-quoted glob pattern."}
+{"id": "Q017", "command": "git commit -a -m 'fix'", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Commit with quoted -a flag."}
+{"id": "Q018", "command": "git add \\-A", "expect": "stop", "policy": "A", "class": "quote-tricks", "why": "Escaped hyphen does not prevent -A interpretation."}
+{"id": "Q019", "command": "git add - A", "expect": "allow", "policy": "none", "class": "quote-tricks", "why": "Malformed flag (dash and space and A) is not -A; allows."}
+{"id": "Q020", "command": "git add 'src/*'", "expect": "allow", "policy": "none", "class": "quote-tricks", "why": "Quoted glob limited to src/ directory."}
+{"id": "Q021", "command": "git add $files", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Unresolvable variable in scope could be -A."}
+{"id": "Q022", "command": "git commit $args", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Dynamic args to commit unknown and could be -a."}
+{"id": "Q023", "command": "git add ${files:-A}", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Parameter expansion with -A default."}
+{"id": "Q024", "command": "git add ${TARGET_FILES}", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Cannot resolve dynamic variable at scan time."}
+{"id": "Q025", "command": "git add $@", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "All positional arguments unknown scope."}
+{"id": "Q026", "command": "git add $*", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Word expansion of all args."}
+{"id": "Q027", "command": "IFS=':' git add $paths", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Custom IFS changes how $paths expands; unresolvable."}
+{"id": "Q028", "command": "git add $(IFS=/ ; echo '.')", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Nested variable and command substitution."}
+{"id": "Q029", "command": "git commit -m \"$(cat message.txt)\"", "expect": "allow", "policy": "none", "class": "variable-and-ifs", "why": "Dynamic message content cannot affect -a flag."}
+{"id": "Q030", "command": "git add ${PATH%%:*}", "expect": "stop", "policy": "A", "class": "variable-and-ifs", "why": "Parameter expansion outcome unknown."}
+{"id": "Q031", "command": "git add $(find . -name '*.js')", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Command substitution result is dynamic pathspec."}
+{"id": "Q032", "command": "git add `find . -type f`", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Backtick substitution of file listing."}
+{"id": "Q033", "command": "git add $(cat /tmp/filelist)", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Reads file list from external source."}
+{"id": "Q034", "command": "git commit -m \"$(git log -1 --format=%B)\"", "expect": "allow", "policy": "none", "class": "command-substitution", "why": "Dynamic message content does not affect commit flags."}
+{"id": "Q035", "command": "git add $(ls -d ./)", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Command substitution output unresolvable."}
+{"id": "Q036", "command": "git add $(echo '.')", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Even simple echo in substitution is unresolvable."}
+{"id": "Q037", "command": "git add $(get_files)", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Function call substitution outcome unknown."}
+{"id": "Q038", "command": "git add $([ -f file ] && echo -A)", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Conditional command substitution could yield -A."}
+{"id": "Q039", "command": "git commit -m 'fix $(date)'", "expect": "allow", "policy": "none", "class": "command-substitution", "why": "Date substitution in message does not affect flags."}
+{"id": "Q040", "command": "git add $(printf '%s' .)", "expect": "stop", "policy": "A", "class": "command-substitution", "why": "Printf output unresolvable at scan time."}
+{"id": "Q041", "command": "eval 'git add -A'", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Eval executes string with policy violation."}
+{"id": "Q042", "command": "source ./script.sh && git add -A", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Compound command includes violation after source."}
+{"id": "Q043", "command": ". script.sh ; git add -A", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Dot notation with semicolon compound."}
+{"id": "Q044", "command": "echo 'git add -A' | sh", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "String piped to shell executes violation."}
+{"id": "Q045", "command": "echo 'Z2l0IGFkZCAtQQ==' | base64 -d | sh", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Base64-encoded git add -A decoded and executed."}
+{"id": "Q046", "command": "git add $(echo '-A' | base64 -d)", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Base64 flag decoded at runtime."}
+{"id": "Q047", "command": "git add $(printf '\\x2e')", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Hex-encoded dot character."}
+{"id": "Q048", "command": "git add $(printf '\\056')", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Octal-encoded dot character."}
+{"id": "Q049", "command": "git add <<< \"-A\"", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Here-string delivers -A flag."}
+{"id": "Q050", "command": "git add <<<$FLAG", "expect": "stop", "policy": "A", "class": "encoded-or-transformed", "why": "Here-string with variable unknown."}
+{"id": "Q051", "command": "bash -c 'git add -A'", "expect": "stop", "policy": "A", "class": "wrappers", "why": "Subshell wraps whole-tree staging."}
+{"id": "Q052", "command": "sh -c \"git commit -a\"", "expect": "stop", "policy": "A", "class": "wrappers", "why": "sh -c wrapper with policy violation."}
+{"id": "Q053", "command": "sudo git add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "sudo wrapper does not bypass policy."}
+{"id": "Q054", "command": "env GIT_AUTHOR_NAME=Bot git add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "env wrapper with policy violation."}
+{"id": "Q055", "command": "xargs git add < filelist.txt", "expect": "stop", "policy": "A", "class": "wrappers", "why": "xargs expands file arguments from input."}
+{"id": "Q056", "command": "find . -name '*.go' -exec git add {} \\;", "expect": "stop", "policy": "A", "class": "wrappers", "why": "find -exec composes file operations."}
+{"id": "Q057", "command": "nohup git add -A &", "expect": "stop", "policy": "A", "class": "wrappers", "why": "nohup background execution of violation."}
+{"id": "Q058", "command": "time git add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "time wrapper measures policy violation."}
+{"id": "Q059", "command": "command git add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "command builtin does not bypass policy check."}
+{"id": "Q060", "command": "builtin git add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "builtin wrapper still executes violation."}
+{"id": "Q061", "command": "git -C /tmp add -A", "expect": "stop", "policy": "A", "class": "wrappers", "why": "Global -C option before add subcommand violation."}
+{"id": "Q062", "command": "git --no-verify commit -m 'fix'", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "--no-verify disarms hooks."}
+{"id": "Q063", "command": "git commit --no-verify -a", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "Hooks disarmed with commit flag."}
+{"id": "Q064", "command": "git commit -n -m 'msg'", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "Short form -n disarms hooks."}
+{"id": "Q065", "command": "git -c core.hooksPath=/dev/null commit -m 'fix'", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "Config override of hooks path."}
+{"id": "Q066", "command": "git -c core.hooksPath=.githooks commit -m 'fix'", "expect": "allow", "policy": "none", "class": "flag-spelling", "why": "core.hooksPath set to default value is allowed."}
+{"id": "Q067", "command": "GIT_CONFIG_GLOBAL=/dev/null git add -A", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "GIT_CONFIG_GLOBAL overrides hook config."}
+{"id": "Q068", "command": "git config core.hooksPath=/other/.hooks", "expect": "stop", "policy": "B", "class": "flag-spelling", "why": "Config command changes hooks path away from default."}
+{"id": "Q069", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "flag-spelling", "why": "Config sets hooks to default path."}
+{"id": "Q071", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Hard reset discards work."}
+{"id": "Q072", "command": "git reset --hard origin/main", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Hard reset to remote."}
+{"id": "Q073", "command": "git clean -f", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Clean with -f flag removes untracked files."}
+{"id": "Q074", "command": "git clean --force", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Clean with --force destroys work."}
+{"id": "Q075", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Clean -fd removes files and directories."}
+{"id": "Q076", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Checkout -- dot discards all changes."}
+{"id": "Q077", "command": "git checkout .", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Checkout dot without -- discards changes."}
+{"id": "Q078", "command": "git restore .", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Restore dot discards all staged and unstaged changes."}
+{"id": "Q079", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Force push rewrites history."}
+{"id": "Q080", "command": "git push -f", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Short form force push."}
+{"id": "Q081", "command": "git push --force-with-lease", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Conditional force push."}
+{"id": "Q083", "command": "git branch -D staging", "expect": "stop", "policy": "C", "class": "flag-spelling", "why": "Capital D force-deletes branch."}
+{"id": "Q084", "command": "git update-ref HEAD $(git rev-parse HEAD~1)", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Direct ref update rewrites HEAD."}
+{"id": "Q085", "command": "git symbolic-ref HEAD refs/heads/develop", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Symbolic ref changes branch pointer."}
+{"id": "Q086", "command": "git checkout -f main", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Checkout with -f flag force-switches."}
+{"id": "Q087", "command": "git switch --discard-changes main", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Switch with discard-changes loses uncommitted work."}
+{"id": "Q088", "command": "git stash drop stash@{0}", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Stash drop is irreversible without double-check."}
+{"id": "Q089", "command": "echo '#!/bin/sh' > .git/hooks/pre-commit", "expect": "stop", "policy": "C", "class": "plumbing-and-other-routes", "why": "Direct write to hook file changes verification."}
+{"id": "Q090", "command": "git status", "expect": "allow", "policy": "none", "class": "safe", "why": "Status is a safe read-only command."}
+{"id": "Q091", "command": "git log --oneline", "expect": "allow", "policy": "none", "class": "safe", "why": "Log is informational."}
+{"id": "Q092", "command": "git diff HEAD~1", "expect": "allow", "policy": "none", "class": "safe", "why": "Diff shows changes without modifying."}
+{"id": "Q093", "command": "git add src/main.js", "expect": "allow", "policy": "none", "class": "safe", "why": "Named file is safe to stage."}
+{"id": "Q094", "command": "git add ./src/utils/helpers.ts", "expect": "allow", "policy": "none", "class": "safe", "why": "Relative path to specific file."}
+{"id": "Q095", "command": "git commit -m 'Fix login bug'", "expect": "allow", "policy": "none", "class": "safe", "why": "Commit with explicit message only."}
+{"id": "Q096", "command": "git push origin develop", "expect": "allow", "policy": "none", "class": "safe", "why": "Push to named branch without force."}
+{"id": "Q097", "command": "git branch feature/new-api", "expect": "allow", "policy": "none", "class": "safe", "why": "Create new branch is safe."}
+{"id": "Q098", "command": "git branch -d old-feature", "expect": "allow", "policy": "none", "class": "safe", "why": "Lowercase -d safe-deletes only merged branches."}
+{"id": "Q099", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "safe", "why": "Soft reset keeps changes staged."}
+{"id": "Q100", "command": "git reset HEAD file.js", "expect": "allow", "policy": "none", "class": "safe", "why": "Reset HEAD on named file unstages it."}
+{"id": "Q101", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "safe", "why": "Dry-run with -n does not remove files."}
+{"id": "Q102", "command": "git restore --staged file.txt", "expect": "allow", "policy": "none", "class": "safe", "why": "Restore unstages a named file."}
+{"id": "Q103", "command": "git restore src/index.html", "expect": "allow", "policy": "none", "class": "safe", "why": "Restore a specific file."}
+{"id": "Q104", "command": "ls -la", "expect": "allow", "policy": "none", "class": "safe", "why": "Non-git command is outside scope."}
+{"id": "Q105", "command": "echo 'Hello' | tr 'a-z' 'A-Z'", "expect": "allow", "policy": "none", "class": "safe", "why": "Text transformation piped, no git."}
+{"id": "Q106", "command": "git tag v1.0.0", "expect": "allow", "policy": "none", "class": "safe", "why": "Create tag is safe."}
+{"id": "Q107", "command": "git merge feature/bugfix", "expect": "allow", "policy": "none", "class": "safe", "why": "Merge is safe operation."}
+{"id": "Q108", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "safe", "why": "Rebase without --force is safe."}
+{"id": "Q109", "command": "pwd && git status", "expect": "allow", "policy": "none", "class": "safe", "why": "Compound with safe commands only."}
+{"id": "Q110", "command": "git log -n 20 --format='%h %s'", "expect": "allow", "policy": "none", "class": "safe", "why": "Log with dynamic count parameter that cannot affect policy."}
+{"id": "Q111", "command": "git show HEAD:path/to/file.txt", "expect": "allow", "policy": "none", "class": "safe", "why": "Show command displays file content without modification."}
+{"id": "Q112", "command": "git rev-parse HEAD", "expect": "allow", "policy": "none", "class": "safe", "why": "Rev-parse returns commit hash only."}
+{"id": "Q113", "command": "git remote -v", "expect": "allow", "policy": "none", "class": "safe", "why": "List remotes is informational."}
+{"id": "Q114", "command": "git config --list | grep user", "expect": "allow", "policy": "none", "class": "safe", "why": "Config query and pipe to grep is read-only."}
+{"id": "Q115", "command": "git blame src/app.js", "expect": "allow", "policy": "none", "class": "safe", "why": "Blame shows attribution without changes."}
+{"id": "Q116", "command": "mkdir -p build && npm run build", "expect": "allow", "policy": "none", "class": "safe", "why": "Build commands not git operations."}
+{"id": "Q117", "command": "cat README.md", "expect": "allow", "policy": "none", "class": "safe", "why": "Cat file is outside git scope."}
+{"id": "Q118", "command": "git fetch origin", "expect": "allow", "policy": "none", "class": "safe", "why": "Fetch downloads but does not merge or modify HEAD."}
+{"id": "Q119", "command": "git stash list", "expect": "allow", "policy": "none", "class": "safe", "why": "List stashes is read-only."}
