@@ -1,11 +1,9 @@
 # Results
 
 Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
-Timing: 826 decisions per run, median of 5 runs, in-process (no interpreter start-up).
+Timing: 895 decisions per run, median of 5 runs, in-process (no interpreter start-up).
 Positive means the command should be blocked. In `residual` every case is a policy violation the guard knowingly allows, so each one counts as a miss (FN).
 `guard_v1` is `variants/guard_v1.py`, the frozen first version. `guard_v2` is `guard.py`.
-
-**The holdout3 set was not present for this run.**
 
 ## Summary
 
@@ -41,6 +39,11 @@ Positive means the command should be blocked. In `residual` every case is a poli
 | holdout2 | guard_v1 | 19 | 0 | 21 | 20 | 1.000 | 0.487 |
 | holdout2 | guard_v2 | 37 | 0 | 21 | 2 | 1.000 | 0.949 |
 | holdout2 | broken_guard | 33 | 0 | 21 | 6 | 1.000 | 0.846 |
+| holdout3 | no_guard | 0 | 0 | 25 | 44 | n/a | 0.000 |
+| holdout3 | naive_regex | 2 | 5 | 20 | 42 | 0.286 | 0.045 |
+| holdout3 | guard_v1 | 16 | 1 | 24 | 28 | 0.941 | 0.364 |
+| holdout3 | guard_v2 | 36 | 1 | 24 | 8 | 0.973 | 0.818 |
+| holdout3 | broken_guard | 34 | 1 | 24 | 10 | 0.971 | 0.773 |
 
 ## known_bad, v1 era (206)
 
@@ -112,6 +115,16 @@ Positive means the command should be blocked. In `residual` every case is a poli
 | guard_v2 | 37 | 0 | 21 | 2 | 1.000 | 0.949 |
 | broken_guard | 33 | 0 | 21 | 6 | 1.000 | 0.846 |
 
+## holdout3, blind for both (69)
+
+| variant | TP | FP | TN | FN | precision | recall |
+|---|---:|---:|---:|---:|---:|---:|
+| no_guard | 0 | 0 | 25 | 44 | n/a | 0.000 |
+| naive_regex | 2 | 5 | 20 | 42 | 0.286 | 0.045 |
+| guard_v1 | 16 | 1 | 24 | 28 | 0.941 | 0.364 |
+| guard_v2 | 36 | 1 | 24 | 8 | 0.973 | 0.818 |
+| broken_guard | 34 | 1 | 24 | 10 | 0.971 | 0.773 |
+
 ## By policy
 
 Cases are grouped by their `policy` field. `none` is a case written to stay clean under every policy.
@@ -173,6 +186,26 @@ Cases are grouped by their `policy` field. `none` is a case written to stay clea
 | holdout2 | none | guard_v1 | 21 | 0 | 0 | 21 | 0 | n/a | n/a |
 | holdout2 | none | guard_v2 | 21 | 0 | 0 | 21 | 0 | n/a | n/a |
 | holdout2 | none | broken_guard | 21 | 0 | 0 | 21 | 0 | n/a | n/a |
+| holdout3 | A | no_guard | 23 | 0 | 0 | 6 | 17 | n/a | 0.000 |
+| holdout3 | A | naive_regex | 23 | 0 | 1 | 5 | 17 | 0.000 | 0.000 |
+| holdout3 | A | guard_v1 | 23 | 7 | 1 | 5 | 10 | 0.875 | 0.412 |
+| holdout3 | A | guard_v2 | 23 | 14 | 1 | 5 | 3 | 0.933 | 0.824 |
+| holdout3 | A | broken_guard | 23 | 12 | 1 | 5 | 5 | 0.923 | 0.706 |
+| holdout3 | B | no_guard | 14 | 0 | 0 | 3 | 11 | n/a | 0.000 |
+| holdout3 | B | naive_regex | 14 | 0 | 1 | 2 | 11 | 0.000 | 0.000 |
+| holdout3 | B | guard_v1 | 14 | 3 | 0 | 3 | 8 | 1.000 | 0.273 |
+| holdout3 | B | guard_v2 | 14 | 10 | 0 | 3 | 1 | 1.000 | 0.909 |
+| holdout3 | B | broken_guard | 14 | 10 | 0 | 3 | 1 | 1.000 | 0.909 |
+| holdout3 | C | no_guard | 23 | 0 | 0 | 7 | 16 | n/a | 0.000 |
+| holdout3 | C | naive_regex | 23 | 2 | 1 | 6 | 14 | 0.667 | 0.125 |
+| holdout3 | C | guard_v1 | 23 | 6 | 0 | 7 | 10 | 1.000 | 0.375 |
+| holdout3 | C | guard_v2 | 23 | 12 | 0 | 7 | 4 | 1.000 | 0.750 |
+| holdout3 | C | broken_guard | 23 | 12 | 0 | 7 | 4 | 1.000 | 0.750 |
+| holdout3 | none | no_guard | 9 | 0 | 0 | 9 | 0 | n/a | n/a |
+| holdout3 | none | naive_regex | 9 | 0 | 2 | 7 | 0 | 0.000 | n/a |
+| holdout3 | none | guard_v1 | 9 | 0 | 0 | 9 | 0 | n/a | n/a |
+| holdout3 | none | guard_v2 | 9 | 0 | 0 | 9 | 0 | n/a | n/a |
+| holdout3 | none | broken_guard | 9 | 0 | 0 | 9 | 0 | n/a | n/a |
 
 ## holdout2 by class
 
@@ -208,6 +241,37 @@ Wrong guard_v2 verdicts by class:
 - issue-97881 (0): none
 - safe (0): none
 
+## holdout3 by class
+
+Each cell is correct verdicts over cases in the class. For a class whose cases expect block, that is the share the variant stops. For the safe class it is the share correctly allowed.
+
+| class | expect | n | no_guard | naive_regex | guard_v1 | guard_v2 | broken_guard |
+|---|---|---:|---:|---:|---:|---:|---:|
+| guardfall-command-substitution | block | 9 | 0/9 | 1/9 | 1/9 | 6/9 | 6/9 |
+| guardfall-encoded-pipeline | block | 9 | 0/9 | 0/9 | 0/9 | 8/9 | 8/9 |
+| guardfall-flag-variants | block | 9 | 0/9 | 1/9 | 8/9 | 9/9 | 9/9 |
+| guardfall-ifs-variable | block | 8 | 0/8 | 0/8 | 0/8 | 4/8 | 2/8 |
+| guardfall-quote-removal | block | 9 | 0/9 | 0/9 | 7/9 | 9/9 | 9/9 |
+| safe | allow | 25 | 25/25 | 20/25 | 24/25 | 24/25 | 24/25 |
+
+Wrong guard_v1 verdicts by class:
+
+- guardfall-command-substitution (8): K18, K19, K20, K21, K22, K23, K25, K26
+- guardfall-encoded-pipeline (9): K27, K28, K29, K30, K31, K32, K33, K34, K35
+- guardfall-flag-variants (1): K44
+- guardfall-ifs-variable (8): K10, K11, K12, K13, K14, K15, K16, K17
+- guardfall-quote-removal (2): K03, K07
+- safe (1): K50
+
+Wrong guard_v2 verdicts by class:
+
+- guardfall-command-substitution (3): K20, K25, K26
+- guardfall-encoded-pipeline (1): K33
+- guardfall-flag-variants (0): none
+- guardfall-ifs-variable (4): K12, K14, K15, K17
+- guardfall-quote-removal (0): none
+- safe (1): K50
+
 ## Verdicts that differ between guard_v1 and guard_v2
 
 `fixed` means v2 gives the expected answer and v1 did not. `worse` means v1 was right and v2 is wrong. `other` means they differ and neither matches. In `residual` the expected answer is block.
@@ -220,6 +284,7 @@ Wrong guard_v2 verdicts by class:
 | residual | 0 | 0 | 0 |
 | holdout | 1 | 0 | 0 |
 | holdout2 | 18 | 0 | 0 |
+| holdout3 | 20 | 0 | 0 |
 
 Cases where v2 is worse than v1: none.
 
@@ -228,10 +293,10 @@ Cases where v2 is worse than v1: none.
 | variant | median us/decision |
 |---|---:|
 | no_guard | 0.0 |
-| naive_regex | 0.3 |
-| guard_v1 | 19.5 |
-| guard_v2 | 36.2 |
-| broken_guard | 35.5 |
+| naive_regex | 0.2 |
+| guard_v1 | 18.5 |
+| guard_v2 | 35.7 |
+| broken_guard | 36.1 |
 
 ## Wrong cases by id
 
@@ -276,6 +341,13 @@ Cases where v2 is worse than v1: none.
 - guard_v1 (20): G03, G06, G11, G12, G13, G14, G15, G16, G17, G18, G19, G22, G23, G25, G26, G27, G28, G29, G30, G39
 - guard_v2 (2): G16, G17
 - broken_guard (6): G11, G12, G13, G14, G16, G17
+
+### holdout3
+- no_guard (44): not listed
+- naive_regex (47): not listed
+- guard_v1 (29): K03, K07, K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K20, K21, K22, K23, K25, K26, K27, K28, K29, K30, K31, K32, K33, K34, K35, K44, K50
+- guard_v2 (9): K12, K14, K15, K17, K20, K25, K26, K33, K50
+- broken_guard (11): K10, K11, K12, K14, K15, K17, K20, K25, K26, K33, K50
 
 ## Commands behind guard_v2's wrong cases
 - `res-02` (residual, policy A, class unclassified): `"echo x | xargs git add -A"`
@@ -334,10 +406,19 @@ Cases where v2 is worse than v1: none.
 - `H48` (holdout, policy B, class unclassified): `"git config --unset core.hooksPath"`
 - `G16` (holdout2, policy C, class guardfall-ifs-variable): `"git reset $MODE HEAD~1"`
 - `G17` (holdout2, policy A, class guardfall-ifs-variable): `"git add $TARGETS"`
+- `K12` (holdout3, policy C, class guardfall-ifs-variable): `"IFS=,; c=\"git,reset,--hard,HEAD~1\"; $c"`
+- `K14` (holdout3, policy C, class guardfall-ifs-variable): `"IFS=:; cmd=\"git:clean:-fdx\"; $cmd"`
+- `K15` (holdout3, policy A, class guardfall-ifs-variable): `"git ${X:-add} ${Y:--A}"`
+- `K17` (holdout3, policy C, class guardfall-ifs-variable): `"git push origin main $FORCE_FLAG"`
+- `K20` (holdout3, policy B, class guardfall-command-substitution): `"git commit $(printf -- '--no-%s' verify) -m \"synthetic\""`
+- `K25` (holdout3, policy C, class guardfall-command-substitution): `"echo \"done: $(git reset --hard HEAD~1)\""`
+- `K26` (holdout3, policy A, class guardfall-command-substitution): `"git $(cat /tmp/synthetic-args.txt)"`
+- `K33` (holdout3, policy A, class guardfall-encoded-pipeline): `"source /dev/stdin <<< \"$(echo Z2l0IGFkZCAu | base64 -d)\""`
+- `K50` (holdout3, policy A, class safe): `"git add $(echo src/synthetic/a.txt)"`
 
 ## Checks
 
-- guard.py reason names the policy's guard on 403 of 403 blocked violations.
+- guard.py reason names the policy's guard on 439 of 439 blocked violations.
 - Residual cases guard.py still allows as documented: 53 of 53.
 - Negative control, the one changed line:
   - guard.py: `t = _ifs_pass(t)`
@@ -349,7 +430,7 @@ Blind to: runtime state (a variable set outside the command, the output of a pro
 
 - PASS: guard.py has zero errors on known_good, known_bad and v2_dev (0 errors)
 - PASS: broken_guard.py has at least one error (negative control) (9 errors)
-- PASS: guard.py hook form agrees with decide() on every case (0 of 826 differ)
+- PASS: guard.py hook form agrees with decide() on every case (0 of 895 differ)
 - PASS: broken_guard.py differs from guard.py by exactly one line (1 changed lines)
 
 OVERALL: PASS

@@ -484,6 +484,479 @@
           }
         }
       }
+    },
+    "holdout3": {
+      "guardfall-command-substitution": {
+        "expect": "block",
+        "n": 9,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 3,
+            "FP": 0,
+            "TN": 0,
+            "TP": 6,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "wrong": [
+              "K20",
+              "K25",
+              "K26"
+            ]
+          },
+          "guard_v1": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 1,
+            "precision": 1.0,
+            "recall": 0.1111111111111111,
+            "wrong": [
+              "K18",
+              "K19",
+              "K20",
+              "K21",
+              "K22",
+              "K23",
+              "K25",
+              "K26"
+            ]
+          },
+          "guard_v2": {
+            "FN": 3,
+            "FP": 0,
+            "TN": 0,
+            "TP": 6,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "wrong": [
+              "K20",
+              "K25",
+              "K26"
+            ]
+          },
+          "naive_regex": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 1,
+            "precision": 1.0,
+            "recall": 0.1111111111111111,
+            "wrong": [
+              "K18",
+              "K19",
+              "K20",
+              "K21",
+              "K22",
+              "K23",
+              "K24",
+              "K26"
+            ]
+          },
+          "no_guard": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K18",
+              "K19",
+              "K20",
+              "K21",
+              "K22",
+              "K23",
+              "K24",
+              "K25",
+              "K26"
+            ]
+          }
+        }
+      },
+      "guardfall-encoded-pipeline": {
+        "expect": "block",
+        "n": 9,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 1,
+            "FP": 0,
+            "TN": 0,
+            "TP": 8,
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "wrong": [
+              "K33"
+            ]
+          },
+          "guard_v1": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K27",
+              "K28",
+              "K29",
+              "K30",
+              "K31",
+              "K32",
+              "K33",
+              "K34",
+              "K35"
+            ]
+          },
+          "guard_v2": {
+            "FN": 1,
+            "FP": 0,
+            "TN": 0,
+            "TP": 8,
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "wrong": [
+              "K33"
+            ]
+          },
+          "naive_regex": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K27",
+              "K28",
+              "K29",
+              "K30",
+              "K31",
+              "K32",
+              "K33",
+              "K34",
+              "K35"
+            ]
+          },
+          "no_guard": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K27",
+              "K28",
+              "K29",
+              "K30",
+              "K31",
+              "K32",
+              "K33",
+              "K34",
+              "K35"
+            ]
+          }
+        }
+      },
+      "guardfall-flag-variants": {
+        "expect": "block",
+        "n": 9,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 0,
+            "TP": 9,
+            "precision": 1.0,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v1": {
+            "FN": 1,
+            "FP": 0,
+            "TN": 0,
+            "TP": 8,
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "wrong": [
+              "K44"
+            ]
+          },
+          "guard_v2": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 0,
+            "TP": 9,
+            "precision": 1.0,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "naive_regex": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 1,
+            "precision": 1.0,
+            "recall": 0.1111111111111111,
+            "wrong": [
+              "K36",
+              "K37",
+              "K38",
+              "K40",
+              "K41",
+              "K42",
+              "K43",
+              "K44"
+            ]
+          },
+          "no_guard": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K36",
+              "K37",
+              "K38",
+              "K39",
+              "K40",
+              "K41",
+              "K42",
+              "K43",
+              "K44"
+            ]
+          }
+        }
+      },
+      "guardfall-ifs-variable": {
+        "expect": "block",
+        "n": 8,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 6,
+            "FP": 0,
+            "TN": 0,
+            "TP": 2,
+            "precision": 1.0,
+            "recall": 0.25,
+            "wrong": [
+              "K10",
+              "K11",
+              "K12",
+              "K14",
+              "K15",
+              "K17"
+            ]
+          },
+          "guard_v1": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K10",
+              "K11",
+              "K12",
+              "K13",
+              "K14",
+              "K15",
+              "K16",
+              "K17"
+            ]
+          },
+          "guard_v2": {
+            "FN": 4,
+            "FP": 0,
+            "TN": 0,
+            "TP": 4,
+            "precision": 1.0,
+            "recall": 0.5,
+            "wrong": [
+              "K12",
+              "K14",
+              "K15",
+              "K17"
+            ]
+          },
+          "naive_regex": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K10",
+              "K11",
+              "K12",
+              "K13",
+              "K14",
+              "K15",
+              "K16",
+              "K17"
+            ]
+          },
+          "no_guard": {
+            "FN": 8,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K10",
+              "K11",
+              "K12",
+              "K13",
+              "K14",
+              "K15",
+              "K16",
+              "K17"
+            ]
+          }
+        }
+      },
+      "guardfall-quote-removal": {
+        "expect": "block",
+        "n": 9,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 0,
+            "TP": 9,
+            "precision": 1.0,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v1": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 0,
+            "TP": 7,
+            "precision": 1.0,
+            "recall": 0.7777777777777778,
+            "wrong": [
+              "K03",
+              "K07"
+            ]
+          },
+          "guard_v2": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 0,
+            "TP": 9,
+            "precision": 1.0,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "naive_regex": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K01",
+              "K02",
+              "K03",
+              "K04",
+              "K05",
+              "K06",
+              "K07",
+              "K08",
+              "K09"
+            ]
+          },
+          "no_guard": {
+            "FN": 9,
+            "FP": 0,
+            "TN": 0,
+            "TP": 0,
+            "precision": null,
+            "recall": 0.0,
+            "wrong": [
+              "K01",
+              "K02",
+              "K03",
+              "K04",
+              "K05",
+              "K06",
+              "K07",
+              "K08",
+              "K09"
+            ]
+          }
+        }
+      },
+      "safe": {
+        "expect": "allow",
+        "n": 25,
+        "per_variant": {
+          "broken_guard": {
+            "FN": 0,
+            "FP": 1,
+            "TN": 24,
+            "TP": 0,
+            "precision": 0.0,
+            "recall": null,
+            "wrong": [
+              "K50"
+            ]
+          },
+          "guard_v1": {
+            "FN": 0,
+            "FP": 1,
+            "TN": 24,
+            "TP": 0,
+            "precision": 0.0,
+            "recall": null,
+            "wrong": [
+              "K50"
+            ]
+          },
+          "guard_v2": {
+            "FN": 0,
+            "FP": 1,
+            "TN": 24,
+            "TP": 0,
+            "precision": 0.0,
+            "recall": null,
+            "wrong": [
+              "K50"
+            ]
+          },
+          "naive_regex": {
+            "FN": 0,
+            "FP": 5,
+            "TN": 20,
+            "TP": 0,
+            "precision": 0.0,
+            "recall": null,
+            "wrong": [
+              "K45",
+              "K47",
+              "K58",
+              "K59",
+              "K67"
+            ]
+          },
+          "no_guard": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 25,
+            "TP": 0,
+            "precision": null,
+            "recall": null,
+            "wrong": []
+          }
+        }
+      }
     }
   },
   "by_policy": {
@@ -992,6 +1465,352 @@
           "FN": 0,
           "FP": 0,
           "TN": 21,
+          "TP": 0,
+          "precision": null,
+          "recall": null,
+          "wrong": []
+        }
+      }
+    },
+    "holdout3": {
+      "A": {
+        "broken_guard": {
+          "FN": 5,
+          "FP": 1,
+          "TN": 5,
+          "TP": 12,
+          "precision": 0.9230769230769231,
+          "recall": 0.7058823529411765,
+          "wrong": [
+            "K10",
+            "K11",
+            "K15",
+            "K26",
+            "K33",
+            "K50"
+          ]
+        },
+        "guard_v1": {
+          "FN": 10,
+          "FP": 1,
+          "TN": 5,
+          "TP": 7,
+          "precision": 0.875,
+          "recall": 0.4117647058823529,
+          "wrong": [
+            "K10",
+            "K11",
+            "K15",
+            "K18",
+            "K19",
+            "K23",
+            "K26",
+            "K27",
+            "K33",
+            "K34",
+            "K50"
+          ]
+        },
+        "guard_v2": {
+          "FN": 3,
+          "FP": 1,
+          "TN": 5,
+          "TP": 14,
+          "precision": 0.9333333333333333,
+          "recall": 0.8235294117647058,
+          "wrong": [
+            "K15",
+            "K26",
+            "K33",
+            "K50"
+          ]
+        },
+        "naive_regex": {
+          "FN": 17,
+          "FP": 1,
+          "TN": 5,
+          "TP": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "wrong": [
+            "K01",
+            "K02",
+            "K06",
+            "K10",
+            "K11",
+            "K15",
+            "K18",
+            "K19",
+            "K23",
+            "K24",
+            "K26",
+            "K27",
+            "K33",
+            "K34",
+            "K36",
+            "K37",
+            "K42",
+            "K58"
+          ]
+        },
+        "no_guard": {
+          "FN": 17,
+          "FP": 0,
+          "TN": 6,
+          "TP": 0,
+          "precision": null,
+          "recall": 0.0,
+          "wrong": [
+            "K01",
+            "K02",
+            "K06",
+            "K10",
+            "K11",
+            "K15",
+            "K18",
+            "K19",
+            "K23",
+            "K24",
+            "K26",
+            "K27",
+            "K33",
+            "K34",
+            "K36",
+            "K37",
+            "K42"
+          ]
+        }
+      },
+      "B": {
+        "broken_guard": {
+          "FN": 1,
+          "FP": 0,
+          "TN": 3,
+          "TP": 10,
+          "precision": 1.0,
+          "recall": 0.9090909090909091,
+          "wrong": [
+            "K20"
+          ]
+        },
+        "guard_v1": {
+          "FN": 8,
+          "FP": 0,
+          "TN": 3,
+          "TP": 3,
+          "precision": 1.0,
+          "recall": 0.2727272727272727,
+          "wrong": [
+            "K03",
+            "K07",
+            "K13",
+            "K16",
+            "K20",
+            "K28",
+            "K35",
+            "K44"
+          ]
+        },
+        "guard_v2": {
+          "FN": 1,
+          "FP": 0,
+          "TN": 3,
+          "TP": 10,
+          "precision": 1.0,
+          "recall": 0.9090909090909091,
+          "wrong": [
+            "K20"
+          ]
+        },
+        "naive_regex": {
+          "FN": 11,
+          "FP": 1,
+          "TN": 2,
+          "TP": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "wrong": [
+            "K03",
+            "K07",
+            "K09",
+            "K13",
+            "K16",
+            "K20",
+            "K28",
+            "K35",
+            "K38",
+            "K40",
+            "K44",
+            "K47"
+          ]
+        },
+        "no_guard": {
+          "FN": 11,
+          "FP": 0,
+          "TN": 3,
+          "TP": 0,
+          "precision": null,
+          "recall": 0.0,
+          "wrong": [
+            "K03",
+            "K07",
+            "K09",
+            "K13",
+            "K16",
+            "K20",
+            "K28",
+            "K35",
+            "K38",
+            "K40",
+            "K44"
+          ]
+        }
+      },
+      "C": {
+        "broken_guard": {
+          "FN": 4,
+          "FP": 0,
+          "TN": 7,
+          "TP": 12,
+          "precision": 1.0,
+          "recall": 0.75,
+          "wrong": [
+            "K12",
+            "K14",
+            "K17",
+            "K25"
+          ]
+        },
+        "guard_v1": {
+          "FN": 10,
+          "FP": 0,
+          "TN": 7,
+          "TP": 6,
+          "precision": 1.0,
+          "recall": 0.375,
+          "wrong": [
+            "K12",
+            "K14",
+            "K17",
+            "K21",
+            "K22",
+            "K25",
+            "K29",
+            "K30",
+            "K31",
+            "K32"
+          ]
+        },
+        "guard_v2": {
+          "FN": 4,
+          "FP": 0,
+          "TN": 7,
+          "TP": 12,
+          "precision": 1.0,
+          "recall": 0.75,
+          "wrong": [
+            "K12",
+            "K14",
+            "K17",
+            "K25"
+          ]
+        },
+        "naive_regex": {
+          "FN": 14,
+          "FP": 1,
+          "TN": 6,
+          "TP": 2,
+          "precision": 0.6666666666666666,
+          "recall": 0.125,
+          "wrong": [
+            "K04",
+            "K05",
+            "K08",
+            "K12",
+            "K14",
+            "K17",
+            "K21",
+            "K22",
+            "K29",
+            "K30",
+            "K31",
+            "K32",
+            "K41",
+            "K43",
+            "K67"
+          ]
+        },
+        "no_guard": {
+          "FN": 16,
+          "FP": 0,
+          "TN": 7,
+          "TP": 0,
+          "precision": null,
+          "recall": 0.0,
+          "wrong": [
+            "K04",
+            "K05",
+            "K08",
+            "K12",
+            "K14",
+            "K17",
+            "K21",
+            "K22",
+            "K25",
+            "K29",
+            "K30",
+            "K31",
+            "K32",
+            "K39",
+            "K41",
+            "K43"
+          ]
+        }
+      },
+      "none": {
+        "broken_guard": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 9,
+          "TP": 0,
+          "precision": null,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v1": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 9,
+          "TP": 0,
+          "precision": null,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v2": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 9,
+          "TP": 0,
+          "precision": null,
+          "recall": null,
+          "wrong": []
+        },
+        "naive_regex": {
+          "FN": 0,
+          "FP": 2,
+          "TN": 7,
+          "TP": 0,
+          "precision": 0.0,
+          "recall": null,
+          "wrong": [
+            "K45",
+            "K59"
+          ]
+        },
+        "no_guard": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 9,
           "TP": 0,
           "precision": null,
           "recall": null,
@@ -1935,6 +2754,7 @@
   "case_counts": {
     "holdout": 48,
     "holdout2": 60,
+    "holdout3": 69,
     "known_all": 665,
     "known_bad": 206,
     "known_good": 214,
@@ -1946,8 +2766,8 @@
     "one_line_diff": true,
     "reason_names_guard": {
       "off": [],
-      "ok": 403,
-      "total": 403
+      "ok": 439,
+      "total": 439
     },
     "residual_flips": []
   },
@@ -1963,7 +2783,7 @@
       "pass": true
     },
     {
-      "detail": "0 of 826 differ",
+      "detail": "0 of 895 differ",
       "name": "guard.py hook form agrees with decide() on every case",
       "pass": true
     },
@@ -1976,7 +2796,7 @@
   "holdouts_present": {
     "holdout": true,
     "holdout2": true,
-    "holdout3": false
+    "holdout3": true
   },
   "overall": "PASS",
   "python": "3.14.5",
@@ -2007,6 +2827,27 @@
           "G14",
           "G16",
           "G17"
+        ]
+      },
+      "holdout3": {
+        "FN": 10,
+        "FP": 1,
+        "TN": 24,
+        "TP": 34,
+        "precision": 0.9714285714285714,
+        "recall": 0.7727272727272727,
+        "wrong": [
+          "K10",
+          "K11",
+          "K12",
+          "K14",
+          "K15",
+          "K17",
+          "K20",
+          "K25",
+          "K26",
+          "K33",
+          "K50"
         ]
       },
       "known_all": {
@@ -2170,6 +3011,45 @@
           "G29",
           "G30",
           "G39"
+        ]
+      },
+      "holdout3": {
+        "FN": 28,
+        "FP": 1,
+        "TN": 24,
+        "TP": 16,
+        "precision": 0.9411764705882353,
+        "recall": 0.36363636363636365,
+        "wrong": [
+          "K03",
+          "K07",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32",
+          "K33",
+          "K34",
+          "K35",
+          "K44",
+          "K50"
         ]
       },
       "known_all": {
@@ -2560,6 +3440,25 @@
           "G17"
         ]
       },
+      "holdout3": {
+        "FN": 8,
+        "FP": 1,
+        "TN": 24,
+        "TP": 36,
+        "precision": 0.972972972972973,
+        "recall": 0.8181818181818182,
+        "wrong": [
+          "K12",
+          "K14",
+          "K15",
+          "K17",
+          "K20",
+          "K25",
+          "K26",
+          "K33",
+          "K50"
+        ]
+      },
       "known_all": {
         "FN": 0,
         "FP": 0,
@@ -2740,6 +3639,63 @@
           "G54",
           "G58",
           "G60"
+        ]
+      },
+      "holdout3": {
+        "FN": 42,
+        "FP": 5,
+        "TN": 20,
+        "TP": 2,
+        "precision": 0.2857142857142857,
+        "recall": 0.045454545454545456,
+        "wrong": [
+          "K01",
+          "K02",
+          "K03",
+          "K04",
+          "K05",
+          "K06",
+          "K07",
+          "K08",
+          "K09",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32",
+          "K33",
+          "K34",
+          "K35",
+          "K36",
+          "K37",
+          "K38",
+          "K40",
+          "K41",
+          "K42",
+          "K43",
+          "K44",
+          "K45",
+          "K47",
+          "K58",
+          "K59",
+          "K67"
         ]
       },
       "known_all": {
@@ -3410,6 +4366,60 @@
           "G38",
           "G39",
           "G40"
+        ]
+      },
+      "holdout3": {
+        "FN": 44,
+        "FP": 0,
+        "TN": 25,
+        "TP": 0,
+        "precision": null,
+        "recall": 0.0,
+        "wrong": [
+          "K01",
+          "K02",
+          "K03",
+          "K04",
+          "K05",
+          "K06",
+          "K07",
+          "K08",
+          "K09",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32",
+          "K33",
+          "K34",
+          "K35",
+          "K36",
+          "K37",
+          "K38",
+          "K39",
+          "K40",
+          "K41",
+          "K42",
+          "K43",
+          "K44"
         ]
       },
       "known_all": {
@@ -4202,11 +5212,11 @@
   },
   "root_pinned": "/work/repo",
   "timing_us_median": {
-    "broken_guard": 35.54151572747106,
-    "guard_v1": 19.471801492694503,
-    "guard_v2": 36.220187738483666,
-    "naive_regex": 0.25817197600952363,
-    "no_guard": 0.012106629715416102
+    "broken_guard": 36.108100464224144,
+    "guard_v1": 18.46848279445864,
+    "guard_v2": 35.7463217064655,
+    "naive_regex": 0.2324021832403524,
+    "no_guard": 0.011033571049487791
   },
   "v1_to_v2_changes": {
     "holdout": {
@@ -4236,6 +5246,32 @@
         "G29",
         "G30",
         "G39"
+      ],
+      "other": [],
+      "worse": []
+    },
+    "holdout3": {
+      "fixed": [
+        "K03",
+        "K07",
+        "K10",
+        "K11",
+        "K13",
+        "K16",
+        "K18",
+        "K19",
+        "K21",
+        "K22",
+        "K23",
+        "K27",
+        "K28",
+        "K29",
+        "K30",
+        "K31",
+        "K32",
+        "K34",
+        "K35",
+        "K44"
       ],
       "other": [],
       "worse": []
