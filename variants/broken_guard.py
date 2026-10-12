@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""guard.py: a Claude Code PreToolUse hook with two guards over Bash command strings.
+"""guard.py: a Claude Code PreToolUse hook with three guards over Bash command strings.
 
 Policy A, blanket_stage_guard: `git add` / `git commit` whose scope is the whole worktree or
 all tracked modifications is denied. That means -A, --all and its abbreviations, -u/--update,
@@ -12,6 +12,16 @@ the token order, when git is the direct command word: --no-verify, `commit -n`, 
 `config` core.hooksPath to anything but .githooks, GIT_CONFIG_* overrides, and the plumbing
 commands send-pack / commit-tree / update-ref. `git config core.hooksPath .githooks` and every
 read-only form still pass.
+
+Policy C, data_loss_guard: never destroy uncommitted or pushed work. Denied when git is the
+direct command word: `reset --hard` (any ref), `clean` with -f in any flag combination,
+whole-tree discards (`checkout -- .`, `checkout .`, `restore .`, `restore --staged --worktree .`),
+force pushes (--force, -f, --force-with-lease, a +refspec) and `branch -D`. Still allowed:
+`reset --soft`, `reset --mixed`, `reset HEAD <file>`, `clean -n`/`--dry-run`, `restore <named
+file>`, `restore --staged .`, a normal `push`, `branch -d`. Same tokenizer, same splitting on
+; && || | & subshells and newlines, same global-option skipping as policy A.
+Motivation: anthropics/claude-code issue 97881, where `git reset --hard` on line 3 of a
+multi-line command got past a permission check.
 
 Usage as a hook: reads {"tool_name":"Bash","tool_input":{"command":"..."}} on stdin. Prints a
 deny decision with a named reason to block. Prints nothing to allow.
@@ -134,7 +144,7 @@ def blanket_stage_guard(cmd_nohd, root):
                         return SAY + "git add " + a
                     continue
                 if not endopts and a.startswith("-") and a != "-":
-                    if "A" in a[1:]:  # DEFECT (negative control): the "u" test was dropped
+                    if "A" in a[1:] or "u" in a[1:]:
                         return SAY + "git add " + a
                     continue
                 core = a.rstrip("/")
@@ -214,6 +224,150 @@ def hook_bypass_guard(cmd_nohd):
     return None
 
 
+# ---- data_loss_guard (policy C) ----
+FORCE_PUSH_LONG = ("--force", "--force-with-lease", "--force-if-includes")
+PUSH_VAL = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
+LOSS_TAIL = (". That destroys uncommitted or pushed work that the repo may not be able to give "
+             "back. Stop and ask. Name the paths or refs, and let a human run it.")
+_LOSS_LITERAL = re.compile(
+    r"(?:^|[;&|(]\s*)(?:\S*/)?git\s+(?:[^;&|)\n]*\s)?(?:"
+    r"reset\s+(?:[^;&|)\n]*\s)?--ha\w*"
+    r"|clean\s+(?:[^;&|)\n]*\s)?(?:-\w*f\w*|--f\w*)"
+    r"|push\s+(?:[^;&|)\n]*\s)?(?:-\w*f\w*|--for\w*|\+\S+)"
+    r"|branch\s+(?:[^;&|)\n]*\s)?-\w*D\w*"
+    r"|(?:checkout|restore)\s+(?:[^;&|)\n]*\s)?(?:\.|\./|:/)(?:\s|$))")
+
+
+def _git_calls(cmd_nohd):
+    """Every (subcommand, args) whose command word is git, one per shell segment, or None when the
+    quoting does not parse. Same normalization, tokenizer, segment split, wrapper skipping and
+    global-option skipping as blanket_stage_guard."""
+    toks_all = _tokens(re.sub(r"[\r\n]+", " ; ", cmd_nohd))
+    if toks_all is None:
+        return None
+    segs, cur = [], []
+    for t in toks_all:
+        if t in OPS:
+            segs.append(cur)
+            cur = []
+        else:
+            cur.append(t)
+    segs.append(cur)
+    calls = []
+    for toks in segs:
+        i = 0
+        while i < len(toks) and (toks[i] in WRAP
+                                 or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
+            i += 1
+        if i >= len(toks) or (toks[i] != "git" and not toks[i].endswith("/git")):
+            continue
+        i += 1
+        while i < len(toks) and toks[i].startswith("-"):
+            i += 2 if toks[i] in GIT_GLOBAL_VAL else 1
+        if i < len(toks):
+            calls.append((toks[i], toks[i + 1:]))
+    return calls
+
+
+def _whole_tree(a, root):
+    return a.rstrip("/") in ("", ".", "..", ":", "*", "$", root) or a.startswith("`")
+
+
+def _loss_reason(sub, args, root):
+    """Return the named form that destroys work, or None."""
+    if sub == "reset":
+        for a in args:
+            if a == "--":
+                break
+            name = a.split("=", 1)[0]
+            if a.startswith("--") and len(name) >= 4 and "--hard".startswith(name):
+                return "git reset --hard throws away every uncommitted change in the worktree and index"
+    elif sub == "clean":
+        skip = False
+        for a in args:
+            if skip:
+                skip = False
+                continue
+            if a == "--":
+                break
+            if a == "-e" or a == "--exclude":
+                skip = True
+                continue
+            name = a.split("=", 1)[0]
+            if a.startswith("--"):
+                if len(name) >= 3 and "--force".startswith(name):
+                    return "git clean --force deletes untracked files for good"
+            elif a.startswith("-") and not a.startswith("-e") and a == "-f":  # DEFECT (negative control): only a lone -f is seen; -fd, -df, -xdf slip through
+                return "git clean with -f deletes untracked files for good"
+    elif sub == "checkout" or sub == "restore":
+        staged = worktree = whole = endopts = False
+        for a in args:
+            if a == "--" and not endopts:
+                endopts = True
+            elif not endopts and a.startswith("--"):
+                staged = staged or a == "--staged"
+                worktree = worktree or a == "--worktree"
+            elif not endopts and a.startswith("-") and a != "-":
+                staged = staged or "S" in a[1:]
+                worktree = worktree or "W" in a[1:]
+            elif _whole_tree(a, root):
+                whole = True
+        if whole and (sub == "checkout" or worktree or not staged):
+            return "git %s over the whole tree discards every uncommitted change" % sub
+    elif sub == "push":
+        skip = endopts = False
+        for a in args:
+            if skip:
+                skip = False
+                continue
+            if a == "--" and not endopts:
+                endopts = True
+            elif not endopts and a in PUSH_VAL:
+                skip = True
+            elif not endopts and a.startswith("--"):
+                name = a.split("=", 1)[0]
+                if len(name) >= 5 and any(L.startswith(name) for L in FORCE_PUSH_LONG):
+                    return "git push " + a + " is a force push and can overwrite remote history"
+            elif not endopts and a.startswith("-") and len(a) > 1:
+                if "f" in a[1:]:
+                    return "git push " + a + " is a force push and can overwrite remote history"
+            elif a.startswith("+") and len(a) > 1:
+                return "git push with a +refspec (" + a + ") is a force push of that ref"
+    elif sub == "branch":
+        dele = force = False
+        for a in args:
+            if a == "--":
+                break
+            name = a.split("=", 1)[0]
+            if a.startswith("--"):
+                dele = dele or (len(name) >= 5 and "--delete".startswith(name))
+                force = force or (len(name) >= 6 and "--force".startswith(name))
+            elif a.startswith("-") and len(a) > 1:
+                if "D" in a[1:]:
+                    return "git branch -D deletes a branch whether or not it is merged"
+                dele = dele or "d" in a[1:]
+                force = force or "f" in a[1:]
+        if dele and force:
+            return "git branch --delete --force deletes a branch whether or not it is merged"
+    return None
+
+
+def data_loss_guard(cmd_nohd, root):
+    """Return a deny reason, or None."""
+    calls = _git_calls(cmd_nohd)
+    if calls is None:
+        # unparseable quoting must not become a silent allow: fall back to the literal forms
+        if _LOSS_LITERAL.search(re.sub(r"[\r\n]+", " ; ", cmd_nohd)):
+            return ("data_loss_guard: a work-destroying git form inside an unparseable command line"
+                    + LOSS_TAIL)
+        return None
+    for sub, args in calls:
+        why = _loss_reason(sub, args, root)
+        if why:
+            return "data_loss_guard: " + why + LOSS_TAIL
+    return None
+
+
 def decide(command):
     """Return ("block", reason) or ("allow", reason). An allow carries an empty reason, except a
     fail-open, whose reason names the exception."""
@@ -224,6 +378,9 @@ def decide(command):
         if why:
             return "block", why
         why = hook_bypass_guard(nohd)
+        if why:
+            return "block", why
+        why = data_loss_guard(nohd, _root())
         if why:
             return "block", why
         return "allow", ""

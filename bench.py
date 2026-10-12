@@ -2,10 +2,14 @@
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
 Variants: no_guard (baseline), naive_regex, guard (the real one), broken_guard (negative control).
-Sets: known_bad, known_good, residual, and holdout when cases/holdout/holdout.jsonl exists.
+Sets: known_bad, known_good, residual, and the two blind holdouts when their files exist
+(cases/holdout/holdout.jsonl and cases/holdout2/holdout2.jsonl).
+Reports: per set, per policy (A, B, C, none) inside known cases and each holdout, and per class
+inside holdout2 (issue-97881, each guardfall-* class, safe), so a reader sees which classes the
+guard stops and which it does not.
 
 Scoring. "Positive" means "this command should be blocked".
-  known_bad / known_good / holdout: positive = expect is "block".
+  known_bad / known_good / holdout / holdout2: positive = expect is "block".
   residual: every case is a policy violation the guard knowingly does not catch. Positive = True.
             A residual the guard allows is a miss (FN). It is reported as a miss, not hidden.
 Exit 0 only if all of these hold:
@@ -13,7 +17,7 @@ Exit 0 only if all of these hold:
   2. broken_guard.py has at least one wrong answer there (the negative control can fail).
   3. guard.py run as a hook (stdin JSON, stdout) agrees with guard.decide() on every case.
   4. broken_guard.py differs from guard.py by exactly one line.
-Holdout results never change the exit code. They are reported as they are.
+Holdout results (both) never change the exit code. They are reported as they are.
 
 Surface: command strings only. Nothing is ever executed. Blind to: shell state (variables,
 aliases, globs), wrappers (bash -c, eval, xargs), scripts, other tools, and anything outside the
@@ -44,8 +48,13 @@ CASE_FILES = [
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
     ("residual", os.path.join(HERE, "cases", "residual.jsonl")),
     ("holdout", os.path.join(HERE, "cases", "holdout", "holdout.jsonl")),
+    ("holdout2", os.path.join(HERE, "cases", "holdout2", "holdout2.jsonl")),
 ]
-GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard"}
+GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
+HOLDOUTS = ("holdout", "holdout2")
+EXPECT_WORDS = {"block": "block", "deny": "block", "blocked": "block", "denied": "block",
+                "allow": "allow", "allowed": "allow", "pass": "allow"}
+CLASS_FIELDS = ("class", "category", "bypass_class", "group", "klass", "type", "tag")
 
 
 def load_module(name, path):
@@ -65,7 +74,7 @@ def load_cases(path):
             for k in ("id", "command", "expect"):
                 if k not in row:
                     raise SystemExit("%s line %d: missing %r" % (path, n, k))
-            row["expect"] = str(row["expect"]).strip().lower()
+            row["expect"] = EXPECT_WORDS.get(str(row["expect"]).strip().lower(), row["expect"])
             if row["expect"] not in ("block", "allow"):
                 raise SystemExit("%s line %d: expect must be block or allow, got %r"
                                  % (path, n, row["expect"]))
@@ -81,6 +90,18 @@ def truth_positive(set_name, row):
     if set_name == "residual":
         return True
     return row["expect"] == "block"
+
+
+def policy_of(row):
+    return str(row.get("policy", "none")).strip() or "none"
+
+
+def class_of(row):
+    """The class a holdout2 case belongs to: the first class-like field, else the id prefix."""
+    for k in CLASS_FIELDS:
+        if row.get(k):
+            return str(row[k]).strip()
+    return "unclassified"
 
 
 def score(decide, set_name, rows):
@@ -146,8 +167,10 @@ def main():
         if os.path.exists(path):
             sets[name] = load_cases(path)
     holdout_present = "holdout" in sets
+    holdout2_present = "holdout2" in sets
     sets_known = sets["known_bad"] + sets["known_good"]
-    order = ["known_bad", "known_good", "known_all", "residual"] + (["holdout"] if holdout_present else [])
+    order = ["known_bad", "known_good", "known_all", "residual"] + (["holdout"] if holdout_present else []) \
+        + (["holdout2"] if holdout2_present else [])
     sets["known_all"] = sets_known
 
     results = {}
@@ -155,15 +178,31 @@ def main():
         decide = mods[vname].decide
         results[vname] = {s: score(decide, s, sets[s]) for s in order}
 
+    # per policy inside known cases and each holdout; per class inside holdout2
+    by_policy = {}
+    for s in ("known_all",) + tuple(h for h in HOLDOUTS if h in sets):
+        pols = sorted({policy_of(r) for r in sets[s]})
+        by_policy[s] = {p: {v: score(mods[v].decide, s, [r for r in sets[s] if policy_of(r) == p])
+                            for v, _ in VARIANTS} for p in pols}
+    by_class = {}
+    if holdout2_present:
+        for c in sorted({class_of(r) for r in sets["holdout2"]}):
+            crows = [r for r in sets["holdout2"] if class_of(r) == c]
+            by_class[c] = {"n": len(crows),
+                           "expect": "/".join(sorted({r["expect"] for r in crows})),
+                           "per_variant": {v: score(mods[v].decide, "holdout2", crows)
+                                           for v, _ in VARIANTS}}
+
     timing_cmds = [r["command"] for s in ("known_bad", "known_good", "residual") for r in sets[s]]
-    if holdout_present:
-        timing_cmds += [r["command"] for r in sets["holdout"]]
+    for h in HOLDOUTS:
+        if h in sets:
+            timing_cmds += [r["command"] for r in sets[h]]
     timing = {v: median_us(mods[v].decide, timing_cmds) for v, _ in VARIANTS}
 
     # guard.py's reason names the guard the case's policy points at
     named_ok = named_total = 0
     named_bad = []
-    for s in ("known_bad", "holdout"):
+    for s in ("known_bad",) + HOLDOUTS:
         for row in sets.get(s, []):
             if row["expect"] == "block" and row.get("policy") in GUARD_BY_POLICY:
                 verdict, reason = mods["guard"].decide(row["command"])
@@ -178,7 +217,7 @@ def main():
     cli_diffs = []
     cli_total = 0
     seen = set()
-    for s in ("known_bad", "known_good", "residual") + (("holdout",) if holdout_present else ()):
+    for s in ("known_bad", "known_good", "residual") + tuple(h for h in HOLDOUTS if h in sets):
         for row in sets[s]:
             if row["id"] in seen:
                 continue
@@ -219,12 +258,13 @@ def main():
                  % len(timing_cmds))
     lines.append("Positive means the command should be blocked. In `residual` every case is a policy "
                  "violation the guard knowingly allows, so each one counts as a miss (FN).")
-    if not holdout_present:
-        lines.append("")
-        lines.append("**The blind holdout set was not present for this run.**")
+    for h, present in (("holdout", holdout_present), ("holdout2", holdout2_present)):
+        if not present:
+            lines.append("")
+            lines.append("**The blind %s set was not present for this run.**" % h)
     labels = {"known_bad": "known_bad (%d)", "known_good": "known_good (%d)",
               "known_all": "known_bad + known_good (%d)", "residual": "residual (%d)",
-              "holdout": "holdout, blind (%d)"}
+              "holdout": "holdout, blind (%d)", "holdout2": "holdout2, blind (%d)"}
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -247,6 +287,41 @@ def main():
             r = results[vname][s]
             lines.append("| %s | %d | %d | %d | %d | %s | %s |" % (
                 vname, r["TP"], r["FP"], r["TN"], r["FN"], fmt(r["precision"]), fmt(r["recall"])))
+    lines.append("")
+    lines.append("## By policy")
+    lines.append("")
+    lines.append("Cases are grouped by their `policy` field. `none` is a case written to stay clean "
+                 "under every policy.")
+    lines.append("")
+    lines.append("| set | policy | variant | n | TP | FP | TN | FN | precision | recall |")
+    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|")
+    for s, pols in by_policy.items():
+        for p, per_v in pols.items():
+            for vname, _ in VARIANTS:
+                r = per_v[vname]
+                lines.append("| %s | %s | %s | %d | %d | %d | %d | %d | %s | %s |" % (
+                    s, p, vname, r["TP"] + r["FP"] + r["TN"] + r["FN"], r["TP"], r["FP"], r["TN"],
+                    r["FN"], fmt(r["precision"]), fmt(r["recall"])))
+    if holdout2_present:
+        lines.append("")
+        lines.append("## holdout2 by class")
+        lines.append("")
+        lines.append("Each cell is correct verdicts over cases in the class. For a class whose cases "
+                     "expect block, that is the share the variant stops. For the safe class it is the "
+                     "share correctly allowed.")
+        lines.append("")
+        lines.append("| class | expect | n | " + " | ".join(v for v, _ in VARIANTS) + " |")
+        lines.append("|---|---|---:|" + "---:|" * len(VARIANTS))
+        for c, info in by_class.items():
+            cells = ["%d/%d" % (info["per_variant"][v]["TP"] + info["per_variant"][v]["TN"], info["n"])
+                     for v, _ in VARIANTS]
+            lines.append("| %s | %s | %d | %s |" % (c, info["expect"], info["n"], " | ".join(cells)))
+        lines.append("")
+        lines.append("Wrong guard.py verdicts by class:")
+        lines.append("")
+        for c, info in by_class.items():
+            w = info["per_variant"]["guard"]["wrong"]
+            lines.append("- %s (%d): %s" % (c, len(w), ", ".join(w) if w else "none"))
     lines.append("")
     lines.append("## Timing")
     lines.append("")
@@ -290,7 +365,8 @@ def main():
     lines.append("  - broken_guard.py: `%s`" % next((l[1:].strip() for l in changed if l[0] == "+"), "?"))
     lines.append("")
     lines.append("Blind to: shell state (variables, aliases, globs), wrappers (`bash -c`, `eval`, `xargs`), "
-                 "scripts and interpreters that call git, tools other than Bash, and everything outside "
+                 "scripts and interpreters that call git, git config that changes a command's meaning "
+                 "(aliases, clean.requireForce), tools other than Bash, and everything outside "
                  "the command text. Nothing is executed. The residual set lists shapes in each class.")
     lines.append("")
     lines.append("## Exit conditions")
@@ -305,7 +381,8 @@ def main():
     with open(os.path.join(HERE, "results", "RESULTS.md"), "w", encoding="utf-8") as fh:
         fh.write(md)
     out = {"python": platform.python_version(), "root_pinned": PINNED_ROOT,
-           "holdout_present": holdout_present, "timing_us_median": timing,
+           "holdout_present": holdout_present, "holdout2_present": holdout2_present,
+           "by_policy": by_policy, "by_class": by_class, "timing_us_median": timing,
            "case_counts": {s: len(sets[s]) for s in order},
            "results": results, "checks": {
                "reason_names_guard": {"ok": named_ok, "total": named_total, "off": named_bad},

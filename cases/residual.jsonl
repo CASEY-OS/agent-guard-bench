@@ -31,3 +31,24 @@
 {"id": "res-31", "command": "git --config-env=core.hooksPath=NOHOOKS commit -m x", "expect": "allow", "policy": "B", "why": "found by probing: --config-env is another route to a config override"}
 {"id": "res-32", "command": "chmod -x .git/hooks/pre-commit", "expect": "allow", "policy": "B", "why": "not a git call: disabling the hook by file mode"}
 {"id": "res-33", "command": "mv .git/hooks .git/hooks.off", "expect": "allow", "policy": "B", "why": "not a git call: moving the hooks directory away"}
+{"id": "res-34", "command": "bash -c 'git reset --hard'", "expect": "allow", "policy": "C", "why": "wrapper: the command is inside a shell string. Documented bound."}
+{"id": "res-35", "command": "eval 'git push --force'", "expect": "allow", "policy": "C", "why": "wrapper: eval of a string. Documented bound."}
+{"id": "res-36", "command": "echo origin | xargs git push --force", "expect": "allow", "policy": "C", "why": "wrapper: git is not the command word. Documented bound."}
+{"id": "res-37", "command": "G=git; $G reset --hard", "expect": "allow", "policy": "C", "why": "a binary reached through a variable. Documented bound."}
+{"id": "res-38", "command": "if true; then git reset --hard; fi", "expect": "allow", "policy": "C", "why": "segment head is `then`, not git. Same class as the policy A residuals."}
+{"id": "res-39", "command": "git reset \\\n--hard", "expect": "allow", "policy": "C", "why": "found by probing: backslash-newline continuation is not joined"}
+{"id": "res-40", "command": "git -c alias.nuke='reset --hard' nuke", "expect": "allow", "policy": "C", "why": "an alias defined on the same line hides the verb"}
+{"id": "res-41", "command": "git checkout -f main", "expect": "allow", "policy": "C", "why": "not on the list: -f throws away local changes while switching"}
+{"id": "res-42", "command": "git switch --discard-changes main", "expect": "allow", "policy": "C", "why": "not on the list: switch can discard local changes like checkout -f"}
+{"id": "res-43", "command": "git push origin :old-branch", "expect": "allow", "policy": "C", "why": "not on the list: an empty-source refspec deletes a remote branch"}
+{"id": "res-44", "command": "git push --delete origin old-branch", "expect": "allow", "policy": "C", "why": "not on the list: deletes a remote branch"}
+{"id": "res-45", "command": "git push --mirror", "expect": "allow", "policy": "C", "why": "not on the list: overwrites and deletes remote refs"}
+{"id": "res-46", "command": "git branch -f main HEAD~5", "expect": "allow", "policy": "C", "why": "not on the list: moves a branch back and orphans commits"}
+{"id": "res-47", "command": "git stash clear", "expect": "allow", "policy": "C", "why": "not on the list: drops every stash"}
+{"id": "res-48", "command": "git reflog expire --expire=now --all", "expect": "allow", "policy": "C", "why": "not on the list: removes the safety net that recovers reset --hard"}
+{"id": "res-49", "command": "git -c clean.requireForce=false clean -d", "expect": "allow", "policy": "C", "why": "clean without -f when the config waives it; the guard reads flags, not config"}
+{"id": "res-50", "command": "git checkout -- src/..", "expect": "allow", "policy": "C", "why": "a path that resolves to the parent tree; the guard compares text"}
+{"id": "res-51", "command": "git restore ':(top)'", "expect": "allow", "policy": "C", "why": "pathspec magic for the repo root is not resolved"}
+{"id": "res-52", "command": "git rm -rf .", "expect": "allow", "policy": "C", "why": "not on the list: removes every tracked file from disk"}
+{"id": "res-53", "command": "rm -rf .git", "expect": "allow", "policy": "C", "why": "not a git call: deletes the repository itself. Outside a git-command check."}
+{"id": "res-54", "command": "git worktree remove --force ../wt", "expect": "allow", "policy": "C", "why": "not on the list: deletes a worktree with uncommitted work"}

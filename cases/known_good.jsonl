@@ -112,14 +112,12 @@
 {"id": "good-112", "command": "git revert -n HEAD", "expect": "allow", "policy": "none", "why": "realistic: revert -n is no-commit"}
 {"id": "good-113", "command": "git cherry-pick -n abc123", "expect": "allow", "policy": "none", "why": "realistic: cherry-pick -n is no-commit"}
 {"id": "good-114", "command": "git pull --rebase", "expect": "allow", "policy": "none", "why": "realistic: pull"}
-{"id": "good-115", "command": "git push --force-with-lease", "expect": "allow", "policy": "none", "why": "realistic: safe force"}
 {"id": "good-116", "command": "git push -u origin feat", "expect": "allow", "policy": "none", "why": "realistic: set upstream"}
 {"id": "good-117", "command": "git push -n", "expect": "allow", "policy": "none", "why": "realistic: push -n is dry run"}
 {"id": "good-118", "command": "git revert HEAD", "expect": "allow", "policy": "none", "why": "realistic: revert"}
 {"id": "good-119", "command": "git checkout -- src/a.py", "expect": "allow", "policy": "none", "why": "realistic: discard one path"}
 {"id": "good-120", "command": "git restore src/a.py", "expect": "allow", "policy": "none", "why": "realistic: restore one path"}
 {"id": "good-121", "command": "git restore --staged .", "expect": "allow", "policy": "none", "why": "realistic: unstage; not staging"}
-{"id": "good-122", "command": "git reset --hard", "expect": "allow", "policy": "none", "why": "realistic: not staging"}
 {"id": "good-123", "command": "git stash -u", "expect": "allow", "policy": "none", "why": "realistic: stash includes untracked, not a stage"}
 {"id": "good-124", "command": "git diff -u", "expect": "allow", "policy": "none", "why": "realistic: unified diff"}
 {"id": "good-125", "command": "git log -a", "expect": "allow", "policy": "none", "why": "realistic: log"}
@@ -142,3 +140,75 @@
 {"id": "good-142", "command": "python3 -m pytest -q", "expect": "allow", "policy": "none", "why": "realistic: unrelated"}
 {"id": "good-143", "command": "git diff --stat HEAD~1", "expect": "allow", "policy": "none", "why": "realistic: read-only"}
 {"id": "good-144", "command": "git show HEAD:src/guard.py", "expect": "allow", "policy": "none", "why": "realistic: read-only"}
+{"id": "good-C01", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "C", "why": "undo a commit, keep the work"}
+{"id": "good-C02", "command": "git reset --soft HEAD^", "expect": "allow", "policy": "C", "why": "undo a commit, keep the work"}
+{"id": "good-C03", "command": "git reset --mixed HEAD~1", "expect": "allow", "policy": "C", "why": "undo a commit, keep the files"}
+{"id": "good-C04", "command": "git reset HEAD src/a.py", "expect": "allow", "policy": "C", "why": "unstage one file"}
+{"id": "good-C05", "command": "git reset HEAD .", "expect": "allow", "policy": "C", "why": "unstage everything; the files stay"}
+{"id": "good-C06", "command": "git reset", "expect": "allow", "policy": "C", "why": "bare mixed reset"}
+{"id": "good-C07", "command": "git reset -q", "expect": "allow", "policy": "C", "why": "quiet mixed reset"}
+{"id": "good-C08", "command": "git reset -- src/a.py", "expect": "allow", "policy": "C", "why": "unstage by path"}
+{"id": "good-C09", "command": "git reset --soft HEAD~2 && git commit -m squash", "expect": "allow", "policy": "C", "why": "soft reset then commit"}
+{"id": "good-C10", "command": "git clean -n", "expect": "allow", "policy": "C", "why": "dry run"}
+{"id": "good-C11", "command": "git clean --dry-run", "expect": "allow", "policy": "C", "why": "dry run, long"}
+{"id": "good-C12", "command": "git clean -nd", "expect": "allow", "policy": "C", "why": "dry run with directories"}
+{"id": "good-C13", "command": "git clean -dn", "expect": "allow", "policy": "C", "why": "dry run flags reversed"}
+{"id": "good-C14", "command": "git clean -n -d -x", "expect": "allow", "policy": "C", "why": "dry run, separate flags"}
+{"id": "good-C15", "command": "git clean -i", "expect": "allow", "policy": "C", "why": "interactive: the human picks"}
+{"id": "good-C16", "command": "git clean -n -e keep.txt", "expect": "allow", "policy": "C", "why": "dry run with an exclude"}
+{"id": "good-C17", "command": "git clean -n && git status --short", "expect": "allow", "policy": "C", "why": "dry run then status"}
+{"id": "good-C18", "command": "git restore src/a.py", "expect": "allow", "policy": "C", "why": "restore one named file"}
+{"id": "good-C19", "command": "git restore src/a.py docs/b.md", "expect": "allow", "policy": "C", "why": "restore two named files"}
+{"id": "good-C20", "command": "git restore --staged src/a.py", "expect": "allow", "policy": "C", "why": "unstage one file"}
+{"id": "good-C21", "command": "git restore -S .", "expect": "allow", "policy": "C", "why": "unstage everything; the files stay"}
+{"id": "good-C22", "command": "git restore --source=HEAD~1 src/a.py", "expect": "allow", "policy": "C", "why": "named file from an older commit"}
+{"id": "good-C23", "command": "git restore .github/workflows/ci.yml", "expect": "allow", "policy": "C", "why": "a path that starts with a dot"}
+{"id": "good-C24", "command": "git restore ./src/a.py", "expect": "allow", "policy": "C", "why": "dot-slash path"}
+{"id": "good-C25", "command": "git restore --staged --worktree src/a.py", "expect": "allow", "policy": "C", "why": "both, but one named file"}
+{"id": "good-C26", "command": "git checkout dev -- some/file", "expect": "allow", "policy": "C", "why": "issue 97881 repro line 1: one named file"}
+{"id": "good-C27", "command": "git checkout main", "expect": "allow", "policy": "C", "why": "switch branch"}
+{"id": "good-C28", "command": "git checkout -b feature/x", "expect": "allow", "policy": "C", "why": "new branch"}
+{"id": "good-C29", "command": "git checkout .gitignore", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: a dotfile is not the dot"}
+{"id": "good-C30", "command": "git checkout -- .gitattributes", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: a dotfile after --"}
+{"id": "good-C31", "command": "git checkout HEAD -- src/a.py", "expect": "allow", "policy": "C", "why": "one file from HEAD"}
+{"id": "good-C32", "command": "git checkout -- src/ docs/", "expect": "allow", "policy": "C", "why": "two named directories"}
+{"id": "good-C33", "command": "git status --short", "expect": "allow", "policy": "C", "why": "issue 97881 repro line 4"}
+{"id": "good-C34", "command": "git push", "expect": "allow", "policy": "C", "why": "plain push"}
+{"id": "good-C35", "command": "git push origin feature/x", "expect": "allow", "policy": "C", "why": "plain push of a branch"}
+{"id": "good-C36", "command": "git push -u origin feature", "expect": "allow", "policy": "C", "why": "set upstream"}
+{"id": "good-C37", "command": "git push --follow-tags", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: starts with --fo like --force"}
+{"id": "good-C38", "command": "git push --tags", "expect": "allow", "policy": "C", "why": "push tags"}
+{"id": "good-C39", "command": "git push --dry-run origin main", "expect": "allow", "policy": "C", "why": "dry run"}
+{"id": "good-C40", "command": "git push origin HEAD", "expect": "allow", "policy": "C", "why": "push HEAD"}
+{"id": "good-C41", "command": "git push origin feature:feature", "expect": "allow", "policy": "C", "why": "refspec without a plus"}
+{"id": "good-C42", "command": "git push origin v1.0+build5", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: a plus inside a tag name"}
+{"id": "good-C43", "command": "git push origin 'refs/heads/a+b'", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: a plus inside a ref name"}
+{"id": "good-C44", "command": "git push -o ci.skip origin main", "expect": "allow", "policy": "C", "why": "a push option value"}
+{"id": "good-C45", "command": "git branch -d feature/done", "expect": "allow", "policy": "C", "why": "safe delete: git refuses an unmerged branch"}
+{"id": "good-C46", "command": "git branch --delete feature/done", "expect": "allow", "policy": "C", "why": "safe delete, long"}
+{"id": "good-C47", "command": "git branch -d feature/D", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: capital D in a name"}
+{"id": "good-C48", "command": "git branch feature/D", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: create a branch with D in the name"}
+{"id": "good-C49", "command": "git branch -vv", "expect": "allow", "policy": "C", "why": "list"}
+{"id": "good-C50", "command": "git branch --merged main", "expect": "allow", "policy": "C", "why": "list merged"}
+{"id": "good-C51", "command": "git branch -m old new", "expect": "allow", "policy": "C", "why": "rename"}
+{"id": "good-C52", "command": "git branch -r", "expect": "allow", "policy": "C", "why": "list remote"}
+{"id": "good-C53", "command": "git branch --sort=-committerdate", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: value that starts with a dash"}
+{"id": "good-C54", "command": "echo \"never run git reset --hard\"", "expect": "allow", "policy": "C", "why": "text, not a command"}
+{"id": "good-C55", "command": "git commit -m \"docs: explain git reset --hard\"", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: message names the verb"}
+{"id": "good-C56", "command": "git commit -m \"revert the git push --force\"", "expect": "allow", "policy": "C", "why": "OVER-REFUSAL TRAP: message names a force push"}
+{"id": "good-C57", "command": "git log --grep='reset --hard'", "expect": "allow", "policy": "C", "why": "search history"}
+{"id": "good-C58", "command": "git log --oneline -S\"git clean -f\"", "expect": "allow", "policy": "C", "why": "search history for a string"}
+{"id": "good-C59", "command": "grep -rn 'push --force' docs/", "expect": "allow", "policy": "C", "why": "search the docs"}
+{"id": "good-C60", "command": "printf 'git clean -fd'", "expect": "allow", "policy": "C", "why": "print only"}
+{"id": "good-C61", "command": "cat docs/RECOVERY.md | grep 'git branch -D'", "expect": "allow", "policy": "C", "why": "search a runbook"}
+{"id": "good-C62", "command": "cat > /tmp/runbook.txt <<'EOF'\ngit reset --hard origin/main\ngit push --force\nEOF", "expect": "allow", "policy": "C", "why": "heredoc body quoting destroyers is data"}
+{"id": "good-C63", "command": "git diff HEAD", "expect": "allow", "policy": "C", "why": "read-only"}
+{"id": "good-C64", "command": "git stash", "expect": "allow", "policy": "C", "why": "save work"}
+{"id": "good-C65", "command": "git stash pop", "expect": "allow", "policy": "C", "why": "restore stashed work"}
+{"id": "good-C66", "command": "git stash push src/a.py", "expect": "allow", "policy": "C", "why": "stash one path"}
+{"id": "good-C67", "command": "git revert HEAD", "expect": "allow", "policy": "C", "why": "undo by a new commit"}
+{"id": "good-C68", "command": "git fetch origin", "expect": "allow", "policy": "C", "why": "fetch"}
+{"id": "good-C69", "command": "git pull --ff-only", "expect": "allow", "policy": "C", "why": "fast-forward only"}
+{"id": "good-C70", "command": "git merge --no-ff feature/x", "expect": "allow", "policy": "C", "why": "merge"}
+{"id": "good-C71", "command": "git rebase main", "expect": "allow", "policy": "C", "why": "rebase is not on the list"}
+{"id": "good-C72", "command": "git status && git add src/a.py && git commit -m 'fix a' && git push", "expect": "allow", "policy": "C", "why": "a normal chain"}

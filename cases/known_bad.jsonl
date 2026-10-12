@@ -121,3 +121,86 @@
 {"id": "bad-B55", "command": "git rebase --no-verify -i HEAD~3", "expect": "block", "policy": "B", "why": "agent mistake: interactive rebase without hooks"}
 {"id": "bad-B56", "command": "env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: env wrapper plus override"}
 {"id": "bad-B57", "command": "git commit --no-verify\ngit push", "expect": "block", "policy": "B", "why": "agent mistake: bypass on line 1"}
+{"id": "bad-C01", "command": "git checkout dev -- some/file\ngit clean -fd some/other/path\ngit reset --hard dev\ngit status --short", "expect": "block", "policy": "C", "why": "issue 97881 repro verbatim: reset --hard on line 3 of a multi-line command"}
+{"id": "bad-C02", "command": "git checkout dev -- some/file\ngit reset --hard dev", "expect": "block", "policy": "C", "why": "repro minus the clean line: reset on line 2"}
+{"id": "bad-C03", "command": "git status --short\ngit checkout dev -- some/file\ngit reset --hard dev\ngit status --short", "expect": "block", "policy": "C", "why": "repro shape: reset on line 3 after a read-only line"}
+{"id": "bad-C04", "command": "git reset --hard", "expect": "block", "policy": "C", "why": "bare"}
+{"id": "bad-C05", "command": "git reset --hard HEAD", "expect": "block", "policy": "C", "why": "explicit HEAD"}
+{"id": "bad-C06", "command": "git reset --hard HEAD~1", "expect": "block", "policy": "C", "why": "back one commit"}
+{"id": "bad-C07", "command": "git reset --hard origin/main", "expect": "block", "policy": "C", "why": "to the remote branch"}
+{"id": "bad-C08", "command": "git reset -q --hard HEAD", "expect": "block", "policy": "C", "why": "flag before --hard"}
+{"id": "bad-C09", "command": "git reset HEAD~3 --hard", "expect": "block", "policy": "C", "why": "--hard after the ref"}
+{"id": "bad-C10", "command": "git reset --ha HEAD", "expect": "block", "policy": "C", "why": "unique abbreviation of --hard (git accepts it)"}
+{"id": "bad-C11", "command": "git -C /work/repo reset --hard", "expect": "block", "policy": "C", "why": "global -C option"}
+{"id": "bad-C12", "command": "git --no-pager reset --hard", "expect": "block", "policy": "C", "why": "global option without a value"}
+{"id": "bad-C13", "command": "git -c user.name=x reset --hard", "expect": "block", "policy": "C", "why": "global -c option"}
+{"id": "bad-C14", "command": "git status && git reset --hard origin/main", "expect": "block", "policy": "C", "why": "chained with &&"}
+{"id": "bad-C15", "command": "git fetch origin; git reset --hard FETCH_HEAD", "expect": "block", "policy": "C", "why": "chained with ;"}
+{"id": "bad-C16", "command": "git reset --hard | cat", "expect": "block", "policy": "C", "why": "piped"}
+{"id": "bad-C17", "command": "/usr/bin/git reset --hard", "expect": "block", "policy": "C", "why": "absolute git path"}
+{"id": "bad-C18", "command": "env GIT_PAGER=cat git reset --hard", "expect": "block", "policy": "C", "why": "env wrapper"}
+{"id": "bad-C19", "command": "time git reset --hard", "expect": "block", "policy": "C", "why": "time wrapper"}
+{"id": "bad-C20", "command": "git \"reset\" --hard", "expect": "block", "policy": "C", "why": "quoted verb"}
+{"id": "bad-C21", "command": "git reset \"--hard\" HEAD", "expect": "block", "policy": "C", "why": "quoted flag"}
+{"id": "bad-C22", "command": "git status\ngit diff\ngit log -1\ngit reset --hard HEAD~2", "expect": "block", "policy": "C", "why": "reset on line 4"}
+{"id": "bad-C23", "command": "git reset --hard 'oops", "expect": "block", "policy": "C", "why": "unparseable quoting: falls back to the literal form"}
+{"id": "bad-C24", "command": "git clean -f", "expect": "block", "policy": "C", "why": "bare force"}
+{"id": "bad-C25", "command": "git clean -fd", "expect": "block", "policy": "C", "why": "force and directories"}
+{"id": "bad-C26", "command": "git clean -df", "expect": "block", "policy": "C", "why": "flags reversed"}
+{"id": "bad-C27", "command": "git clean -fdx", "expect": "block", "policy": "C", "why": "also ignored files"}
+{"id": "bad-C28", "command": "git clean -xdf", "expect": "block", "policy": "C", "why": "f last in the cluster"}
+{"id": "bad-C29", "command": "git clean -ffdx", "expect": "block", "policy": "C", "why": "double force"}
+{"id": "bad-C30", "command": "git clean -f -d", "expect": "block", "policy": "C", "why": "separate flags"}
+{"id": "bad-C31", "command": "git clean --force", "expect": "block", "policy": "C", "why": "long form"}
+{"id": "bad-C32", "command": "git clean -d --force -x", "expect": "block", "policy": "C", "why": "long form mid-command"}
+{"id": "bad-C33", "command": "git clean -fd some/other/path", "expect": "block", "policy": "C", "why": "named path still deletes for good"}
+{"id": "bad-C34", "command": "git clean -nf", "expect": "block", "policy": "C", "why": "JUDGMENT: dry-run plus force; a guard cannot know the next edit drops -n, so -f in any combination blocks"}
+{"id": "bad-C35", "command": "git clean --fo", "expect": "block", "policy": "C", "why": "unique abbreviation of --force"}
+{"id": "bad-C36", "command": "git -C /work/repo clean -fd", "expect": "block", "policy": "C", "why": "global -C option"}
+{"id": "bad-C37", "command": "git checkout -- .", "expect": "block", "policy": "C", "why": "whole-tree discard"}
+{"id": "bad-C38", "command": "git checkout .", "expect": "block", "policy": "C", "why": "whole-tree discard without --"}
+{"id": "bad-C39", "command": "git checkout HEAD -- .", "expect": "block", "policy": "C", "why": "overwrite the tree from HEAD"}
+{"id": "bad-C40", "command": "git checkout dev -- .", "expect": "block", "policy": "C", "why": "overwrite the tree from another branch"}
+{"id": "bad-C41", "command": "git checkout -- ./", "expect": "block", "policy": "C", "why": "dot-slash"}
+{"id": "bad-C42", "command": "git checkout -- :/", "expect": "block", "policy": "C", "why": "top-of-repo pathspec"}
+{"id": "bad-C43", "command": "git checkout -- *", "expect": "block", "policy": "C", "why": "star"}
+{"id": "bad-C44", "command": "git checkout -- /work/repo", "expect": "block", "policy": "C", "why": "the pinned repo root"}
+{"id": "bad-C45", "command": "git checkout -- $(git rev-parse --show-toplevel)", "expect": "block", "policy": "C", "why": "unquoted command substitution for the root"}
+{"id": "bad-C46", "command": "git restore .", "expect": "block", "policy": "C", "why": "whole-tree restore"}
+{"id": "bad-C47", "command": "git restore --staged --worktree .", "expect": "block", "policy": "C", "why": "both index and worktree"}
+{"id": "bad-C48", "command": "git restore -SW .", "expect": "block", "policy": "C", "why": "short cluster, both"}
+{"id": "bad-C49", "command": "git restore -W .", "expect": "block", "policy": "C", "why": "worktree only"}
+{"id": "bad-C50", "command": "git restore --worktree .", "expect": "block", "policy": "C", "why": "worktree only, long"}
+{"id": "bad-C51", "command": "git restore --source=HEAD~1 .", "expect": "block", "policy": "C", "why": "restore from an older commit"}
+{"id": "bad-C52", "command": "git restore -- .", "expect": "block", "policy": "C", "why": "after --"}
+{"id": "bad-C53", "command": "git restore :/", "expect": "block", "policy": "C", "why": "top-of-repo pathspec"}
+{"id": "bad-C54", "command": "git push --force", "expect": "block", "policy": "C", "why": "long force"}
+{"id": "bad-C55", "command": "git push -f", "expect": "block", "policy": "C", "why": "short force"}
+{"id": "bad-C56", "command": "git push --force-with-lease", "expect": "block", "policy": "C", "why": "lease force"}
+{"id": "bad-C57", "command": "git push --force-with-lease=main:abc123", "expect": "block", "policy": "C", "why": "lease with an expected value"}
+{"id": "bad-C58", "command": "git push --force-if-includes", "expect": "block", "policy": "C", "why": "force-if-includes"}
+{"id": "bad-C59", "command": "git push --force-with-lease --force-if-includes origin main", "expect": "block", "policy": "C", "why": "both lease flags"}
+{"id": "bad-C60", "command": "git push origin +main", "expect": "block", "policy": "C", "why": "plus refspec"}
+{"id": "bad-C61", "command": "git push origin +HEAD:main", "expect": "block", "policy": "C", "why": "plus refspec with a destination"}
+{"id": "bad-C62", "command": "git push origin +refs/heads/x:refs/heads/x", "expect": "block", "policy": "C", "why": "plus full refspec"}
+{"id": "bad-C63", "command": "git push origin main -f", "expect": "block", "policy": "C", "why": "flag after the refspec"}
+{"id": "bad-C64", "command": "git push -f origin main", "expect": "block", "policy": "C", "why": "flag first"}
+{"id": "bad-C65", "command": "git push -fu origin feature", "expect": "block", "policy": "C", "why": "force inside a cluster"}
+{"id": "bad-C66", "command": "git push --force origin main", "expect": "block", "policy": "C", "why": "long force with remote"}
+{"id": "bad-C67", "command": "git push origin main --force-with-lease", "expect": "block", "policy": "C", "why": "lease after the refspec"}
+{"id": "bad-C68", "command": "git -c user.name=x push -f", "expect": "block", "policy": "C", "why": "global -c option"}
+{"id": "bad-C69", "command": "git commit -m wip && git push -f", "expect": "block", "policy": "C", "why": "chained after a commit"}
+{"id": "bad-C70", "command": "git add src/a.py\ngit commit -m x\ngit push --force", "expect": "block", "policy": "C", "why": "force on line 3"}
+{"id": "bad-C71", "command": "git branch -D feature", "expect": "block", "policy": "C", "why": "force delete"}
+{"id": "bad-C72", "command": "git branch -D a b c", "expect": "block", "policy": "C", "why": "several branches"}
+{"id": "bad-C73", "command": "git branch --delete --force x", "expect": "block", "policy": "C", "why": "long delete and force"}
+{"id": "bad-C74", "command": "git branch -d -f x", "expect": "block", "policy": "C", "why": "-d plus -f is -D"}
+{"id": "bad-C75", "command": "git branch -fd x", "expect": "block", "policy": "C", "why": "cluster"}
+{"id": "bad-C76", "command": "git branch -Dr origin/foo", "expect": "block", "policy": "C", "why": "cluster with r"}
+{"id": "bad-C77", "command": "git branch --dele --forc x", "expect": "block", "policy": "C", "why": "unique abbreviations"}
+{"id": "bad-C78", "command": "git branch \"-D\" x", "expect": "block", "policy": "C", "why": "quoted flag"}
+{"id": "bad-C79", "command": "cd /work/repo && git reset --hard && git clean -fd", "expect": "block", "policy": "C", "why": "two destroyers in one chain"}
+{"id": "bad-C80", "command": "sudo git reset --hard", "expect": "block", "policy": "C", "why": "sudo wrapper"}
+{"id": "bad-C81", "command": "git stash\ngit fetch\ngit reset --hard origin/main\ngit stash pop", "expect": "block", "policy": "C", "why": "agent mistake: sync to remote throwing away local work"}
+{"id": "bad-C82", "command": "git fetch && git checkout -- . && git pull", "expect": "block", "policy": "C", "why": "agent mistake: discard to get a clean pull"}
+{"id": "bad-C83", "command": "git push origin HEAD:main --force-with-lease", "expect": "block", "policy": "C", "why": "agent mistake: rewrite main"}
