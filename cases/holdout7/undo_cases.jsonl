@@ -1,0 +1,25 @@
+{"id": "S7U01", "command": "git reset --hard", "expect": "restore", "class": "reset-hard", "why": "Discards staged and unstaged changes and rewrites the index."}
+{"id": "S7U02", "command": "git clean -fd", "expect": "restore", "class": "clean-untracked", "why": "Deletes untracked notes.txt and src/untracked_dir."}
+{"id": "S7U03", "command": "git checkout -- .", "expect": "restore", "class": "checkout-discard-unstaged", "why": "Reverts unstaged edits to README.md, src/app.py and the deletion of docs/old.md."}
+{"id": "S7U04", "command": "git stash clear", "expect": "restore", "class": "stash-clear", "why": "Removes the only stash entry and its ref."}
+{"id": "S7U05", "command": "git update-ref -d refs/stash", "expect": "restore", "class": "stash-ref-delete", "why": "Plumbing delete of the stash ref."}
+{"id": "S7U06", "command": "git branch -D other", "expect": "restore", "class": "branch-delete", "why": "Force-deletes the other branch."}
+{"id": "S7U07", "command": "git tag -d v1 light", "expect": "restore", "class": "tag-delete-both", "why": "Deletes the annotated and the lightweight tag."}
+{"id": "S7U08", "command": "rm -rf src/lib", "expect": "restore", "class": "rm-tracked-dir", "why": "Removes a tracked directory and its file."}
+{"id": "S7U09", "command": "chmod -x bin/run.sh && chmod 755 notes.txt", "expect": "restore", "class": "mode-bits", "why": "Changes mode bits on a tracked and an untracked file."}
+{"id": "S7U10", "command": "ln -sf src/app.py link", "expect": "restore", "class": "symlink-retarget", "why": "Re-points the tracked symlink at a different target."}
+{"id": "S7U11", "command": "git update-ref refs/heads/other HEAD", "expect": "restore", "class": "branch-move-plumbing", "why": "Moves branch other from O1 to C3 without touching the checked-out branch."}
+{"id": "S7U12", "command": "git checkout -f other", "expect": "restore", "class": "forced-branch-switch", "why": "Switches to other, dropping the staged and unstaged changes."}
+{"id": "S7U13", "command": "git stash push -u -m extra", "expect": "restore", "class": "stash-push-untracked", "why": "Stashes tracked and untracked changes, rewriting the worktree and adding a stash."}
+{"id": "S7U14", "command": "git rm -f README.md", "expect": "restore", "class": "rm-force-tracked", "why": "Removes a tracked file with unstaged edits from index and disk."}
+{"id": "S7U15", "command": "git branch -m other renamed && git tag -a v2 -m second", "expect": "restore", "class": "branch-rename-tag-create", "why": "Renames a branch and creates an annotated tag."}
+{"id": "S7U16", "command": "git symbolic-ref HEAD refs/heads/other", "expect": "restore", "class": "head-symbolic-move", "why": "Points HEAD at another branch without touching files or index."}
+{"id": "S7U17", "command": "git commit -m snapshot", "expect": "restore", "class": "commit-staged", "why": "Commits the index, moving main and changing HEAD's tree."}
+{"id": "S7U18", "command": "b=$(git rev-parse HEAD:README.md)\nprintf '100644 %s 1\\tREADME.md\\n100644 %s 2\\tREADME.md\\n100644 %s 3\\tREADME.md\\n' $b $b $b | git update-index --index-info\nrm README.md", "expect": "restore", "class": "conflict-stages-index", "why": "Replaces the stage-0 entry for README.md with three conflict stages and removes the file."}
+{"id": "S7U19", "command": "git rev-parse other > .git/MERGE_HEAD && printf 'Merge branch other\\n' > .git/MERGE_MSG", "expect": "restore", "class": "merge-state-files", "why": "Creates merge state as an interrupted merge would leave it."}
+{"id": "S7U20", "command": "mv src/untracked_dir src/moved_dir && echo more >> notes.txt", "expect": "restore", "class": "untracked-move-edit", "why": "Moves an untracked directory and edits an untracked file."}
+{"id": "S7U21", "command": "rm -f debug.log", "expect": "residual", "class": "ignored-file-delete", "why": "debug.log is ignored, so its loss is outside the undo scope."}
+{"id": "S7U22", "command": "rm -rf build", "expect": "residual", "class": "ignored-dir-delete", "why": "build/ is ignored, so its loss is outside the undo scope."}
+{"id": "S7U23", "command": "echo changed > ../outside.txt", "expect": "residual", "class": "outside-repo-edit", "why": "The file is beside the repo, outside the undo scope."}
+{"id": "S7U24", "command": "mkdir -p empty_dir/nested", "expect": "residual", "class": "empty-dirs-created", "why": "Empty directories are not tracked by git or restored."}
+{"id": "S7U25", "command": "touch -t 202001010000 README.md", "expect": "residual", "class": "mtime-only", "why": "Only the modification time changes, which is a documented limit."}
