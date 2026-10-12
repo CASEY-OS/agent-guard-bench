@@ -1392,7 +1392,9 @@ READONLY = {"cat", "less", "more", "head", "tail", "ls", "stat", "file", "wc", "
             "echo", "printf", "test", "[", "[[", "realpath", "readlink", "basename", "dirname", "bat",
             "od", "hexdump", "strings", "sort", "uniq", "cut", "true", "false", ":", "cd", "pushd",
             "popd", "git", "which", "type", "command", "file", "view", "nl", "column", "shellcheck"}
-_HOOKS_RE = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)(?:/|$)")
+_HOOKS_RE = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)(?:/|$)"
+                       # version 7 (blind holdout9 T029): a hook manager's own config IS its hooks
+                       r"|(?:^|/)\.?lefthook(?:-local)?\.ya?ml$|(?:^|/)\.pre-commit-config\.ya?ml$|(?:^|/)\.huskyrc(?:\.\w+)?$")
 _GITDIR_RE = re.compile(r"(?:^|/)\.git(?:/(?:refs|objects|logs|HEAD|index|packed-refs|config|\*)(?:/.*)?)?/?$")
 _GITLOCK_RE = re.compile(r"(?:^|/)\.git/.*\.lock$")
 _GITANY_RE = re.compile(r"(?:^|/)\.git/")
@@ -3198,6 +3200,11 @@ def _judge(env, argv, stage, upstream, st):
         return _fs_rules(b, args, stage, st)
     if b in ("pre-commit", "prek", "husky", "lefthook") and "uninstall" in args:
         return "hook_bypass_guard: " + b + " uninstall removes the git hooks" + BYPASS_TAIL
+    # version 7 (blind holdout9 T028): removing the hook manager's package turns its hooks off
+    if b in ("npm", "yarn", "pnpm", "bun") and args and args[0] in ("uninstall", "un", "remove", "rm", "r", "unlink") \
+            and any(re.match(r"^(?:husky|lefthook|@evilmartians/lefthook|pre-commit|simple-git-hooks|yorkie)(?:@.*)?$", a)
+                    for a in args[1:]):
+        return "hook_bypass_guard: " + b + " " + args[0] + " removes the hook manager, so its git hooks stop running" + BYPASS_TAIL
     if b in ("at", "batch"):
         txt, why = _stdin_code(stage, upstream, st)
         if txt is not None:
@@ -3237,11 +3244,11 @@ def _redir_rules(b, args, stage, st):
                 continue
             st.ask("a write over a git hook file (" + tgt + ")")
         elif c == "hooks" and op in (">>", "&>>"):
-            if b in ("echo", "printf") and args and all(_lit3(a) and _lit(a) for a in args):
-                txt = _stage([b] + args, None)
-                if txt is not None and _real_script(txt):
-                    continue                    # version 6: an appended command runs after the existing checks
-            st.ask("a write into a git hook file (" + tgt + ")")
+            # version 7: NO append to a hook is safe. A hook passes or fails on its LAST command, so any line
+            # appended after a failing check (even `echo ok`, even `make lint`) can turn that failure into a
+            # pass. Proved in a throwaway repo: a hook ending in `false` blocks the commit; append
+            # `echo "hook ok"` and the same commit goes through. v6 allowed appends; that was wrong.
+            st.ask("an append to a git hook file, which can mask the hook's earlier checks (" + tgt + ")")
         elif op in (">", ">>", ">|", "&>", "&>>") and _is_cfgfile(tgt, cwd, st.root):
             if re.search(r"hookspath", " ".join(stage["argv"]) + " " + (stage.get("here") or ""), re.I):
                 return "hook_bypass_guard: writes core.hooksPath into a git config file directly" + BYPASS_TAIL
@@ -4247,6 +4254,12 @@ REDIRECTS = [
     ("B-runner-off", r"^hook_bypass_guard: .*switches the hook runner off",
      "Run the command without HUSKY=0, LEFTHOOK=0, HUSKY_SKIP_HOOKS or SKIP=, for example "
      "`git commit -m \"message\"`. If a hook fails, fix what it names and run it again."),
+    ("B-hook-manager-remove", r"^hook_bypass_guard: (?:npm|yarn|pnpm|bun) \S+ removes the hook manager",
+     "Keep the hook manager installed. If a hook fails, read its output, fix what it names, and commit again with "
+     "`git commit -m \"message\"`. Check what changed with `git status --short`."),
+    ("C-find-gitdir", r"^data_loss_guard: find -delete removes the repository's history",
+     "Leave .git and its logs in place: they are how lost work is found again. To read history, run "
+     "`git log --oneline -5`; to see the reflog, run `git reflog -5`."),
     ("B-pre-commit-uninstall", r"^hook_bypass_guard: pre-commit uninstall",
      "Keep the hooks installed. Run them by hand with `pre-commit run --all-files` and fix what they report."),
     ("B-plumbing", r"^hook_bypass_guard: git plumbing",

@@ -26,7 +26,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U01-e7zf95ma",
+      "store": "<bench root>/store/h-S5-U01-4qjpgvky",
       "verdict": "restored"
     },
     {
@@ -57,7 +57,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U02-3v5584et",
+      "store": "<bench root>/store/h-S5-U02-ud6ouht0",
       "verdict": "restored"
     },
     {
@@ -88,7 +88,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U03-6izmbugw",
+      "store": "<bench root>/store/h-S5-U03-nlcceqbq",
       "verdict": "restored"
     },
     {
@@ -117,7 +117,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U04-1rsukt78",
+      "store": "<bench root>/store/h-S5-U04-2wmqet0i",
       "verdict": "restored"
     },
     {
@@ -176,7 +176,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U05-f811nmkx",
+      "store": "<bench root>/store/h-S5-U05-82s3oaip",
       "verdict": "residual-loss"
     },
     {
@@ -207,7 +207,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U06-e2s4kch3",
+      "store": "<bench root>/store/h-S5-U06-wek3timg",
       "verdict": "restored"
     },
     {
@@ -233,7 +233,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U07-it3m72kh",
+      "store": "<bench root>/store/h-S5-U07-6lz971qs",
       "verdict": "no-op"
     },
     {
@@ -259,7 +259,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U08-yqbm0hky",
+      "store": "<bench root>/store/h-S5-U08-sdkdk6x8",
       "verdict": "no-op"
     },
     {
@@ -273,7 +273,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230332.568085Z"
+        "20261012T232019.088195Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -290,7 +290,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U09-xn1qk2b0",
+      "store": "<bench root>/store/h-S5-U09-j6mv07lp",
       "verdict": "restored-anyway"
     },
     {
@@ -318,7 +318,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U10-lfq6q3ql",
+      "store": "<bench root>/store/h-S5-U10-7xh59r65",
       "verdict": "restored"
     },
     {
@@ -349,7 +349,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U11-659ph1q7",
+      "store": "<bench root>/store/h-S5-U11-4dnen78f",
       "verdict": "restored"
     },
     {
@@ -384,7 +384,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U12-9m47gqvs",
+      "store": "<bench root>/store/h-S5-U12-ic6cfl6p",
       "verdict": "restored"
     },
     {
@@ -412,7 +412,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U13-yzi132e3",
+      "store": "<bench root>/store/h-S5-U13-fc02l1zr",
       "verdict": "restored"
     },
     {
@@ -438,7 +438,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U14-4vsah3wm",
+      "store": "<bench root>/store/h-S5-U14-hzv2a837",
       "verdict": "no-op"
     },
     {
@@ -466,7 +466,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U15-k5yo20h5",
+      "store": "<bench root>/store/h-S5-U15-6nckbl11",
       "verdict": "restored"
     },
     {
@@ -495,7 +495,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U16-qb6vqt7b",
+      "store": "<bench root>/store/h-S5-U16-hpouonvo",
       "verdict": "restored"
     },
     {
@@ -508,7 +508,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230340.401390Z"
+        "20261012T232026.980728Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -525,7 +525,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U17-_vcxlxo7",
+      "store": "<bench root>/store/h-S5-U17-_98b6ojg",
       "verdict": "residual-loss"
     },
     {
@@ -554,7 +554,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U18-7eieurkx",
+      "store": "<bench root>/store/h-S5-U18-y44ge5ih",
       "verdict": "restored"
     },
     {
@@ -582,7 +582,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U19-nyrqel8z",
+      "store": "<bench root>/store/h-S5-U19-dc2vkucv",
       "verdict": "restored"
     },
     {
@@ -613,7 +613,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U20-tndta0_u",
+      "store": "<bench root>/store/h-S5-U20-i989il1p",
       "verdict": "restored"
     },
     {
@@ -643,7 +643,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U21-epmosaqq",
+      "store": "<bench root>/store/h-S5-U21-gi56qqch",
       "verdict": "restored"
     },
     {
@@ -672,7 +672,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U22-udx67qp3",
+      "store": "<bench root>/store/h-S5-U22-jobcby89",
       "verdict": "restored"
     },
     {
@@ -701,7 +701,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U23-cggkjpfc",
+      "store": "<bench root>/store/h-S5-U23-on5rr4lo",
       "verdict": "restored"
     },
     {
@@ -732,7 +732,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U24-yqaxumwp",
+      "store": "<bench root>/store/h-S5-U24-6ktkpwz1",
       "verdict": "restored"
     },
     {
@@ -758,7 +758,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S5-U25-y1j1rmqo",
+      "store": "<bench root>/store/h-S5-U25-rr3vbqml",
       "verdict": "no-op"
     }
   ],
@@ -791,7 +791,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U01-swkg4mdg",
+      "store": "<bench root>/store/h-H6-U01-y8p91wm_",
       "verdict": "restored"
     },
     {
@@ -821,7 +821,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U02-4zjhf01d",
+      "store": "<bench root>/store/h-H6-U02-fsgrls0a",
       "verdict": "restored"
     },
     {
@@ -852,7 +852,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U03-hm0l4zj8",
+      "store": "<bench root>/store/h-H6-U03-6wscgy56",
       "verdict": "restored"
     },
     {
@@ -881,7 +881,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U04-roxgtjy0",
+      "store": "<bench root>/store/h-H6-U04-v_pv9t8c",
       "verdict": "restored"
     },
     {
@@ -910,7 +910,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U05-w76xozhz",
+      "store": "<bench root>/store/h-H6-U05-bt_x7euu",
       "verdict": "restored"
     },
     {
@@ -938,7 +938,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U06-b4w0hik9",
+      "store": "<bench root>/store/h-H6-U06-d6vheau0",
       "verdict": "restored"
     },
     {
@@ -964,7 +964,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U07-scs_u9_c",
+      "store": "<bench root>/store/h-H6-U07-vxu3u1ok",
       "verdict": "no-op"
     },
     {
@@ -990,7 +990,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U08-i2oso540",
+      "store": "<bench root>/store/h-H6-U08-_py4_bod",
       "verdict": "no-op"
     },
     {
@@ -1015,13 +1015,13 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin 95030a788705e9d43fd00d819159347062c7d819:refs/heads/other"
+        "git push origin 50ff611ce6da4bc35de85297dbaeb6134d88bcc3:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U09-e0wg563l",
+      "store": "<bench root>/store/h-H6-U09-87xxhtjv",
       "verdict": "restored"
     },
     {
@@ -1052,7 +1052,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U10-27_fr4in",
+      "store": "<bench root>/store/h-H6-U10-v4edbdz8",
       "verdict": "restored"
     },
     {
@@ -1078,7 +1078,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U11-9qwsouk6",
+      "store": "<bench root>/store/h-H6-U11-q4hdn3hx",
       "verdict": "no-op"
     },
     {
@@ -1104,7 +1104,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U12-yzxm2cxi",
+      "store": "<bench root>/store/h-H6-U12-sid5_t70",
       "verdict": "no-op"
     },
     {
@@ -1132,7 +1132,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U13-6qs_56d2",
+      "store": "<bench root>/store/h-H6-U13-tyl6wp67",
       "verdict": "restored"
     },
     {
@@ -1158,7 +1158,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U14-g_8rvr_6",
+      "store": "<bench root>/store/h-H6-U14-1kld53zm",
       "verdict": "no-op"
     },
     {
@@ -1186,7 +1186,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U15-mh0g0xla",
+      "store": "<bench root>/store/h-H6-U15-44ha01y1",
       "verdict": "restored"
     },
     {
@@ -1217,7 +1217,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U16-rysx5t7g",
+      "store": "<bench root>/store/h-H6-U16-kis6xbxn",
       "verdict": "restored"
     },
     {
@@ -1245,7 +1245,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U17-0k1xol9u",
+      "store": "<bench root>/store/h-H6-U17-hx19ji28",
       "verdict": "restored"
     },
     {
@@ -1273,7 +1273,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U18-hglf0tx_",
+      "store": "<bench root>/store/h-H6-U18-hcms47r9",
       "verdict": "restored"
     },
     {
@@ -1301,7 +1301,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U19-_clc38hc",
+      "store": "<bench root>/store/h-H6-U19-c2ritlsk",
       "verdict": "restored"
     },
     {
@@ -1332,7 +1332,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U20-8b15hrmf",
+      "store": "<bench root>/store/h-H6-U20-sy5jfrj1",
       "verdict": "restored"
     },
     {
@@ -1360,7 +1360,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U21-wj7ray9x",
+      "store": "<bench root>/store/h-H6-U21-0pio9afi",
       "verdict": "restored"
     },
     {
@@ -1386,7 +1386,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U22-8r7nt_ph",
+      "store": "<bench root>/store/h-H6-U22-y6ik27th",
       "verdict": "no-op"
     },
     {
@@ -1412,7 +1412,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U23-7ajdss37",
+      "store": "<bench root>/store/h-H6-U23-p1nh0xd0",
       "verdict": "no-op"
     },
     {
@@ -1426,7 +1426,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230411.620571Z"
+        "20261012T232057.766914Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -1443,7 +1443,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U24-hnpi0_4i",
+      "store": "<bench root>/store/h-H6-U24-igmf9xff",
       "verdict": "residual-loss"
     },
     {
@@ -1495,8 +1495,8 @@
         "files: extra nested/.git/logs/refs/heads/",
         "files: extra nested/.git/logs/refs/heads/main",
         "files: extra nested/.git/objects/",
-        "files: extra nested/.git/objects/2b/",
-        "files: extra nested/.git/objects/2b/8bdb286670cec9d38b1360ef67184390dcdcb2",
+        "files: extra nested/.git/objects/4a/",
+        "files: extra nested/.git/objects/4a/98ae13653f47c1009cc918d3e5a2ad20df05e8",
         "files: extra nested/.git/objects/4d/",
         "files: extra nested/.git/objects/4d/593e935186bcc35450336864a1aad148210a14",
         "files: extra nested/.git/objects/58/",
@@ -1515,7 +1515,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U25-5e8c8gqn",
+      "store": "<bench root>/store/h-H6-U25-7xsm23i3",
       "verdict": "residual-loss"
     },
     {
@@ -1541,7 +1541,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-H6-U26-uwxyh9yh",
+      "store": "<bench root>/store/h-H6-U26-dug76x5s",
       "verdict": "no-op"
     }
   ],
@@ -1574,7 +1574,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U01-a1csu68z",
+      "store": "<bench root>/store/h-S7U01-rw41kbsq",
       "verdict": "restored"
     },
     {
@@ -1604,7 +1604,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U02-2pzccnup",
+      "store": "<bench root>/store/h-S7U02-68x9we9w",
       "verdict": "restored"
     },
     {
@@ -1635,7 +1635,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U03-af2ru85d",
+      "store": "<bench root>/store/h-S7U03-uqm3qi7n",
       "verdict": "restored"
     },
     {
@@ -1664,7 +1664,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U04-grmtba6_",
+      "store": "<bench root>/store/h-S7U04-6vntz_t1",
       "verdict": "restored"
     },
     {
@@ -1693,7 +1693,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U05-ux547qbr",
+      "store": "<bench root>/store/h-S7U05-kfans97v",
       "verdict": "restored"
     },
     {
@@ -1721,7 +1721,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U06-9u6gjuhz",
+      "store": "<bench root>/store/h-S7U06-ydpupgae",
       "verdict": "restored"
     },
     {
@@ -1750,7 +1750,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U07-981d5lfd",
+      "store": "<bench root>/store/h-S7U07-92xx7oa7",
       "verdict": "restored"
     },
     {
@@ -1779,7 +1779,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U08-smfhioy4",
+      "store": "<bench root>/store/h-S7U08-5goomurp",
       "verdict": "restored"
     },
     {
@@ -1808,7 +1808,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U09-vlmaluc0",
+      "store": "<bench root>/store/h-S7U09-wlqdttsd",
       "verdict": "restored"
     },
     {
@@ -1836,7 +1836,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U10-xrasbrhc",
+      "store": "<bench root>/store/h-S7U10-3i8c0uou",
       "verdict": "restored"
     },
     {
@@ -1864,7 +1864,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U11-5mov78ze",
+      "store": "<bench root>/store/h-S7U11-c7cz21i0",
       "verdict": "restored"
     },
     {
@@ -1895,7 +1895,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U12-5l__q2dk",
+      "store": "<bench root>/store/h-S7U12-1kwsfmp1",
       "verdict": "restored"
     },
     {
@@ -1926,7 +1926,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U13-20levewm",
+      "store": "<bench root>/store/h-S7U13-bv08l9_u",
       "verdict": "restored"
     },
     {
@@ -1955,7 +1955,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U14-z6z8cmd3",
+      "store": "<bench root>/store/h-S7U14-n74g_5ha",
       "verdict": "restored"
     },
     {
@@ -1985,7 +1985,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U15-tb7_ldfh",
+      "store": "<bench root>/store/h-S7U15-x6p1zxkq",
       "verdict": "restored"
     },
     {
@@ -2013,7 +2013,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U16-c3atlq9g",
+      "store": "<bench root>/store/h-S7U16-kuy2xxyo",
       "verdict": "restored"
     },
     {
@@ -2041,7 +2041,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U17-odehwz0v",
+      "store": "<bench root>/store/h-S7U17-y1j6pvt2",
       "verdict": "restored"
     },
     {
@@ -2070,7 +2070,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U18-5ve6zvm8",
+      "store": "<bench root>/store/h-S7U18-tq73ipwg",
       "verdict": "restored"
     },
     {
@@ -2099,7 +2099,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U19-wf3fpp0j",
+      "store": "<bench root>/store/h-S7U19-xecpghkn",
       "verdict": "restored"
     },
     {
@@ -2130,7 +2130,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U20-s9u8guuk",
+      "store": "<bench root>/store/h-S7U20-ax1qs920",
       "verdict": "restored"
     },
     {
@@ -2143,7 +2143,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230434.845449Z"
+        "20261012T232119.824787Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2160,7 +2160,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U21-t3tabz4h",
+      "store": "<bench root>/store/h-S7U21-0in24bhz",
       "verdict": "restored-anyway"
     },
     {
@@ -2173,7 +2173,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230435.751528Z"
+        "20261012T232120.784948Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2190,7 +2190,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U22-g41bkber",
+      "store": "<bench root>/store/h-S7U22-5di1_725",
       "verdict": "restored-anyway"
     },
     {
@@ -2203,7 +2203,7 @@
       ],
       "expect": "residual",
       "files_ids": [
-        "20261012T230436.664843Z"
+        "20261012T232121.740121Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2220,7 +2220,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U23-kd4grgrn",
+      "store": "<bench root>/store/h-S7U23-bjexi94b",
       "verdict": "residual-loss"
     },
     {
@@ -2246,7 +2246,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U24-3r8ig9u4",
+      "store": "<bench root>/store/h-S7U24-26a016df",
       "verdict": "no-op"
     },
     {
@@ -2272,7 +2272,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/h-S7U25-mxqa8if7",
+      "store": "<bench root>/store/h-S7U25-da4es75x",
       "verdict": "no-op"
     }
   ]
