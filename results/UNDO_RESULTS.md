@@ -55,13 +55,15 @@ Route: `direct` means the guard allowed the command, so the hook took the snapsh
 | 47 | dir-becomes-symlink | `rm -rf src/lib && ln -s ../docs src/lib` | direct | 3 | 0 | 0 | n/a |
 | 48 | binary-overwrite | `head -c 512 /dev/zero > data/blob.bin` | direct | 1 | 0 | 0 | n/a |
 | 49 | python-rmtree | `python3 -c "import shutil; shutil.rmtree('src')"` | direct | 8 | 0 | 0 | n/a |
-| 50 | wu5-chmod-dash-x | `chmod -x bin/run.sh` | direct | 1 | 0 | 0 | n/a |
-| 51 | wu5-chmod-R-dash-w | `chmod -R -w src` | direct | 8 | 0 | 0 | n/a |
-| 52 | wu5-chmod-R-a-w | `chmod -R a-w src` | direct | 8 | 0 | 0 | n/a |
-| 53 | wu5-find-print0-xargs-rm | `find . -name '*.py' -not -path './.git/*' -print0 \| xargs -0 rm -f` | direct | 5 | 0 | 0 | n/a |
-| 54 | wu5-ls-files-xargs-chmod | `git ls-files bin \| xargs chmod 600` | direct | 1 | 0 | 0 | n/a |
-| 55 | wu5-ls-files-xargs-gzip | `git ls-files src \| xargs gzip -f` | direct | 8 | 0 | 0 | n/a |
-| 56 | wu5-patch-heredoc | `patch -p0 <<'EOP'
+| 50 | rm-rf-dotgit | `rm -rf .git` | script | 36 | 0 | 0 | n/a |
+| 51 | rm-rf-dotgit-reinit | `rm -rf .git && git init -q` | script | 11 | 0 | 0 | n/a |
+| 52 | wu5-chmod-dash-x | `chmod -x bin/run.sh` | direct | 1 | 0 | 0 | n/a |
+| 53 | wu5-chmod-R-dash-w | `chmod -R -w src` | direct | 8 | 0 | 0 | n/a |
+| 54 | wu5-chmod-R-a-w | `chmod -R a-w src` | direct | 8 | 0 | 0 | n/a |
+| 55 | wu5-find-print0-xargs-rm | `find . -name '*.py' -not -path './.git/*' -print0 \| xargs -0 rm -f` | direct | 5 | 0 | 0 | n/a |
+| 56 | wu5-ls-files-xargs-chmod | `git ls-files bin \| xargs chmod 600` | direct | 1 | 0 | 0 | n/a |
+| 57 | wu5-ls-files-xargs-gzip | `git ls-files src \| xargs gzip -f` | direct | 8 | 0 | 0 | n/a |
+| 58 | wu5-patch-heredoc | `patch -p0 <<'EOP'
 --- README.md
 +++ README.md
 @@ -1,3 +1,3 @@
@@ -70,22 +72,22 @@ Route: `direct` means the guard allowed the command, so the hook took the snapsh
 +alpha gamma
  unstaged line
 EOP` | direct | 1 | 0 | 0 | n/a |
-| 57 | wu5-sed-Ei | `sed -Ei '' 's/alpha/ALPHA/' README.md` | direct | 1 | 0 | 0 | n/a |
-| 58 | wu5-sort-ro | `sort -ro README.md README.md` | direct | 1 | 0 | 0 | n/a |
-| 59 | wu5-tar-extract-outside | `mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar` | direct | 1 | 0 | 0 | n/a |
-| 60 | wu5-unzip-outside | `mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip` | direct | 1 | 0 | 0 | n/a |
-| 61 | wu5-subshell-cd | `(cd .. && ls) ; rm -f notes.txt README.md` | direct | 2 | 0 | 0 | n/a |
-| 62 | wu5-cd-dash | `cd .. && cd - && rm -f notes.txt` | direct | 1 | 0 | 0 | n/a |
-| 63 | wu5-env-S | `env -S 'rm -f notes.txt README.md'` | direct | 2 | 0 | 0 | n/a |
-| 64 | wu5-git-c-fsmonitor | `git -c core.fsmonitor='rm -f notes.txt;' status` | direct | 1 | 0 | 0 | n/a |
-| 65 | wu5-git-external-diff | `GIT_EXTERNAL_DIFF='rm -f' git diff` | direct | 1 | 0 | 0 | n/a |
-| 66 | wu5-ignore-added-then-file | `echo '*.out' >> .gitignore && echo result > result.out` | direct | 1 | 0 | 0 | n/a |
-| 67 | wu5-ignore-dir-then-file | `printf 'tmp/\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt` | direct | 1 | 0 | 0 | n/a |
-| 68 | wu5-merge-squash | `git stash -q && git merge --squash other` | direct | 11 | 0 | 0 | n/a |
-| 69 | wu5-revert-sequencer | `git stash -q && git checkout -q other && git revert --no-edit main main~1` | direct | 16 | 0 | 0 | n/a |
-| 70 | chmod-dirs-go-rx | `chmod -R go-rx src docs` | direct | 8 | 0 | 0 | n/a |
+| 59 | wu5-sed-Ei | `sed -Ei '' 's/alpha/ALPHA/' README.md` | direct | 1 | 0 | 0 | n/a |
+| 60 | wu5-sort-ro | `sort -ro README.md README.md` | direct | 1 | 0 | 0 | n/a |
+| 61 | wu5-tar-extract-outside | `mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar` | direct | 1 | 0 | 0 | n/a |
+| 62 | wu5-unzip-outside | `mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip` | direct | 1 | 0 | 0 | n/a |
+| 63 | wu5-subshell-cd | `(cd .. && ls) ; rm -f notes.txt README.md` | direct | 2 | 0 | 0 | n/a |
+| 64 | wu5-cd-dash | `cd .. && cd - && rm -f notes.txt` | direct | 1 | 0 | 0 | n/a |
+| 65 | wu5-env-S | `env -S 'rm -f notes.txt README.md'` | direct | 2 | 0 | 0 | n/a |
+| 66 | wu5-git-c-fsmonitor | `git -c core.fsmonitor='rm -f notes.txt;' status` | direct | 1 | 0 | 0 | n/a |
+| 67 | wu5-git-external-diff | `GIT_EXTERNAL_DIFF='rm -f' git diff` | direct | 1 | 0 | 0 | n/a |
+| 68 | wu5-ignore-added-then-file | `echo '*.out' >> .gitignore && echo result > result.out` | direct | 1 | 0 | 0 | n/a |
+| 69 | wu5-ignore-dir-then-file | `printf 'tmp/\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt` | direct | 1 | 0 | 0 | n/a |
+| 70 | wu5-merge-squash | `git stash -q && git merge --squash other` | direct | 11 | 0 | 0 | n/a |
+| 71 | wu5-revert-sequencer | `git stash -q && git checkout -q other && git revert --no-edit main main~1` | direct | 16 | 0 | 0 | n/a |
+| 72 | chmod-dirs-go-rx | `chmod -R go-rx src docs` | direct | 8 | 0 | 0 | n/a |
 
-Fully restored: 70 of 70.
+Fully restored: 72 of 72.
 
 ## Negative controls: snapshot skipped (AGENT_GUARD_UNDO=0)
 
@@ -118,6 +120,7 @@ Controls that show the loss: 5 of 5.
 | restore skips the directory mode bits | chmod-dirs-go-rx | 3 | yes |
 | restore judges ignores by the post-command .gitignore | wu5-ignore-added-then-file | 1 | yes |
 | restore does not save SQUASH_MSG | wu5-merge-squash | 1 | yes |
+| restore does not import from the store | rm-rf-dotgit | 36 | yes |
 
 ## The hook's plan: snapshot or not
 
@@ -131,32 +134,32 @@ Made 55 snapshots with the default bound: 50 kept, the newest ones (ok). Same st
 
 | measure | value |
 |---|---:|
-| first snapshot, clean tree (one run) | 143 ms, 42389 bytes added to .git/objects |
-| snapshot, nothing changed (dedupe) | 56 ms median |
-| snapshot, 10 files changed and 1 new | 83 ms median, 5498 bytes median |
+| first snapshot, clean tree (one run) | 251 ms, 56172 bytes added to .git/objects |
+| snapshot, nothing changed (dedupe) | 67 ms median |
+| snapshot, 10 files changed and 1 new | 138 ms median, 5558 bytes median |
 | plan() for a read-only command, in-process | 16 us |
 | whole hook, read-only command (Python start-up included) | 47 ms median |
-| whole hook, command that gets a snapshot | 143 ms median |
-| restore --last, CLI | 322 ms |
+| whole hook, command that gets a snapshot | 201 ms median |
+| restore --last, CLI | 406 ms |
 | .git/objects before any snapshot | 899860 bytes |
 
 Blind to: ignored files, files outside the repo, empty directories, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps writing). Proven on this machine's OS and git only.
 
 ## Exit conditions
 
-- PASS: at least 30 in-scope scenarios (70)
-- PASS: every in-scope scenario fully restored (70 of 70)
+- PASS: at least 30 in-scope scenarios (72)
+- PASS: every in-scope scenario fully restored (72 of 72)
 - PASS: every scenario command really changed something (all did)
 - PASS: the hook took exactly one snapshot before each command (all)
 - PASS: a snapshot left index bytes, HEAD, refs, stash and files untouched (all)
 - PASS: all 5 negative controls show the loss (5 of 5)
 - PASS: every residual behaves as documented (all)
-- PASS: every one-line restore mutant is caught by the readback (6 of 6)
+- PASS: every one-line restore mutant is caught by the readback (7 of 7)
 - PASS: the plan is right on every planted and clean command (0 wrong)
 - PASS: bound keeps the newest 50; dedupe stores a state once (kept 50)
 - PASS: the printed repair push put every pushed remote back (2 push scenarios)
-- PASS: every destructive command ran under the bench root (88 runs, 0 outside)
+- PASS: every destructive command ran under the bench root (91 runs, 0 outside)
 
-Runtime 70 s.
+Runtime 93 s.
 
 OVERALL: PASS

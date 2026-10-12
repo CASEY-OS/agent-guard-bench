@@ -4104,6 +4104,14 @@ _VAR_ALT = {"add": "git add path/to/file", "stage": "git add path/to/file",
             "rebase": "git rebase origin/branch-name", "pull": "git pull --rebase origin branch-name"}
 # (shape id, regex over the v3 reason, redirect). Order matters: the first match wins.
 REDIRECTS = [
+    # v6: the two shapes that fell to UNMATCHED on blind holdout6 (H6-028) and the dev set (WG6-022)
+    ("B-interp-hooks", r"interpreter code that touches \.git or a hooks directory",
+     "Leave .git and the hook files in place, and do not change them from python, node, perl or ruby. Read "
+     "a hook first with `ls -la .githooks`, then edit its contents by name in the shell if the task needs it. "
+     "Check the repo with `git status --short`."),
+    ("A-pathspec-file", r"git add --pathspec-from-file reads its paths",
+     "Name the paths in the command itself instead of reading them from a file: run `git status --short` "
+     "to list them, then `git add path/to/file1 path/to/file2`."),
     # policy B: never disarm the hooks
     ("B-no-verify-pull", r"^hook_bypass_guard: --no-verify on git pull",
      "Run `git pull origin branch-name` without --no-verify. If a hook fails, read its output, fix what it "

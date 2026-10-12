@@ -47,7 +47,8 @@ with open(os.path.join(HOME, "gitconfig"), "w") as fh:
 ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_") and k not in ("CLAUDE_PROJECT_DIR",)}
 ENV.update({"HOME": HOME, "GIT_CONFIG_GLOBAL": os.path.join(HOME, "gitconfig"), "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_CEILING_DIRECTORIES": ROOT, "LC_ALL": "C", "GIT_TERMINAL_PROMPT": "0",
-            "GIT_EDITOR": "true", "EDITOR": "true"})
+            "GIT_EDITOR": "true", "EDITOR": "true",
+            "AGENT_GUARD_STORE": os.path.join(ROOT, "store")})   # the outside-the-repo snapshot copies, under the root
 os.environ.clear()
 os.environ.update(ENV)          # undo.py, imported for the cost section, inherits the pinned config
 sys.path.insert(0, HERE)
@@ -338,6 +339,9 @@ SCENARIOS = [
     ("dir-becomes-symlink", "rm -rf src/lib && ln -s ../docs src/lib", None),
     ("binary-overwrite", "head -c 512 /dev/zero > data/blob.bin", None),
     ("python-rmtree", "python3 -c \"import shutil; shutil.rmtree('src')\"", None),
+    # v6: the git dir itself (blind holdout6 H6-U20): the snapshots must survive in the outside store
+    ("rm-rf-dotgit", "rm -rf .git", None),
+    ("rm-rf-dotgit-reinit", "rm -rf .git && git init -q", None),
     # --- v5: the 20 blind scenarios of wb_undo.jsonl (WRITER_SHEET.md), then one of mine for directory modes
     ("wu5-chmod-dash-x", "chmod -x bin/run.sh", None),
     ("wu5-chmod-R-dash-w", "chmod -R -w src", None),
@@ -373,6 +377,8 @@ MUTANTS = [
     ("judges ignores by the post-command .gitignore", "wu5-ignore-added-then-file",
      'if posixpath.basename(rel) == ".gitignore" and mode in ("100644", "100755"):', "if False:"),
     ("does not save SQUASH_MSG", "wu5-merge-squash", '"AUTO_MERGE", "SQUASH_MSG")', '"AUTO_MERGE")'),
+    # v6: a restore that never looks in the outside store
+    ("does not import from the store", "rm-rf-dotgit", "    rebuilt = _from_store(repo)\n", "    rebuilt = False\n"),
 ]
 RESIDUALS = [
     ("ignored-files", "git clean -fdX", None, "ignored files are not in any snapshot"),
@@ -403,7 +409,10 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     out_pre = outside_state(base)
     rc = run_destructive(repo, agent_cmd)
     outside_changed = outside_state(base) != out_pre
-    post = capture(repo, remote)
+    try:
+        post = capture(repo, remote)
+    except RuntimeError:                        # the command removed the git dir itself
+        post = {"files": {}, "index": {"(git dir lost)": 1}}
     damage = diff(pre, post, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare"))
     p = subprocess.run([sys.executable, undo_cli, "--repo", repo, "restore", "--last"], env=ENV,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -415,7 +424,10 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
         run_destructive(repo, h)
     if hints:
         git(repo, "fetch", "-q", "origin")
-    after = capture(repo, remote)
+    try:
+        after = capture(repo, remote)
+    except RuntimeError:                        # restore did not bring the git dir back
+        after = {"files": {}, "index": {"(git dir still lost after restore)": 1}}
     left = diff(pre, after, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare"))
     ignored_lost = diff(pre, after, keys=("ignored",))
     return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "rc": rc,
@@ -805,6 +817,12 @@ if __name__ == "__main__":
     try:
         code = holdouts() if "--holdouts" in sys.argv[1:] else main()
     finally:
+        for dp, dns, fns in os.walk(ROOT):          # a scenario may leave read-only dirs (chmod -R a-w)
+            for d in dns:
+                try:
+                    os.chmod(os.path.join(dp, d), 0o755)
+                except OSError:
+                    pass
         shutil.rmtree(ROOT, ignore_errors=True)
         print("Bench root deleted: %s" % (not os.path.exists(ROOT)))
     sys.exit(code)

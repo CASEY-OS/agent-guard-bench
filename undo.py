@@ -166,6 +166,51 @@ def _new_id(existing):
     return sid
 
 
+def store_dir(top):
+    """The copy of this repo's snapshots kept OUTSIDE the repo, so `rm -rf .git` cannot take the
+    snapshots with it: $AGENT_GUARD_STORE (default ~/.local/state/agent-guard)/<hash of the path>.git."""
+    import hashlib
+    base = os.environ.get("AGENT_GUARD_STORE") or os.path.join(os.path.expanduser("~"), ".local", "state",
+                                                                "agent-guard")
+    h = hashlib.sha256(os.path.realpath(top).encode("utf-8", "surrogateescape")).hexdigest()[:20]
+    return os.path.join(base, h + ".git")
+
+
+def _mirror(top, sid, keep):
+    """Copy snapshot sid into the store (a bare repo; a fetch run from the store side, so no hook of
+    the user's repo runs). Never fails the snapshot: a store problem is printed and skipped."""
+    store = store_dir(top)
+    try:
+        if not os.path.isdir(store):
+            os.makedirs(os.path.dirname(store), exist_ok=True)
+            _git(os.path.dirname(store), ["init", "-q", "--bare", store])
+        _git(store, ["fetch", "-q", "--no-tags", "--no-write-fetch-head", top,
+                     "+%s%s:%s%s" % (REF_NS, sid, REF_NS, sid)])
+        have = _snapshots(store)
+        if keep > 0 and len(have) > keep:
+            script = "".join("delete %s%s\n" % (REF_NS, s) for s, _ in have[:len(have) - keep])
+            _git(store, ["update-ref", "--stdin"], input=script.encode())
+    except (UndoError, OSError) as exc:
+        print("undo: snapshot %s not copied to the store %s: %s" % (sid, store, exc), file=sys.stderr)
+
+
+def _from_store(repo):
+    """If the repo lost its git dir (or was re-initialised) and the store holds its snapshots, make the
+    repo a git repo again and fetch every stored snapshot into it. -> True when it imported."""
+    top = os.path.realpath(repo)
+    store = store_dir(top)
+    if not os.path.isdir(store) or not _snapshots(store):
+        return False
+    p = _git(top, ["rev-parse", "--path-format=absolute", "--show-toplevel"], check=False)
+    if p.returncode != 0 or os.path.realpath(p.stdout.decode().strip()) != top:
+        _git(top, ["init", "-q", top])
+    elif _snapshots(top):
+        return False                                    # its own snapshots are there: nothing to import
+    _git(top, ["fetch", "-q", "--no-tags", "--no-write-fetch-head", store,
+               "+%s*:%s*" % (REF_NS, REF_NS)])
+    return True
+
+
 def snapshot(repo, label="", keep=None, force=False):
     """Capture the full working state. -> snapshot id (an existing id when nothing changed)."""
     top, gitdir, common = paths(repo)
@@ -279,6 +324,23 @@ def snapshot(repo, label="", keep=None, force=False):
                     if b is not None:
                         names.append((dname, f))
                         blobs.append(b)
+        # the git dir's own files, so a repo whose .git is deleted comes back with its remotes, its
+        # core.hooksPath and its installed hooks (they are in no ref or tree)
+        for rel, nm in (("config", "config"), (os.path.join("info", "exclude"), "info-exclude")):
+            b = _read(os.path.join(common, rel))
+            if b is not None:
+                names.append(("gitmeta", nm))
+                blobs.append(b)
+        hdir, hmodes = os.path.join(common, "hooks"), []
+        if os.path.isdir(hdir):
+            for f in sorted(os.listdir(hdir)):
+                full = os.path.join(hdir, f)
+                if os.path.isfile(full) and not os.path.islink(full):
+                    names.append(("gitmeta-hooks", f))
+                    blobs.append(_read(full) or b"")
+                    hmodes.append("%o %s" % (stat.S_IMODE(os.lstat(full).st_mode), f))
+            names.append(("gitmeta", "hooks-modes"))
+            blobs.append("\n".join(hmodes).encode("utf-8", "surrogateescape"))
         for t, raw in sorted(tag_raw.items()):
             names.append(("tagobjs", t))
             blobs.append(raw)
@@ -302,6 +364,8 @@ def snapshot(repo, label="", keep=None, force=False):
         if existing and not force:
             p = _git(top, ["rev-parse", "-q", "--verify", existing[-1][1] + ":state"], check=False)
             if p.returncode == 0 and p.stdout.decode().strip() == state_tree:
+                if not os.path.isdir(store_dir(top)):
+                    _mirror(top, existing[-1][0], keep)
                 return existing[-1][0]                                   # nothing changed since
         sid = _new_id([s for s, _ in existing])
         meta = json.dumps({"version": 1, "id": sid, "toplevel": top, "label": label[:500],
@@ -320,6 +384,7 @@ def snapshot(repo, label="", keep=None, force=False):
         if keep > 0 and len(all_ids) > keep:
             script = "".join("delete %s%s\n" % (REF_NS, s) for s in all_ids[:len(all_ids) - keep])
             _git(top, ["update-ref", "--stdin"], input=script.encode())
+        _mirror(top, sid, keep)
         return sid
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -397,7 +462,10 @@ def _apply_modes(top, blob, dirs):
 
 def restore(repo, sid, safety=True):
     """Put the worktree, index, local refs, HEAD, stash list and state files back to snapshot sid.
-    refs/remotes are left alone; the repair push for each moved one is returned, never run."""
+    refs/remotes are left alone; the repair push for each moved one is returned, never run. If the repo
+    lost its git dir (rm -rf .git, or rm then git init), the snapshots come back from the store first, and
+    then refs/remotes are restored too: the remote did not move, only the local record of it was lost."""
+    rebuilt = _from_store(repo)
     top, gitdir, common = paths(repo)
     if sid == "--last":
         snaps = _snapshots(top)
@@ -528,15 +596,15 @@ def restore(repo, sid, safety=True):
     now = _refs(top)
     script = []
     for name, oid, _t, symref, _p, _pt in now:
-        if name not in want and name not in syms and not name.startswith("refs/remotes/"):
+        if name not in want and name not in syms and (rebuilt or not name.startswith("refs/remotes/")):
             script.append("option no-deref\ndelete %s\n" % name)
     for name, oid in want.items():
-        if not name.startswith("refs/remotes/"):
+        if rebuilt or not name.startswith("refs/remotes/"):
             script.append("option no-deref\nupdate %s %s\n" % (name, oid))
     if script:
         _git(top, ["update-ref", "--stdin"], input="".join(script).encode("utf-8", "surrogateescape"))
     for name, tgt in syms.items():
-        if not name.startswith("refs/remotes/"):
+        if rebuilt or not name.startswith("refs/remotes/"):
             _git(top, ["symbolic-ref", name, tgt])
     if head and head[0] == "sym":
         _git(top, ["symbolic-ref", "HEAD", head[1]])
@@ -567,13 +635,40 @@ def restore(repo, sid, safety=True):
                     nm = ent.split(b"\t", 1)[1].decode()
                     with open(os.path.join(ddir, nm), "wb") as fh:
                         fh.write(_blob(top, st + "/" + dname + "/" + nm) or b"")
+    # the git dir's own files: config, info/exclude and the hooks dir, as the snapshot had them
+    for nm, rel in (("config", "config"), ("info-exclude", os.path.join("info", "exclude"))):
+        b = _blob(top, st + "/gitmeta/" + nm)
+        if b is not None:
+            os.makedirs(os.path.dirname(os.path.join(common, rel)), exist_ok=True)
+            with open(os.path.join(common, rel), "wb") as fh:
+                fh.write(b)
+    hm = _blob(top, st + "/gitmeta/hooks-modes")
+    if hm is not None:
+        hdir = os.path.join(common, "hooks")
+        os.makedirs(hdir, exist_ok=True)
+        want_h = {}
+        for l in hm.decode("utf-8", "surrogateescape").split("\n"):
+            if l:
+                m_, f = l.split(" ", 1)
+                want_h[f] = int(m_, 8)
+        for f in os.listdir(hdir):
+            full = os.path.join(hdir, f)
+            if f not in want_h and os.path.isfile(full) and not os.path.islink(full):
+                os.unlink(full)
+        for f, m_ in want_h.items():
+            full = os.path.join(hdir, f)
+            if os.path.islink(full):
+                os.unlink(full)
+            with open(full, "wb") as fh:
+                fh.write(_blob(top, st + "/gitmeta-hooks/" + f) or b"")
+            os.chmod(full, m_)
     # 4. refs/remotes describe the remote, which restore never touches. Where one moved since the
     #    snapshot, print the push that would put the remote back. Run it only if the undone command
     #    pushed (a force push, a push --delete). If you fetched someone else's work, do not.
     hints = []
     for name, oid in sorted(want.items()):
         m = re.match(r"^refs/remotes/([^/]+)/(.+)$", name)
-        if m and before_refs.get(name) != oid and m.group(2) != "HEAD":
+        if m and not rebuilt and before_refs.get(name) != oid and m.group(2) != "HEAD":
             r, b = m.group(1), m.group(2)
             if name in before_refs:
                 hints.append("git push --force-with-lease=refs/heads/%s:%s %s %s:refs/heads/%s"
@@ -581,7 +676,8 @@ def restore(repo, sid, safety=True):
             else:
                 hints.append("git push %s %s:refs/heads/%s" % (r, oid, b))
     return {"restored": sid, "safety_snapshot": safety_id, "files_deleted": deleted,
-            "files_written": len(target), "refs": len(want), "remote_repair": hints}
+            "files_written": len(target), "refs": len(want), "remote_repair": hints,
+            "rebuilt_from_store": rebuilt}
 
 
 # ---- the hook path: should this command get a snapshot first? ----

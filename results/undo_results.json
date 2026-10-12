@@ -1,12 +1,12 @@
 {
   "conditions": [
     {
-      "detail": "70",
+      "detail": "72",
       "name": "at least 30 in-scope scenarios",
       "pass": true
     },
     {
-      "detail": "70 of 70",
+      "detail": "72 of 72",
       "name": "every in-scope scenario fully restored",
       "pass": true
     },
@@ -36,7 +36,7 @@
       "pass": true
     },
     {
-      "detail": "6 of 6",
+      "detail": "7 of 7",
       "name": "every one-line restore mutant is caught by the readback",
       "pass": true
     },
@@ -56,7 +56,7 @@
       "pass": true
     },
     {
-      "detail": "88 runs, 0 outside",
+      "detail": "91 runs, 0 outside",
       "name": "every destructive command ran under the bench root",
       "pass": true
     }
@@ -190,17 +190,17 @@
     }
   ],
   "cost": {
-    "dirty_snapshot_bytes_median": 5498.5,
-    "dirty_snapshot_ms_median": 83.37860449682921,
+    "dirty_snapshot_bytes_median": 5558.0,
+    "dirty_snapshot_ms_median": 137.64143746811897,
     "files": 1000,
-    "first_snapshot_bytes": 42389,
-    "first_snapshot_ms": 143.0439578834921,
-    "hook_read_only_ms_median": 47.12954210117459,
-    "hook_with_snapshot_ms_median": 143.07604194618762,
-    "no_change_ms_median": 56.1749164480716,
+    "first_snapshot_bytes": 56172,
+    "first_snapshot_ms": 251.03016709908843,
+    "hook_read_only_ms_median": 46.65983305312693,
+    "hook_with_snapshot_ms_median": 200.59899985790253,
+    "no_change_ms_median": 67.36733403522521,
     "objects_bytes_before": 899860,
-    "plan_us_read_only": 15.817708452232182,
-    "restore_ms": 321.7334998771548
+    "plan_us_read_only": 15.63183346297592,
+    "restore_ms": 405.59441689401865
   },
   "mutants": [
     {
@@ -347,6 +347,65 @@
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
       "what": "does not save SQUASH_MSG"
+    },
+    {
+      "command": "rm -rf .git",
+      "damage": 36,
+      "damage_sample": [
+        "files: lost .gitignore",
+        "files: lost /",
+        "files: lost README.md",
+        "files: lost bin/"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 2,
+      "left": [
+        "files: lost .gitignore",
+        "files: lost /",
+        "files: lost README.md",
+        "files: lost bin/",
+        "files: lost bin/run.sh",
+        "files: lost data/",
+        "files: lost data/blob.bin",
+        "files: lost link",
+        "files: lost notes.txt",
+        "files: lost src/",
+        "files: lost src/app.py",
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/",
+        "files: lost src/untracked_dir/u.txt",
+        "files: lost src/util.py",
+        "index differs",
+        "refs: lost refs/heads/main",
+        "refs: lost refs/heads/other",
+        "refs: lost refs/stash",
+        "refs: lost refs/tags/light",
+        "refs: lost refs/tags/v1",
+        "HEAD differs",
+        "stash differs",
+        "state: lost CHERRY_PICK_HEAD",
+        "state: lost MERGE_HEAD",
+        "state: lost MERGE_MODE",
+        "state: lost MERGE_MSG",
+        "state: lost ORIG_HEAD",
+        "state: lost REVERT_HEAD",
+        "state: lost SQUASH_MSG",
+        "remotes: lost refs/remotes/origin/HEAD",
+        "remotes: lost refs/remotes/origin/main",
+        "remotes: lost refs/remotes/origin/other",
+        "bare differs"
+      ],
+      "name": "rm-rf-dotgit",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "does not import from the store"
     }
   ],
   "overall": "PASS",
@@ -428,7 +487,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:4ff9b8d1a230de48dcf68006ea5f4cd06e4d4bf3 origin 7376fa13aeb6ccaa2ef723867505172aa17149ee:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:7a2abb65343eb833c83d0bfd689e0a7537700673 origin ec74a9013a93af715f82f859fde5c23d998efced:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1030,7 +1089,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:3ac19f668318974c202c5107d3bf0ba80b0d501d origin 3becb8ea5b4f8fb78092d64760ef73d55a4cf972:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:df297dca646b1bcc924e787c60b7e8d6e1642f3b origin ff968c1e907f9411d7b8527d39f00d4a5a6002ba:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1051,7 +1110,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin fbadbfeb7609e1492d749932d07433a932702041:refs/heads/other"
+        "git push origin ec731fdd6c4089850ad133d804226104501491cc:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1410,6 +1469,48 @@
       "remote_repair": [],
       "restore_rc": 0,
       "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm -rf .git",
+      "damage": 36,
+      "damage_sample": [
+        "files: lost .gitignore",
+        "files: lost /",
+        "files: lost README.md",
+        "files: lost bin/"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rm-rf-dotgit",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm -rf .git && git init -q",
+      "damage": 11,
+      "damage_sample": [
+        "index differs",
+        "refs: lost refs/heads/main",
+        "refs: lost refs/heads/other",
+        "refs: lost refs/stash"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rm-rf-dotgit-reinit",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1
     },
