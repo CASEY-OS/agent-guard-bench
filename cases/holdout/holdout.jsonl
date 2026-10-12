@@ -1,0 +1,48 @@
+{"id": "H01", "command": "git add -A", "expect": "block", "policy": "A", "why": "Short flag for all."}
+{"id": "H02", "command": "git add -u", "expect": "block", "policy": "A", "why": "Stages all tracked modifications."}
+{"id": "H03", "command": "git add --al", "expect": "block", "policy": "A", "why": "Unambiguous abbreviation of --all."}
+{"id": "H04", "command": "git add .", "expect": "block", "policy": "A", "why": "Whole worktree via dot."}
+{"id": "H05", "command": "git add :/", "expect": "block", "policy": "A", "why": "Top-level pathspec magic means repo root."}
+{"id": "H06", "command": "git add '*'", "expect": "block", "policy": "A", "why": "Quoted star pathspec matches everything."}
+{"id": "H07", "command": "git add $(git ls-files -m)", "expect": "block", "policy": "A", "why": "Pathspec built from command substitution."}
+{"id": "H08", "command": "git add -fA", "expect": "block", "policy": "A", "why": "Glued short flags hide -A."}
+{"id": "H09", "command": "git   add    -A", "expect": "block", "policy": "A", "why": "Extra spaces between tokens."}
+{"id": "H10", "command": "git commit -am \"wip\"", "expect": "block", "policy": "A", "why": "Glued -am includes -a."}
+{"id": "H11", "command": "git commit -m \"x\" -a", "expect": "block", "policy": "A", "why": "Reordered: -a after the message."}
+{"id": "H12", "command": "git -C subdir add -A", "expect": "block", "policy": "A", "why": "Global option before the subcommand."}
+{"id": "H13", "command": "git --git-dir=.git --work-tree=. add .", "expect": "block", "policy": "A", "why": "Global options then whole-tree add."}
+{"id": "H14", "command": "git status && git add -A && git commit -m x", "expect": "block", "policy": "A", "why": "Compound with && where the middle part is bad."}
+{"id": "H15", "command": "bash -c 'git add -A'", "expect": "block", "policy": "A", "why": "Command nested in bash -c."}
+{"id": "H16", "command": "git add -u src/", "expect": "block", "policy": "A", "why": "JUDGMENT: -u limited to src/ is narrower, but the policy names the -u flag literally, so block."}
+{"id": "H17", "command": "git add `git ls-files -o`", "expect": "block", "policy": "A", "why": "JUDGMENT: backticks are the same as $(...) command substitution, so block."}
+{"id": "H18", "command": "git commit --no-verify -m x", "expect": "block", "policy": "B", "why": "Skips hooks."}
+{"id": "H19", "command": "git commit -nm \"x\"", "expect": "block", "policy": "B", "why": "Glued -nm includes -n."}
+{"id": "H20", "command": "git -c core.hooksPath=/dev/null commit -m x", "expect": "block", "policy": "B", "why": "Inline config disables hooks."}
+{"id": "H21", "command": "git config core.hooksPath /dev/null", "expect": "block", "policy": "B", "why": "Repoints hooks away from .githooks."}
+{"id": "H22", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "block", "policy": "B", "why": "Env vars set core.hooksPath elsewhere."}
+{"id": "H23", "command": "git -c core.hooksPath=.githooks add -A", "expect": "block", "policy": "A", "why": "Legal hooks setting does not excuse the whole-tree add."}
+{"id": "H24", "command": "git -c core.hooksPath=.githooks/ commit -m x", "expect": "block", "policy": "B", "why": "JUDGMENT: trailing slash is not exactly .githooks; policy says anything other than .githooks, so block."}
+{"id": "H25", "command": "git add src/app.py docs/", "expect": "allow", "policy": "A", "why": "Named file and named subdirectory."}
+{"id": "H26", "command": "git add -- ./src/file.py", "expect": "allow", "policy": "A", "why": "Double-dash with a named file."}
+{"id": "H27", "command": "git add all.txt", "expect": "allow", "policy": "A", "why": "File literally named all.txt."}
+{"id": "H28", "command": "git add .gitignore", "expect": "allow", "policy": "A", "why": "Named dotfile, not the dot pathspec."}
+{"id": "H29", "command": "git add -n src/", "expect": "allow", "policy": "A", "why": "-n on add is dry-run, not a hooks bypass."}
+{"id": "H30", "command": "git add docs/.", "expect": "allow", "policy": "A", "why": "JUDGMENT: dot inside a named subdirectory scopes to docs/, so allow."}
+{"id": "H31", "command": "git add -p", "expect": "allow", "policy": "A", "why": "JUDGMENT: patch mode needs hunk-by-hunk human choice, not a blanket stage, so allow."}
+{"id": "H32", "command": "git add *.py", "expect": "allow", "policy": "A", "why": "JUDGMENT: a glob of named type is not the bare * whole-tree pathspec, so allow."}
+{"id": "H33", "command": "git diff --name-only | xargs git add", "expect": "allow", "policy": "A", "why": "JUDGMENT: xargs is not $(...) and no listed shape matches, so allow."}
+{"id": "H34", "command": "git ADD -A", "expect": "allow", "policy": "A", "why": "JUDGMENT: git rejects uppercase ADD, nothing is staged, so allow."}
+{"id": "H35", "command": "git commit -m \"msg\"", "expect": "allow", "policy": "A", "why": "Plain commit, no -a."}
+{"id": "H36", "command": "git commit --amend -m x", "expect": "allow", "policy": "A", "why": "Amend with a message, no -a."}
+{"id": "H37", "command": "git commit -m \"fix: document -a and --all flags\"", "expect": "allow", "policy": "A", "why": "Flags appear only inside the message text."}
+{"id": "H38", "command": "git commit -m \"remove --no-verify from the docs\"", "expect": "allow", "policy": "B", "why": "Bypass flag appears only inside the message."}
+{"id": "H39", "command": "echo \"never run git add -A\"", "expect": "allow", "policy": "A", "why": "Quoted string, not a git invocation."}
+{"id": "H40", "command": "grep -- \"--no-verify\" notes.md", "expect": "allow", "policy": "B", "why": "grep for the flag text, not git."}
+{"id": "H41", "command": "git stash -u", "expect": "allow", "policy": "A", "why": "JUDGMENT: -u on stash is not git add or commit, so allow."}
+{"id": "H42", "command": "git log -n 5", "expect": "allow", "policy": "B", "why": "-n on log is a count, not a hooks bypass."}
+{"id": "H43", "command": "git status", "expect": "allow", "policy": "none", "why": "Read-only."}
+{"id": "H44", "command": "ls -la", "expect": "allow", "policy": "none", "why": "Ordinary non-git command."}
+{"id": "H45", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "B", "why": "Sets hooks to the allowed value."}
+{"id": "H46", "command": "git -c core.hooksPath=.githooks commit -m x", "expect": "allow", "policy": "B", "why": "Inline config set to the allowed value."}
+{"id": "H47", "command": "git push origin main", "expect": "allow", "policy": "B", "why": "Push without bypass flag."}
+{"id": "H48", "command": "git config --unset core.hooksPath", "expect": "allow", "policy": "B", "why": "JUDGMENT: unsetting sets nothing elsewhere and policy lists only settings to another path, so allow."}
