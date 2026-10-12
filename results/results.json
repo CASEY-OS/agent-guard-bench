@@ -2449,24 +2449,20 @@
         "per_variant": {
           "broken_guard": {
             "FN": 0,
-            "FP": 1,
+            "FP": 0,
             "FP_ask": 0,
-            "FP_block": 1,
-            "TN": 24,
+            "FP_block": 0,
+            "TN": 25,
             "TP": 0,
             "TP_ask": 0,
             "TP_block": 0,
             "ask_rate_safe": 0.0,
             "fn_ids": [],
             "fp_ask_ids": [],
-            "fp_block_ids": [
-              "K50"
-            ],
-            "fp_rate_safe": 0.04,
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
             "recall": null,
-            "wrong": [
-              "K50"
-            ]
+            "wrong": []
           },
           "guard_v1": {
             "FN": 0,
@@ -2575,24 +2571,20 @@
           },
           "guard_v6": {
             "FN": 0,
-            "FP": 1,
+            "FP": 0,
             "FP_ask": 0,
-            "FP_block": 1,
-            "TN": 24,
+            "FP_block": 0,
+            "TN": 25,
             "TP": 0,
             "TP_ask": 0,
             "TP_block": 0,
             "ask_rate_safe": 0.0,
             "fn_ids": [],
             "fp_ask_ids": [],
-            "fp_block_ids": [
-              "K50"
-            ],
-            "fp_rate_safe": 0.04,
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
             "recall": null,
-            "wrong": [
-              "K50"
-            ]
+            "wrong": []
           },
           "naive_regex": {
             "FN": 0,
@@ -43511,24 +43503,20 @@
         },
         "guard_v6": {
           "FN": 0,
-          "FP": 1,
+          "FP": 0,
           "FP_ask": 0,
-          "FP_block": 1,
-          "TN": 5,
+          "FP_block": 0,
+          "TN": 6,
           "TP": 17,
           "TP_ask": 0,
           "TP_block": 17,
           "ask_rate_safe": 0.0,
           "fn_ids": [],
           "fp_ask_ids": [],
-          "fp_block_ids": [
-            "K50"
-          ],
-          "fp_rate_safe": 0.16666666666666666,
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
           "recall": 1.0,
-          "wrong": [
-            "K50"
-          ]
+          "wrong": []
         }
       },
       "B": {
@@ -46163,7 +46151,7 @@
       },
       "B": {
         "guard_v1": {
-          "FN": 100,
+          "FN": 98,
           "FP": 0,
           "FP_ask": 0,
           "FP_block": 0,
@@ -46227,7 +46215,6 @@
             "v3-bad-204",
             "v3-bad-205",
             "v3-bad-206",
-            "v3-bad-207",
             "v3-bad-208",
             "v3-bad-209",
             "v3-bad-210",
@@ -46238,7 +46225,6 @@
             "v3-bad-215",
             "v3-bad-216",
             "v3-bad-217",
-            "v3-bad-218",
             "v3-bad-219",
             "v3-bad-220",
             "v3-bad-221",
@@ -46277,7 +46263,7 @@
           "fp_ask_ids": [],
           "fp_block_ids": [],
           "fp_rate_safe": null,
-          "recall": 0.40119760479041916,
+          "recall": 0.40606060606060607,
           "wrong": [
             "v2-bad-001",
             "v2-bad-005",
@@ -46333,7 +46319,6 @@
             "v3-bad-204",
             "v3-bad-205",
             "v3-bad-206",
-            "v3-bad-207",
             "v3-bad-208",
             "v3-bad-209",
             "v3-bad-210",
@@ -46344,7 +46329,6 @@
             "v3-bad-215",
             "v3-bad-216",
             "v3-bad-217",
-            "v3-bad-218",
             "v3-bad-219",
             "v3-bad-220",
             "v3-bad-221",
@@ -46382,7 +46366,7 @@
           ]
         },
         "guard_v2": {
-          "FN": 68,
+          "FN": 66,
           "FP": 0,
           "FP_ask": 0,
           "FP_block": 0,
@@ -46417,7 +46401,6 @@
             "v3-bad-204",
             "v3-bad-205",
             "v3-bad-206",
-            "v3-bad-207",
             "v3-bad-208",
             "v3-bad-209",
             "v3-bad-210",
@@ -46428,7 +46411,6 @@
             "v3-bad-215",
             "v3-bad-216",
             "v3-bad-217",
-            "v3-bad-218",
             "v3-bad-219",
             "v3-bad-220",
             "v3-bad-221",
@@ -46464,7 +46446,7 @@
           "fp_ask_ids": [],
           "fp_block_ids": [],
           "fp_rate_safe": null,
-          "recall": 0.592814371257485,
+          "recall": 0.6,
           "wrong": [
             "v3-bad-res-06",
             "v3-bad-res-29",
@@ -46491,7 +46473,6 @@
             "v3-bad-204",
             "v3-bad-205",
             "v3-bad-206",
-            "v3-bad-207",
             "v3-bad-208",
             "v3-bad-209",
             "v3-bad-210",
@@ -46502,7 +46483,6 @@
             "v3-bad-215",
             "v3-bad-216",
             "v3-bad-217",
-            "v3-bad-218",
             "v3-bad-219",
             "v3-bad-220",
             "v3-bad-221",
@@ -46542,8 +46522,8 @@
           "FP_ask": 0,
           "FP_block": 0,
           "TN": 0,
-          "TP": 154,
-          "TP_ask": 17,
+          "TP": 152,
+          "TP_ask": 15,
           "TP_block": 137,
           "ask_rate_safe": null,
           "fn_ids": [
@@ -46564,7 +46544,7 @@
           "fp_ask_ids": [],
           "fp_block_ids": [],
           "fp_rate_safe": null,
-          "recall": 0.9221556886227545,
+          "recall": 0.9212121212121213,
           "wrong": [
             "v5-WB5-010",
             "v5-WB5-011",
@@ -46587,9 +46567,9 @@
           "FP_ask": 0,
           "FP_block": 0,
           "TN": 0,
-          "TP": 154,
+          "TP": 152,
           "TP_ask": 0,
-          "TP_block": 154,
+          "TP_block": 152,
           "ask_rate_safe": null,
           "fn_ids": [
             "v5-WB5-010",
@@ -46609,7 +46589,7 @@
           "fp_ask_ids": [],
           "fp_block_ids": [],
           "fp_rate_safe": null,
-          "recall": 0.9221556886227545,
+          "recall": 0.9212121212121213,
           "wrong": [
             "v5-WB5-010",
             "v5-WB5-011",
@@ -46632,9 +46612,9 @@
           "FP_ask": 0,
           "FP_block": 0,
           "TN": 0,
-          "TP": 167,
+          "TP": 165,
           "TP_ask": 0,
-          "TP_block": 167,
+          "TP_block": 165,
           "ask_rate_safe": null,
           "fn_ids": [],
           "fp_ask_ids": [],
@@ -46649,9 +46629,9 @@
           "FP_ask": 0,
           "FP_block": 0,
           "TN": 0,
-          "TP": 167,
+          "TP": 165,
           "TP_ask": 0,
-          "TP_block": 167,
+          "TP_block": 165,
           "ask_rate_safe": null,
           "fn_ids": [],
           "fp_ask_ids": [],
@@ -47952,10 +47932,10 @@
       "none": {
         "guard_v1": {
           "FN": 5,
-          "FP": 29,
+          "FP": 34,
           "FP_ask": 0,
-          "FP_block": 29,
-          "TN": 452,
+          "FP_block": 34,
+          "TN": 464,
           "TP": 0,
           "TP_ask": 0,
           "TP_block": 0,
@@ -47997,9 +47977,14 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v6-WG6-006",
+            "v6-WG6-008",
+            "v6-WG6-014",
+            "v6-WG6-018",
+            "v6-WG6-019"
           ],
-          "fp_rate_safe": 0.060291060291060294,
+          "fp_rate_safe": 0.06827309236947791,
           "recall": 0.0,
           "wrong": [
             "good-005",
@@ -48035,15 +48020,20 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v6-WG6-006",
+            "v6-WG6-008",
+            "v6-WG6-014",
+            "v6-WG6-018",
+            "v6-WG6-019"
           ]
         },
         "guard_v2": {
           "FN": 5,
-          "FP": 29,
+          "FP": 34,
           "FP_ask": 0,
-          "FP_block": 29,
-          "TN": 452,
+          "FP_block": 34,
+          "TN": 464,
           "TP": 0,
           "TP_ask": 0,
           "TP_block": 0,
@@ -48085,9 +48075,14 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v6-WG6-006",
+            "v6-WG6-008",
+            "v6-WG6-014",
+            "v6-WG6-018",
+            "v6-WG6-019"
           ],
-          "fp_rate_safe": 0.060291060291060294,
+          "fp_rate_safe": 0.06827309236947791,
           "recall": 0.0,
           "wrong": [
             "good-005",
@@ -48123,19 +48118,24 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v6-WG6-006",
+            "v6-WG6-008",
+            "v6-WG6-014",
+            "v6-WG6-018",
+            "v6-WG6-019"
           ]
         },
         "guard_v3": {
           "FN": 0,
-          "FP": 60,
-          "FP_ask": 28,
-          "FP_block": 32,
+          "FP": 77,
+          "FP_ask": 37,
+          "FP_block": 40,
           "TN": 421,
           "TP": 5,
           "TP_ask": 5,
           "TP_block": 0,
-          "ask_rate_safe": 0.058212058212058215,
+          "ask_rate_safe": 0.07429718875502007,
           "fn_ids": [],
           "fp_ask_ids": [
             "v2-good-073",
@@ -48165,7 +48165,16 @@
             "v5-good-043",
             "v5-good-048",
             "v5-good-049",
-            "v5-good-051"
+            "v5-good-051",
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-015",
+            "v6-WG6-020",
+            "v6-WG6-021"
           ],
           "fp_block_ids": [
             "bad-C34",
@@ -48199,9 +48208,17 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-014",
+            "v6-WG6-018",
+            "v6-WG6-019"
           ],
-          "fp_rate_safe": 0.12474012474012475,
+          "fp_rate_safe": 0.15461847389558234,
           "recall": 1.0,
           "wrong": [
             "bad-C34",
@@ -48263,14 +48280,31 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-014",
+            "v6-WG6-015",
+            "v6-WG6-018",
+            "v6-WG6-019",
+            "v6-WG6-020",
+            "v6-WG6-021"
           ]
         },
         "guard_v4": {
           "FN": 0,
-          "FP": 60,
+          "FP": 77,
           "FP_ask": 0,
-          "FP_block": 60,
+          "FP_block": 77,
           "TN": 421,
           "TP": 5,
           "TP_ask": 0,
@@ -48338,9 +48372,26 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-014",
+            "v6-WG6-015",
+            "v6-WG6-018",
+            "v6-WG6-019",
+            "v6-WG6-020",
+            "v6-WG6-021"
           ],
-          "fp_rate_safe": 0.12474012474012475,
+          "fp_rate_safe": 0.15461847389558234,
           "recall": 1.0,
           "wrong": [
             "bad-C34",
@@ -48402,14 +48453,31 @@
             "v5-good-052",
             "v5-good-053",
             "v5-good-054",
-            "v5-good-055"
+            "v5-good-055",
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-014",
+            "v6-WG6-015",
+            "v6-WG6-018",
+            "v6-WG6-019",
+            "v6-WG6-020",
+            "v6-WG6-021"
           ]
         },
         "guard_v5": {
           "FN": 0,
-          "FP": 0,
+          "FP": 17,
           "FP_ask": 0,
-          "FP_block": 0,
+          "FP_block": 17,
           "TN": 481,
           "TP": 5,
           "TP_ask": 0,
@@ -48417,17 +48485,53 @@
           "ask_rate_safe": 0.0,
           "fn_ids": [],
           "fp_ask_ids": [],
-          "fp_block_ids": [],
-          "fp_rate_safe": 0.0,
+          "fp_block_ids": [
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-014",
+            "v6-WG6-015",
+            "v6-WG6-018",
+            "v6-WG6-019",
+            "v6-WG6-020",
+            "v6-WG6-021"
+          ],
+          "fp_rate_safe": 0.03413654618473896,
           "recall": 1.0,
-          "wrong": []
+          "wrong": [
+            "v3-bad-207",
+            "v3-bad-218",
+            "v6-WG6-001",
+            "v6-WG6-002",
+            "v6-WG6-003",
+            "v6-WG6-005",
+            "v6-WG6-006",
+            "v6-WG6-007",
+            "v6-WG6-008",
+            "v6-WG6-012",
+            "v6-WG6-013",
+            "v6-WG6-014",
+            "v6-WG6-015",
+            "v6-WG6-018",
+            "v6-WG6-019",
+            "v6-WG6-020",
+            "v6-WG6-021"
+          ]
         },
         "guard_v6": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
           "FP_block": 0,
-          "TN": 481,
+          "TN": 498,
           "TP": 5,
           "TP_ask": 0,
           "TP_block": 5,
@@ -48449,12 +48553,13 @@
     "holdout4": 110,
     "holdout5": 113,
     "holdout6": 116,
-    "own_all": 1287,
+    "own_all": 1302,
     "residual": 12,
     "v1_era": 420,
     "v2_dev": 245,
     "v3_dev": 434,
-    "v5_dev": 188
+    "v5_dev": 188,
+    "v6_dev": 15
   },
   "checks": {
     "asks_named_fail_closed": true,
@@ -48556,7 +48661,7 @@
     "redirect_bad": {},
     "redirect_shapes": {
       "A-add-exclude": 2,
-      "A-add-whole": 212,
+      "A-add-whole": 211,
       "A-apply": 2,
       "A-commit-all": 33,
       "A-commit-whole": 1,
@@ -48607,7 +48712,7 @@
       "F-git-sub-unknown": 5,
       "F-gitdir-delete": 1,
       "F-history-rewrite": 1,
-      "F-hook-write": 12,
+      "F-hook-write": 10,
       "F-interpreter": 2,
       "F-nested-code": 1,
       "F-pipe-to-shell": 7,
@@ -48659,18 +48764,26 @@
       "v5-good-052",
       "v5-good-053",
       "v5-good-054",
-      "v5-good-055"
+      "v5-good-055",
+      "v6-WG6-006",
+      "v6-WG6-008",
+      "v6-WG6-014",
+      "v6-WG6-018",
+      "v6-WG6-019"
     ],
     "softened_v3_stops": [
       "H16",
       "H24",
       "H6-021",
+      "K50",
       "S5-111",
       "bad-C34",
       "v2-good-073",
       "v2-good-082",
       "v3-bad-054",
       "v3-bad-144",
+      "v3-bad-207",
+      "v3-bad-218",
       "v3-bad-res-02",
       "v5-S5-111",
       "v5-WG5-001",
@@ -48725,10 +48838,43 @@
       "v5-good-052",
       "v5-good-053",
       "v5-good-054",
-      "v5-good-055"
+      "v5-good-055",
+      "v6-WG6-001",
+      "v6-WG6-002",
+      "v6-WG6-003",
+      "v6-WG6-005",
+      "v6-WG6-006",
+      "v6-WG6-007",
+      "v6-WG6-008",
+      "v6-WG6-012",
+      "v6-WG6-013",
+      "v6-WG6-014",
+      "v6-WG6-015",
+      "v6-WG6-018",
+      "v6-WG6-019",
+      "v6-WG6-020",
+      "v6-WG6-021"
     ],
     "softened_v4_denies": [],
-    "softened_v4_listed": [],
+    "softened_v4_listed": [
+      "v3-bad-207",
+      "v3-bad-218",
+      "v6-WG6-001",
+      "v6-WG6-002",
+      "v6-WG6-003",
+      "v6-WG6-005",
+      "v6-WG6-006",
+      "v6-WG6-007",
+      "v6-WG6-008",
+      "v6-WG6-012",
+      "v6-WG6-013",
+      "v6-WG6-014",
+      "v6-WG6-015",
+      "v6-WG6-018",
+      "v6-WG6-019",
+      "v6-WG6-020",
+      "v6-WG6-021"
+    ],
     "undo_bench": {
       "controls": "Controls that show the loss: 5 of 5.",
       "exit": 0,
@@ -48753,12 +48899,12 @@
       "pass": true
     },
     {
-      "detail": "79 errors",
+      "detail": "77 errors",
       "name": "broken_guard.py has at least one error on own cases (negative control)",
       "pass": true
     },
     {
-      "detail": "0 of 1815 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs",
+      "detail": "0 of 1830 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs",
       "name": "guard.py hook form agrees with decide() on every case, never asks, carries every redirect, and made no snapshot ref here",
       "pass": true
     },
@@ -48768,22 +48914,27 @@
       "pass": true
     },
     {
-      "detail": "0 softened outside the list; listed (31): H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055",
+      "detail": "0 softened outside the list; listed (36): H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019",
       "name": "every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed)",
       "pass": true
     },
     {
-      "detail": "0 of 1056 v5 denies softened outside the list; 0 newly stopped; listed (0): none; holdout fixes (0): none; holdout regressions (0): none",
+      "detail": "0 of 1071 v5 denies softened outside the list; 0 newly stopped; listed (17): v3-bad-207, v3-bad-218, v6-WG6-001, v6-WG6-002, v6-WG6-003, v6-WG6-005, v6-WG6-006, v6-WG6-007, v6-WG6-008, v6-WG6-012, v6-WG6-013, v6-WG6-014, v6-WG6-015, v6-WG6-018, v6-WG6-019, v6-WG6-020, v6-WG6-021; holdout fixes (1): K50; holdout regressions (0): none",
       "name": "every v5 deny is a v6 deny on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed",
       "pass": true
     },
     {
-      "detail": "0 asks (v3 asked on 133)",
+      "detail": "slowest 0.302 s on '${${${${${${${${${${${${${${${${${${${${'",
+      "name": "no decision takes a second on 270 pathological inputs (unbounded regex backtracking)",
+      "pass": true
+    },
+    {
+      "detail": "0 asks (v3 asked on 140)",
       "name": "guard.py never returns ask",
       "pass": true
     },
     {
-      "detail": "0 of 1056 denies bad, 70 shapes, 65 distinct alternatives; planted caught 5 of 5; clean control passes",
+      "detail": "0 of 1053 denies bad, 70 shapes, 65 distinct alternatives; planted caught 5 of 5; clean control passes",
       "name": "every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught",
       "pass": true
     },
@@ -48864,10 +49015,10 @@
       },
       "holdout3": {
         "FN": 2,
-        "FP": 1,
+        "FP": 0,
         "FP_ask": 0,
-        "FP_block": 1,
-        "TN": 24,
+        "FP_block": 0,
+        "TN": 25,
         "TP": 42,
         "TP_ask": 0,
         "TP_block": 42,
@@ -48877,15 +49028,12 @@
           "K26"
         ],
         "fp_ask_ids": [],
-        "fp_block_ids": [
-          "K50"
-        ],
-        "fp_rate_safe": 0.04,
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
         "recall": 0.9545454545454546,
         "wrong": [
           "K17",
-          "K26",
-          "K50"
+          "K26"
         ]
       },
       "holdout4": {
@@ -48990,11 +49138,11 @@
         ]
       },
       "own_all": {
-        "FN": 79,
+        "FN": 77,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 553,
+        "TN": 570,
         "TP": 655,
         "TP_ask": 0,
         "TP_block": 655,
@@ -49060,10 +49208,8 @@
           "v3-bad-188",
           "v3-bad-197",
           "v3-bad-198",
-          "v3-bad-207",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -49083,7 +49229,7 @@
         "fp_ask_ids": [],
         "fp_block_ids": [],
         "fp_rate_safe": 0.0,
-        "recall": 0.8923705722070845,
+        "recall": 0.894808743169399,
         "wrong": [
           "good-005",
           "v2-good-033",
@@ -49145,10 +49291,8 @@
           "v3-bad-188",
           "v3-bad-197",
           "v3-bad-198",
-          "v3-bad-207",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -49258,11 +49402,11 @@
         ]
       },
       "v3_dev": {
-        "FN": 68,
+        "FN": 66,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 130,
+        "TN": 132,
         "TP": 236,
         "TP_ask": 0,
         "TP_block": 236,
@@ -49323,10 +49467,8 @@
           "v3-bad-188",
           "v3-bad-197",
           "v3-bad-198",
-          "v3-bad-207",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -49340,7 +49482,7 @@
         "fp_ask_ids": [],
         "fp_block_ids": [],
         "fp_rate_safe": 0.0,
-        "recall": 0.7763157894736842,
+        "recall": 0.7814569536423841,
         "wrong": [
           "v3-bad-res-03",
           "v3-bad-res-07",
@@ -49397,10 +49539,8 @@
           "v3-bad-188",
           "v3-bad-197",
           "v3-bad-198",
-          "v3-bad-207",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -49442,6 +49582,23 @@
           "v5-bad-035",
           "v5-bad-039"
         ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 15,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": null,
+        "wrong": []
       }
     },
     "guard_v1": {
@@ -49896,11 +50053,11 @@
         ]
       },
       "own_all": {
-        "FN": 497,
-        "FP": 29,
+        "FN": 495,
+        "FP": 34,
         "FP_ask": 0,
-        "FP_block": 29,
-        "TN": 524,
+        "FP_block": 34,
+        "TN": 536,
         "TP": 237,
         "TP_ask": 0,
         "TP_block": 237,
@@ -50277,7 +50434,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -50288,7 +50444,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -50434,10 +50589,15 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ],
-        "fp_rate_safe": 0.05244122965641953,
-        "recall": 0.3228882833787466,
+        "fp_rate_safe": 0.05964912280701754,
+        "recall": 0.3237704918032787,
         "wrong": [
           "v2-bad-001",
           "v2-bad-002",
@@ -50810,7 +50970,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -50821,7 +50980,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -50964,7 +51122,12 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ]
       },
       "residual": {
@@ -51324,11 +51487,11 @@
         ]
       },
       "v3_dev": {
-        "FN": 285,
+        "FN": 283,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 130,
+        "TN": 132,
         "TP": 19,
         "TP_ask": 0,
         "TP_block": 19,
@@ -51569,7 +51732,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -51580,7 +51742,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -51623,7 +51784,7 @@
         "fp_ask_ids": [],
         "fp_block_ids": [],
         "fp_rate_safe": 0.0,
-        "recall": 0.0625,
+        "recall": 0.06291390728476821,
         "wrong": [
           "v3-bad-res-03",
           "v3-bad-res-06",
@@ -51860,7 +52021,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -51871,7 +52031,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -52138,6 +52297,35 @@
           "v5-good-053",
           "v5-good-054",
           "v5-good-055"
+        ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 5,
+        "FP_ask": 0,
+        "FP_block": 5,
+        "TN": 10,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
+        ],
+        "fp_rate_safe": 0.3333333333333333,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ]
       }
     },
@@ -52458,11 +52646,11 @@
         ]
       },
       "own_all": {
-        "FN": 349,
-        "FP": 29,
+        "FN": 347,
+        "FP": 34,
         "FP_ask": 0,
-        "FP_block": 29,
-        "TN": 524,
+        "FP_block": 34,
+        "TN": 536,
         "TP": 385,
         "TP_ask": 0,
         "TP_block": 385,
@@ -52694,7 +52882,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -52705,7 +52892,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -52848,10 +53034,15 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ],
-        "fp_rate_safe": 0.05244122965641953,
-        "recall": 0.5245231607629428,
+        "fp_rate_safe": 0.05964912280701754,
+        "recall": 0.5259562841530054,
         "wrong": [
           "good-005",
           "v2-good-033",
@@ -53079,7 +53270,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -53090,7 +53280,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -53230,7 +53419,12 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ]
       },
       "residual": {
@@ -53328,11 +53522,11 @@
         ]
       },
       "v3_dev": {
-        "FN": 271,
+        "FN": 269,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 130,
+        "TN": 132,
         "TP": 33,
         "TP_ask": 0,
         "TP_block": 33,
@@ -53559,7 +53753,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -53570,7 +53763,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -53613,7 +53805,7 @@
         "fp_ask_ids": [],
         "fp_block_ids": [],
         "fp_rate_safe": 0.0,
-        "recall": 0.10855263157894737,
+        "recall": 0.10927152317880795,
         "wrong": [
           "v3-bad-res-03",
           "v3-bad-res-06",
@@ -53836,7 +54028,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -53847,7 +54038,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -54109,6 +54299,35 @@
           "v5-good-054",
           "v5-good-055"
         ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 5,
+        "FP_ask": 0,
+        "FP_block": 5,
+        "TN": 10,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
+        ],
+        "fp_rate_safe": 0.3333333333333333,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-006",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
+        ]
       }
     },
     "guard_v3": {
@@ -54255,14 +54474,14 @@
       },
       "own_all": {
         "FN": 63,
-        "FP": 60,
-        "FP_ask": 28,
-        "FP_block": 32,
+        "FP": 77,
+        "FP_ask": 37,
+        "FP_block": 40,
         "TN": 493,
-        "TP": 671,
-        "TP_ask": 80,
+        "TP": 669,
+        "TP_ask": 78,
         "TP_block": 591,
-        "ask_rate_safe": 0.05063291139240506,
+        "ask_rate_safe": 0.06491228070175438,
         "fn_ids": [
           "v5-WB5-001",
           "v5-WB5-002",
@@ -54356,7 +54575,16 @@
           "v5-good-043",
           "v5-good-048",
           "v5-good-049",
-          "v5-good-051"
+          "v5-good-051",
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-015",
+          "v6-WG6-020",
+          "v6-WG6-021"
         ],
         "fp_block_ids": [
           "bad-C34",
@@ -54390,10 +54618,18 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
         ],
-        "fp_rate_safe": 0.10849909584086799,
-        "recall": 0.9141689373297003,
+        "fp_rate_safe": 0.13508771929824562,
+        "recall": 0.9139344262295082,
         "wrong": [
           "v5-WB5-001",
           "v5-WB5-002",
@@ -54517,7 +54753,24 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
         ]
       },
       "residual": {
@@ -54609,28 +54862,32 @@
       },
       "v3_dev": {
         "FN": 0,
-        "FP": 3,
-        "FP_ask": 1,
+        "FP": 5,
+        "FP_ask": 3,
         "FP_block": 2,
         "TN": 127,
-        "TP": 304,
-        "TP_ask": 70,
+        "TP": 302,
+        "TP_ask": 68,
         "TP_block": 234,
-        "ask_rate_safe": 0.007692307692307693,
+        "ask_rate_safe": 0.022727272727272728,
         "fn_ids": [],
         "fp_ask_ids": [
-          "v3-bad-144"
+          "v3-bad-144",
+          "v3-bad-207",
+          "v3-bad-218"
         ],
         "fp_block_ids": [
           "v3-bad-res-02",
           "v3-bad-054"
         ],
-        "fp_rate_safe": 0.023076923076923078,
+        "fp_rate_safe": 0.03787878787878788,
         "recall": 1.0,
         "wrong": [
           "v3-bad-res-02",
           "v3-bad-054",
-          "v3-bad-144"
+          "v3-bad-144",
+          "v3-bad-207",
+          "v3-bad-218"
         ]
       },
       "v5_dev": {
@@ -54887,6 +55144,56 @@
           "v5-good-054",
           "v5-good-055"
         ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 15,
+        "FP_ask": 7,
+        "FP_block": 8,
+        "TN": 0,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.4666666666666667,
+        "fn_ids": [],
+        "fp_ask_ids": [
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-015",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ],
+        "fp_block_ids": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-014",
+          "v6-WG6-018",
+          "v6-WG6-019"
+        ],
+        "fp_rate_safe": 1.0,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ]
       }
     },
     "guard_v4": {
@@ -55032,13 +55339,13 @@
       },
       "own_all": {
         "FN": 63,
-        "FP": 60,
+        "FP": 77,
         "FP_ask": 0,
-        "FP_block": 60,
+        "FP_block": 77,
         "TN": 493,
-        "TP": 671,
+        "TP": 669,
         "TP_ask": 0,
-        "TP_block": 671,
+        "TP_block": 669,
         "ask_rate_safe": 0.0,
         "fn_ids": [
           "v5-WB5-001",
@@ -55166,10 +55473,27 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
         ],
-        "fp_rate_safe": 0.10849909584086799,
-        "recall": 0.9141689373297003,
+        "fp_rate_safe": 0.13508771929824562,
+        "recall": 0.9139344262295082,
         "wrong": [
           "v5-WB5-001",
           "v5-WB5-002",
@@ -55293,7 +55617,24 @@
           "v5-good-052",
           "v5-good-053",
           "v5-good-054",
-          "v5-good-055"
+          "v5-good-055",
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
         ]
       },
       "residual": {
@@ -55385,27 +55726,31 @@
       },
       "v3_dev": {
         "FN": 0,
-        "FP": 3,
+        "FP": 5,
         "FP_ask": 0,
-        "FP_block": 3,
+        "FP_block": 5,
         "TN": 127,
-        "TP": 304,
+        "TP": 302,
         "TP_ask": 0,
-        "TP_block": 304,
+        "TP_block": 302,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
         "fp_block_ids": [
           "v3-bad-res-02",
           "v3-bad-054",
-          "v3-bad-144"
+          "v3-bad-144",
+          "v3-bad-207",
+          "v3-bad-218"
         ],
-        "fp_rate_safe": 0.023076923076923078,
+        "fp_rate_safe": 0.03787878787878788,
         "recall": 1.0,
         "wrong": [
           "v3-bad-res-02",
           "v3-bad-054",
-          "v3-bad-144"
+          "v3-bad-144",
+          "v3-bad-207",
+          "v3-bad-218"
         ]
       },
       "v5_dev": {
@@ -55661,6 +56006,55 @@
           "v5-good-054",
           "v5-good-055"
         ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 15,
+        "FP_ask": 0,
+        "FP_block": 15,
+        "TN": 0,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ],
+        "fp_rate_safe": 1.0,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ]
       }
     },
     "guard_v5": {
@@ -55797,20 +56191,56 @@
       },
       "own_all": {
         "FN": 0,
-        "FP": 0,
+        "FP": 17,
         "FP_ask": 0,
-        "FP_block": 0,
+        "FP_block": 17,
         "TN": 553,
-        "TP": 734,
+        "TP": 732,
         "TP_ask": 0,
-        "TP_block": 734,
+        "TP_block": 732,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
-        "fp_block_ids": [],
-        "fp_rate_safe": 0.0,
+        "fp_block_ids": [
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ],
+        "fp_rate_safe": 0.02982456140350877,
         "recall": 1.0,
-        "wrong": []
+        "wrong": [
+          "v3-bad-207",
+          "v3-bad-218",
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ]
       },
       "residual": {
         "FN": 12,
@@ -55891,20 +56321,26 @@
       },
       "v3_dev": {
         "FN": 0,
-        "FP": 0,
+        "FP": 2,
         "FP_ask": 0,
-        "FP_block": 0,
+        "FP_block": 2,
         "TN": 130,
-        "TP": 304,
+        "TP": 302,
         "TP_ask": 0,
-        "TP_block": 304,
+        "TP_block": 302,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
-        "fp_block_ids": [],
-        "fp_rate_safe": 0.0,
+        "fp_block_ids": [
+          "v3-bad-207",
+          "v3-bad-218"
+        ],
+        "fp_rate_safe": 0.015151515151515152,
         "recall": 1.0,
-        "wrong": []
+        "wrong": [
+          "v3-bad-207",
+          "v3-bad-218"
+        ]
       },
       "v5_dev": {
         "FN": 0,
@@ -55922,6 +56358,55 @@
         "fp_rate_safe": 0.0,
         "recall": 1.0,
         "wrong": []
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 15,
+        "FP_ask": 0,
+        "FP_block": 15,
+        "TN": 0,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ],
+        "fp_rate_safe": 1.0,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-001",
+          "v6-WG6-002",
+          "v6-WG6-003",
+          "v6-WG6-005",
+          "v6-WG6-006",
+          "v6-WG6-007",
+          "v6-WG6-008",
+          "v6-WG6-012",
+          "v6-WG6-013",
+          "v6-WG6-014",
+          "v6-WG6-015",
+          "v6-WG6-018",
+          "v6-WG6-019",
+          "v6-WG6-020",
+          "v6-WG6-021"
+        ]
       }
     },
     "guard_v6": {
@@ -55974,24 +56459,20 @@
       },
       "holdout3": {
         "FN": 0,
-        "FP": 1,
+        "FP": 0,
         "FP_ask": 0,
-        "FP_block": 1,
-        "TN": 24,
+        "FP_block": 0,
+        "TN": 25,
         "TP": 44,
         "TP_ask": 0,
         "TP_block": 44,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
-        "fp_block_ids": [
-          "K50"
-        ],
-        "fp_rate_safe": 0.04,
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
         "recall": 1.0,
-        "wrong": [
-          "K50"
-        ]
+        "wrong": []
       },
       "holdout4": {
         "FN": 3,
@@ -56061,10 +56542,10 @@
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 553,
-        "TP": 734,
+        "TN": 570,
+        "TP": 732,
         "TP_ask": 0,
-        "TP_block": 734,
+        "TP_block": 732,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
@@ -56155,10 +56636,10 @@
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 130,
-        "TP": 304,
+        "TN": 132,
+        "TP": 302,
         "TP_ask": 0,
-        "TP_block": 304,
+        "TP_block": 302,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
@@ -56182,6 +56663,23 @@
         "fp_block_ids": [],
         "fp_rate_safe": 0.0,
         "recall": 1.0,
+        "wrong": []
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 15,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": null,
         "wrong": []
       }
     },
@@ -56827,11 +57325,11 @@
         ]
       },
       "own_all": {
-        "FN": 490,
-        "FP": 74,
+        "FN": 488,
+        "FP": 75,
         "FP_ask": 0,
-        "FP_block": 74,
-        "TN": 479,
+        "FP_block": 75,
+        "TN": 495,
         "TP": 244,
         "TP_ask": 0,
         "TP_block": 244,
@@ -57219,7 +57717,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -57230,7 +57727,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -57403,10 +57899,11 @@
           "v5-good-037",
           "v5-good-044",
           "v5-good-047",
-          "v5-good-062"
+          "v5-good-062",
+          "v6-WG6-018"
         ],
-        "fp_rate_safe": 0.13381555153707053,
-        "recall": 0.33242506811989103,
+        "fp_rate_safe": 0.13157894736842105,
+        "recall": 0.3333333333333333,
         "wrong": [
           "bad-A05",
           "bad-A06",
@@ -57790,7 +58287,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -57801,7 +58297,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -57971,7 +58466,8 @@
           "v5-good-037",
           "v5-good-044",
           "v5-good-047",
-          "v5-good-062"
+          "v5-good-062",
+          "v6-WG6-018"
         ]
       },
       "residual": {
@@ -58558,11 +59054,11 @@
         ]
       },
       "v3_dev": {
-        "FN": 209,
+        "FN": 207,
         "FP": 13,
         "FP_ask": 0,
         "FP_block": 13,
-        "TN": 117,
+        "TN": 119,
         "TP": 95,
         "TP_ask": 0,
         "TP_block": 95,
@@ -58744,7 +59240,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -58755,7 +59250,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -58794,8 +59288,8 @@
           "v3-good-115",
           "v3-bad-res-02"
         ],
-        "fp_rate_safe": 0.1,
-        "recall": 0.3125,
+        "fp_rate_safe": 0.09848484848484848,
+        "recall": 0.31456953642384106,
         "wrong": [
           "v3-bad-res-03",
           "v3-bad-res-06",
@@ -58973,7 +59467,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -58984,7 +59477,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -59221,6 +59713,27 @@
           "v5-good-044",
           "v5-good-047",
           "v5-good-062"
+        ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 1,
+        "FP_ask": 0,
+        "FP_block": 1,
+        "TN": 14,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "v6-WG6-018"
+        ],
+        "fp_rate_safe": 0.06666666666666667,
+        "recall": null,
+        "wrong": [
+          "v6-WG6-018"
         ]
       }
     },
@@ -59988,11 +60501,11 @@
         ]
       },
       "own_all": {
-        "FN": 734,
+        "FN": 732,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 553,
+        "TN": 570,
         "TP": 0,
         "TP_ask": 0,
         "TP_block": 0,
@@ -60598,7 +61111,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -60609,7 +61121,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -61338,7 +61849,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -61349,7 +61859,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -62248,11 +62757,11 @@
         ]
       },
       "v3_dev": {
-        "FN": 304,
+        "FN": 302,
         "FP": 0,
         "FP_ask": 0,
         "FP_block": 0,
-        "TN": 130,
+        "TN": 132,
         "TP": 0,
         "TP_ask": 0,
         "TP_block": 0,
@@ -62512,7 +63021,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -62523,7 +63031,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -62822,7 +63329,6 @@
           "v3-bad-204",
           "v3-bad-205",
           "v3-bad-206",
-          "v3-bad-207",
           "v3-bad-208",
           "v3-bad-209",
           "v3-bad-210",
@@ -62833,7 +63339,6 @@
           "v3-bad-215",
           "v3-bad-216",
           "v3-bad-217",
-          "v3-bad-218",
           "v3-bad-219",
           "v3-bad-220",
           "v3-bad-221",
@@ -63060,54 +63565,71 @@
           "v5-bad-042",
           "v5-bad-043"
         ]
+      },
+      "v6_dev": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 15,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": null,
+        "wrong": []
       }
     }
   },
   "root_pinned": "/work/repo",
   "timing_us": {
     "broken_guard": {
-      "max": 5613.0001321434975,
-      "mean_median_of_runs": 105.14449028005777,
-      "median_per_command": 98.62519800662994
+      "max": 5632.166983559728,
+      "mean_median_of_runs": 108.20346072702948,
+      "median_per_command": 101.04198008775711
     },
     "guard_v1": {
-      "max": 978.4579742699862,
-      "mean_median_of_runs": 17.386225896269163,
-      "median_per_command": 16.416888684034348
+      "max": 1036.4169720560312,
+      "mean_median_of_runs": 17.821994645755147,
+      "median_per_command": 16.624806448817253
     },
     "guard_v2": {
-      "max": 1508.0419834703207,
-      "mean_median_of_runs": 31.741345480864368,
-      "median_per_command": 25.33290535211563
+      "max": 1570.9579456597567,
+      "mean_median_of_runs": 32.09997762422093,
+      "median_per_command": 25.667017325758934
     },
     "guard_v3": {
-      "max": 4995.29205262661,
-      "mean_median_of_runs": 83.0791322334821,
-      "median_per_command": 79.1249331086874
+      "max": 5077.459150925279,
+      "mean_median_of_runs": 84.71641636102414,
+      "median_per_command": 80.29153104871511
     },
     "guard_v4": {
-      "max": 5001.000128686428,
-      "mean_median_of_runs": 85.01122595316451,
-      "median_per_command": 80.54194040596485
+      "max": 5183.875095099211,
+      "mean_median_of_runs": 87.58032780975266,
+      "median_per_command": 82.60400500148535
     },
     "guard_v5": {
-      "max": 5669.5828679949045,
-      "mean_median_of_runs": 105.27196973972741,
-      "median_per_command": 99.45896454155445
+      "max": 5622.165976092219,
+      "mean_median_of_runs": 108.64244038595365,
+      "median_per_command": 102.4163793772459
     },
     "guard_v6": {
-      "max": 5557.29097686708,
-      "mean_median_of_runs": 105.34506393776124,
-      "median_per_command": 100.62521323561668
+      "max": 5825.500003993511,
+      "mean_median_of_runs": 108.91204478493968,
+      "median_per_command": 102.2089272737503
     },
     "naive_regex": {
-      "max": 7.542083039879799,
-      "mean_median_of_runs": 0.26434821592382163,
+      "max": 7.541850209236145,
+      "mean_median_of_runs": 0.2667578853300361,
       "median_per_command": 0.250060111284256
     },
     "no_guard": {
-      "max": 1.583946868777275,
-      "mean_median_of_runs": 0.0310375434718513,
+      "max": 0.8330680429935455,
+      "mean_median_of_runs": 0.03217210575856797,
       "median_per_command": 0.04190951585769653
     }
   },
@@ -63484,7 +64006,6 @@
         "v3-bad-204",
         "v3-bad-205",
         "v3-bad-206",
-        "v3-bad-207",
         "v3-bad-208",
         "v3-bad-209",
         "v3-bad-210",
@@ -63495,7 +64016,6 @@
         "v3-bad-215",
         "v3-bad-216",
         "v3-bad-217",
-        "v3-bad-218",
         "v3-bad-219",
         "v3-bad-220",
         "v3-bad-221",
@@ -63538,7 +64058,9 @@
       "worse": [
         "v3-bad-res-02",
         "v3-bad-054",
-        "v3-bad-144"
+        "v3-bad-144",
+        "v3-bad-207",
+        "v3-bad-218"
       ]
     },
     "v5_dev": {
@@ -63582,6 +64104,21 @@
         "v5-good-049",
         "v5-good-051"
       ]
+    },
+    "v6_dev": {
+      "fixed": [],
+      "worse": [
+        "v6-WG6-001",
+        "v6-WG6-002",
+        "v6-WG6-003",
+        "v6-WG6-005",
+        "v6-WG6-007",
+        "v6-WG6-012",
+        "v6-WG6-013",
+        "v6-WG6-015",
+        "v6-WG6-020",
+        "v6-WG6-021"
+      ]
     }
   },
   "v4_to_v5_changes": {
@@ -63594,7 +64131,9 @@
       "worse": []
     },
     "holdout3": {
-      "fixed": [],
+      "fixed": [
+        "K50"
+      ],
       "worse": []
     },
     "holdout4": {
@@ -63622,11 +64161,34 @@
       "worse": []
     },
     "v3_dev": {
-      "fixed": [],
+      "fixed": [
+        "v3-bad-207",
+        "v3-bad-218"
+      ],
       "worse": []
     },
     "v5_dev": {
       "fixed": [],
+      "worse": []
+    },
+    "v6_dev": {
+      "fixed": [
+        "v6-WG6-001",
+        "v6-WG6-002",
+        "v6-WG6-003",
+        "v6-WG6-005",
+        "v6-WG6-006",
+        "v6-WG6-007",
+        "v6-WG6-008",
+        "v6-WG6-012",
+        "v6-WG6-013",
+        "v6-WG6-014",
+        "v6-WG6-015",
+        "v6-WG6-018",
+        "v6-WG6-019",
+        "v6-WG6-020",
+        "v6-WG6-021"
+      ],
       "worse": []
     }
   }

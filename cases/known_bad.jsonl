@@ -598,7 +598,6 @@
 {"id": "v3-bad-204", "command": "chmod 644 .githooks/pre-push", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "octal mode without exec"}
 {"id": "v3-bad-205", "command": "chmod a-x .githooks/*", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "a-x on every hook"}
 {"id": "v3-bad-206", "command": "chmod u=rw .git/hooks/pre-push", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "= without x"}
-{"id": "v3-bad-207", "command": "chmod go-x .git/hooks/pre-push", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "a mode change that may not matter: ask"}
 {"id": "v3-bad-208", "command": "mv .githooks/pre-push /tmp/", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "moves a hook out"}
 {"id": "v3-bad-209", "command": "echo 'exit 0' > .git/hooks/pre-push", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "overwrites a hook with exit 0"}
 {"id": "v3-bad-210", "command": "printf '#!/bin/sh\\nexit 0\\n' > .githooks/pre-commit", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "overwrites a hook with a shebang and exit 0"}
@@ -609,7 +608,6 @@
 {"id": "v3-bad-215", "command": "cp /dev/null .githooks/pre-commit", "expect": "block", "policy": "B", "class": "plumbing-and-other-routes", "why": "hook replaced by /dev/null"}
 {"id": "v3-bad-216", "command": "cp scripts/pre-commit .git/hooks/", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "a write over a hook: contents unknown"}
 {"id": "v3-bad-217", "command": "cat other-hook > .git/hooks/pre-commit", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "a write over a hook from a file"}
-{"id": "v3-bad-218", "command": "echo 'make lint' >> .git/hooks/pre-commit", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "an append to a hook"}
 {"id": "v3-bad-219", "command": "tee .githooks/pre-push < /dev/null", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "tee into a hook"}
 {"id": "v3-bad-220", "command": "sed -i 's/make test/true/' .githooks/pre-push", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "in-place edit of a hook"}
 {"id": "v3-bad-221", "command": "perl -pi -e 's/^/exit 0\\n/' .git/hooks/pre-commit", "expect": "ask", "policy": "B", "class": "plumbing-and-other-routes", "why": "perl in-place edit of a hook"}

@@ -24,7 +24,7 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | holdout3 | blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5 | 69 | guard_v3 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
 | holdout3 | blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5 | 69 | guard_v4 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
 | holdout3 | blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5 | 69 | guard_v5 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
-| holdout3 | blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5 | 69 | guard_v6 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
+| holdout3 | blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5 | 69 | guard_v6 | 44 | 0 | 0 | 25 | 0 | 1.000 | 0.0% |
 | holdout4 | blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5 | 110 | guard_v1 | 49 | 0 | 0 | 37 | 24 | 0.671 | 0.0% |
 | holdout4 | blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5 | 110 | guard_v2 | 54 | 0 | 0 | 37 | 19 | 0.740 | 0.0% |
 | holdout4 | blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5 | 110 | guard_v3 | 70 | 0 | 0 | 37 | 3 | 0.959 | 0.0% |
@@ -66,15 +66,15 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | v2_dev | guard_v5 | 140 | 0 | 0 | 105 | 0 | 1.000 | 0.0% |
 | v2_dev | guard_v6 | 140 | 0 | 0 | 105 | 0 | 1.000 | 0.0% |
 | v2_dev | broken_guard | 136 | 0 | 0 | 105 | 4 | 0.971 | 0.0% |
-| v3_dev | no_guard | 0 | 0 | 0 | 130 | 304 | 0.000 | 0.0% |
-| v3_dev | naive_regex | 95 | 13 | 0 | 117 | 209 | 0.312 | 0.0% |
-| v3_dev | guard_v1 | 19 | 0 | 0 | 130 | 285 | 0.062 | 0.0% |
-| v3_dev | guard_v2 | 33 | 0 | 0 | 130 | 271 | 0.109 | 0.0% |
-| v3_dev | guard_v3 | 304 | 2 | 1 | 127 | 0 | 1.000 | 0.8% |
-| v3_dev | guard_v4 | 304 | 3 | 0 | 127 | 0 | 1.000 | 0.0% |
-| v3_dev | guard_v5 | 304 | 0 | 0 | 130 | 0 | 1.000 | 0.0% |
-| v3_dev | guard_v6 | 304 | 0 | 0 | 130 | 0 | 1.000 | 0.0% |
-| v3_dev | broken_guard | 236 | 0 | 0 | 130 | 68 | 0.776 | 0.0% |
+| v3_dev | no_guard | 0 | 0 | 0 | 132 | 302 | 0.000 | 0.0% |
+| v3_dev | naive_regex | 95 | 13 | 0 | 119 | 207 | 0.315 | 0.0% |
+| v3_dev | guard_v1 | 19 | 0 | 0 | 132 | 283 | 0.063 | 0.0% |
+| v3_dev | guard_v2 | 33 | 0 | 0 | 132 | 269 | 0.109 | 0.0% |
+| v3_dev | guard_v3 | 302 | 2 | 3 | 127 | 0 | 1.000 | 2.3% |
+| v3_dev | guard_v4 | 302 | 5 | 0 | 127 | 0 | 1.000 | 0.0% |
+| v3_dev | guard_v5 | 302 | 2 | 0 | 130 | 0 | 1.000 | 0.0% |
+| v3_dev | guard_v6 | 302 | 0 | 0 | 132 | 0 | 1.000 | 0.0% |
+| v3_dev | broken_guard | 236 | 0 | 0 | 132 | 66 | 0.781 | 0.0% |
 | v5_dev | no_guard | 0 | 0 | 0 | 104 | 84 | 0.000 | 0.0% |
 | v5_dev | naive_regex | 9 | 16 | 0 | 88 | 75 | 0.107 | 0.0% |
 | v5_dev | guard_v1 | 8 | 28 | 0 | 76 | 76 | 0.095 | 0.0% |
@@ -84,15 +84,24 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | v5_dev | guard_v5 | 84 | 0 | 0 | 104 | 0 | 1.000 | 0.0% |
 | v5_dev | guard_v6 | 84 | 0 | 0 | 104 | 0 | 1.000 | 0.0% |
 | v5_dev | broken_guard | 78 | 0 | 0 | 104 | 6 | 0.929 | 0.0% |
-| own_all | no_guard | 0 | 0 | 0 | 553 | 734 | 0.000 | 0.0% |
-| own_all | naive_regex | 244 | 74 | 0 | 479 | 490 | 0.332 | 0.0% |
-| own_all | guard_v1 | 237 | 29 | 0 | 524 | 497 | 0.323 | 0.0% |
-| own_all | guard_v2 | 385 | 29 | 0 | 524 | 349 | 0.525 | 0.0% |
-| own_all | guard_v3 | 671 | 32 | 28 | 493 | 63 | 0.914 | 5.1% |
-| own_all | guard_v4 | 671 | 60 | 0 | 493 | 63 | 0.914 | 0.0% |
-| own_all | guard_v5 | 734 | 0 | 0 | 553 | 0 | 1.000 | 0.0% |
-| own_all | guard_v6 | 734 | 0 | 0 | 553 | 0 | 1.000 | 0.0% |
-| own_all | broken_guard | 655 | 0 | 0 | 553 | 79 | 0.892 | 0.0% |
+| v6_dev | no_guard | 0 | 0 | 0 | 15 | 0 | n/a | 0.0% |
+| v6_dev | naive_regex | 0 | 1 | 0 | 14 | 0 | n/a | 0.0% |
+| v6_dev | guard_v1 | 0 | 5 | 0 | 10 | 0 | n/a | 0.0% |
+| v6_dev | guard_v2 | 0 | 5 | 0 | 10 | 0 | n/a | 0.0% |
+| v6_dev | guard_v3 | 0 | 8 | 7 | 0 | 0 | n/a | 46.7% |
+| v6_dev | guard_v4 | 0 | 15 | 0 | 0 | 0 | n/a | 0.0% |
+| v6_dev | guard_v5 | 0 | 15 | 0 | 0 | 0 | n/a | 0.0% |
+| v6_dev | guard_v6 | 0 | 0 | 0 | 15 | 0 | n/a | 0.0% |
+| v6_dev | broken_guard | 0 | 0 | 0 | 15 | 0 | n/a | 0.0% |
+| own_all | no_guard | 0 | 0 | 0 | 570 | 732 | 0.000 | 0.0% |
+| own_all | naive_regex | 244 | 75 | 0 | 495 | 488 | 0.333 | 0.0% |
+| own_all | guard_v1 | 237 | 34 | 0 | 536 | 495 | 0.324 | 0.0% |
+| own_all | guard_v2 | 385 | 34 | 0 | 536 | 347 | 0.526 | 0.0% |
+| own_all | guard_v3 | 669 | 40 | 37 | 493 | 63 | 0.914 | 6.5% |
+| own_all | guard_v4 | 669 | 77 | 0 | 493 | 63 | 0.914 | 0.0% |
+| own_all | guard_v5 | 732 | 17 | 0 | 553 | 0 | 1.000 | 0.0% |
+| own_all | guard_v6 | 732 | 0 | 0 | 570 | 0 | 1.000 | 0.0% |
+| own_all | broken_guard | 655 | 0 | 0 | 570 | 77 | 0.895 | 0.0% |
 | residual | no_guard | 0 | 0 | 0 | 0 | 12 | 0.000 | n/a |
 | residual | naive_regex | 1 | 0 | 0 | 0 | 11 | 0.083 | n/a |
 | residual | guard_v1 | 0 | 0 | 0 | 0 | 12 | 0.000 | n/a |
@@ -127,8 +136,8 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | holdout3 | guard_v3 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
 | holdout3 | guard_v4 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
 | holdout3 | guard_v5 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
-| holdout3 | guard_v6 | 44 | 1 | 0 | 24 | 0 | 1.000 | 0.0% |
-| holdout3 | broken_guard | 42 | 1 | 0 | 24 | 2 | 0.955 | 0.0% |
+| holdout3 | guard_v6 | 44 | 0 | 0 | 25 | 0 | 1.000 | 0.0% |
+| holdout3 | broken_guard | 42 | 0 | 0 | 25 | 2 | 0.955 | 0.0% |
 | holdout4 | no_guard | 0 | 0 | 0 | 37 | 73 | 0.000 | 0.0% |
 | holdout4 | naive_regex | 24 | 1 | 0 | 36 | 49 | 0.329 | 0.0% |
 | holdout4 | guard_v1 | 49 | 0 | 0 | 37 | 24 | 0.671 | 0.0% |
@@ -163,12 +172,13 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 |---|---:|---:|---:|---:|---:|---:|
 | v1_era | 214 | 0 | 1 | 0 | 0 | 0.0% |
 | v2_dev | 105 | 2 | 0 | 0 | 0 | 0.0% |
-| v3_dev | 130 | 1 | 2 | 0 | 0 | 0.0% |
+| v3_dev | 132 | 3 | 2 | 2 | 0 | 0.0% |
 | v5_dev | 104 | 25 | 29 | 0 | 0 | 0.0% |
-| own_all | 553 | 28 | 32 | 0 | 0 | 0.0% |
+| v6_dev | 15 | 7 | 8 | 15 | 0 | 0.0% |
+| own_all | 570 | 37 | 40 | 17 | 0 | 0.0% |
 | holdout | 24 | 2 | 1 | 3 | 3 | 12.5% |
 | holdout2 | 21 | 0 | 0 | 0 | 0 | 0.0% |
-| holdout3 | 25 | 0 | 1 | 1 | 1 | 4.0% |
+| holdout3 | 25 | 0 | 1 | 1 | 0 | 0.0% |
 | holdout4 | 37 | 0 | 0 | 0 | 0 | 0.0% |
 | holdout5 | 44 | 1 | 0 | 0 | 0 | 0.0% |
 | holdout6 | 41 | 1 | 0 | 0 | 0 | 0.0% |
@@ -205,15 +215,15 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 
 | variant | TP (block / ask) | FP block | FP ask | TN | FN | recall |
 |---|---:|---:|---:|---:|---:|---:|
-| no_guard | 0 (0 / 0) | 0 | 0 | 130 | 304 | 0.000 |
-| naive_regex | 95 (95 / 0) | 13 | 0 | 117 | 209 | 0.312 |
-| guard_v1 | 19 (19 / 0) | 0 | 0 | 130 | 285 | 0.062 |
-| guard_v2 | 33 (33 / 0) | 0 | 0 | 130 | 271 | 0.109 |
-| guard_v3 | 304 (234 / 70) | 2 | 1 | 127 | 0 | 1.000 |
-| guard_v4 | 304 (304 / 0) | 3 | 0 | 127 | 0 | 1.000 |
-| guard_v5 | 304 (304 / 0) | 0 | 0 | 130 | 0 | 1.000 |
-| guard_v6 | 304 (304 / 0) | 0 | 0 | 130 | 0 | 1.000 |
-| broken_guard | 236 (236 / 0) | 0 | 0 | 130 | 68 | 0.776 |
+| no_guard | 0 (0 / 0) | 0 | 0 | 132 | 302 | 0.000 |
+| naive_regex | 95 (95 / 0) | 13 | 0 | 119 | 207 | 0.315 |
+| guard_v1 | 19 (19 / 0) | 0 | 0 | 132 | 283 | 0.063 |
+| guard_v2 | 33 (33 / 0) | 0 | 0 | 132 | 269 | 0.109 |
+| guard_v3 | 302 (234 / 68) | 2 | 3 | 127 | 0 | 1.000 |
+| guard_v4 | 302 (302 / 0) | 5 | 0 | 127 | 0 | 1.000 |
+| guard_v5 | 302 (302 / 0) | 2 | 0 | 130 | 0 | 1.000 |
+| guard_v6 | 302 (302 / 0) | 0 | 0 | 132 | 0 | 1.000 |
+| broken_guard | 236 (236 / 0) | 0 | 0 | 132 | 66 | 0.781 |
 
 ## own cases written while building v5 (188)
 
@@ -229,19 +239,33 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | guard_v6 | 84 (84 / 0) | 0 | 0 | 104 | 0 | 1.000 |
 | broken_guard | 78 (78 / 0) | 0 | 0 | 104 | 6 | 0.929 |
 
-## all own cases (1287)
+## own cases written while building v6 (15)
 
 | variant | TP (block / ask) | FP block | FP ask | TN | FN | recall |
 |---|---:|---:|---:|---:|---:|---:|
-| no_guard | 0 (0 / 0) | 0 | 0 | 553 | 734 | 0.000 |
-| naive_regex | 244 (244 / 0) | 74 | 0 | 479 | 490 | 0.332 |
-| guard_v1 | 237 (237 / 0) | 29 | 0 | 524 | 497 | 0.323 |
-| guard_v2 | 385 (385 / 0) | 29 | 0 | 524 | 349 | 0.525 |
-| guard_v3 | 671 (591 / 80) | 32 | 28 | 493 | 63 | 0.914 |
-| guard_v4 | 671 (671 / 0) | 60 | 0 | 493 | 63 | 0.914 |
-| guard_v5 | 734 (734 / 0) | 0 | 0 | 553 | 0 | 1.000 |
-| guard_v6 | 734 (734 / 0) | 0 | 0 | 553 | 0 | 1.000 |
-| broken_guard | 655 (655 / 0) | 0 | 0 | 553 | 79 | 0.892 |
+| no_guard | 0 (0 / 0) | 0 | 0 | 15 | 0 | n/a |
+| naive_regex | 0 (0 / 0) | 1 | 0 | 14 | 0 | n/a |
+| guard_v1 | 0 (0 / 0) | 5 | 0 | 10 | 0 | n/a |
+| guard_v2 | 0 (0 / 0) | 5 | 0 | 10 | 0 | n/a |
+| guard_v3 | 0 (0 / 0) | 8 | 7 | 0 | 0 | n/a |
+| guard_v4 | 0 (0 / 0) | 15 | 0 | 0 | 0 | n/a |
+| guard_v5 | 0 (0 / 0) | 15 | 0 | 0 | 0 | n/a |
+| guard_v6 | 0 (0 / 0) | 0 | 0 | 15 | 0 | n/a |
+| broken_guard | 0 (0 / 0) | 0 | 0 | 15 | 0 | n/a |
+
+## all own cases (1302)
+
+| variant | TP (block / ask) | FP block | FP ask | TN | FN | recall |
+|---|---:|---:|---:|---:|---:|---:|
+| no_guard | 0 (0 / 0) | 0 | 0 | 570 | 732 | 0.000 |
+| naive_regex | 244 (244 / 0) | 75 | 0 | 495 | 488 | 0.333 |
+| guard_v1 | 237 (237 / 0) | 34 | 0 | 536 | 495 | 0.324 |
+| guard_v2 | 385 (385 / 0) | 34 | 0 | 536 | 347 | 0.526 |
+| guard_v3 | 669 (591 / 78) | 40 | 37 | 493 | 63 | 0.914 |
+| guard_v4 | 669 (669 / 0) | 77 | 0 | 493 | 63 | 0.914 |
+| guard_v5 | 732 (732 / 0) | 17 | 0 | 553 | 0 | 1.000 |
+| guard_v6 | 732 (732 / 0) | 0 | 0 | 570 | 0 | 1.000 |
+| broken_guard | 655 (655 / 0) | 0 | 0 | 570 | 77 | 0.895 |
 
 ## residual: violations the guard knowingly misses (12)
 
@@ -296,8 +320,8 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | guard_v3 | 44 (42 / 2) | 1 | 0 | 24 | 0 | 1.000 |
 | guard_v4 | 44 (44 / 0) | 1 | 0 | 24 | 0 | 1.000 |
 | guard_v5 | 44 (44 / 0) | 1 | 0 | 24 | 0 | 1.000 |
-| guard_v6 | 44 (44 / 0) | 1 | 0 | 24 | 0 | 1.000 |
-| broken_guard | 42 (42 / 0) | 1 | 0 | 24 | 2 | 0.955 |
+| guard_v6 | 44 (44 / 0) | 0 | 0 | 25 | 0 | 1.000 |
+| broken_guard | 42 (42 / 0) | 0 | 0 | 25 | 2 | 0.955 |
 
 ## holdout4, blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5 (110)
 
@@ -351,24 +375,24 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | own_all | A | guard_v4 | 158 | 145 | 0 | 0 | 0 | 13 |
 | own_all | A | guard_v5 | 158 | 158 | 0 | 0 | 0 | 0 |
 | own_all | A | guard_v6 | 158 | 158 | 0 | 0 | 0 | 0 |
-| own_all | B | guard_v1 | 167 | 67 | 0 | 0 | 0 | 100 |
-| own_all | B | guard_v2 | 167 | 99 | 0 | 0 | 0 | 68 |
-| own_all | B | guard_v3 | 167 | 154 | 0 | 0 | 0 | 13 |
-| own_all | B | guard_v4 | 167 | 154 | 0 | 0 | 0 | 13 |
-| own_all | B | guard_v5 | 167 | 167 | 0 | 0 | 0 | 0 |
-| own_all | B | guard_v6 | 167 | 167 | 0 | 0 | 0 | 0 |
+| own_all | B | guard_v1 | 165 | 67 | 0 | 0 | 0 | 98 |
+| own_all | B | guard_v2 | 165 | 99 | 0 | 0 | 0 | 66 |
+| own_all | B | guard_v3 | 165 | 152 | 0 | 0 | 0 | 13 |
+| own_all | B | guard_v4 | 165 | 152 | 0 | 0 | 0 | 13 |
+| own_all | B | guard_v5 | 165 | 165 | 0 | 0 | 0 | 0 |
+| own_all | B | guard_v6 | 165 | 165 | 0 | 0 | 0 | 0 |
 | own_all | C | guard_v1 | 476 | 96 | 0 | 0 | 72 | 308 |
 | own_all | C | guard_v2 | 476 | 198 | 0 | 0 | 72 | 206 |
 | own_all | C | guard_v3 | 476 | 367 | 0 | 0 | 72 | 37 |
 | own_all | C | guard_v4 | 476 | 367 | 0 | 0 | 72 | 37 |
 | own_all | C | guard_v5 | 476 | 404 | 0 | 0 | 72 | 0 |
 | own_all | C | guard_v6 | 476 | 404 | 0 | 0 | 72 | 0 |
-| own_all | none | guard_v1 | 486 | 0 | 29 | 0 | 452 | 5 |
-| own_all | none | guard_v2 | 486 | 0 | 29 | 0 | 452 | 5 |
-| own_all | none | guard_v3 | 486 | 5 | 32 | 28 | 421 | 0 |
-| own_all | none | guard_v4 | 486 | 5 | 60 | 0 | 421 | 0 |
-| own_all | none | guard_v5 | 486 | 5 | 0 | 0 | 481 | 0 |
-| own_all | none | guard_v6 | 486 | 5 | 0 | 0 | 481 | 0 |
+| own_all | none | guard_v1 | 503 | 0 | 34 | 0 | 464 | 5 |
+| own_all | none | guard_v2 | 503 | 0 | 34 | 0 | 464 | 5 |
+| own_all | none | guard_v3 | 503 | 5 | 40 | 37 | 421 | 0 |
+| own_all | none | guard_v4 | 503 | 5 | 77 | 0 | 421 | 0 |
+| own_all | none | guard_v5 | 503 | 5 | 17 | 0 | 481 | 0 |
+| own_all | none | guard_v6 | 503 | 5 | 0 | 0 | 498 | 0 |
 | holdout | A | guard_v1 | 33 | 17 | 0 | 0 | 15 | 1 |
 | holdout | A | guard_v2 | 33 | 18 | 0 | 0 | 15 | 0 |
 | holdout | A | guard_v3 | 33 | 18 | 0 | 2 | 13 | 0 |
@@ -416,7 +440,7 @@ Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 | holdout3 | A | guard_v3 | 23 | 17 | 1 | 0 | 5 | 0 |
 | holdout3 | A | guard_v4 | 23 | 17 | 1 | 0 | 5 | 0 |
 | holdout3 | A | guard_v5 | 23 | 17 | 1 | 0 | 5 | 0 |
-| holdout3 | A | guard_v6 | 23 | 17 | 1 | 0 | 5 | 0 |
+| holdout3 | A | guard_v6 | 23 | 17 | 0 | 0 | 6 | 0 |
 | holdout3 | B | guard_v1 | 14 | 3 | 0 | 0 | 3 | 8 |
 | holdout3 | B | guard_v2 | 14 | 10 | 0 | 0 | 3 | 1 |
 | holdout3 | B | guard_v3 | 14 | 11 | 0 | 0 | 3 | 0 |
@@ -593,7 +617,7 @@ Each cell is correct verdicts over cases in the class (stopped for a stop class,
 | guardfall-flag-variants | block | 9 | 0/9 | 1/9 | 8/9 | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 |
 | guardfall-ifs-variable | block | 8 | 0/8 | 0/8 | 0/8 | 4/8 | 8/8 | 8/8 | 8/8 | 8/8 | 7/8 |
 | guardfall-quote-removal | block | 9 | 0/9 | 0/9 | 7/9 | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 |
-| safe | allow | 25 | 25/25 | 20/25 | 24/25 | 24/25 | 24/25 | 24/25 | 24/25 | 24/25 | 24/25 |
+| safe | allow | 25 | 25/25 | 20/25 | 24/25 | 24/25 | 24/25 | 24/25 | 24/25 | 25/25 | 25/25 |
 
 Wrong guard_v1 verdicts by class:
 
@@ -647,7 +671,7 @@ Wrong guard_v6 verdicts by class:
 - guardfall-flag-variants (0): none
 - guardfall-ifs-variable (0): none
 - guardfall-quote-removal (0): none
-- safe (1): K50
+- safe (0): none
 
 ## holdout4 by class (blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5)
 
@@ -2389,8 +2413,9 @@ Wrong guard_v6 verdicts by class:
 |---|---:|---:|
 | v1_era | 1 | 0 |
 | v2_dev | 4 | 2 |
-| v3_dev | 271 | 3 |
+| v3_dev | 269 | 5 |
 | v5_dev | 10 | 26 |
+| v6_dev | 0 | 10 |
 | residual | 0 | 0 |
 | holdout | 0 | 2 |
 | holdout2 | 2 | 0 |
@@ -2399,7 +2424,7 @@ Wrong guard_v6 verdicts by class:
 | holdout5 | 32 | 1 |
 | holdout6 | 33 | 1 |
 
-Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:v3-bad-res-02, v3_dev:v3-bad-054, v3_dev:v3-bad-144, v5_dev:v5-WG5-004, v5_dev:v5-WG5-005, v5_dev:v5-WG5-010, v5_dev:v5-WG5-016, v5_dev:v5-WG5-017, v5_dev:v5-WG5-018, v5_dev:v5-WG5-019, v5_dev:v5-WG5-020, v5_dev:v5-WG5-021, v5_dev:v5-WG5-025, v5_dev:v5-WG5-030, v5_dev:v5-WG5-031, v5_dev:v5-WG5-032, v5_dev:v5-WG5-033, v5_dev:v5-WG5-034, v5_dev:v5-WG5-035, v5_dev:v5-WG5-036, v5_dev:v5-WG5-037, v5_dev:v5-WG5-038, v5_dev:v5-WG5-039, v5_dev:v5-S5-111, v5_dev:v5-good-041, v5_dev:v5-good-043, v5_dev:v5-good-048, v5_dev:v5-good-049, v5_dev:v5-good-051, holdout:H33, holdout:H34, holdout5:S5-111, holdout6:H6-021.
+Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:v3-bad-res-02, v3_dev:v3-bad-054, v3_dev:v3-bad-144, v3_dev:v3-bad-207, v3_dev:v3-bad-218, v5_dev:v5-WG5-004, v5_dev:v5-WG5-005, v5_dev:v5-WG5-010, v5_dev:v5-WG5-016, v5_dev:v5-WG5-017, v5_dev:v5-WG5-018, v5_dev:v5-WG5-019, v5_dev:v5-WG5-020, v5_dev:v5-WG5-021, v5_dev:v5-WG5-025, v5_dev:v5-WG5-030, v5_dev:v5-WG5-031, v5_dev:v5-WG5-032, v5_dev:v5-WG5-033, v5_dev:v5-WG5-034, v5_dev:v5-WG5-035, v5_dev:v5-WG5-036, v5_dev:v5-WG5-037, v5_dev:v5-WG5-038, v5_dev:v5-WG5-039, v5_dev:v5-S5-111, v5_dev:v5-good-041, v5_dev:v5-good-043, v5_dev:v5-good-048, v5_dev:v5-good-049, v5_dev:v5-good-051, v6_dev:v6-WG6-001, v6_dev:v6-WG6-002, v6_dev:v6-WG6-003, v6_dev:v6-WG6-005, v6_dev:v6-WG6-007, v6_dev:v6-WG6-012, v6_dev:v6-WG6-013, v6_dev:v6-WG6-015, v6_dev:v6-WG6-020, v6_dev:v6-WG6-021, holdout:H33, holdout:H34, holdout5:S5-111, holdout6:H6-021.
 
 ## Verdicts that changed from guard_v4 to guard_v5 (stopped versus allowed)
 
@@ -2407,39 +2432,40 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 |---|---:|---:|---|
 | v1_era | 0 | 0 | none |
 | v2_dev | 0 | 0 | none |
-| v3_dev | 0 | 0 | none |
+| v3_dev | 2 | 0 | none |
 | v5_dev | 0 | 0 | none |
+| v6_dev | 15 | 0 | none |
 | residual | 0 | 0 | none |
 | holdout | 0 | 0 | none |
 | holdout2 | 0 | 0 | none |
-| holdout3 | 0 | 0 | none |
+| holdout3 | 1 | 0 | none |
 | holdout4 | 0 | 0 | none |
 | holdout5 | 0 | 0 | none |
 | holdout6 | 0 | 0 | none |
 
 ## Timing
 
-1815 decisions per run, in-process (no interpreter start-up).
+1830 decisions per run, in-process (no interpreter start-up).
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 2 |
+| no_guard | 0.0 | 0.0 | 1 |
 | naive_regex | 0.3 | 0.3 | 8 |
-| guard_v1 | 17.4 | 16.4 | 978 |
-| guard_v2 | 31.7 | 25.3 | 1508 |
-| guard_v3 | 83.1 | 79.1 | 4995 |
-| guard_v4 | 85.0 | 80.5 | 5001 |
-| guard_v5 | 105.3 | 99.5 | 5670 |
-| guard_v6 | 105.3 | 100.6 | 5557 |
-| broken_guard | 105.1 | 98.6 | 5613 |
+| guard_v1 | 17.8 | 16.6 | 1036 |
+| guard_v2 | 32.1 | 25.7 | 1571 |
+| guard_v3 | 84.7 | 80.3 | 5077 |
+| guard_v4 | 87.6 | 82.6 | 5184 |
+| guard_v5 | 108.6 | 102.4 | 5622 |
+| guard_v6 | 108.9 | 102.2 | 5826 |
+| broken_guard | 108.2 | 101.0 | 5632 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
-1056 denies over every set, 70 shapes, 65 distinct alternative commands, each one allowed by guard.py.
+1053 denies over every set, 70 shapes, 65 distinct alternative commands, each one allowed by guard.py.
 
 | shape | denies | first alternative |
 |---|---:|---|
-| A-add-whole | 212 | `git status --short` |
+| A-add-whole | 211 | `git status --short` |
 | C-reset-hard | 183 | `git stash push -m "before reset"` |
 | C-force-push | 79 | `git push origin branch-name` |
 | B-no-verify | 70 | `git commit -m "message"` |
@@ -2455,11 +2481,11 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 | C-remote-delete | 15 | `git push origin branch-name` |
 | B-commit-n | 12 | `git commit -m "message"` |
 | C-branch-move | 12 | `git switch -c new-branch origin/main` |
-| F-hook-write | 12 | `cat .git/hooks/pre-commit` |
 | B-plumbing | 10 | `git commit -m "message"` |
 | B-runner-off | 10 | `git commit -m "message"` |
 | C-delete-dotgit | 10 | `git fsck` |
 | C-stash-drop | 10 | `git stash list` |
+| F-hook-write | 10 | `cat .git/hooks/pre-commit` |
 | B-config-env | 9 | `git -c user.name="Name" commit -m "message"` |
 | F-var-reset | 8 | `echo "$VAR"` |
 | F-pipe-to-shell | 7 | `cat script.sh` |
@@ -2536,10 +2562,6 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 - false positive, block `H48` (policy B, class unclassified): `"git config --unset core.hooksPath"`
   - reason: hook_bypass_guard: git config core.hooksPath <not .githooks> disarms the hooks for the clone. Git's own hooks are the safety checks that run before a commit or push. DO THIS INSTEAD: Leave core.hooksP
 
-### holdout3
-- false positive, block `K50` (policy A, class safe): `"git add $(echo src/synthetic/a.txt)"`
-  - reason: blanket_stage_guard: this stages by SCOPE, not by NAME. Whole-worktree staging is denied as a class, not only the two literal spellings. Name every path: `git add <path> <path>`. Form seen: git add $ 
-
 ### holdout4
 - miss `Q016` (policy A, class quote-tricks): `"git add \"*.txt\""`
 - miss `Q050` (policy A, class encoded-or-transformed): `"git add <<<$FLAG"`
@@ -2570,13 +2592,14 @@ Blind to: a script FILE run by name that this command did not write (sh x.sh, py
 
 - PASS: guard.py stops every own bad case and allows every own good case (0 errors)
 - PASS: guard.py denies each own stop case with the origin it names (v3 block or v3 fail-closed ask) (0 differ)
-- PASS: broken_guard.py has at least one error on own cases (negative control) (79 errors)
-- PASS: guard.py hook form agrees with decide() on every case, never asks, carries every redirect, and made no snapshot ref here (0 of 1815 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs)
+- PASS: broken_guard.py has at least one error on own cases (negative control) (77 errors)
+- PASS: guard.py hook form agrees with decide() on every case, never asks, carries every redirect, and made no snapshot ref here (0 of 1830 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs)
 - PASS: broken_guard.py differs from guard.py by exactly one line (1 changed lines)
-- PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (31): H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055)
-- PASS: every v5 deny is a v6 deny on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1056 v5 denies softened outside the list; 0 newly stopped; listed (0): none; holdout fixes (0): none; holdout regressions (0): none)
-- PASS: guard.py never returns ask (0 asks (v3 asked on 133))
-- PASS: every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 1056 denies bad, 70 shapes, 65 distinct alternatives; planted caught 5 of 5; clean control passes)
+- PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (36): H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019)
+- PASS: every v5 deny is a v6 deny on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1071 v5 denies softened outside the list; 0 newly stopped; listed (17): v3-bad-207, v3-bad-218, v6-WG6-001, v6-WG6-002, v6-WG6-003, v6-WG6-005, v6-WG6-006, v6-WG6-007, v6-WG6-008, v6-WG6-012, v6-WG6-013, v6-WG6-014, v6-WG6-015, v6-WG6-018, v6-WG6-019, v6-WG6-020, v6-WG6-021; holdout fixes (1): K50; holdout regressions (0): none)
+- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.302 s on '${${${${${${${${${${${${${${${${${${${${')
+- PASS: guard.py never returns ask (0 asks (v3 asked on 140))
+- PASS: every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 1053 denies bad, 70 shapes, 65 distinct alternatives; planted caught 5 of 5; clean control passes)
 - PASS: undo_bench.py passes (OVERALL: PASS, exit 0; Fully restored: 72 of 72. Controls that show the loss: 5 of 5.)
 
 OVERALL: PASS

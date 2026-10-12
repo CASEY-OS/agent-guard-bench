@@ -3,7 +3,7 @@
 
 Variants: no_guard (baseline), naive_regex, guard_v1, guard_v2, guard_v3 and guard_v4 (frozen copies in
 variants/), guard_v5 (guard.py, the real one), broken_guard (negative control for guard.py).
-Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"); residual;
+Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"); residual;
 and the holdouts when their files exist. Which holdout was blind or a development set for which version is
 in HOLDOUT_STATUS and printed with every table.
 
@@ -89,6 +89,28 @@ EXPECT_WORDS = {"block": "block", "deny": "block", "blocked": "block", "denied":
                 "ask": "ask", "stop": "stop", "stopped": "stop",
                 "allow": "allow", "allowed": "allow", "pass": "allow"}
 CLASS_FIELDS = ("class", "category", "bypass_class", "group", "klass", "type", "tag")
+
+
+PATHO_SEEDS = ["git add $(echo ", "a ", "'", '"', "$(", "${", "`", "\\", "<<", "git add ", "-", "x=", "{a,", "*", "#",
+               " -c core.hooksPath=", "git commit -m '", "; ", "&& ", "$IFS", "\n", "(", "python3 -c \"", "find . -name ",
+               "sed -i 's/", "for a in ", "a\\ ", "printf '%s", "<<<", ":(exclude)"]
+
+
+def pathological_timing(mod):
+    """Version 6: a regex that backtracks without bound hangs the hook (the first v6 echo pattern took 13 s on
+    28 characters). 270 long, repetitive, unterminated inputs; -> (slowest seconds, its input head)."""
+    worst = (0.0, "")
+    for sd in PATHO_SEEDS:
+        for tail in ("", ")", " x"):
+            for n in (40, 400, 3000):
+                body = "a" * n if sd.endswith((" ", "(")) else sd * (n // max(1, len(sd)))
+                c = (sd + body + tail)[:6000]
+                t = time.perf_counter()
+                mod.decide(c)
+                dt = time.perf_counter() - t
+                if dt > worst[0]:
+                    worst = (dt, c[:40])
+    return worst
 
 
 def load_module(name, path):
@@ -230,7 +252,8 @@ def git_snapshot_refs(path):
 
 SET_LABELS = {"v1_era": "own cases, v1 era (%d)", "v2_dev": "own cases written while building v2 (%d)",
               "v3_dev": "own cases written while building v3 (%d)",
-              "v5_dev": "own cases written while building v5 (%d)", "own_all": "all own cases (%d)",
+              "v5_dev": "own cases written while building v5 (%d)",
+              "v6_dev": "own cases written while building v6 (%d)", "own_all": "all own cases (%d)",
               "residual": "residual: violations the guard knowingly misses (%d)"}
 
 
@@ -258,17 +281,18 @@ def main():
     present = {h: h in loaded for h in HOLDOUTS}
     own = loaded["known_bad"] + loaded["known_good"]
     sets = {
-        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-"))],
+        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-", "v6-"))],
         "v2_dev": [r for r in own if r["id"].startswith("v2-")],
         "v3_dev": [r for r in own if r["id"].startswith("v3-")],
         "v5_dev": [r for r in own if r["id"].startswith("v5-")],
+        "v6_dev": [r for r in own if r["id"].startswith("v6-")],
         "own_all": own,
         "residual": loaded["residual"],
     }
     for h in HOLDOUTS:
         if present[h]:
             sets[h] = loaded[h]
-    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
+    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "v6_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
 
     # one verdict per (variant, case)
     all_rows = {}
@@ -422,6 +446,7 @@ def main():
     uh_lines = [l for l in uh.stdout.splitlines() if l.startswith("UNDO HOLDOUT ")]
 
     flips = [r["id"] for r in sets["residual"] if verdicts["guard_v6"][r["id"]] != "allow"]
+    patho = pathological_timing(mods["guard_v6"])
 
     # verdict changes v2 -> v3, judged as stopped / allowed
     changes, regressions = {}, []
@@ -481,6 +506,8 @@ def main():
             (": " + ", ".join(v4_softened)) if v4_softened else "", len(v5_hardened), len(soft4_listed),
             ", ".join(soft4_listed) or "none", len(hold_fixed), ", ".join(hold_fixed) or "none",
             len(hold_regressed), ", ".join(hold_regressed) or "none")),
+        ("no decision takes a second on 270 pathological inputs (unbounded regex backtracking)", patho[0] < 1.0,
+         "slowest %.3f s on %r" % patho),
         ("guard.py never returns ask", not v5_asks, "%d asks (v3 asked on %d)" % (len(v5_asks), len(v3_asks))),
         ("every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught",
          not redirect_bad and len(planted_caught) == len(planted) and not clean_control,

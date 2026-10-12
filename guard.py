@@ -139,6 +139,13 @@ def _tokens(text):
         return None
 
 
+def _hd_end(line, d, dash):
+    """Is `line` the end of a heredoc delimited by d? Bash ends `<<` only on a line that is exactly d,
+    and `<<-` on one that is d after leading TABS (not spaces). "  EOF" ends neither (version 6, WG6-018)."""
+    line = line.rstrip("\n").rstrip("\r")
+    return line == d or (dash and line.lstrip("\t") == d)
+
+
 def _strip_heredocs(cmd):
     """A heredoc BODY is data, not commands (a runbook quoting `git add -A` on its own line).
     Delimiters are found by tokenizing only the lines that carry `<<` (so a quoted "<<EOF"
@@ -158,7 +165,8 @@ def _strip_heredocs(cmd):
         i += 1
         m = re.search(r"<<-?\s*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?", line)
         if m and m.group(1) in delims:
-            end = next((j for j in range(i, len(lines)) if lines[j].strip() == m.group(1)), None)
+            dash = m.group(0).startswith("<<-")
+            end = next((j for j in range(i, len(lines)) if _hd_end(lines[j], m.group(1), dash)), None)
             if end is not None:
                 i = end + 1
     return "\n".join(out)
@@ -403,7 +411,7 @@ def hook_bypass_guard(cmd_nohd):
             why = "-c core.hooksPath=<not .githooks> disarms the hooks for this one command"
         elif sub == "config" and re.search(r"core\.hooksPath", bare, re.I) \
                 and not re.search(r"--get|--list", rest):
-            val = re.search(r"core\.hooksPath\s+(\S+)", tail.split("<<")[0], re.I)
+            val = re.search(r"core\.hooksPath\s+(\"[^\"]*\"|'[^']*'|\S+)", tail.split("<<")[0], re.I)
             if (val and not _hooks_ok(val.group(1))) or re.search(r"--unset", rest):
                 why = "git config core.hooksPath <not .githooks> disarms the hooks for the clone"
         elif sub in PLUMB:
@@ -412,7 +420,8 @@ def hook_bypass_guard(cmd_nohd):
             why = "--no-verify on a hook-carrying git command"
         elif sub == "push" and re.search(r"--no-verify(?![\w-])", bare):
             why = "--no-verify (quoted) on a hook-carrying git command"
-        elif sub == "commit" and re.search(r"(?:^|\s)-[A-Za-z]*n[A-Za-z]*(?=\s|$)", rest):
+        elif sub == "commit" and re.search(r"(?:^|\s)-[A-Za-z]*n[A-Za-z]*(?=\s|$)", rest) \
+                and not re.search(r"(?:^|\s)--dry-run(?=\s|$)", rest):
             why = "git commit -n (= --no-verify)"
         if why:
             return "hook_bypass_guard: " + why + BYPASS_TAIL
@@ -512,9 +521,12 @@ def _loss_reason(sub, args, root, cwd=None):
                 return "git clean with -f deletes untracked files for good"
     elif sub == "checkout" or sub == "restore":
         staged = worktree = whole = endopts = False
+        has_dd = "--" in args                    # version 6: with --, the words before it name a commit, not paths
         for a in args:
             if a == "--" and not endopts:
                 endopts = True
+            elif (has_dd and not endopts and not a.startswith("-")) or a == "$":
+                continue                         # a lone "$" is what is left of a $( split at its bracket
             elif not endopts and a.startswith("--"):
                 staged = staged or a == "--staged"
                 worktree = worktree or a == "--worktree"
@@ -613,6 +625,11 @@ def _hook_reason(c):
         for k, a in enumerate(args):
             if a.casefold() == "core.hookspath":
                 val = args[k + 1] if k + 1 < len(args) else None
+                if val and val[0] in "\"'" and not (len(val) > 1 and val.endswith(val[0])):
+                    for j in range(k + 2, len(args)):   # this view split a quoted value at its spaces
+                        val += " " + args[j]
+                        if args[j].endswith(val[0]):
+                            break
                 if (val and not _hooks_ok(val)) or any(x.startswith("--unset") for x in args):
                     return "git config core.hooksPath <not .githooks> disarms the hooks for the clone"
         return None
@@ -632,7 +649,7 @@ def _hook_reason(c):
             if len(a) >= 8 and "--no-verify".startswith(a):     # git accepts a unique abbreviation
                 return "--no-verify on a hook-carrying git command"
             if (sub == "commit" and re.match(r"^-[A-Za-z]+$", a) and a[:2] not in GLUED_COMMIT
-                    and "n" in a[1:]):
+                    and "n" in a[1:] and "--dry-run" not in args):
                 return "git commit -n (= --no-verify)"
     return None
 
@@ -1133,11 +1150,25 @@ def _producer(head, rest):
                 "export SSH_AGENT_PID;\necho Agent pid 4242;\n")
     if (head in ("pyenv", "rbenv", "nodenv") and rest[:1] == ["init"]) or (head == "brew" and rest == ["shellenv"]):
         return "export PATH=/opt/" + head + "/shims:/usr/bin:/bin\n"
+    if head in ("whoami", "id") and (not rest or rest in (["-un"], ["-u", "-n"], ["-n", "-u"])):
+        return "user\n"                         # a login name: letters, digits, . _ -, never a leading -
     if head != "git" or not rest:
         return None
     sub, a2 = rest[0], rest[1:]
     if sub == "branch" and a2 == ["--show-current"]:
         return BRANCH_PLACEHOLDER + "\n"
+    # version 6: commit ids, counts and branch lists (dev cases WG6-012 to WG6-016)
+    plain = [a for a in a2 if not a.startswith("-")]
+    if sub == "merge-base" and all(a in ("--fork-point",) or not a.startswith("-") for a in a2) and len(plain) >= 2:
+        return SHA_PLACEHOLDER + "\n"
+    if sub == "rev-list" and plain and all(re.match(r"^(--count|-n\d+|-1|--max-count=\d+|--first-parent|"
+                                                     r"--no-merges|--reverse)$", a) for a in a2 if a.startswith("-")):
+        if "--count" in a2:
+            return "3\n"
+        return SHA_PLACEHOLDER + "\n"
+    if sub == "branch" and a2 and all(re.match(r"^(--merged|--no-merged|--list|-l|-a|-r)$", a) or not a.startswith("-")
+                                      for a in a2) and any(a in ("--merged", "--no-merged") for a in a2):
+        return "  " + BRANCH_PLACEHOLDER + "\n  done-branch\n"
     if sub == "symbolic-ref" and [a for a in a2 if a not in ("-q", "--quiet")] in (["--short", "HEAD"], ["HEAD"]):
         return (BRANCH_PLACEHOLDER if "--short" in a2 else "refs/heads/" + BRANCH_PLACEHOLDER) + "\n"
     if sub != "rev-parse":
@@ -1580,6 +1611,9 @@ def _hooks_ok(val, cwd=None):
     if v.rstrip("/") in (".githooks", "./.githooks"):
         return True
     root = _root()
+    # version 6: the repo root named the way an agent names it (WG6-006): git's own answer or Claude Code's variable
+    v = re.sub(r"^(?:\$\(git rev-parse --show-toplevel\)|`git rev-parse --show-toplevel`|\$\{?CLAUDE_PROJECT_DIR\}?)(?=/)",
+               lambda m: root, v)
     return bool(v) and not _dyn(v) and "$" not in v and \
         posixpath.normpath(posixpath.join(cwd or root, v)) == posixpath.join(root, ".githooks")
 
@@ -1623,7 +1657,7 @@ def _strip_comments(cmd):
         elif q == 0 and cmd.startswith("<<", i) and not cmd.startswith("<<<", i):
             m = re.match(r"<<-?\s*\\?(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1", cmd[i:])
             if m:
-                pend.append(m.group(2))
+                pend.append((m.group(2), m.group(0).startswith("<<-")))
                 out.append(m.group(0))
                 i += len(m.group(0))
                 continue
@@ -1635,13 +1669,13 @@ def _strip_comments(cmd):
             out.append(c)
             i += 1
             while pend and i < n:                   # each heredoc body, verbatim, through its delimiter
-                d = pend.pop(0)
+                d, dash = pend.pop(0)
                 while i < n:
                     j = cmd.find("\n", i)
                     line = cmd[i:] if j < 0 else cmd[i:j + 1]
                     out.append(line)
                     i += len(line)
-                    if line.strip() == d:
+                    if _hd_end(line, d, dash):
                         break
             continue
         out.append(c)
@@ -2315,8 +2349,8 @@ def _heredoc_bodies(cmd):
         lt = _tokens(line) or []
         for k in range(len(lt) - 1):
             if lt[k] == "<<":
-                d = lt[k + 1].lstrip("-")
-                end = next((j for j in range(i, len(lines)) if lines[j].strip() == d), None)
+                d, dash = lt[k + 1].lstrip("-"), lt[k + 1].startswith("-")
+                end = next((j for j in range(i, len(lines)) if _hd_end(lines[j], d, dash)), None)
                 if end is not None:
                     quoted = bool(re.search(r"<<-?\s*(?:\\|['\"])\s*" + re.escape(d) + r"|<<-?\s*" +
                                             re.escape(d) + r"['\"]", line)) or "\\" in lt[k + 1]
@@ -3139,6 +3173,10 @@ def _redir_rules(b, args, stage, st):
                 continue
             st.ask("a write over a git hook file (" + tgt + ")")
         elif c == "hooks" and op in (">>", "&>>"):
+            if b in ("echo", "printf") and args and all(_lit3(a) and _lit(a) for a in args):
+                txt = _stage([b] + args, None)
+                if txt is not None and _real_script(txt):
+                    continue                    # version 6: an appended command runs after the existing checks
             st.ask("a write into a git hook file (" + tgt + ")")
         elif op in (">", ">>", ">|", "&>", "&>>") and _is_cfgfile(tgt, cwd, st.root):
             if re.search(r"hookspath", " ".join(stage["argv"]) + " " + (stage.get("here") or ""), re.I):
@@ -3164,6 +3202,10 @@ def _fs_rules(b, args, stage, st):
         rec = any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in args if a.startswith("-"))
         for p in pos:
             c = _pclass(p, cwd)
+            if c == "hooks" and _lit3(p) and p.endswith(".sample"):
+                continue                        # git never runs a .sample file (version 6)
+            if c == "git" and _lit3(p) and posixpath.basename(p) in ("FETCH_HEAD", "gc.log", "COMMIT_EDITMSG"):
+                continue                        # rewritten by the next fetch, gc or commit: no work in it
             if c == "hooks":
                 return "hook_bypass_guard: deletes a git hook (" + p + ")" + BYPASS_TAIL
             if c == "gitdir":
@@ -3228,6 +3270,8 @@ def _fs_rules(b, args, stage, st):
                 return "hook_bypass_guard: chmod " + mode + " turns a git hook off" + BYPASS_TAIL
             if mode and "+" in mode:
                 return None
+            if mode and all(re.match(r"^[go]+[-+=]", c) for c in mode.split(",")):
+                return None                     # group and other bits only: the owner still runs it (version 6)
             st.ask("a mode change on a git hook")
         return None
     if b in ("cp", "install", "ln", "rsync", "tee", "truncate", "dd", "sed", "perl", "touch"):
@@ -3311,9 +3355,13 @@ def _fs_rules(b, args, stage, st):
             if a.startswith("-") or a in ("(", "!", ")"):
                 break
             starts.append(a)
+        samples_only = any(a in ("-name", "-iname") and j + 1 < len(args) and args[j + 1].endswith(".sample")
+                           for j, a in enumerate(args)) and not any(a in ("-o", "-or", ",") for a in args)
         if "-delete" in args:
             for s in starts:
                 c = _pclass(s, cwd)
+                if c == "hooks" and samples_only:
+                    continue
                 if c == "hooks":
                     return "hook_bypass_guard: find -delete removes git hooks" + BYPASS_TAIL
                 if c == "gitdir":
@@ -3674,7 +3722,7 @@ def _git_rules3(sub, args, cwd, st):
                         break
                     if ch == "a" and not dry:
                         return SAY + "git commit " + a + " (stages every tracked modification, then commits, in one step)."
-                    if ch == "n":
+                    if ch == "n" and not dry:
                         return "hook_bypass_guard: git commit -n (= --no-verify)" + BYPASS_TAIL
             k += 1
         if whole(pos) and not dry:
@@ -3705,7 +3753,7 @@ def _git_rules3(sub, args, cwd, st):
                 any(n.startswith("--force") or (len(n) >= 6 and "--force".startswith(n)) for n in longs):
             return "data_loss_guard: git switch that discards local changes or resets a branch" + LOSS_TAIL
     elif sub == "branch":
-        if "f" in shorts or has_long("--force", 6):
+        if ("f" in shorts or has_long("--force", 6)) and not ("m" in shorts or has_long("--move", 4)):
             return "data_loss_guard: git branch --force moves an existing branch and can orphan its commits" + LOSS_TAIL
     elif sub == "stash":
         p = [t for t in pos]
@@ -4337,11 +4385,23 @@ def alternatives(redirect):
     return _BACKTICK.findall(redirect or "")
 
 
+_ECHO_SUB = re.compile(r"\$\(\s*echo[ \t]+([A-Za-z0-9_./][A-Za-z0-9_./+@%-]*(?:[ \t]+[A-Za-z0-9_./][A-Za-z0-9_./+@%-]*)*)[ \t]*\)")
+
+
+def _echo_words(command):
+    """Version 6 (WG6-008): `$(echo a.md b.txt)` is the words a.md b.txt, so it is judged as the words.
+    Only words that cannot be a flag or a glob are rewritten (no leading -, no * ? [ $ quote or space);
+    `$(echo .)` becomes `.` and is judged as `.`. Anything else is left for the layers to judge."""
+    if "$(" not in command or "echo" not in command:
+        return command
+    return _ECHO_SUB.sub(lambda m: m.group(1).strip(), command)
+
+
 def decide_full(command):
     """-> dict(verdict "deny"|"allow", origin "block"|"fail_closed"|None, v3 verdict, shape, redirect,
     alternatives, reason). reason is what the hook prints: the v3 reason without its ask tails, then
     DO THIS INSTEAD and the redirect."""
-    v3, why = _decide3(command)
+    v3, why = _decide3(_echo_words(command))
     if v3 == "allow":
         return {"verdict": "allow", "origin": None, "v3": v3, "shape": None, "redirect": "",
                 "alternatives": [], "reason": ""}
