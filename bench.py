@@ -225,6 +225,18 @@ def main():
     labels = {"known_bad": "known_bad (%d)", "known_good": "known_good (%d)",
               "known_all": "known_bad + known_good (%d)", "residual": "residual (%d)",
               "holdout": "holdout, blind (%d)"}
+    lines.append("")
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| set | variant | TP | FP | TN | FN | precision | recall |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|")
+    for s in order:
+        if s == "known_all":
+            continue
+        for vname, _ in VARIANTS:
+            r = results[vname][s]
+            lines.append("| %s | %s | %d | %d | %d | %d | %s | %s |" % (
+                s, vname, r["TP"], r["FP"], r["TN"], r["FN"], fmt(r["precision"]), fmt(r["recall"])))
     for s in order:
         lines.append("")
         lines.append("## " + labels[s] % len(sets[s]))

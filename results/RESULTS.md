@@ -1,10 +1,29 @@
 # Results
 
-Python 3.9.6 on Darwin. Root pinned to `/work/repo`.
-Timing: 300 decisions per run, median of 5 runs, in-process (no interpreter start-up).
+Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
+Timing: 348 decisions per run, median of 5 runs, in-process (no interpreter start-up).
 Positive means the command should be blocked. In `residual` every case is a policy violation the guard knowingly allows, so each one counts as a miss (FN).
 
-**The blind holdout set was not present for this run.**
+## Summary
+
+| set | variant | TP | FP | TN | FN | precision | recall |
+|---|---|---:|---:|---:|---:|---:|---:|
+| known_bad | no_guard | 0 | 0 | 0 | 123 | n/a | 0.000 |
+| known_bad | naive_regex | 61 | 0 | 0 | 62 | 1.000 | 0.496 |
+| known_bad | guard | 123 | 0 | 0 | 0 | 1.000 | 1.000 |
+| known_bad | broken_guard | 120 | 0 | 0 | 3 | 1.000 | 0.976 |
+| known_good | no_guard | 0 | 0 | 144 | 0 | n/a | n/a |
+| known_good | naive_regex | 0 | 19 | 125 | 0 | 0.000 | n/a |
+| known_good | guard | 0 | 0 | 144 | 0 | n/a | n/a |
+| known_good | broken_guard | 0 | 0 | 144 | 0 | n/a | n/a |
+| residual | no_guard | 0 | 0 | 0 | 33 | n/a | 0.000 |
+| residual | naive_regex | 12 | 0 | 0 | 21 | 1.000 | 0.364 |
+| residual | guard | 0 | 0 | 0 | 33 | n/a | 0.000 |
+| residual | broken_guard | 0 | 0 | 0 | 33 | n/a | 0.000 |
+| holdout | no_guard | 0 | 0 | 24 | 24 | n/a | 0.000 |
+| holdout | naive_regex | 5 | 4 | 20 | 19 | 0.556 | 0.208 |
+| holdout | guard | 23 | 1 | 23 | 1 | 0.958 | 0.958 |
+| holdout | broken_guard | 21 | 1 | 23 | 3 | 0.955 | 0.875 |
 
 ## known_bad (123)
 
@@ -42,14 +61,23 @@ Positive means the command should be blocked. In `residual` every case is a poli
 | guard | 0 | 0 | 0 | 33 | n/a | 0.000 |
 | broken_guard | 0 | 0 | 0 | 33 | n/a | 0.000 |
 
+## holdout, blind (48)
+
+| variant | TP | FP | TN | FN | precision | recall |
+|---|---:|---:|---:|---:|---:|---:|
+| no_guard | 0 | 0 | 24 | 24 | n/a | 0.000 |
+| naive_regex | 5 | 4 | 20 | 19 | 0.556 | 0.208 |
+| guard | 23 | 1 | 23 | 1 | 0.958 | 0.958 |
+| broken_guard | 21 | 1 | 23 | 3 | 0.955 | 0.875 |
+
 ## Timing
 
 | variant | median us/decision |
 |---|---:|
 | no_guard | 0.0 |
-| naive_regex | 0.3 |
-| guard | 27.0 |
-| broken_guard | 26.5 |
+| naive_regex | 0.2 |
+| guard | 11.9 |
+| broken_guard | 11.9 |
 
 ## Wrong cases by id
 
@@ -70,6 +98,12 @@ Positive means the command should be blocked. In `residual` every case is a poli
 - naive_regex (21): res-03, res-06, res-07, res-08, res-10, res-15, res-16, res-18, res-19, res-20, res-21, res-22, res-23, res-24, res-27, res-28, res-29, res-30, res-31, res-32, res-33
 - guard (33): res-01, res-02, res-03, res-04, res-05, res-06, res-07, res-08, res-09, res-10, res-11, res-12, res-13, res-14, res-15, res-16, res-17, res-18, res-19, res-20, res-21, res-22, res-23, res-24, res-25, res-26, res-27, res-28, res-29, res-30, res-31, res-32, res-33
 - broken_guard (33): res-01, res-02, res-03, res-04, res-05, res-06, res-07, res-08, res-09, res-10, res-11, res-12, res-13, res-14, res-15, res-16, res-17, res-18, res-19, res-20, res-21, res-22, res-23, res-24, res-25, res-26, res-27, res-28, res-29, res-30, res-31, res-32, res-33
+
+### holdout
+- no_guard (24): H01, H02, H03, H04, H05, H06, H07, H08, H09, H10, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24
+- naive_regex (23): H02, H03, H05, H06, H07, H08, H09, H10, H11, H12, H13, H16, H17, H19, H20, H21, H22, H23, H24, H28, H38, H39, H40
+- guard (2): H15, H48
+- broken_guard (4): H02, H15, H16, H48
 
 ## Commands behind guard.py's wrong cases
 - `res-01` (residual, policy A): `"bash -c \"git add -A\""`
@@ -105,10 +139,12 @@ Positive means the command should be blocked. In `residual` every case is a poli
 - `res-31` (residual, policy B): `"git --config-env=core.hooksPath=NOHOOKS commit -m x"`
 - `res-32` (residual, policy B): `"chmod -x .git/hooks/pre-commit"`
 - `res-33` (residual, policy B): `"mv .git/hooks .git/hooks.off"`
+- `H15` (holdout, policy A): `"bash -c 'git add -A'"`
+- `H48` (holdout, policy B): `"git config --unset core.hooksPath"`
 
 ## Checks
 
-- guard.py reason names the policy's guard on 123 of 123 blocked violations.
+- guard.py reason names the policy's guard on 146 of 146 blocked violations.
 - Residual cases guard.py still allows as documented: 33 of 33.
 - Negative control, the one changed line:
   - guard.py: `if "A" in a[1:] or "u" in a[1:]:`
@@ -120,7 +156,7 @@ Blind to: shell state (variables, aliases, globs), wrappers (`bash -c`, `eval`, 
 
 - PASS: guard.py has zero errors on known_good and known_bad (0 errors)
 - PASS: broken_guard.py has at least one error (negative control) (3 errors)
-- PASS: guard.py hook form agrees with decide() on every case (0 of 300 differ)
+- PASS: guard.py hook form agrees with decide() on every case (0 of 348 differ)
 - PASS: broken_guard.py differs from guard.py by exactly one line (1 changed lines)
 
 OVERALL: PASS

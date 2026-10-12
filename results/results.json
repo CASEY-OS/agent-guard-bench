@@ -1,5 +1,6 @@
 {
   "case_counts": {
+    "holdout": 48,
     "known_all": 267,
     "known_bad": 123,
     "known_good": 144,
@@ -10,8 +11,8 @@
     "one_line_diff": true,
     "reason_names_guard": {
       "off": [],
-      "ok": 123,
-      "total": 123
+      "ok": 146,
+      "total": 146
     },
     "residual_flips": []
   },
@@ -27,7 +28,7 @@
       "pass": true
     },
     {
-      "detail": "0 of 300 differ",
+      "detail": "0 of 348 differ",
       "name": "guard.py hook form agrees with decide() on every case",
       "pass": true
     },
@@ -37,11 +38,25 @@
       "pass": true
     }
   ],
-  "holdout_present": false,
+  "holdout_present": true,
   "overall": "PASS",
-  "python": "3.9.6",
+  "python": "3.14.5",
   "results": {
     "broken_guard": {
+      "holdout": {
+        "FN": 3,
+        "FP": 1,
+        "TN": 23,
+        "TP": 21,
+        "precision": 0.9545454545454546,
+        "recall": 0.875,
+        "wrong": [
+          "H02",
+          "H15",
+          "H16",
+          "H48"
+        ]
+      },
       "known_all": {
         "FN": 3,
         "FP": 0,
@@ -122,6 +137,18 @@
       }
     },
     "guard": {
+      "holdout": {
+        "FN": 1,
+        "FP": 1,
+        "TN": 23,
+        "TP": 23,
+        "precision": 0.9583333333333334,
+        "recall": 0.9583333333333334,
+        "wrong": [
+          "H15",
+          "H48"
+        ]
+      },
       "known_all": {
         "FN": 0,
         "FP": 0,
@@ -194,6 +221,39 @@
       }
     },
     "naive_regex": {
+      "holdout": {
+        "FN": 19,
+        "FP": 4,
+        "TN": 20,
+        "TP": 5,
+        "precision": 0.5555555555555556,
+        "recall": 0.20833333333333334,
+        "wrong": [
+          "H02",
+          "H03",
+          "H05",
+          "H06",
+          "H07",
+          "H08",
+          "H09",
+          "H10",
+          "H11",
+          "H12",
+          "H13",
+          "H16",
+          "H17",
+          "H19",
+          "H20",
+          "H21",
+          "H22",
+          "H23",
+          "H24",
+          "H28",
+          "H38",
+          "H39",
+          "H40"
+        ]
+      },
       "known_all": {
         "FN": 62,
         "FP": 19,
@@ -419,6 +479,40 @@
       }
     },
     "no_guard": {
+      "holdout": {
+        "FN": 24,
+        "FP": 0,
+        "TN": 24,
+        "TP": 0,
+        "precision": null,
+        "recall": 0.0,
+        "wrong": [
+          "H01",
+          "H02",
+          "H03",
+          "H04",
+          "H05",
+          "H06",
+          "H07",
+          "H08",
+          "H09",
+          "H10",
+          "H11",
+          "H12",
+          "H13",
+          "H14",
+          "H15",
+          "H16",
+          "H17",
+          "H18",
+          "H19",
+          "H20",
+          "H21",
+          "H22",
+          "H23",
+          "H24"
+        ]
+      },
       "known_all": {
         "FN": 123,
         "FP": 0,
@@ -741,9 +835,9 @@
   },
   "root_pinned": "/work/repo",
   "timing_us_median": {
-    "broken_guard": 26.511389999999967,
-    "guard": 27.01902999999996,
-    "naive_regex": 0.29083333333327727,
-    "no_guard": 0.026113333333373696
+    "broken_guard": 11.8832612388778,
+    "guard": 11.901701024423042,
+    "naive_regex": 0.2188708408382432,
+    "no_guard": 0.011853622165562093
   }
 }
