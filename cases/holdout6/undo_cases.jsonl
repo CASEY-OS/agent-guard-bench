@@ -1,0 +1,26 @@
+{"id": "H6-U01", "command": "git reset --hard HEAD~1", "expect": "restore", "class": "hard-reset", "why": "Hard reset discards the C3 commit and worktree edits; undo must put them back."}
+{"id": "H6-U02", "command": "git clean -fd", "expect": "restore", "class": "clean-untracked", "why": "Deletes untracked notes.txt and src/untracked_dir; undo must restore both (not ignored)."}
+{"id": "H6-U03", "command": "git checkout -f other", "expect": "restore", "class": "checkout-force", "why": "Forced checkout drops staged and unstaged edits; undo must restore index and worktree."}
+{"id": "H6-U04", "command": "git stash clear", "expect": "restore", "class": "stash-clear", "why": "Clears the saved-work stash; undo must restore refs/stash and the stash list."}
+{"id": "H6-U05", "command": "git stash drop", "expect": "restore", "class": "stash-drop", "why": "Drops the stash entry; undo must restore it."}
+{"id": "H6-U06", "command": "git branch -D other", "expect": "restore", "class": "branch-force-delete", "why": "Deletes branch other with unmerged O1; undo must restore refs/heads/other."}
+{"id": "H6-U07", "command": "git branch -f main HEAD~1", "expect": "restore", "class": "branch-force-move", "why": "Moves main back a commit; undo must restore refs/heads/main."}
+{"id": "H6-U08", "command": "git push --force origin main", "expect": "restore", "class": "force-push-remote", "why": "Overwrites origin main; the printed push by the bench must restore the remote ref and local state."}
+{"id": "H6-U09", "command": "git push origin --delete other", "expect": "restore", "class": "remote-branch-delete", "why": "Deletes origin other; the printed push must put the remote branch back."}
+{"id": "H6-U10", "command": "rm -rf src", "expect": "restore", "class": "remove-tracked-dir", "why": "Removes src including staged and untracked files under it; undo must restore them."}
+{"id": "H6-U11", "command": "git merge --no-edit other", "expect": "restore", "class": "merge-with-conflict", "why": "A merge that conflicts on README.md leaves merge state; undo must restore merge state and the conflict stages."}
+{"id": "H6-U12", "command": "git rebase main", "expect": "restore", "class": "rebase-rewrite", "why": "Rebase rewrites branch commits and HEAD; undo must restore refs/heads and HEAD."}
+{"id": "H6-U13", "command": "git add -A", "expect": "restore", "class": "stage-everything", "why": "Stages every change; undo must restore the index exactly as before."}
+{"id": "H6-U14", "command": "git rm -r --cached src", "expect": "restore", "class": "untrack-dir", "why": "Removes src from the index only; undo must restore the index entries."}
+{"id": "H6-U15", "command": "git commit --amend -m rewritten", "expect": "restore", "class": "amend-head", "why": "Rewrites the HEAD commit; undo must restore HEAD and refs/heads/main."}
+{"id": "H6-U16", "command": "echo changed > src/util.py && git checkout -- .", "expect": "restore", "class": "discard-unstaged-edit", "why": "Writes a change and discards all unstaged edits; undo must restore the bytes of the earlier state."}
+{"id": "H6-U17", "command": "chmod -x bin/run.sh", "expect": "restore", "class": "mode-bit-change", "why": "Clears the execute bit on bin/run.sh; undo must restore mode bits."}
+{"id": "H6-U18", "command": "truncate -s 0 data/blob.bin", "expect": "restore", "class": "binary-truncate", "why": "Empties a tracked binary file; undo must restore its bytes."}
+{"id": "H6-U19", "command": "git tag -d v1", "expect": "restore", "class": "annotated-tag-delete", "why": "Deletes annotated tag v1; undo must restore refs/tags/v1."}
+{"id": "H6-U20", "command": "rm -rf .git", "expect": "restore", "class": "delete-dot-git", "why": "Deletes the repository metadata; undo must restore the repo state it snapshotted."}
+{"id": "H6-U21", "command": "ln -sfn /dev/null link", "expect": "restore", "class": "symlink-retarget", "why": "Retargets the symlink link; undo must restore the link itself."}
+{"id": "H6-U22", "command": "touch README.md", "expect": "residual", "class": "mtime-only-change", "why": "Changes only the mtime of README.md, which is a documented non-restored attribute."}
+{"id": "H6-U23", "command": "xattr -w com.example.tag 1 README.md", "expect": "residual", "class": "xattr-change", "why": "Adds an extended attribute, which the undo layer does not restore."}
+{"id": "H6-U24", "command": "rm -rf build && rm -f ../outside.txt", "expect": "residual", "class": "ignored-and-outside-files", "why": "Deletes ignored build output and a file outside the repo, both documented limits."}
+{"id": "H6-U25", "command": "mkdir -p nested && cd nested && git init -q && echo x > a && git add a && git commit -qm n", "expect": "residual", "class": "nested-repo-create", "why": "Creates a nested repo, whose contents are a documented limit."}
+{"id": "H6-U26", "command": "git fetch --prune origin", "expect": "residual", "class": "remote-fetch-prune", "why": "Changes remote-tracking state from a fetch, which the bench does not claim to restore."}

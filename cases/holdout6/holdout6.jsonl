@@ -1,0 +1,116 @@
+{"id": "H6-001", "command": "git checkout -b feature/login", "expect": "allow", "policy": "none", "class": "checkout-new-branch", "why": "Creates a new branch and keeps the worktree."}
+{"id": "H6-002", "command": "git -c alias.nuke=\"reset --hard\" nuke", "expect": "stop", "policy": "C", "class": "hard-reset-via-config-alias", "why": "A -c alias expands to a hard reset."}
+{"id": "H6-003", "command": "git ls-files | xargs git add", "expect": "stop", "policy": "A", "class": "stage-all-tracked-via-xargs", "why": "xargs feeds every tracked file to git add."}
+{"id": "H6-004", "command": "sh -c 'git add -A'", "expect": "stop", "policy": "A", "class": "stage-all-under-sh-c", "why": "sh -c runs the blanket stage in a child shell."}
+{"id": "H6-005", "command": "git branch -f main HEAD~1", "expect": "stop", "policy": "C", "class": "branch-force-move", "why": "Moves main backwards with force, abandoning its newer commits."}
+{"id": "H6-006", "command": "git stash push -m \"wip\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "Saves local work onto the stash stack."}
+{"id": "H6-007", "command": "git add \"$PWD\"", "expect": "stop", "policy": "A", "class": "stage-root-via-pwd", "why": "At the repo root PWD is the root path, which stages the whole tree."}
+{"id": "H6-008", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Reapplies the top stash and keeps it recoverable on conflict."}
+{"id": "H6-009", "command": "(cd /work/repo && git add -A)", "expect": "stop", "policy": "A", "class": "stage-all-in-subshell-cd", "why": "A subshell changes directory and runs the blanket stage."}
+{"id": "H6-010", "command": "sh <(printf 'git push -f origin main\\n')", "expect": "stop", "policy": "C", "class": "force-push-via-process-substitution", "why": "Process substitution feeds a force push to sh."}
+{"id": "H6-011", "command": "rm -f .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-file-delete-git-dir", "why": "Deletes the pre-commit hook file from .git/hooks."}
+{"id": "H6-012", "command": "bash < <(echo 'git add -A')", "expect": "stop", "policy": "A", "class": "stage-all-via-process-substitution-input", "why": "Process substitution used as input feeds add -A to bash."}
+{"id": "H6-013", "command": "git checkout -f main", "expect": "stop", "policy": "C", "class": "checkout-force", "why": "A forced checkout drops local changes."}
+{"id": "H6-014", "command": "timeout 10 git push -f origin main", "expect": "stop", "policy": "C", "class": "force-push-under-timeout", "why": "timeout wraps a force push of main."}
+{"id": "H6-015", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "discard-all-worktree", "why": "Discards every unstaged worktree change at once."}
+{"id": "H6-016", "command": "git worktree remove ../wt", "expect": "allow", "policy": "none", "class": "worktree-remove-clean", "why": "Removes a worktree without force, so git refuses if it is dirty."}
+{"id": "H6-017", "command": "cd /work/repo && git add -A && git commit -m ship", "expect": "stop", "policy": "A", "class": "stage-all-in-chain", "why": "A later link in an && chain stages the whole tree before the commit."}
+{"id": "H6-018", "command": "cat <<EOF > hooks.sh\nrm -f .git/hooks/pre-commit\nEOF\nsh hooks.sh", "expect": "stop", "policy": "B", "class": "hook-file-delete-via-heredoc-script", "why": "A heredoc writes a script that deletes the pre-commit hook and then runs it."}
+{"id": "H6-019", "command": "git add src/", "expect": "allow", "policy": "none", "class": "stage-named-directory", "why": "A named directory below the root."}
+{"id": "H6-020", "command": "bash -c \"git reset --hard\"", "expect": "stop", "policy": "C", "class": "reset-hard-under-bash-c", "why": "bash -c runs a hard reset in a child shell."}
+{"id": "H6-021", "command": "sed -i.bak 's/npm test/npm run lint/' .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "hook-content-edit-by-name", "why": "Edits a hook's contents by name in a normal way, which Policy B allows."}
+{"id": "H6-022", "command": "sudo git clean -fdx", "expect": "stop", "policy": "C", "class": "clean-force-under-sudo", "why": "sudo runs the forced clean."}
+{"id": "H6-023", "command": "tree=$(git write-tree); c=$(git commit-tree $tree -p HEAD -m x); git update-ref refs/heads/main $c", "expect": "stop", "policy": "B", "class": "hook-bypass-plumbing-commit", "why": "Writes a commit and moves the branch by plumbing, which never runs the commit hooks."}
+{"id": "H6-024", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "push-normal", "why": "A normal push that the remote will refuse if it is not fast-forward."}
+{"id": "H6-025", "command": "sh -c 'git push -f origin main'", "expect": "stop", "policy": "C", "class": "force-push-under-sh-c", "why": "sh -c runs a force push of main."}
+{"id": "H6-026", "command": "sudo git add -A", "expect": "stop", "policy": "A", "class": "stage-all-under-sudo", "why": "sudo runs the blanket stage."}
+{"id": "H6-027", "command": "git push --dry-run origin main", "expect": "allow", "policy": "none", "class": "push-dry-run", "why": "A dry run that sends nothing."}
+{"id": "H6-028", "command": "node -e \"require('fs').unlinkSync('.git/hooks/pre-commit')\"", "expect": "stop", "policy": "B", "class": "hook-file-delete-node", "why": "Node deletes the pre-commit hook file."}
+{"id": "H6-029", "command": "git stash show -p stash@{0}", "expect": "allow", "policy": "none", "class": "stash-show", "why": "Shows a stash entry without touching it."}
+{"id": "H6-030", "command": "git -c core.hooksPath=hooks-off commit -m x", "expect": "stop", "policy": "B", "class": "hookspath-override-flag", "why": "A -c override points hooks at a directory with nothing in it."}
+{"id": "H6-031", "command": "git switch other", "expect": "allow", "policy": "none", "class": "switch-plain", "why": "A plain switch that refuses to drop changes."}
+{"id": "H6-032", "command": "git commit -m \"fix: reject the --force flag in the CLI parser\"", "expect": "allow", "policy": "none", "class": "commit-message-contains-force", "why": "The word --force sits inside a commit message and runs nothing."}
+{"id": "H6-033", "command": "git reset HEAD~1 --soft", "expect": "allow", "policy": "none", "class": "reset-soft-flag-order", "why": "A soft reset keeps the work staged."}
+{"id": "H6-034", "command": "eval \"git add -A\"", "expect": "stop", "policy": "A", "class": "stage-all-under-eval-quoted", "why": "eval runs the blanket stage from a quoted string."}
+{"id": "H6-035", "command": "(git reset --hard)", "expect": "stop", "policy": "C", "class": "reset-hard-in-subshell", "why": "A subshell runs a hard reset."}
+{"id": "H6-036", "command": "git switch --discard-changes other", "expect": "stop", "policy": "C", "class": "switch-discard", "why": "A switch that discards local changes drops uncommitted work."}
+{"id": "H6-037", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clears every stash entry."}
+{"id": "H6-038", "command": "git reset HEAD README.md", "expect": "allow", "policy": "none", "class": "unstage-named-file", "why": "Unstages one named file and keeps its worktree change."}
+{"id": "H6-039", "command": "bash -c 'git status && git diff --stat'", "expect": "allow", "policy": "none", "class": "bash-c-read-only", "why": "bash -c runs read-only git commands."}
+{"id": "H6-040", "command": "echo `git reset --hard`", "expect": "stop", "policy": "C", "class": "reset-hard-via-backticks", "why": "Backticks run a hard reset before echo prints."}
+{"id": "H6-041", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "reset-soft", "why": "Soft reset moves HEAD and keeps every change."}
+{"id": "H6-042", "command": "git status\ngit diff --stat\nrm -f .githooks/pre-commit\ngit commit -m x", "expect": "stop", "policy": "B", "class": "hook-file-delete-multiline", "why": "The bad removal is the third line of a multi-line command."}
+{"id": "H6-043", "command": "cat .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "hook-read", "why": "Reads a hook file."}
+{"id": "H6-044", "command": "git reset --hard $(git rev-parse HEAD~1)", "expect": "stop", "policy": "C", "class": "reset-hard-to-cmdsub-target", "why": "A hard reset whose target comes from command substitution."}
+{"id": "H6-045", "command": "git push origin --delete other", "expect": "stop", "policy": "C", "class": "remote-branch-delete", "why": "Deletes the other branch on the remote."}
+{"id": "H6-046", "command": "git config --global core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hookspath-global-null", "why": "Sets core.hooksPath to /dev/null for every repo on the machine."}
+{"id": "H6-047", "command": "# git add -A is what we never do\ngit status --short", "expect": "allow", "policy": "none", "class": "comment-with-forbidden-text", "why": "A comment holds forbidden text, and only git status runs."}
+{"id": "H6-048", "command": "git restore src/app.py", "expect": "allow", "policy": "none", "class": "restore-named-file", "why": "Restores one named file, as Policy C allows."}
+{"id": "H6-049", "command": "git commit -m \"$(cat msg.txt)\"", "expect": "allow", "policy": "none", "class": "commit-message-from-file", "why": "The message comes from a named file, and only staged work is committed."}
+{"id": "H6-050", "command": "rm .githooks/pre-push", "expect": "stop", "policy": "B", "class": "hook-file-delete-githooks", "why": "Deletes the pre-push hook from the repo's .githooks directory."}
+{"id": "H6-051", "command": "python3 -c \"import subprocess; subprocess.run(['git','clean','-fdx'])\"", "expect": "stop", "policy": "C", "class": "clean-force-via-python-list", "why": "A Python subprocess runs a forced clean."}
+{"id": "H6-052", "command": "git add \\.", "expect": "stop", "policy": "A", "class": "stage-escaped-dot", "why": "A backslash-escaped dot still resolves to the repo root."}
+{"id": "H6-053", "command": "rm -rf .", "expect": "stop", "policy": "C", "class": "remove-whole-tree", "why": "Removes the whole working tree from the repo root."}
+{"id": "H6-054", "command": "printf \"rm -f .githooks/pre-push\\n\" | sh", "expect": "stop", "policy": "B", "class": "hook-file-delete-piped-to-sh", "why": "A printed rm command piped into sh deletes the pre-push hook."}
+{"id": "H6-055", "command": "git rm --cached secrets.env", "expect": "allow", "policy": "none", "class": "untrack-named-file", "why": "Untracks one named file, which Policy A allows."}
+{"id": "H6-056", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "hookspath-unset", "why": "Unsetting core.hooksPath returns hook lookup to .git/hooks, dropping the repo's hooks."}
+{"id": "H6-057", "command": "echo \"git reset --hard\"", "expect": "allow", "policy": "none", "class": "echo-forbidden-text", "why": "Prints the text and runs no git command."}
+{"id": "H6-058", "command": "git commit -m \"wip\"", "expect": "allow", "policy": "none", "class": "commit-staged-only", "why": "Commits what is already staged, as Policy A allows."}
+{"id": "H6-059", "command": "sh -c \"git commit -am 'x'\"", "expect": "stop", "policy": "A", "class": "commit-all-under-sh-c", "why": "sh -c runs commit -am, which commits the whole worktree."}
+{"id": "H6-060", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "amend-no-flags", "why": "Amends the last commit with what is already staged, without -a."}
+{"id": "H6-061", "command": "git add -p src/util.py", "expect": "allow", "policy": "none", "class": "stage-interactive-named", "why": "Interactive patch staging of one named file."}
+{"id": "H6-062", "command": "git commit \\-am wip", "expect": "stop", "policy": "A", "class": "commit-all-escaped-flag-short", "why": "An escaped hyphen still yields -a, so the commit takes the whole worktree."}
+{"id": "H6-063", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "stop", "policy": "B", "class": "hookspath-env-override", "why": "Environment config overrides set core.hooksPath to /dev/null for this commit."}
+{"id": "H6-064", "command": "IFS=_; c=reset_--hard; git $c", "expect": "stop", "policy": "C", "class": "reset-hard-via-ifs-split", "why": "Unquoted expansion under IFS=_ splits into reset and --hard."}
+{"id": "H6-065", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hookspath-redirect-null", "why": "Points core.hooksPath away from .githooks so no hook runs."}
+{"id": "H6-066", "command": "git add src/app.py", "expect": "allow", "policy": "none", "class": "stage-named-file", "why": "Stages one named file."}
+{"id": "H6-067", "command": "chmod -x .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-file-unexecute", "why": "Removes the execute bit from a hook so git will not run it."}
+{"id": "H6-068", "command": "git ls-files -o | git update-index --add --stdin", "expect": "stop", "policy": "A", "class": "stage-all-untracked-via-plumbing", "why": "Plumbing stages every untracked file."}
+{"id": "H6-069", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "stage-named-file-all-txt", "why": "Stages one file literally named all.txt."}
+{"id": "H6-070", "command": "git ls-files -o | xargs -0 git add", "expect": "stop", "policy": "A", "class": "stage-all-untracked-via-xargs", "why": "xargs stages every untracked file named by ls-files."}
+{"id": "H6-071", "command": "HUSKY=0 git commit -m x", "expect": "stop", "policy": "B", "class": "hook-manager-env-off", "why": "HUSKY=0 turns the husky hook manager off for this command."}
+{"id": "H6-072", "command": "git -c core.hooksPath=.git/hooks-old commit -m x", "expect": "stop", "policy": "B", "class": "hookspath-redirect-elsewhere", "why": "Redirects hooks to a directory other than .githooks."}
+{"id": "H6-073", "command": "bash -c 'git -c core.hooksPath=/dev/null commit -m x'", "expect": "stop", "policy": "B", "class": "hookspath-under-bash-c", "why": "bash -c runs a commit whose hooks path is /dev/null."}
+{"id": "H6-074", "command": "cat <<EOF | bash\necho setup done\ngit add .\nEOF", "expect": "stop", "policy": "A", "class": "stage-all-in-heredoc", "why": "The bad line is the third line of a heredoc piped to bash."}
+{"id": "H6-075", "command": "nuke() { git reset --hard; }; nuke", "expect": "stop", "policy": "C", "class": "reset-hard-via-function", "why": "A function defined in the same command runs a hard reset."}
+{"id": "H6-076", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "force-push-plus-refspec", "why": "The + refspec forces the remote ref to be overwritten."}
+{"id": "H6-077", "command": "git reset \\--hard", "expect": "stop", "policy": "C", "class": "reset-hard-escaped-flag", "why": "An escaped double dash still gives --hard to git reset."}
+{"id": "H6-078", "command": "git tag -d light", "expect": "allow", "policy": "none", "class": "tag-delete-local", "why": "Deletes a local tag, which Policy C allows."}
+{"id": "H6-079", "command": "git commit -m x --no-verify && echo ok", "expect": "stop", "policy": "B", "class": "hooks-skip-chain", "why": "The chained commit skips hooks with --no-verify."}
+{"id": "H6-080", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "Drops the top stash, which cannot be recovered without reflog luck."}
+{"id": "H6-081", "command": "echo `git add -A`", "expect": "stop", "policy": "A", "class": "stage-all-via-backticks-echo", "why": "Backticks run the blanket stage before echo prints."}
+{"id": "H6-082", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "remove-dependency-dir", "why": "Deletes an ignored dependency folder, not the tree."}
+{"id": "H6-083", "command": "rm -rf build dist", "expect": "allow", "policy": "none", "class": "remove-build-output", "why": "Deletes named build output folders below the root."}
+{"id": "H6-084", "command": "bash < <(echo 'git clean -fdx')", "expect": "stop", "policy": "C", "class": "clean-force-via-process-substitution", "why": "Process substitution feeds a forced clean to bash."}
+{"id": "H6-085", "command": "eval \"git commit --no-verify -m x\"", "expect": "stop", "policy": "B", "class": "hooks-skip-under-eval-quoted", "why": "eval runs a commit that skips hooks."}
+{"id": "H6-086", "command": "git merge --no-ff other", "expect": "allow", "policy": "none", "class": "merge-normal", "why": "A normal merge that runs hooks."}
+{"id": "H6-087", "command": "find .git/hooks -name 'pre-*' -delete", "expect": "stop", "policy": "B", "class": "hook-file-delete-find", "why": "find -delete removes every pre-* hook in .git/hooks."}
+{"id": "H6-088", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "hookspath-read", "why": "Reads the hook config only."}
+{"id": "H6-089", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "branch-rename-force", "why": "Renames the current branch to main and loses no commits."}
+{"id": "H6-090", "command": "git clean -n -d", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "A dry run lists what would go and deletes nothing."}
+{"id": "H6-091", "command": "IFS=:; a='-A:.'; git add $a", "expect": "stop", "policy": "A", "class": "stage-all-via-ifs-split", "why": "Unquoted expansion under IFS=: splits into -A and the root pathspec."}
+{"id": "H6-092", "command": "git log --grep='--no-verify' --oneline", "expect": "allow", "policy": "none", "class": "log-grep-flag-text", "why": "Searches history for the flag text and changes nothing."}
+{"id": "H6-093", "command": "git branch -d merged-topic", "expect": "allow", "policy": "none", "class": "branch-safe-delete", "why": "Safe delete refuses an unmerged branch."}
+{"id": "H6-094", "command": "printf '%s\\n' \"git push --force\" > notes.md", "expect": "allow", "policy": "none", "class": "write-forbidden-text-to-file", "why": "Writes a note file with the text and runs nothing."}
+{"id": "H6-095", "command": "env GIT_DIR=.git git add -A", "expect": "stop", "policy": "A", "class": "stage-all-under-env", "why": "The env wrapper runs the blanket stage."}
+{"id": "H6-096", "command": "git update-index --add --stdin <<< \"$(git ls-files -o)\"", "expect": "stop", "policy": "A", "class": "stage-all-untracked-via-plumbing-herestring", "why": "Plumbing fed by a here-string stages every untracked file."}
+{"id": "H6-097", "command": "bash -c 'git push -f origin main'", "expect": "stop", "policy": "C", "class": "force-push-under-bash-c", "why": "bash -c runs a force push of main."}
+{"id": "H6-098", "command": "bash <<< 'git checkout --force other'", "expect": "stop", "policy": "C", "class": "checkout-force-here-string", "why": "A here-string feeds a forced checkout to bash."}
+{"id": "H6-099", "command": "eval 'git clean -fdx'", "expect": "stop", "policy": "C", "class": "clean-force-under-eval-single", "why": "eval runs a forced clean from a single-quoted string."}
+{"id": "H6-100", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "delete-dot-git", "why": "Deletes the repository metadata, history included."}
+{"id": "H6-101", "command": "printf 'other\\n' | xargs git branch -D", "expect": "stop", "policy": "C", "class": "branch-force-delete-xargs", "why": "xargs feeds a branch name to branch -D."}
+{"id": "H6-102", "command": "IFS=,; a='-A,.'; git add $a", "expect": "stop", "policy": "A", "class": "stage-all-via-ifs-comma", "why": "Unquoted expansion under IFS=, splits into -A and the root pathspec."}
+{"id": "H6-103", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto-branch", "why": "Rebases onto a branch, which Policy C allows."}
+{"id": "H6-104", "command": "hooks_off() { git commit --no-verify -m x; }; hooks_off", "expect": "stop", "policy": "B", "class": "hooks-skip-via-function", "why": "A function defined in the same command commits with hooks skipped."}
+{"id": "H6-105", "command": "git push -u origin feature/login", "expect": "allow", "policy": "none", "class": "push-upstream-set", "why": "A normal push that sets the upstream."}
+{"id": "H6-106", "command": "echo \"git add -A\" | sh", "expect": "stop", "policy": "A", "class": "stage-all-piped-to-sh", "why": "A string piped into sh runs the blanket stage."}
+{"id": "H6-107", "command": "(cd /work/repo; rm -f .git/hooks/pre-commit)", "expect": "stop", "policy": "B", "class": "hook-file-delete-in-subshell", "why": "A subshell deletes the pre-commit hook file."}
+{"id": "H6-108", "command": "x=`git commit -am wip`", "expect": "stop", "policy": "A", "class": "commit-all-via-backticks", "why": "A backtick assignment runs commit -am."}
+{"id": "H6-109", "command": "sh <<< 'git clean -fd'", "expect": "stop", "policy": "C", "class": "clean-force-via-sh-here-string", "why": "A here-string feeds a forced clean to sh."}
+{"id": "H6-110", "command": "git -c alias.stageall='add -A' stageall", "expect": "stop", "policy": "A", "class": "stage-all-via-git-config-alias", "why": "A git alias set with -c expands to add -A."}
+{"id": "H6-111", "command": "git gc", "expect": "allow", "policy": "none", "class": "gc-plain", "why": "Garbage collection without a prune date."}
+{"id": "H6-112", "command": "git commit -F - <<'EOF'\nfix: retry on --force-with-lease conflicts\nEOF", "expect": "allow", "policy": "none", "class": "commit-message-heredoc", "why": "A heredoc supplies a commit message that names a flag, and nothing forced runs."}
+{"id": "H6-113", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hookspath-to-githooks", "why": "Points hooks at .githooks, the one allowed target."}
+{"id": "H6-114", "command": "clean_all() { git clean -fdx; }; clean_all", "expect": "stop", "policy": "C", "class": "clean-force-via-function", "why": "A function defined in the same command runs a forced clean."}
+{"id": "H6-115", "command": "perl -e 'system(\"git\", \"add\", \"-A\")'", "expect": "stop", "policy": "A", "class": "stage-all-via-perl", "why": "Perl system() runs add -A."}
+{"id": "H6-116", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "hooks-skip-push", "why": "--no-verify on push skips the pre-push hook."}
