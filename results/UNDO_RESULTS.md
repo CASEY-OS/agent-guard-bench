@@ -134,13 +134,13 @@ Made 55 snapshots with the default bound: 50 kept, the newest ones (ok). Same st
 
 | measure | value |
 |---|---:|
-| first snapshot, clean tree (one run) | 292 ms, 56106 bytes added to .git/objects |
-| snapshot, nothing changed (dedupe) | 67 ms median |
-| snapshot, 10 files changed and 1 new | 137 ms median, 5559 bytes median |
+| first snapshot, clean tree (one run) | 251 ms, 56153 bytes added to .git/objects |
+| snapshot, nothing changed (dedupe) | 77 ms median |
+| snapshot, 10 files changed and 1 new | 156 ms median, 5560 bytes median |
 | plan() for a read-only command, in-process | 16 us |
-| whole hook, read-only command (Python start-up included) | 48 ms median |
-| whole hook, command that gets a snapshot | 199 ms median |
-| restore --last, CLI | 407 ms |
+| whole hook, read-only command (Python start-up included) | 52 ms median |
+| whole hook, command that gets a snapshot | 223 ms median |
+| restore --last, CLI | 442 ms |
 | .git/objects before any snapshot | 899860 bytes |
 
 Blind to: ignored files, files outside the repo, empty directories, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps writing). Proven on this machine's OS and git only.
@@ -160,6 +160,6 @@ Blind to: ignored files, files outside the repo, empty directories, owner, ACLs,
 - PASS: the printed repair push put every pushed remote back (2 push scenarios)
 - PASS: every destructive command ran under the bench root (91 runs, 0 outside)
 
-Runtime 92 s.
+Runtime 96 s.
 
 OVERALL: PASS

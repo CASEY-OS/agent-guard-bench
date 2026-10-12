@@ -798,7 +798,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin 3e10157bd7862a4bfdfb96dac8e3d2080432b586:refs/heads/other"
+        "git push origin 627d3df7c4576f4ab34c31b324582eb79f454040:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1178,12 +1178,12 @@
         "files: extra nested/.git/logs/refs/heads/",
         "files: extra nested/.git/logs/refs/heads/main",
         "files: extra nested/.git/objects/",
-        "files: extra nested/.git/objects/26/",
-        "files: extra nested/.git/objects/26/283602e34987f70058205acdf2537af263df83",
         "files: extra nested/.git/objects/4d/",
         "files: extra nested/.git/objects/4d/593e935186bcc35450336864a1aad148210a14",
         "files: extra nested/.git/objects/58/",
         "files: extra nested/.git/objects/58/7be6b4c3f93f93c489c0111bba5596147a26cb",
+        "files: extra nested/.git/objects/6d/",
+        "files: extra nested/.git/objects/6d/8e3d796fd41f0c35474ea4a4e5be3f0573a50c",
         "files: extra nested/.git/refs/",
         "files: extra nested/.git/refs/heads/",
         "files: extra nested/.git/refs/heads/main",

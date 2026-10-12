@@ -175,8 +175,9 @@ def _strip_heredocs(cmd):
 def _cd_target(toks):
     """The target of a cd / pushd command (\"~\" when it has none), or None when toks is not one."""
     i = 0
-    while i < len(toks) and (toks[i] in ("builtin", "command") or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
-        i += 1
+    while i < len(toks) and (toks[i] in ("builtin", "command", "do", "then", "else", "{", "!")
+                             or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
+        i += 1                                  # version 6 (WG6-017): `do cd $d` is a cd
     if i >= len(toks) or toks[i] not in ("cd", "pushd", "popd"):
         return None
     if toks[i] == "popd":
@@ -1220,6 +1221,8 @@ def _eval_pipeline(inner):
     pls = _pipelines(toks) if toks else None
     if not pls or len(pls) != 1 or not pls[0]:
         return None
+    if _branch_listing_sub("$(" + inner + ")"):
+        return "listed-branch\n"               # version 6 (WG6-016): branch or tag names, never a flag
     return _eval_stages(pls[0])
 
 
@@ -2159,6 +2162,8 @@ class _R(object):
                 self.nloop += 1
                 self.loops.append((k, vals))
                 self.known[name] = vals[min(self.choice.get(k, 0), len(vals) - 1)]
+            elif vals and _branch_listing_sub(" ".join(vals)):
+                self.known[name] = "listed-branch"     # version 6 (WG6-016): a branch name, never a flag
             else:
                 self.known[name] = U
             return
@@ -2732,6 +2737,9 @@ def _peel(argv, stage, upstream, st):
                 lit = _eval_stages(upstream)
                 if lit is not None:     # xargs splits on blanks unless -0, -d, -I or -L says otherwise
                     words = lit.split() if delim is None else [w for w in lit.rstrip("\n").split(delim) if w]
+                elif _scoped_names(upstream, st.cwd) and len(inner) >= 2 and \
+                        posixpath.basename(inner[0]) == "git" and inner[1] in ("add", "stage"):
+                    words = [_scoped_names(upstream, st.cwd)]   # staging a named subfolder is allowed; discarding is not
                 elif _listing(upstream):
                     words = ["n" + Q]   # names git listed: one name per word, never a flag (version 5)
             if words is None:
@@ -2814,6 +2822,62 @@ def _peel(argv, stage, upstream, st):
 LIST_FILTERS = {"grep", "egrep", "fgrep", "sort", "uniq", "head", "tail", "cat"}
 
 
+def _scoped_names(stages, cwd):
+    """Version 6 (WG6-009, WG6-010): a pipeline whose every output line is a path below ONE literal subdirectory
+    that is not the repo root: `git ls-files -m src`, `find src docs -name '*.md'`. -> a name in that scope
+    (the first directory) that stands for every line, or None. Names never start with - (find prints the
+    start it was given; git prints repo paths)."""
+    if not stages or not stages[0]["argv"] or not all(_lit3(x) for x in stages[0]["argv"]):
+        return None
+    for s in stages[1:]:
+        a = s["argv"]
+        if not a or posixpath.basename(a[0]) not in LIST_FILTERS or any(
+                x in ("-o", "--only-matching", "-r", "-R", "-f") for x in a[1:]) or s["redirs"]:
+            return None
+    a = stages[0]["argv"]
+    head = posixpath.basename(a[0])
+    if head == "find":
+        starts = []
+        for x in a[1:]:
+            if x.startswith("-") or x in ("(", "!", ")"):
+                break
+            starts.append(x)
+        expr = a[1 + len(starts):]
+        if any(x in ("-exec", "-execdir", "-ok", "-okdir", "-delete", "-printf", "-fprintf", "-fprint", "-ls", "-fls")
+               for x in expr):
+            return None
+        dirs = starts
+    elif head == "git" and len(a) > 2 and a[1] == "ls-files":
+        if any(x.startswith(("--format", "-z", "--stage", "-s", "--debug", "-t", "-v")) for x in a[2:]):
+            return None
+        dirs = [x for x in a[2:] if not x.startswith("-")]
+    else:
+        return None
+    root = _root()
+    if not dirs or any(_dyn(d) or d.startswith(("-", ":", "~", "/")) or _glob_all(posixpath.basename(d))
+                       or any(ch in d for ch in "*?[") for d in dirs):
+        return None
+    for d in dirs:
+        if _is_root_or_above(posixpath.normpath(posixpath.join(cwd or root, d)), root):
+            return None
+    return posixpath.join(dirs[0].rstrip("/"), "listed-file")
+
+
+def _branch_listing_sub(text):
+    """Is text exactly one $(...) whose pipeline lists BRANCH or TAG names (git branch --merged | grep -v main)?
+    Git refuses a branch or tag name that starts with -, so each word is a name, never a flag. File listings
+    are left out on purpose: a loop that stages every listed file is a blanket stage."""
+    m = re.match(r"^\$\((.*)\)$", text.strip(), re.S)
+    if not m:
+        return False
+    toks = _tokens(m.group(1))
+    pls = _pipelines(toks) if toks else None
+    if not pls or len(pls) != 1 or not pls[0] or not pls[0][0]["argv"]:
+        return False
+    a = pls[0][0]["argv"]
+    return len(a) > 1 and posixpath.basename(a[0]) == "git" and a[1] in ("branch", "tag") and _listing(pls[0])
+
+
 def _listing(stages):
     """Is this pipeline a git listing of branch, tag or file NAMES, filtered only by programs that keep or
     drop whole lines? Then each word it prints is a name (version 5)."""
@@ -2822,7 +2886,7 @@ def _listing(stages):
     for s in stages[1:]:
         a = s["argv"]
         if not a or posixpath.basename(a[0]) not in LIST_FILTERS or any(
-                x in ("-o", "--only-matching", "-r", "-R", "-f") for x in a[1:]) or s["redirs"]:
+                x in ("-o", "--only-matching", "-r", "-R", "-f") for x in a[1:]) or s.get("redirs") or s.get("out"):
             return False
     a = stages[0]["argv"]
     if posixpath.basename(a[0]) != "git" or len(a) < 2 or not all(_lit3(x) for x in a):
