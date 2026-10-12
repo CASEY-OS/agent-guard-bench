@@ -190,17 +190,17 @@
     }
   ],
   "cost": {
-    "dirty_snapshot_bytes_median": 5560.5,
-    "dirty_snapshot_ms_median": 156.00789594464004,
+    "dirty_snapshot_bytes_median": 5560.0,
+    "dirty_snapshot_ms_median": 141.5007293689996,
     "files": 1000,
-    "first_snapshot_bytes": 56153,
-    "first_snapshot_ms": 251.4951671473682,
-    "hook_read_only_ms_median": 51.94454197771847,
-    "hook_with_snapshot_ms_median": 222.9902921244502,
-    "no_change_ms_median": 77.2180415224284,
-    "objects_bytes_before": 899860,
-    "plan_us_read_only": 16.33593742735684,
-    "restore_ms": 442.3357918858528
+    "first_snapshot_bytes": 56121,
+    "first_snapshot_ms": 233.50062500685453,
+    "hook_read_only_ms_median": 48.707416048273444,
+    "hook_with_snapshot_ms_median": 210.79425001516938,
+    "no_change_ms_median": 69.4887915160507,
+    "objects_bytes_before": 899859,
+    "plan_us_read_only": 15.84385393653065,
+    "restore_ms": 416.2405419629067
   },
   "mutants": [
     {
@@ -487,7 +487,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:0b6cb3560ce25d2f7425b2f8c696b2100bc79176 origin 58821484233472c68184305f5851264ee87f9e38:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:3774f88131c7a42693e176606c061e3b14135c35 origin 3c15e9fb3545e76f28160f80285c86359de7d15c:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1089,7 +1089,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:36c9a7cd569e81859027ee127125f91bbdbbfdd5 origin ce7bca7ce9ef98464693abbdea3705f6b1dc79a0:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:0991aee81a5d5a2393be9ecfd530a70ecec8ac68 origin d58b61065dd37fe1bb662e4f7399d5cd235654a6:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -1110,7 +1110,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin b6675bd63bd517b5d708db1a5c0db3e261b100dd:refs/heads/other"
+        "git push origin 602acd79c6fe9a1781f7b0f24697f7fd84e2976e:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",

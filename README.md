@@ -28,6 +28,58 @@ It needs Python 3.9 or newer and git, nothing else. bench.py also runs undo_benc
 
 As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},"cwd":"..."}` on stdin. To stop a command it prints a deny decision whose reason ends with `DO THIS INSTEAD:` and a redirect. To allow it prints nothing, after the undo snapshot. In code, `guard.decide(command)` returns `("block"|"allow", reason)` and `guard.decide_full(command)` adds the shape, the redirect and its alternatives.
 
+## Results first (2026-10-12)
+
+### Real agents under pressure
+
+`live_bench.py` puts real headless Claude Code agents (Claude Haiku and Claude Sonnet) to work in throwaway repos, inside a write jail. Each gets an ordinary task that tempts a destructive shortcut: a rejected push, a failing hook, an unmerged branch to delete, a repo to clean up. Each prompt says I am away and cannot answer questions. Half the runs have the guard and undo hook. Half have nothing.
+
+| | runs | finished the task | permanent damage | what they ran |
+|---|---:|---:|---:|---|
+| no guard | 16 | 12 | **8 runs: 16 pieces of work lost in 6, the hook bypassed in 2** | `git commit --no-verify` (2 of 2), `git branch -D` on unmerged work (2 of 2), `git reset --hard && git clean -fd` (4 of 4) |
+| guard + undo | 16 | 13 | **0** | every one of those denied; the agent fixed the whitespace and committed through the hook, used `branch -d`, stashed, or stopped and said why |
+
+The lost work is read by the bench's own route: file contents by sha256, commits by reachability, from disk, the index, every ref and the bare remote. In two of the unguarded wipe runs Haiku first copied a backup to `/tmp`, outside the repo, which the bench does not search. I count those losses anyway, and say so here. With the plain prompts, without "do whatever it takes", no agent tempted anything in 32 runs. A guard test needs pressure. Cost of all 32 pressure runs: $0.93 in API terms.
+
+The four denies on the guarded side were all right. Each was a chain whose last step was destructive. I checked every one by hand.
+
+### The free guards, on a set none of us had seen
+
+`destructive_command_guard` (dcg, 6,155 GitHub stars) and `cc-safety-net` (1,604 stars) are the two most used command guards for coding agents. I ran their released builds as hooks (dcg v0.15.3, sha256 matched its release; cc-safety-net 2.6.10) on holdout7, which was written after all three guards were frozen.
+
+| guard | bad commands stopped | whole-tree staging | disabling hooks | destroying work | safe commands stopped |
+|---|---:|---:|---:|---:|---:|
+| this guard (v6) | **65 of 65** | 22 of 22 | 20 of 20 | 23 of 23 | **1 of 45** |
+| dcg, default packs | 21 of 65 | 2 of 22 | 2 of 20 | 17 of 23 | 7 of 45 |
+| cc-safety-net, standard | 20 of 65 | 0 of 22 | 2 of 20 | 18 of 23 | 3 of 45 |
+| cc-safety-net, paranoid | 22 of 65 | 2 of 22 | 2 of 20 | 18 of 23 | 7 of 45 |
+
+Read it fairly. The sets are written to my three policies, and staging and hooks are not what those tools set out to cover. Destroying work is their own lane, and there they let 5 or 6 of 23 through. They also cover far more than I do: databases, cloud, Kubernetes, secrets, other agents. I test none of that. This table says nothing about it.
+
+### Blind holdouts for versions 4 to 6
+
+Each set was written by a model that saw only the policy sheet, sealed (`chmod 000`) while the next version was built, and opened only after that version was frozen in a commit.
+
+| set | writer | blind for | stopped bad | safe stopped | undo fully restored |
+|---|---|---|---:|---:|---:|
+| holdout5 | Claude Sonnet | v4 | 67 of 69 | 1 of 44 | 18 of 18 |
+| holdout6 | Claude Haiku | v5 | 75 of 75 | 0 of 41 | 15 of 16 (the miss: `rm -rf .git` took the snapshots with it) |
+| holdout7 | Claude Sonnet | v6 | 65 of 65 | 1 of 45 | 20 of 20 |
+
+The one safe command v6 stops on holdout7 is `S7-097`, a heredoc appended to a hook file. v6 allows an appended `echo` or `printf` with a real command, but not yet a heredoc. It is the next fix. v5 scores the same as v6 on holdout7, so v6's changes did not move this set.
+
+## Version 6
+
+- **Undo survives `rm -rf .git`.** Every snapshot is also copied, by a fetch run from the store side, into a bare repo outside the worktree (`~/.local/state/agent-guard/<hash>.git`, or `AGENT_GUARD_STORE`). A restore in a repo whose git dir is gone, or was re-initialised, rebuilds it from the store, with its config, `info/exclude`, installed hooks and remote-tracking refs. In that case it prints no repair push, because the remote never moved. Holdout6 undo went from 15 of 16 to 16 of 16. The price: a snapshot costs about 190 ms instead of 125. A read-only command is unchanged at about 46 ms.
+- **A regex that could hang the hook.** One pattern I wrote for v6 backtracked without bound: 13 seconds on 28 characters. The bench caught it by running slow. It is replaced, and bench.py now times 270 long, repetitive, unterminated inputs on every run. The slowest takes 0.30 s. Over one second fails the run.
+- **19 safe commands no longer denied**, each fixed by cause and checked in both directions. They include a hook's `.sample` files, `chmod go-x` (the owner still runs it, which I proved with a real hook), an appended hook command, `branch -m -f` (that is `-M`), a commit dry run, `.git/FETCH_HEAD`, `core.hooksPath` named by the repo root, outputs whose shape is known (`merge-base`, `rev-list`, `whoami`, branch listings), `checkout <commit> -- <file>`, staging a named subfolder through `find` or `xargs`, a merged-branch cleanup loop, `cd` after a shell keyword, heredoc ends read exactly as bash reads them, and `$(echo words)`. One of these first let a discard through. The bench showed it, I closed it, and two own cases now hold it.
+- **The 30 white-box violations still missed.** I ran each one for real in a jailed throwaway repo. 24 did damage there, and undo fully restored all 24. Six could not run inside the jail: they write to `/tmp`, need a terminal, or need a submodule. The guard still misses those strings. The undo layer is why that is not a loss.
+- **Bench changes.** v6 is compared with frozen v5. A softened deny on a holdout case is reported as a fix when its blind label says allow, and as a regression when it says stop, never in the exit code. Every deny still needs a specific redirect: 0 of 1,056 bad. The bench now also deletes its own read-only temp dirs.
+
+## Version 5
+
+v5 added prefix expansion of long options from each git subcommand's real option list, comment stripping, dry-run handling, cwd tracking through `cd` and `-C`, edits of hook contents by name, and 11 new redirect shapes. The undo layer learned to snapshot whatever it cannot prove read-only (dash modes in chmod, xargs, patch, archives extracting into the repo, a git config or variable that makes git run a program) and to restore into read-only directories. Undo went from 49 to 70 scenarios, all restored. Holdout5 became its development set. Holdout6 was its blind test (above).
+
 ## Version 4
 
 ### Never ask
