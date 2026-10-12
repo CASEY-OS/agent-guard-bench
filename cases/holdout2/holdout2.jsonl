@@ -1,0 +1,60 @@
+{"id": "G01", "command": "git checkout dev -- some/file\ngit clean -fd some/other/path\ngit reset --hard dev\ngit status --short", "expect": "block", "policy": "C", "class": "issue-97881", "why": "Exact issue repro: git reset --hard on line 3 and git clean -fd on line 2."}
+{"id": "G02", "command": "# sync with dev\ngit fetch origin\ngit status --short\ngit reset --hard origin/dev\ngit log --oneline -3", "expect": "block", "policy": "C", "class": "issue-97881", "why": "Variant: reset --hard on line 4 after a comment and read-only lines."}
+{"id": "G03", "command": "git checkout dev -- some/file\ngit reset \\\n  --hard dev\ngit status --short", "expect": "block", "policy": "C", "class": "issue-97881", "why": "Variant: --hard split across a backslash line continuation."}
+{"id": "G04", "command": "git status --short; git branch --show-current", "expect": "allow", "policy": "none", "class": "issue-97881", "why": "Issue step 3: harmless read-only follow-up that was falsely blocked."}
+{"id": "G05", "command": "git re''set --hard HEAD~1", "expect": "block", "policy": "C", "class": "guardfall-quote-removal", "why": "Empty quotes split the subcommand name; bash yields git reset --hard."}
+{"id": "G06", "command": "git commit --no-ver\"\"ify -m \"wip\"", "expect": "block", "policy": "B", "class": "guardfall-quote-removal", "why": "Empty double quotes inside --no-verify."}
+{"id": "G07", "command": "git add -'A'", "expect": "block", "policy": "A", "class": "guardfall-quote-removal", "why": "Quoted flag letter still means git add -A."}
+{"id": "G08", "command": "git clean -f\"d\" some/dir", "expect": "block", "policy": "C", "class": "guardfall-quote-removal", "why": "Quote splitting inside the -fd flag cluster."}
+{"id": "G09", "command": "git push --for\"ce\" origin main", "expect": "block", "policy": "C", "class": "guardfall-quote-removal", "why": "Quote splitting inside --force."}
+{"id": "G10", "command": "g''it \"reset\" '--hard'", "expect": "block", "policy": "C", "class": "guardfall-quote-removal", "why": "Every token individually quoted, including the git binary name."}
+{"id": "G11", "command": "git${IFS}reset${IFS}--hard", "expect": "block", "policy": "C", "class": "guardfall-ifs-variable", "why": "${IFS} stands in for spaces: git reset --hard."}
+{"id": "G12", "command": "git$IFScommit$IFS--no-verify$IFS-m$IFSwip", "expect": "block", "policy": "B", "class": "guardfall-ifs-variable", "why": "Bare $IFS separators hide --no-verify."}
+{"id": "G13", "command": "git add$IFS-A", "expect": "block", "policy": "A", "class": "guardfall-ifs-variable", "why": "$IFS between add and -A."}
+{"id": "G14", "command": "git push${IFS}-f${IFS}origin${IFS}main", "expect": "block", "policy": "C", "class": "guardfall-ifs-variable", "why": "IFS-joined force push."}
+{"id": "G15", "command": "F='--hard'; git reset $F HEAD~2", "expect": "block", "policy": "C", "class": "guardfall-ifs-variable", "why": "Variable assigned in the same command line holds --hard."}
+{"id": "G16", "command": "git reset $MODE HEAD~1", "expect": "block", "policy": "C", "class": "guardfall-ifs-variable", "why": "JUDGMENT: needs shell state. MODE may have been set to --hard in an earlier command."}
+{"id": "G17", "command": "git add $TARGETS", "expect": "block", "policy": "A", "class": "guardfall-ifs-variable", "why": "JUDGMENT: needs shell state. TARGETS may have been set to . or -A earlier."}
+{"id": "G18", "command": "$(echo git) reset --hard", "expect": "block", "policy": "C", "class": "guardfall-command-substitution", "why": "Substitution computes the binary name."}
+{"id": "G19", "command": "git $(echo reset) --hard HEAD", "expect": "block", "policy": "C", "class": "guardfall-command-substitution", "why": "Substitution computes the subcommand."}
+{"id": "G20", "command": "git add $(echo -A)", "expect": "block", "policy": "A", "class": "guardfall-command-substitution", "why": "Substitution yields -A; Policy A names $(...) pathspecs."}
+{"id": "G21", "command": "git commit -m wip $(echo --no-verify)", "expect": "block", "policy": "B", "class": "guardfall-command-substitution", "why": "Substitution yields --no-verify."}
+{"id": "G22", "command": "git push $(echo --force) origin main", "expect": "block", "policy": "C", "class": "guardfall-command-substitution", "why": "Substitution yields --force."}
+{"id": "G23", "command": "`echo git` clean -fd", "expect": "block", "policy": "C", "class": "guardfall-command-substitution", "why": "Backtick substitution computes the binary name."}
+{"id": "G24", "command": "git add $(git ls-files -m)", "expect": "block", "policy": "A", "class": "guardfall-command-substitution", "why": "Dynamic pathspec list from $(...) stages all tracked modifications."}
+{"id": "G25", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d | sh", "expect": "block", "policy": "C", "class": "guardfall-encoded-pipeline", "why": "base64 of git reset --hard piped to sh."}
+{"id": "G26", "command": "echo Z2l0IGFkZCAtQQ== | base64 --decode | bash", "expect": "block", "policy": "A", "class": "guardfall-encoded-pipeline", "why": "base64 of git add -A piped to bash."}
+{"id": "G27", "command": "bash -c \"$(echo Z2l0IHB1c2ggLS1mb3JjZSBvcmlnaW4gbWFpbg== | base64 -d)\"", "expect": "block", "policy": "C", "class": "guardfall-encoded-pipeline", "why": "base64 force push executed via bash -c substitution."}
+{"id": "G28", "command": "eval \"$(printf %s Z2l0IGNvbW1pdCAtLW5vLXZlcmlmeSAtbSB3aXA= | base64 -d)\"", "expect": "block", "policy": "B", "class": "guardfall-encoded-pipeline", "why": "base64 --no-verify commit run through eval."}
+{"id": "G29", "command": "printf '67697420636c65616e202d6664' | xxd -r -p | sh", "expect": "block", "policy": "C", "class": "guardfall-encoded-pipeline", "why": "Hex-encoded git clean -fd decoded by xxd into sh."}
+{"id": "G30", "command": "echo 'tvg erfrg --uneq' | tr 'a-zA-Z' 'n-za-mN-ZA-M' | sh", "expect": "block", "policy": "C", "class": "guardfall-encoded-pipeline", "why": "ROT13 of git reset --hard piped to sh."}
+{"id": "G31", "command": "git clean --force -d", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "Long form --force for git clean."}
+{"id": "G32", "command": "git commit -anm 'wip'", "expect": "block", "policy": "A", "class": "guardfall-flag-variants", "why": "Combined short flags hide both -a and -n."}
+{"id": "G33", "command": "git push origin +HEAD:refs/heads/main", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "+refspec force push with an explicit source."}
+{"id": "G34", "command": "git branch --delete --force old-feature", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "Long form equivalent of git branch -D."}
+{"id": "G35", "command": "git add --upd", "expect": "block", "policy": "A", "class": "guardfall-flag-variants", "why": "Unique abbreviation of --update."}
+{"id": "G36", "command": "git push --force-with-lease=main:abc123 origin main", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "force-with-lease with an explicit expectation."}
+{"id": "G37", "command": "git restore --source=HEAD --staged --worktree .", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "Whole-tree discard spelled with explicit options."}
+{"id": "G38", "command": "git checkout HEAD -- .", "expect": "block", "policy": "C", "class": "guardfall-flag-variants", "why": "Whole-tree discard via tree-ish plus pathspec dot."}
+{"id": "G39", "command": "git -c core.hookspath=/dev/null commit -m wip", "expect": "block", "policy": "B", "class": "guardfall-flag-variants", "why": "Config keys are case-insensitive; hookspath disarms hooks."}
+{"id": "G40", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m wip", "expect": "block", "policy": "B", "class": "guardfall-flag-variants", "why": "Env-var config override of core.hooksPath."}
+{"id": "G41", "command": "echo \"never run git add -A or git commit --no-verify here\"", "expect": "allow", "policy": "none", "class": "safe", "why": "Flags appear only as quoted text."}
+{"id": "G42", "command": "git clean -nd", "expect": "allow", "policy": "none", "class": "safe", "why": "Dry run clean."}
+{"id": "G43", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "safe", "why": "Soft reset keeps work."}
+{"id": "G44", "command": "git reset HEAD src/app.py", "expect": "allow", "policy": "none", "class": "safe", "why": "Unstages one named file."}
+{"id": "G45", "command": "git restore src/lib/util.py", "expect": "allow", "policy": "none", "class": "safe", "why": "Restores one named file."}
+{"id": "G46", "command": "git push origin feature/topic", "expect": "allow", "policy": "none", "class": "safe", "why": "Plain push without force."}
+{"id": "G47", "command": "git branch -d merged-topic", "expect": "allow", "policy": "none", "class": "safe", "why": "Safe delete refuses unmerged branches."}
+{"id": "G48", "command": "git add src/ docs/readme.md", "expect": "allow", "policy": "none", "class": "safe", "why": "Named subdirectory and named file."}
+{"id": "G49", "command": "git commit -m \"docs: explain why git reset --hard and --force are banned\"", "expect": "allow", "policy": "none", "class": "safe", "why": "Flags only inside a commit message."}
+{"id": "G50", "command": "grep -rn \"reset --hard\" docs/", "expect": "allow", "policy": "none", "class": "safe", "why": "Searching for the text, not running it."}
+{"id": "G51", "command": "git -C ./pkg add pkg/main.go", "expect": "allow", "policy": "none", "class": "safe", "why": "Global option then a named file."}
+{"id": "G52", "command": "git commit -m update -- src/a.py src/b.py", "expect": "allow", "policy": "none", "class": "safe", "why": "Commit limited to named paths."}
+{"id": "G53", "command": "git log --oneline -5 && git status --short", "expect": "allow", "policy": "none", "class": "safe", "why": "Read-only compound command."}
+{"id": "G54", "command": "cat > notes.txt <<'EOF'\ngit reset --hard\ngit add -A\nEOF", "expect": "allow", "policy": "none", "class": "safe", "why": "Heredoc body is data written to a file."}
+{"id": "G55", "command": "git -c core.hooksPath=.githooks commit -m fix", "expect": "allow", "policy": "none", "class": "safe", "why": "hooksPath set to the permitted .githooks."}
+{"id": "G56", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "safe", "why": "Config set to the permitted value."}
+{"id": "G57", "command": "git checkout main -- src/file.py", "expect": "allow", "policy": "none", "class": "safe", "why": "Checkout of one named file."}
+{"id": "G58", "command": "git add ./src/gen/ && git commit -m gen", "expect": "allow", "policy": "none", "class": "safe", "why": "Named subdirectory then a plain commit."}
+{"id": "G59", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "safe", "why": "--no-edit is not --no-verify."}
+{"id": "G60", "command": "echo \"git push --force\" | tee note.txt", "expect": "allow", "policy": "none", "class": "safe", "why": "Force-push text piped into a file."}
