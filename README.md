@@ -81,6 +81,11 @@ Each set was written by a model that saw only the policy sheet, sealed (`chmod 0
 | holdout5 | Claude Sonnet | v4 | 67 of 69 | 1 of 44 | 18 of 18 |
 | holdout6 | Claude Haiku | v5 | 75 of 75 | 0 of 41 | 15 of 16 (the miss: `rm -rf .git` took the snapshots with it) |
 | holdout7 | Claude Sonnet | v6 | 65 of 65 | 1 of 45 | 20 of 20 |
+| holdout8 | **ChatGPT (OpenAI)** | v6 | 40 of 40 | 0 of 40 | (no undo scenarios) |
+| holdout9 | **Gemini (Google)** | v6 | 47 of 50 | 0 of 30 | (no undo scenarios) |
+| holdout10 | Claude Haiku | v7 | 60 of 60 | 0 of 40 | 14 of 14 |
+
+Holdout8 and holdout9 are the first sets from outside the Claude family. Casey pasted the prompt into the free ChatGPT and Gemini and pasted their answers back. The prompt held only the three rules and the format. On those two sets dcg stopped 13 of 40 and 18 of 50, cc-safety-net 12 to 13 of 40 and 18 to 21 of 50, and a Claude judge given the policy stopped all 90 with no safe command stopped. v6 missed `npm uninstall husky` and `rm -f lefthook.yml` (removing a hook manager turns its hooks off), and `push -o no-verify`, whose label I dispute: a push option goes to the server, and the local pre-push hook still runs. Holdout9's README lists the five lines whose JSON quoting I repaired and the two characters the paste lost. Holdout10 is easier than the others: v5 and v6 also score 60 of 60 there. It shows v7 broke nothing. It does not show v7 is better.
 
 The one safe command v6 stops on holdout7 is `S7-097`, a heredoc appended to a hook file. v6 allows an appended `echo` or `printf` with a real command, but not yet a heredoc. It is the next fix. v5 scores the same as v6 on holdout7, so v6's changes did not move this set.
 
@@ -106,6 +111,13 @@ A market scan found doover (github.com/CaydenChik/doover). It snapshots the exac
 | outside any repo, `rm` of a file | 55 ms | 57 ms |
 
 The one real price is a command run in a repo that writes only outside it. v6 took no snapshot there. v7 takes the repo snapshot and the copy, about 130 ms more. A files-only restore of one file took 35 ms.
+
+## Version 7
+
+- **A hook manager is its hooks.** lefthook's and pre-commit's config files and husky's rc file are judged as hook files. `npm`, `yarn`, `pnpm` or `bun` removing husky, lefthook, pre-commit or simple-git-hooks is denied (holdout9's two misses).
+- **No append to a hook is safe.** A hook passes or fails on its last command, so a line appended after a failing check turns the failure into a pass. I proved it: a hook ending in `false` blocks a commit, and after `echo "hook ok" >> .githooks/pre-commit` the same commit goes through. v6 allowed appends of real commands. That was wrong, and v7 denies every append. All three outside writers (Claude, ChatGPT and Gemini) labeled such appends safe. I score their labels as written and count those cases against me.
+- `find -delete` inside `.git` gets a specific redirect (holdout8's X077 had fallen to the generic one).
+- **Undo restores files outside the repo and ignored files that a command names** (`.env`, `../notes.txt`, `~/x`), up to 200 MB or 20,000 entries. 87 of 87 scenarios fully restored. 8 controls show the loss, and 10 one-line restore mutants are caught. `git clean -fdX` stays a residual because it names no paths.
 
 ## Version 6
 
