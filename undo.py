@@ -30,14 +30,26 @@ change the repo, and if so a snapshot is taken first. Read-only commands cost no
 an unknown program, a form it cannot parse, a git -c key or a GIT_* variable that makes git run a program,
 xargs operands, or an extraction from an archive all get one.
 
-CLI: python3 undo.py [--repo PATH] list | snapshot [--label L] | restore <id> | restore --last
-     [--no-safety] | plan <command>
+Files the repo snapshot does not hold (v7). When the plan names a path OUTSIDE the repo (or the command
+runs outside any repo), or an IGNORED path inside it (.env, build/), the hook copies those exact paths
+first into <store>/files/<id>/ with a manifest (path, existed or not, type, mode, sha256, size). The repo
+snapshot of the same call records that id in meta.json, and `restore` puts those files back too:
+deleted ones recreated, bytes and modes put back, files the command created at a target removed. A
+files-only snapshot restores with `files restore --last`. Bounded at 200 MB and 20,000 entries per
+command (AGENT_GUARD_FILES_MAX_BYTES, AGENT_GUARD_FILES_MAX); over that a target is skipped and said so.
+It never follows a symlink, and never copies /, $HOME itself or an ancestor of $HOME.
 
-Blind to: ignored files, files outside the repo, empty directories, owner, ACLs, xattrs and mtimes,
+CLI: python3 undo.py [--repo PATH] list | snapshot [--label L] | restore <id> | restore --last
+     [--no-safety] | plan <command> | files list | files restore <id> | files restore --last
+
+Blind to: ignored files and files outside the repo that the command does not name (git clean -fdX,
+a script that deletes them), a target over the bound, empty directories inside the repo, owner, ACLs,
+xattrs and mtimes,
 submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the
 stash, an in-progress rebase directory, and remote state the local repo never fetched.
 """
 import datetime
+import hashlib
 import json
 import os
 import posixpath
@@ -166,14 +178,16 @@ def _new_id(existing):
     return sid
 
 
+def _store_base():
+    return os.environ.get("AGENT_GUARD_STORE") or os.path.join(os.path.expanduser("~"), ".local", "state",
+                                                                "agent-guard")
+
+
 def store_dir(top):
     """The copy of this repo's snapshots kept OUTSIDE the repo, so `rm -rf .git` cannot take the
     snapshots with it: $AGENT_GUARD_STORE (default ~/.local/state/agent-guard)/<hash of the path>.git."""
-    import hashlib
-    base = os.environ.get("AGENT_GUARD_STORE") or os.path.join(os.path.expanduser("~"), ".local", "state",
-                                                                "agent-guard")
     h = hashlib.sha256(os.path.realpath(top).encode("utf-8", "surrogateescape")).hexdigest()[:20]
-    return os.path.join(base, h + ".git")
+    return os.path.join(_store_base(), h + ".git")
 
 
 def _mirror(top, sid, keep):
@@ -211,8 +225,10 @@ def _from_store(repo):
     return True
 
 
-def snapshot(repo, label="", keep=None, force=False):
-    """Capture the full working state. -> snapshot id (an existing id when nothing changed)."""
+def snapshot(repo, label="", keep=None, force=False, files=None):
+    """Capture the full working state. -> snapshot id (an existing id when nothing changed). files: the id of
+    the files snapshot (outside the repo, or ignored) taken by the same hook call; it goes into meta.json,
+    and a snapshot that carries one is always stored, so `restore --last` finds it."""
     top, gitdir, common = paths(repo)
     keep = int(os.environ.get("AGENT_GUARD_UNDO_KEEP", KEEP_DEFAULT)) if keep is None else keep
     tmpdir = tempfile.mkdtemp(prefix="agent-guard-undo-")
@@ -361,15 +377,17 @@ def snapshot(repo, label="", keep=None, force=False):
             root.append(("040000", "tree", _mktree(top, kept), "keep"))
         state_tree = _mktree(top, root)
         existing = _snapshots(top)
-        if existing and not force:
+        if existing and not force and not files:
             p = _git(top, ["rev-parse", "-q", "--verify", existing[-1][1] + ":state"], check=False)
             if p.returncode == 0 and p.stdout.decode().strip() == state_tree:
                 if not os.path.isdir(store_dir(top)):
                     _mirror(top, existing[-1][0], keep)
                 return existing[-1][0]                                   # nothing changed since
         sid = _new_id([s for s, _ in existing])
-        meta = json.dumps({"version": 1, "id": sid, "toplevel": top, "label": label[:500],
-                           "warnings": warnings}, sort_keys=True).encode()
+        meta = {"version": 1, "id": sid, "toplevel": top, "label": label[:500], "warnings": warnings}
+        if files:
+            meta["files"] = files
+        meta = json.dumps(meta, sort_keys=True).encode()
         meta_id = _hash_blobs(top, [meta], tmpdir)[0]
         top_tree = _mktree(top, [("040000", "tree", state_tree, "state"), ("100644", "blob", meta_id, "meta.json")])
         seen, plist = set(), []
@@ -483,7 +501,17 @@ def restore(repo, sid, safety=True):
         raise UndoError("index.lock exists: another git process is running in %s" % top)
     st = snap + ":state"
     before_refs = {r[0]: r[1] for r in _refs(top) if not r[3]}
-    safety_id = snapshot(top, label="pre-restore of " + sid) if safety else None
+    # the files snapshot the same hook call took (outside the repo, or ignored): its safety copy goes first,
+    # linked from the repo's pre-restore snapshot, so undoing this restore puts both back
+    fid = meta.get("files")
+    fman = _files_manifest(fid) if fid else None
+    if fid and fman is None:
+        print("undo: files snapshot %s is no longer kept in %s; the files outside the repo and the ignored files "
+              "it named are NOT restored" % (fid, files_dir()), file=sys.stderr)
+    fsafe = None
+    if safety and fman:
+        fsafe = files_snapshot(_manifest_targets(fman), label="pre-restore of files " + fid, repo=top, protect=fid)
+    safety_id = snapshot(top, label="pre-restore of " + sid, files=fsafe) if safety else None
     # 1. worktree: delete what the snapshot did not have, then write every snapshot file
     wtree = _out(top, ["rev-parse", st + "/worktree"])
     target = {}
@@ -675,9 +703,406 @@ def restore(repo, sid, safety=True):
                              % (b, before_refs[name], r, oid, b))
             else:
                 hints.append("git push %s %s:refs/heads/%s" % (r, oid, b))
+    # 5. last, the files outside the repo and the ignored files the command named
+    fres = files_restore(fid, safety=False) if fman else None
     return {"restored": sid, "safety_snapshot": safety_id, "files_deleted": deleted,
             "files_written": len(target), "refs": len(want), "remote_repair": hints,
-            "rebuilt_from_store": rebuilt}
+            "rebuilt_from_store": rebuilt, "files": fres, "files_safety_snapshot": fsafe,
+            "files_missing": fid if fid and not fman else None}
+
+
+# ---- files the repo snapshot does not hold: outside every repo, or ignored inside it ----
+# A command that names a path outside the repo (rm ../notes.txt, sed -i ~/.bashrc, > /tmp/x) or an ignored
+# path inside it (rm .env, rm -rf build) gets those EXACT paths copied first, into the store, beside the
+# repo snapshots: <store>/files/<id>/manifest.json and data/<sha256>. Bounded, and never a symlink followed.
+FILES_MAX_BYTES_DEFAULT = 200 * 1024 * 1024
+FILES_MAX_ENTRIES_DEFAULT = 20000
+
+
+def files_dir():
+    return os.path.join(_store_base(), "files")
+
+
+def _files_ids():
+    d = files_dir()
+    try:
+        names = os.listdir(d)
+    except OSError:
+        return []
+    return sorted(n for n in names if not n.startswith(".") and os.path.isfile(os.path.join(d, n, "manifest.json")))
+
+
+def _files_manifest(fid):
+    try:
+        with open(os.path.join(files_dir(), fid, "manifest.json"), "rb") as fh:
+            return json.loads(fh.read().decode("utf-8", "surrogateescape"))
+    except (IOError, OSError, ValueError):
+        return None
+
+
+def _manifest_targets(man):
+    return [(t["path"], t.get("exclude", [])) for t in man.get("targets", []) if not t.get("skipped")]
+
+
+def _under(p, root):
+    return p == root or p.startswith(root.rstrip(os.sep) + os.sep)
+
+
+def _forbidden(path):
+    """A target this layer never copies: /, $HOME itself, an ancestor of $HOME, a device path, the store."""
+    home = os.path.realpath(os.path.expanduser("~"))
+    p = path.rstrip(os.sep) or os.sep
+    if p == os.sep:
+        return "the filesystem root is never copied"
+    if p == home:
+        return "$HOME itself is never copied"
+    if home.startswith(p + os.sep):
+        return "an ancestor of $HOME is never copied"
+    if any(_under(p, d) for d in ("/dev", "/proc", "/sys")):
+        return "a device or kernel path is never copied"
+    if _under(p, os.path.realpath(_store_base())):
+        return "the undo store itself is never copied"
+    return None
+
+
+def _ftype(st):
+    if stat.S_ISLNK(st.st_mode):
+        return "symlink"
+    if stat.S_ISDIR(st.st_mode):
+        return "dir"
+    if stat.S_ISREG(st.st_mode):
+        return "file"
+    return "other"
+
+
+def _walk(root, excludes, cap=None):
+    """-> [(path, lstat, readable)] for root and everything below it, parents before children. A symlink is
+    recorded, never followed; an excluded subtree (the repo itself, the store) is not entered. With cap, it
+    stops after cap + 1 entries: the caller only needs to know the target is over the bound."""
+    out, stack = [], [root]
+    while stack:
+        if cap is not None and len(out) > cap:
+            break
+        p = stack.pop()
+        try:
+            st = os.lstat(p)
+        except OSError:
+            continue
+        ok = True
+        kids = []
+        if stat.S_ISDIR(st.st_mode):
+            try:
+                kids = sorted(os.listdir(p))
+            except OSError:
+                ok = False
+        out.append((p, st, ok))
+        for n in reversed(kids):
+            c = os.path.join(p, n)
+            if not any(_under(c, x) for x in excludes):
+                stack.append(c)
+    return out
+
+
+def _copy_in(src, data):
+    """Copy one regular file into data/<sha256>, never through a symlink. -> (sha256, size)."""
+    h, size = hashlib.sha256(), 0
+    part = os.path.join(data, ".part-%d" % os.getpid())
+    fd = os.open(src, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    with os.fdopen(fd, "rb") as fi, open(part, "wb") as fo:
+        while True:
+            b = fi.read(1 << 20)
+            if not b:
+                break
+            h.update(b)
+            size += len(b)
+            fo.write(b)
+    d = h.hexdigest()
+    dst = os.path.join(data, d)
+    if os.path.exists(dst):
+        os.unlink(part)
+    else:
+        os.replace(part, dst)
+    return d, size
+
+
+def _prune_files(keep, protect=None):
+    ids = _files_ids()
+    if keep > 0 and len(ids) > keep:
+        for old in ids[:len(ids) - keep]:
+            if old != protect:
+                shutil.rmtree(os.path.join(files_dir(), old), ignore_errors=True)
+
+
+def files_snapshot(targets, label="", repo=None, keep=None, protect=None):
+    """Copy each target (an absolute path, with the subtrees to leave out) as it is now. -> files snapshot id,
+    or None when there is no target. A target that does not exist is recorded too, so a restore removes what
+    the command creates there. Over the bound (AGENT_GUARD_FILES_MAX_BYTES, default 200 MB, and
+    AGENT_GUARD_FILES_MAX, default 20,000 entries, for all targets together) a target is skipped: said on
+    stderr and recorded in the manifest."""
+    if not targets:
+        return None
+    keep = int(os.environ.get("AGENT_GUARD_UNDO_KEEP", KEEP_DEFAULT)) if keep is None else keep
+    max_bytes = int(os.environ.get("AGENT_GUARD_FILES_MAX_BYTES", FILES_MAX_BYTES_DEFAULT))
+    max_ents = int(os.environ.get("AGENT_GUARD_FILES_MAX", FILES_MAX_ENTRIES_DEFAULT))
+    fdir = files_dir()
+    if not os.path.isdir(fdir):
+        os.makedirs(fdir, mode=0o700, exist_ok=True)     # the copies can hold secrets (.env): owner only
+    tmp = tempfile.mkdtemp(prefix=".tmp-", dir=fdir)
+    data = os.path.join(tmp, "data")
+    os.makedirs(data)
+    store = os.path.realpath(_store_base())
+    tlist, entries, notes = [], [], []
+    used_bytes = used_ents = 0
+    try:
+        for ti, (path, excl) in enumerate(targets):
+            t = {"path": path, "exclude": sorted(excl), "existed": False, "type": None, "skipped": None,
+                 "entries": 0, "bytes": 0}
+            tlist.append(t)
+            why = _forbidden(path)
+            if why:
+                t["skipped"] = why
+                continue
+            try:
+                st = os.lstat(path)
+            except OSError:
+                continue                                   # not there now: a restore removes what appears
+            t["existed"], t["type"] = True, _ftype(st)
+            walk = _walk(path, list(excl) + [store], cap=max_ents - used_ents)
+            n = len(walk)
+            b = sum(s.st_size for _, s, _ in walk if stat.S_ISREG(s.st_mode))
+            if used_ents + n > max_ents or used_bytes + b > max_bytes:
+                t["skipped"] = ("over the bound: %d entries and %d bytes would pass %d entries or %d bytes"
+                                % (used_ents + n, used_bytes + b, max_ents, max_bytes))
+                continue
+            used_ents += n
+            used_bytes += b
+            t["entries"], t["bytes"] = n, b
+            for p, s, readable in walk:
+                e = {"path": p, "target": ti, "type": _ftype(s), "mode": "%o" % stat.S_IMODE(s.st_mode)}
+                if e["type"] == "symlink":
+                    e["link"] = os.readlink(p)
+                elif e["type"] == "file":
+                    try:
+                        e["sha256"], e["size"] = _copy_in(p, data)
+                    except OSError as exc:
+                        e["unreadable"] = str(exc)[:200]
+                elif e["type"] == "dir" and not readable:
+                    e["unreadable"] = "cannot list it"
+                if e.get("unreadable") or e["type"] == "other":
+                    notes.append("%s: %s" % (p, e.get("unreadable") or "not a file, directory or symlink"))
+                entries.append(e)
+        for t in tlist:
+            if t["skipped"]:
+                print("undo: NOT copied %s (%s). A restore will not bring it back." % (t["path"], t["skipped"]),
+                      file=sys.stderr)
+        existing = _files_ids()
+        man = {"version": 1, "label": label[:500], "repo": repo, "targets": tlist, "entries": entries,
+               "notes": notes, "max_bytes": max_bytes, "max_entries": max_ents}
+        while True:
+            sid = _new_id(existing)
+            man["id"] = sid
+            with open(os.path.join(tmp, "manifest.json"), "wb") as fh:
+                fh.write(json.dumps(man, sort_keys=True, indent=1).encode("utf-8", "surrogateescape"))
+            try:
+                os.rename(tmp, os.path.join(fdir, sid))
+                break
+            except OSError:
+                if not os.path.exists(os.path.join(fdir, sid)):
+                    raise
+                existing = existing + [sid]                # another hook took this id: take the next one
+        tmp = None
+        _prune_files(keep, protect)
+        return sid
+    finally:
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _remove_node(p):
+    if os.path.isdir(p) and not os.path.islink(p):
+        _open_tree(p)
+        shutil.rmtree(p)
+    else:
+        os.unlink(p)
+
+
+def _same_file(p, sha):
+    try:
+        st = os.lstat(p)
+        if not stat.S_ISREG(st.st_mode):
+            return False
+        h = hashlib.sha256()
+        with open(p, "rb") as fh:
+            for b in iter(lambda: fh.read(1 << 20), b""):
+                h.update(b)
+        return h.hexdigest() == sha
+    except OSError:
+        return False
+
+
+def files_list():
+    out = []
+    for fid in _files_ids():
+        m = _files_manifest(fid) or {}
+        out.append({"id": fid, "repo": m.get("repo"), "label": m.get("label", ""),
+                    "targets": [t["path"] for t in m.get("targets", [])],
+                    "skipped": [t["path"] for t in m.get("targets", []) if t.get("skipped")]})
+    return out
+
+
+def files_restore(fid, safety=True):
+    """Put every target of files snapshot fid back as it was: deleted files and directories recreated,
+    overwritten bytes and modes put back, and whatever the command created at a target that did not exist,
+    or inside a target directory, removed. A pre-restore copy of the same targets is taken first."""
+    ids = _files_ids()
+    if fid == "--last":
+        if not ids:
+            raise UndoError("no files snapshot in %s" % files_dir())
+        fid = ids[-1]
+    man = _files_manifest(fid) if fid in ids else None
+    if man is None:
+        raise UndoError("no files snapshot %s in %s" % (fid, files_dir()))
+    data = os.path.join(files_dir(), fid, "data")
+    safety_id = files_snapshot(_manifest_targets(man), label="pre-restore of files " + fid, repo=man.get("repo"),
+                               protect=fid) if safety else None
+    by_t = {}
+    for e in man.get("entries", []):
+        by_t.setdefault(e["target"], []).append(e)
+    written = removed = unchanged = 0
+    skipped, lost = [], []
+    for ti, t in enumerate(man.get("targets", [])):
+        p = t["path"]
+        if t.get("skipped"):
+            skipped.append(p)
+            continue
+        if not t.get("existed"):
+            if os.path.lexists(p):
+                _remove_node(p)
+                removed += 1
+            continue
+        ents = by_t.get(ti, [])
+        if not ents:
+            continue
+        excl = list(t.get("exclude", [])) + [os.path.realpath(_store_base())]
+        parent = os.path.dirname(p)
+        os.makedirs(parent, exist_ok=True)
+        pmode = stat.S_IMODE(os.lstat(parent).st_mode)
+        if pmode & 0o300 != 0o300:
+            os.chmod(parent, pmode | 0o300)            # a read-only parent: opened for the restore, closed after
+        try:
+            want = {e["path"]: e for e in ents}
+            sealed = [e["path"] for e in ents if e["type"] == "dir" and e.get("unreadable")]
+            if ents[0]["type"] == "dir":
+                if os.path.lexists(p) and (os.path.islink(p) or not os.path.isdir(p)):
+                    os.unlink(p)
+                os.makedirs(p, exist_ok=True)
+                _open_tree(p)
+                for cp, cst, _ in reversed(_walk(p, excl + sealed)):     # children first
+                    if cp == p:
+                        continue
+                    e = want.get(cp)
+                    if e is None or e["type"] != _ftype(cst):
+                        if os.path.lexists(cp):
+                            _remove_node(cp)
+                            removed += 1
+            for e in ents:                                   # parents before children
+                ep, kind = e["path"], e["type"]
+                if kind == "other" or e.get("unreadable"):
+                    if not os.path.lexists(ep):
+                        lost.append(ep)
+                    continue
+                if kind == "dir":
+                    if os.path.lexists(ep) and (os.path.islink(ep) or not os.path.isdir(ep)):
+                        os.unlink(ep)
+                    os.makedirs(ep, exist_ok=True)
+                    _open_dirs(ep, [""])
+                    continue
+                if os.path.isdir(ep) and not os.path.islink(ep):
+                    _remove_node(ep)
+                if kind == "symlink":
+                    if os.path.islink(ep) and os.readlink(ep) == e["link"]:
+                        unchanged += 1
+                        continue
+                    if os.path.lexists(ep):
+                        os.unlink(ep)
+                    os.symlink(e["link"], ep)
+                    written += 1
+                    continue
+                if _same_file(ep, e["sha256"]):
+                    unchanged += 1                           # same bytes: not rewritten, so its mtime stays
+                else:
+                    part = ep + ".agent-guard-part"
+                    shutil.copyfile(os.path.join(data, e["sha256"]), part)
+                    os.replace(part, ep)
+                    written += 1
+            for e in ents:
+                if e["type"] == "file" and not e.get("unreadable") and os.path.isfile(e["path"]):
+                    os.chmod(e["path"], int(e["mode"], 8))           # each file's mode bits
+            for e in sorted((e for e in ents if e["type"] == "dir"), key=lambda e: -e["path"].count(os.sep)):
+                if os.path.isdir(e["path"]) and not os.path.islink(e["path"]):
+                    os.chmod(e["path"], int(e["mode"], 8))     # last, children first: a read-only directory is sealed after its files
+        finally:
+            if pmode & 0o300 != 0o300:
+                os.chmod(parent, pmode)
+    return {"restored": fid, "safety_snapshot": safety_id, "written": written, "removed": removed,
+            "unchanged": unchanged, "skipped": skipped, "not_restorable": lost}
+
+
+def _ignored_under(top, rels):
+    """Ignored paths the repo snapshot does not hold, for these repo-relative targets: the target itself
+    when it is ignored, or the ignored files and ignored directories inside a target directory. Two git
+    calls at most, and only for a command that names a path inside the repo."""
+    exist = [r for r in rels if os.path.lexists(os.path.join(top, r))]
+    absent = [r for r in rels if r not in exist]
+    found = []
+    if exist:
+        raw = _git(top, ["--literal-pathspecs", "ls-files", "-z", "-o", "-i", "--exclude-standard", "--directory",
+                         "--"] + exist, check=False).stdout
+        for x in raw.split(b"\0"):
+            if not x:
+                continue
+            r = os.fsdecode(x).rstrip("/")
+            if any(t == "." or r == t or r.startswith(t + "/") for t in exist):
+                found.append(os.path.join(top, r))           # the target, or an ignored path inside it
+            found += [os.path.join(top, t) for t in exist if t != "." and t.startswith(r + "/")]   # inside an ignored dir: the exact path
+    if absent:
+        p = _git(top, ["check-ignore", "-z", "--stdin"], input=("\0".join(absent) + "\0").encode("utf-8", "surrogateescape"),
+                 check=False)
+        found += [os.path.join(top, os.fsdecode(x)) for x in p.stdout.split(b"\0") if x]
+    return found
+
+
+def _file_targets(effects, home):
+    """The path effects the repo snapshot does not hold -> [(absolute path, [subtrees left out])]: a path
+    outside the repo (or anywhere, when the command runs outside any repo), an ignored path inside it, and
+    a directory that holds the repo (the repo is left out of it; its ignored files are added)."""
+    vals = []
+    for kind, val in effects:
+        if kind == "path" and val and val not in vals:
+            vals.append(val)
+    if not vals:
+        return []
+    hr = os.path.realpath(home) if home else None
+    out, inrepo = [], []
+    for v in vals:
+        if hr and _under(v, hr):
+            rel = os.path.relpath(v, hr)
+            if rel.split(os.sep)[0] != ".git":           # the git dir is the repo snapshot's (and the store's)
+                inrepo.append(rel.replace(os.sep, "/"))
+        elif hr and _under(hr, v):
+            out.append((v, [hr]))
+            inrepo.append(".")
+        else:
+            out.append((v, []))
+    if inrepo:
+        out += [(p, []) for p in _ignored_under(hr, sorted(set(inrepo)))]
+    keep, seen = [], set()
+    for p, ex in sorted(out, key=lambda x: x[0]):
+        if p in seen or any(_under(p, q) and p != q and not any(_under(p, x) for x in qx) for q, qx in keep):
+            continue                                     # inside a target already copied whole
+        seen.add(p)
+        keep.append((p, ex))
+    return keep
 
 
 # ---- the hook path: should this command get a snapshot first? ----
@@ -803,7 +1228,12 @@ def _literal(w):
 
 
 def _resolve(w, cwd):
-    """An absolute path for a literal word, or None when it cannot be known."""
+    """An absolute path for a literal word, or None when it cannot be known. A leading ~ or ~/ is $HOME, as
+    bash expands it (~user is not resolved)."""
+    if w == "~" or w.startswith("~/"):
+        if not _literal(w[1:]):
+            return None
+        w = os.path.expanduser("~") + w[1:]
     if not _literal(w):
         return None
     if os.path.isabs(w):
@@ -974,7 +1404,7 @@ def _operands(args):
 def _sed(args):
     """-> ("ro", []) | ("edit", operands) | ("unknown", []). An edit is -i in any cluster (-Ei, -ni, -i.bak,
     --in-place); unknown is a w, W or e command or an s///w, s///e flag, or a script file (-f)."""
-    scripts, pos, k, edit = [], [], 0, False
+    scripts, pos, k, edit, suffix = [], [], 0, False, ""
     while k < len(args):
         a = args[k]
         k += 1
@@ -985,6 +1415,7 @@ def _sed(args):
             nm, eq, val = a.partition("=")
             if nm == "--in-place":
                 edit = True
+                suffix = val
             elif nm == "--file":
                 return "unknown", []
             elif nm == "--expression":
@@ -999,6 +1430,7 @@ def _sed(args):
             for i, c in enumerate(cl):
                 if c == "i":
                     edit = True
+                    suffix = cl[i + 1:]
                     break                                # the rest of the cluster is the backup suffix
                 if c == "f":
                     return "unknown", []
@@ -1023,7 +1455,10 @@ def _sed(args):
         t = re.sub(r"/(?:\\.|[^/])*/", "/", t)
         if re.search(r"(^|[\s;{}!,$0-9/])[wWe]($|[\s;}]|[^A-Za-z])", t):
             return "unknown", []
-    return ("edit", [p for p in pos if p]) if edit else ("ro", [])
+    if edit and suffix and ("/" in suffix or "*" in suffix):
+        return "unknown", []                             # GNU names the backup by a pattern: a path the plan cannot know
+    pos = [p for p in pos if p]
+    return ("edit", pos + [p + suffix for p in pos if suffix]) if edit else ("ro", [])   # -i.bak also writes <file>.bak
 
 
 def _sort_out(args):
@@ -1225,7 +1660,49 @@ def _mut(name, args, cwds, dyn):
             pos = pos[1:]                                # the first operand is the mode or owner (may start with -)
     if name in ("split", "csplit"):
         pos = pos + ["."]                                # the pieces land in the current directory
+    if name in ("cp", "mv", "ln", "install"):
+        return _dest_paths(name, args, pos, cwds)
     return _paths(pos, cwds)
+
+
+def _dest_paths(name, args, pos, cwds):
+    """cp, mv, ln and install write their LAST operand, or a name inside it when it is a directory. The
+    sources are only read (mv also removes them; an ln source is a link target, not a path here). So a copy
+    into ~/bin/ names ~/bin/<file>, not the whole of ~/bin. With -t, or install -d, every operand counts."""
+    if name == "install":                                # -m 755, -o root, -g wheel: values, not operands
+        pos, k = [], 0
+        while k < len(args):
+            a = args[k]
+            if a.startswith("-") and not a.startswith("--") and len(a) > 1 and a[-1] in "mogBSfM":
+                k += 2
+                continue
+            if not a.startswith("-") or a == "-":
+                pos.append(a)
+            k += 1
+    shorts = "".join(a[1:] for a in args if a.startswith("-") and not a.startswith("--") and a != "-")
+    if "t" in shorts or any(a.startswith("--target-directory") for a in args) or not pos \
+            or (name == "install" and "d" in shorts):
+        return _paths(pos, cwds)
+    if len(pos) == 1:
+        if name != "ln":
+            return _paths(pos, cwds)
+        dest, srcs = ".", pos                            # ln -s x: the link is ./x
+    else:
+        dest, srcs = pos[-1], pos[:-1]
+    into = "T" not in shorts and "--no-target-directory" not in args
+    out = _paths(srcs, cwds) if name == "mv" else []
+    for h in cwds:
+        d = _resolve(dest, h)
+        if into and d and os.path.isdir(d):
+            rd = os.path.realpath(d)
+            names = [posixpath.basename(x.rstrip("/")) for x in srcs]
+            if all(_literal(x) and n not in ("", ".", "..") for x, n in zip(srcs, names)):
+                out += [("path", os.path.join(rd, n)) for n in names]
+            else:
+                out.append(("path", rd))                 # a glob into a directory: the directory itself
+        else:
+            out.append(("path", d))
+    return out
 
 
 def _ro_unsafe(name, args):
@@ -1457,14 +1934,9 @@ def _toplevel(d):
     return p.stdout.decode().strip() if p.returncode == 0 else None
 
 
-def snapshot_targets(command, cwd):
-    """The repos the hook would snapshot before this command. Read-only: no git call at all."""
-    pl = plan(command, cwd)
-    if not pl["effects"]:
-        return [], pl["why"]
-    home = _toplevel(cwd)
+def _repos(effects, home):
     repos = []
-    for kind, val in pl["effects"]:
+    for kind, val in effects:
         if kind == "git":
             t = _toplevel(val) if val else home
         elif kind == "path" and val is not None:
@@ -1474,13 +1946,41 @@ def snapshot_targets(command, cwd):
             t = home
         if t and t not in repos:
             repos.append(t)
-    return repos, pl["why"]
+    return repos
+
+
+def snapshot_targets(command, cwd):
+    """The repos the hook would snapshot before this command. Read-only: no git call at all."""
+    pl = plan(command, cwd)
+    if not pl["effects"]:
+        return [], pl["why"]
+    return _repos(pl["effects"], _toplevel(cwd)), pl["why"]
+
+
+def targets(command, cwd):
+    """-> {"repos": [...], "files": [(path, [left out]), ...], "home": repo top or None, "why": str}: what the
+    hook copies before this command. Copies nothing. A read-only command costs no git call."""
+    pl = plan(command, cwd)
+    if not pl["effects"]:
+        return {"repos": [], "files": [], "home": None, "why": pl["why"]}
+    home = _toplevel(cwd)
+    return {"repos": _repos(pl["effects"], home), "files": _file_targets(pl["effects"], home), "home": home,
+            "why": pl["why"]}
 
 
 def pre_tool_use(command, cwd):
-    """The hook path. -> (list of snapshot ids taken, the plan's reason)."""
-    repos, why = snapshot_targets(command, cwd)
-    return [snapshot(r, label=command) for r in repos], why
+    """The hook path. -> (the snapshot ids taken, with the files snapshot as "files:<id>"; the plan's reason).
+    The files outside the repo and the ignored files the command names are copied first; the repo snapshot
+    of the same call records that copy's id. A command whose every target is outside the repo still gets a
+    repo snapshot when it runs inside one, so `restore --last` there brings its files back. Run outside any
+    repo, it gets a files-only snapshot (`undo.py files restore --last`)."""
+    t = targets(command, cwd)
+    repos = t["repos"]
+    fid = files_snapshot(t["files"], label=command, repo=t["home"]) if t["files"] else None
+    if fid and t["home"] and t["home"] not in repos:
+        repos.append(t["home"])
+    ids = [snapshot(r, label=command, files=fid) for r in repos]
+    return ids + (["files:" + fid] if fid else []), t["why"]
 
 
 def main(argv):
@@ -1508,11 +2008,23 @@ def main(argv):
         if argv[0] == "plan" and len(argv) >= 2:
             print(json.dumps(plan(" ".join(argv[1:]), repo)))
             return 0
+        if argv[0] == "files" and len(argv) >= 2 and argv[1] == "list":
+            for f in files_list():
+                print("%s  %s  %d target(s)%s  %s" % (f["id"], f["repo"] or "(no repo)", len(f["targets"]),
+                                                     (", %d skipped" % len(f["skipped"])) if f["skipped"] else "",
+                                                     f["label"]))
+            return 0
+        if argv[0] == "files" and len(argv) >= 3 and argv[1] == "restore":
+            print(json.dumps(files_restore(argv[2], safety="--no-safety" not in argv), indent=2))
+            return 0
     except UndoError as exc:
         print("undo: %s" % exc, file=sys.stderr)
+        if "not inside a git worktree" in str(exc) or "not a git repository" in str(exc):
+            print("undo: for a command run outside any repo, run: python3 undo.py files restore --last",
+                  file=sys.stderr)
         return 2
-    print("usage: python3 undo.py [--repo PATH] list | snapshot | restore <id>|--last [--no-safety] | plan <cmd>",
-          file=sys.stderr)
+    print("usage: python3 undo.py [--repo PATH] list | snapshot | restore <id>|--last [--no-safety] | plan <cmd>\n"
+          "       python3 undo.py files list | files restore <id>|--last [--no-safety]", file=sys.stderr)
     return 2
 
 

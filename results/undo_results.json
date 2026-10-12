@@ -1,12 +1,12 @@
 {
   "conditions": [
     {
-      "detail": "72",
+      "detail": "87",
       "name": "at least 30 in-scope scenarios",
       "pass": true
     },
     {
-      "detail": "72 of 72",
+      "detail": "87 of 87",
       "name": "every in-scope scenario fully restored",
       "pass": true
     },
@@ -17,7 +17,12 @@
     },
     {
       "detail": "all",
-      "name": "the hook took exactly one snapshot before each command",
+      "name": "the hook took exactly one snapshot before each command (files-only outside a repo)",
+      "pass": true
+    },
+    {
+      "detail": "18 of 18",
+      "name": "every command naming an outside or ignored path got one files snapshot, linked from its repo snapshot",
       "pass": true
     },
     {
@@ -26,8 +31,8 @@
       "pass": true
     },
     {
-      "detail": "5 of 5",
-      "name": "all 5 negative controls show the loss",
+      "detail": "8 of 8",
+      "name": "all 8 negative controls show the loss",
       "pass": true
     },
     {
@@ -36,8 +41,18 @@
       "pass": true
     },
     {
-      "detail": "7 of 7",
+      "detail": "10 of 10",
       "name": "every one-line restore mutant is caught by the readback",
+      "pass": true
+    },
+    {
+      "detail": "68 commands, 0 calls",
+      "name": "a read-only command costs no git call and no copy",
+      "pass": true
+    },
+    {
+      "detail": "all",
+      "name": "the files bound skips and says so; /, $HOME and its ancestors are refused; no symlink is followed",
       "pass": true
     },
     {
@@ -56,7 +71,7 @@
       "pass": true
     },
     {
-      "detail": "91 runs, 0 outside",
+      "detail": "111 runs, 0 outside",
       "name": "every destructive command ran under the bench root",
       "pass": true
     }
@@ -64,6 +79,7 @@
   "controls": [
     {
       "command": "git reset --hard HEAD~1",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -71,6 +87,9 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
@@ -83,6 +102,7 @@
         "index differs",
         "refs: changed refs/heads/main"
       ],
+      "left_files": [],
       "name": "reset-hard-HEAD~1",
       "outside_changed": false,
       "rc": 0,
@@ -90,23 +110,30 @@
       "restore_rc": 2,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/reset-hard-HEAD~1-a1v3rssq"
     },
     {
       "command": "git clean -fdx",
-      "damage": 3,
+      "cwd_outside_repo": false,
+      "damage": 6,
       "damage_sample": [
         "files: lost notes.txt",
         "files: lost src/untracked_dir/",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/untracked_dir/u.txt",
+        "ignored: lost .env"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
-      "ignored_lost": 2,
+      "ignored_lost": 3,
       "left": [
         "files: lost notes.txt",
         "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
+      "left_files": [],
       "name": "clean-fdx",
       "outside_changed": false,
       "rc": 0,
@@ -114,10 +141,12 @@
       "restore_rc": 2,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/clean-fdx-0j_2bdzi"
     },
     {
       "command": "rm -rf src",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/",
@@ -125,6 +154,9 @@
         "files: lost src/lib/",
         "files: lost src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
@@ -137,6 +169,7 @@
         "files: lost src/untracked_dir/u.txt",
         "files: lost src/util.py"
       ],
+      "left_files": [],
       "name": "rm-rf-src",
       "outside_changed": false,
       "rc": 0,
@@ -144,19 +177,25 @@
       "restore_rc": 2,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/rm-rf-src-0awmuu9t"
     },
     {
       "command": "git branch -D other",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: lost refs/heads/other"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
         "refs: lost refs/heads/other"
       ],
+      "left_files": [],
       "name": "branch-D-other",
       "outside_changed": false,
       "rc": 0,
@@ -164,21 +203,27 @@
       "restore_rc": 2,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/branch-D-other-n7wu6rlt"
     },
     {
       "command": "git stash drop",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "refs: lost refs/stash",
         "stash differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
         "refs: lost refs/stash",
         "stash differs"
       ],
+      "left_files": [],
       "name": "stash-drop",
       "outside_changed": false,
       "rc": 0,
@@ -186,35 +231,126 @@
       "restore_rc": 2,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/stash-drop-359y6hhy"
+    },
+    {
+      "command": "rm -f ../outside.txt",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [
+        "outside: lost outside.txt"
+      ],
+      "name": "outside-rm",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/outside-rm-fmh1nps7"
+    },
+    {
+      "command": "rm .env",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "ignored: lost .env"
+      ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
+      "guard_direct": "allow",
+      "ignored_lost": 1,
+      "left": [],
+      "left_files": [
+        "ignored: lost .env"
+      ],
+      "name": "ignored-rm-dotenv",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/ignored-rm-dotenv-4nfvyq86"
+    },
+    {
+      "command": "rm -f outside.txt outdir/a.txt",
+      "cwd_outside_repo": true,
+      "damage": 2,
+      "damage_sample": [
+        "outside: lost outdir/a.txt",
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [
+        "outside: lost outdir/a.txt",
+        "outside: lost outside.txt"
+      ],
+      "name": "files-only-rm",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/files-only-rm-8fbqp041"
     }
   ],
   "cost": {
-    "dirty_snapshot_bytes_median": 5560.0,
-    "dirty_snapshot_ms_median": 141.5007293689996,
+    "dirty_snapshot_bytes_median": 5559.0,
+    "dirty_snapshot_ms_median": 138.44258338212967,
     "files": 1000,
-    "first_snapshot_bytes": 56121,
-    "first_snapshot_ms": 233.50062500685453,
-    "hook_read_only_ms_median": 48.707416048273444,
-    "hook_with_snapshot_ms_median": 210.79425001516938,
-    "no_change_ms_median": 69.4887915160507,
+    "files_restore_ms": 34.58458394743502,
+    "first_snapshot_bytes": 56125,
+    "first_snapshot_ms": 228.68350008502603,
+    "hook_files_only_ms_median": 58.03074990399182,
+    "hook_ignored_ms_median": 202.42900005541742,
+    "hook_outside_ms_median": 200.0466249883175,
+    "hook_read_only_ms_median": 49.705541925504804,
+    "hook_with_snapshot_ms_median": 203.07129085995257,
+    "no_change_ms_median": 66.39306258875877,
     "objects_bytes_before": 899859,
-    "plan_us_read_only": 15.84385393653065,
-    "restore_ms": 416.2405419629067
+    "plan_us_read_only": 15.603666543029249,
+    "restore_ms": 425.9672921616584
   },
   "mutants": [
     {
+      "caught": true,
       "command": "chmod 600 bin/run.sh && chmod 755 notes.txt",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: changed bin/run.sh",
         "files: changed notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
         "files: changed notes.txt"
       ],
+      "left_files": [],
       "name": "chmod",
       "outside_changed": false,
       "rc": 0,
@@ -223,20 +359,27 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/chmod-dv5o8zhu",
       "what": "skips the mode bits"
     },
     {
+      "caught": true,
       "command": "git stash drop",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "refs: lost refs/stash",
         "stash differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
         "stash differs"
       ],
+      "left_files": [],
       "name": "stash-drop",
       "outside_changed": false,
       "rc": 0,
@@ -245,10 +388,13 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-drop-o6ia3cel",
       "what": "skips the stash reflog"
     },
     {
+      "caught": true,
       "command": "chmod -R a-w src",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: changed src/",
@@ -256,6 +402,9 @@
         "files: changed src/lib/",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
@@ -267,6 +416,7 @@
         "files: changed src/new_staged.py",
         "files: changed src/util.py"
       ],
+      "left_files": [],
       "name": "wu5-chmod-R-a-w",
       "outside_changed": false,
       "rc": 0,
@@ -275,10 +425,13 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-chmod-R-a-w-zaixbbh6",
       "what": "does not reopen read-only directories"
     },
     {
+      "caught": true,
       "command": "chmod -R go-rx src docs",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: changed src/",
@@ -286,6 +439,9 @@
         "files: changed src/lib/",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
@@ -293,6 +449,7 @@
         "files: changed src/lib/",
         "files: changed src/untracked_dir/"
       ],
+      "left_files": [],
       "name": "chmod-dirs-go-rx",
       "outside_changed": false,
       "rc": 0,
@@ -301,19 +458,27 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/chmod-dirs-go-rx-jzp1te7t",
       "what": "skips the directory mode bits"
     },
     {
+      "caught": true,
       "command": "echo '*.out' >> .gitignore && echo result > result.out",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 2,
       "damage_sample": [
-        "files: changed .gitignore"
+        "files: changed .gitignore",
+        "ignored: extra result.out"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
         "files: extra result.out"
       ],
+      "left_files": [],
       "name": "wu5-ignore-added-then-file",
       "outside_changed": false,
       "rc": 0,
@@ -322,10 +487,13 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-ignore-added-then-file-y78qwnig",
       "what": "judges ignores by the post-command .gitignore"
     },
     {
+      "caught": true,
       "command": "git stash -q && git merge --squash other",
+      "cwd_outside_repo": false,
       "damage": 11,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -333,11 +501,15 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
         "state: changed SQUASH_MSG"
       ],
+      "left_files": [],
       "name": "wu5-merge-squash",
       "outside_changed": false,
       "rc": 0,
@@ -346,19 +518,25 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-merge-squash-8ow0r88z",
       "what": "does not save SQUASH_MSG"
     },
     {
+      "caught": true,
       "command": "rm -rf .git",
-      "damage": 36,
+      "cwd_outside_repo": false,
+      "damage": 39,
       "damage_sample": [
         "files: lost .gitignore",
         "files: lost /",
         "files: lost README.md",
         "files: lost bin/"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
-      "ignored_lost": 2,
+      "ignored_lost": 3,
       "left": [
         "files: lost .gitignore",
         "files: lost /",
@@ -397,6 +575,11 @@
         "remotes: lost refs/remotes/origin/other",
         "bare differs"
       ],
+      "left_files": [
+        "ignored: lost .env",
+        "ignored: lost build/out.o",
+        "ignored: lost debug.log"
+      ],
       "name": "rm-rf-dotgit",
       "outside_changed": false,
       "rc": 0,
@@ -405,7 +588,102 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/rm-rf-dotgit-myoufvc2",
       "what": "does not import from the store"
+    },
+    {
+      "caught": true,
+      "command": "rm -f ../outside.txt",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230304.923275Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [
+        "outside: lost outside.txt"
+      ],
+      "name": "outside-rm",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-rm-2zsew0hm",
+      "what": "ignores the files link in meta.json"
+    },
+    {
+      "caught": true,
+      "command": "chmod 755 ../outside.txt && chmod 700 ../outdir ../outdir/secret",
+      "cwd_outside_repo": false,
+      "damage": 3,
+      "damage_sample": [
+        "outside: changed outdir/",
+        "outside: changed outdir/secret",
+        "outside: changed outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230305.853514Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [
+        "outside: changed outdir/secret",
+        "outside: changed outside.txt"
+      ],
+      "name": "outside-chmod",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-chmod-dokmsfcs",
+      "what": "skips the mode bits of files outside the repo"
+    },
+    {
+      "caught": true,
+      "command": "mv notes.txt ../moved_notes.txt",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "files: lost notes.txt",
+        "outside: extra moved_notes.txt"
+      ],
+      "files_ids": [
+        "20261012T230306.812389Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [
+        "outside: extra moved_notes.txt"
+      ],
+      "name": "mv-out-of-repo",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/mv-out-of-repo-mag__fcj",
+      "what": "leaves a file the command created outside the repo"
     }
   ],
   "overall": "PASS",
@@ -419,11 +697,24 @@
   "residuals": [
     {
       "command": "git clean -fdX",
-      "damage": 0,
-      "damage_sample": [],
+      "cwd_outside_repo": false,
+      "damage": 3,
+      "damage_sample": [
+        "ignored: lost .env",
+        "ignored: lost build/out.o",
+        "ignored: lost debug.log"
+      ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
-      "ignored_lost": 2,
+      "ignored_lost": 3,
       "left": [],
+      "left_files": [
+        "ignored: lost .env",
+        "ignored: lost build/out.o",
+        "ignored: lost debug.log"
+      ],
       "name": "ignored-files",
       "outside_changed": false,
       "rc": 0,
@@ -432,34 +723,22 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "why": "ignored files are not in any snapshot"
-    },
-    {
-      "command": "rm -f ../outside.txt",
-      "damage": 0,
-      "damage_sample": [],
-      "guard_direct": "allow",
-      "ignored_lost": 0,
-      "left": [],
-      "name": "outside-the-repo",
-      "outside_changed": true,
-      "outside_exists": false,
-      "rc": 0,
-      "remote_repair": [],
-      "restore_rc": 2,
-      "route": "direct",
-      "snapshot_left_state_untouched": true,
-      "snapshots_taken": 0,
-      "why": "a file outside the repo is not in any snapshot"
+      "store": "<bench root>/store/ignored-files-fjsxlal5",
+      "why": "git clean -X names no path, so no ignored file is copied; covering it would mean copying every ignored file (node_modules, build caches) before every git clean"
     },
     {
       "command": "rmdir empty_dir",
+      "cwd_outside_repo": false,
       "damage": 0,
       "damage_sample": [],
       "dir_exists": false,
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "empty-directory",
       "outside_changed": false,
       "rc": 0,
@@ -468,31 +747,38 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/empty-directory-w2rshpv7",
       "why": "git does not record empty directories"
     },
     {
       "command": "git push -q -f origin main",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "remotes: changed refs/remotes/origin/HEAD",
         "remotes: changed refs/remotes/origin/main",
         "bare differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
         "bare differs"
       ],
+      "left_files": [],
       "name": "remote-only-commit",
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:3774f88131c7a42693e176606c061e3b14135c35 origin 3c15e9fb3545e76f28160f80285c86359de7d15c:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:f5a06a160788cc5634bbfb1715ad3e630b21c95a origin 6a076281e4fa15dc47cecd1aee45a2ba620e1c50:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
+      "store": "<bench root>/store/remote-only-commit-z2m8hpec",
       "their_commit_on_remote": false,
       "their_commit_recoverable": false,
       "why": "a commit that only the remote held is gone once it is overwritten"
@@ -501,6 +787,7 @@
   "scenarios": [
     {
       "command": "git reset --hard HEAD~1",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -508,9 +795,13 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "reset-hard-HEAD~1",
       "outside_changed": false,
       "rc": 0,
@@ -518,10 +809,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/reset-hard-HEAD~1-kluu7jyr"
     },
     {
       "command": "git reset --hard",
+      "cwd_outside_repo": false,
       "damage": 7,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -529,9 +822,13 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "reset-hard",
       "outside_changed": false,
       "rc": 0,
@@ -539,18 +836,24 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/reset-hard-e2qe2iii"
     },
     {
       "command": "git reset --mixed HEAD~2",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "index differs",
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "reset-mixed-HEAD~2",
       "outside_changed": false,
       "rc": 0,
@@ -558,17 +861,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/reset-mixed-HEAD~2-2r_tk1w9"
     },
     {
       "command": "git reset --soft HEAD~2",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "reset-soft-HEAD~2",
       "outside_changed": false,
       "rc": 0,
@@ -576,19 +885,26 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/reset-soft-HEAD~2-7rxikmh9"
     },
     {
       "command": "git clean -fdx",
-      "damage": 3,
+      "cwd_outside_repo": false,
+      "damage": 6,
       "damage_sample": [
         "files: lost notes.txt",
         "files: lost src/untracked_dir/",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/untracked_dir/u.txt",
+        "ignored: lost .env"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
-      "ignored_lost": 2,
+      "ignored_lost": 3,
       "left": [],
+      "left_files": [],
       "name": "clean-fdx",
       "outside_changed": false,
       "rc": 0,
@@ -596,19 +912,25 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/clean-fdx-8fr3ifdp"
     },
     {
       "command": "git clean -fd",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "files: lost notes.txt",
         "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "clean-fd",
       "outside_changed": false,
       "rc": 0,
@@ -616,10 +938,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/clean-fd-i7e22d_1"
     },
     {
       "command": "git checkout -- .",
+      "cwd_outside_repo": false,
       "damage": 4,
       "damage_sample": [
         "files: extra docs/",
@@ -627,9 +951,13 @@
         "files: changed README.md",
         "files: changed src/app.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "checkout-dash-dash-dot",
       "outside_changed": false,
       "rc": 0,
@@ -637,10 +965,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/checkout-dash-dash-dot-_44j9b1u"
     },
     {
       "command": "git restore .",
+      "cwd_outside_repo": false,
       "damage": 4,
       "damage_sample": [
         "files: extra docs/",
@@ -648,9 +978,13 @@
         "files: changed README.md",
         "files: changed src/app.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "restore-dot",
       "outside_changed": false,
       "rc": 0,
@@ -658,17 +992,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/restore-dot-xhktrrs1"
     },
     {
       "command": "git restore --staged .",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "index differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "restore-staged-dot",
       "outside_changed": false,
       "rc": 0,
@@ -676,10 +1016,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/restore-staged-dot-d67k568k"
     },
     {
       "command": "git restore --source=HEAD~2 --staged --worktree src",
+      "cwd_outside_repo": false,
       "damage": 4,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -687,9 +1029,13 @@
         "files: changed src/util.py",
         "index differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "restore-source-src",
       "outside_changed": false,
       "rc": 0,
@@ -697,10 +1043,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/restore-source-src-5bk4144l"
     },
     {
       "command": "git checkout -f other",
+      "cwd_outside_repo": false,
       "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -708,9 +1056,13 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "checkout-force-other",
       "outside_changed": false,
       "rc": 0,
@@ -718,10 +1070,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/checkout-force-other-ognkkyjw"
     },
     {
       "command": "git switch --discard-changes other",
+      "cwd_outside_repo": false,
       "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -729,9 +1083,13 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "switch-discard-other",
       "outside_changed": false,
       "rc": 0,
@@ -739,10 +1097,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/switch-discard-other-bab81xo9"
     },
     {
       "command": "git checkout other -- .",
+      "cwd_outside_repo": false,
       "damage": 7,
       "damage_sample": [
         "files: extra docs/",
@@ -750,9 +1110,13 @@
         "files: extra other.txt",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "checkout-other-whole-tree",
       "outside_changed": false,
       "rc": 0,
@@ -760,17 +1124,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/checkout-other-whole-tree-7u_55lff"
     },
     {
       "command": "git branch -D other",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: lost refs/heads/other"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "branch-D-other",
       "outside_changed": false,
       "rc": 0,
@@ -778,17 +1148,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/branch-D-other-auczeuco"
     },
     {
       "command": "git branch -f other HEAD~2",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: changed refs/heads/other"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "branch-f-other",
       "outside_changed": false,
       "rc": 0,
@@ -796,10 +1172,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/branch-f-other-j55u6zf2"
     },
     {
       "command": "git stash push -m wip",
+      "cwd_outside_repo": false,
       "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -807,9 +1185,13 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "stash-push",
       "outside_changed": false,
       "rc": 0,
@@ -817,18 +1199,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-push-zkyu0_0_"
     },
     {
       "command": "git stash drop",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "refs: lost refs/stash",
         "stash differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "stash-drop",
       "outside_changed": false,
       "rc": 0,
@@ -836,18 +1224,24 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-drop-aiikj9r5"
     },
     {
       "command": "git stash clear",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "refs: lost refs/stash",
         "stash differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "stash-clear",
       "outside_changed": false,
       "rc": 0,
@@ -855,10 +1249,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-clear-ixvma_5r"
     },
     {
       "command": "git stash && git stash drop",
+      "cwd_outside_repo": false,
       "damage": 7,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -866,9 +1262,13 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "stash-then-drop",
       "outside_changed": false,
       "rc": 0,
@@ -876,17 +1276,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-then-drop-bqpplsic"
     },
     {
       "command": "git commit -q -m 'agent commit'",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "commit",
       "outside_changed": false,
       "rc": 0,
@@ -894,17 +1300,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/commit-cen5fz3k"
     },
     {
       "command": "git commit -q --amend -m amended",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "commit-amend",
       "outside_changed": false,
       "rc": 0,
@@ -912,10 +1324,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/commit-amend-76gj4t7k"
     },
     {
       "command": "git stash -q && git merge -q --no-edit other",
+      "cwd_outside_repo": false,
       "damage": 11,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -923,9 +1337,13 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "stash-then-merge",
       "outside_changed": false,
       "rc": 0,
@@ -933,19 +1351,25 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/stash-then-merge-tuemc0j1"
     },
     {
       "command": "git rebase -q --autostash other",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "files: extra other.txt",
         "index differs",
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rebase-autostash",
       "outside_changed": false,
       "rc": 0,
@@ -953,10 +1377,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rebase-autostash-9w4u8rs9"
     },
     {
       "command": "git rebase -q --autostash --onto HEAD~2 HEAD~1",
+      "cwd_outside_repo": false,
       "damage": 5,
       "damage_sample": [
         "files: changed src/app.py",
@@ -964,9 +1390,13 @@
         "refs: changed refs/heads/main",
         "refs: changed refs/stash"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rebase-drop-commit",
       "outside_changed": false,
       "rc": 0,
@@ -974,17 +1404,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rebase-drop-commit-b7cikdnb"
     },
     {
       "command": "git update-ref -d refs/heads/other",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: lost refs/heads/other"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "update-ref-delete",
       "outside_changed": false,
       "rc": 0,
@@ -992,17 +1428,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/update-ref-delete-aa_jan7o"
     },
     {
       "command": "git update-ref refs/heads/main HEAD~2",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "refs: changed refs/heads/main"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "update-ref-move",
       "outside_changed": false,
       "rc": 0,
@@ -1010,10 +1452,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/update-ref-move-rb4g2p80"
     },
     {
       "command": "git reset -q --hard HEAD~2 && git reflog expire --expire=now --all && git gc -q --prune=now",
+      "cwd_outside_repo": false,
       "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -1021,9 +1465,13 @@
         "files: extra docs/old.md",
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "reset-then-gc",
       "outside_changed": false,
       "rc": 0,
@@ -1031,19 +1479,25 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/reset-then-gc-j37ztzbl"
     },
     {
       "command": "git tag -d v1 light && git reflog expire --expire=now --all && git gc -q --prune=now",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "refs: lost refs/tags/light",
         "refs: lost refs/tags/v1",
         "stash differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "tag-delete-then-gc",
       "outside_changed": false,
       "rc": 0,
@@ -1051,10 +1505,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/tag-delete-then-gc-miwlu1zo"
     },
     {
       "command": "git merge --abort",
+      "cwd_outside_repo": false,
       "damage": 5,
       "damage_sample": [
         "files: changed README.md",
@@ -1062,9 +1518,13 @@
         "state: changed MERGE_HEAD",
         "state: changed MERGE_MODE"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "merge-abort-conflict",
       "outside_changed": false,
       "rc": 0,
@@ -1072,53 +1532,67 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/merge-abort-conflict-lf_hyjy0"
     },
     {
       "command": "git push -q -f origin main",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "remotes: changed refs/remotes/origin/HEAD",
         "remotes: changed refs/remotes/origin/main",
         "bare differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "force-push",
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:0991aee81a5d5a2393be9ecfd530a70ecec8ac68 origin d58b61065dd37fe1bb662e4f7399d5cd235654a6:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:c3d330e316487f2ded0a40fa37f3d38bf3816de5 origin a3aa30f0c9e0aced78de27e98a08f1119139a59f:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/force-push-6_521s1b"
     },
     {
       "command": "git push -q origin --delete other",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "remotes: lost refs/remotes/origin/other",
         "bare differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "push-delete",
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin 602acd79c6fe9a1781f7b0f24697f7fd84e2976e:refs/heads/other"
+        "git push origin e7a7d36bc91d6bed87b1936f552203b9d95aed71:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/push-delete-ef8rjeyz"
     },
     {
       "command": "rm -rf src",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/",
@@ -1126,9 +1600,13 @@
         "files: lost src/lib/",
         "files: lost src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rm-rf-src",
       "outside_changed": false,
       "rc": 0,
@@ -1136,10 +1614,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rm-rf-src-naz_bwkg"
     },
     {
       "command": "rm -f README.md notes.txt bin/run.sh",
+      "cwd_outside_repo": false,
       "damage": 4,
       "damage_sample": [
         "files: lost README.md",
@@ -1147,9 +1627,13 @@
         "files: lost bin/run.sh",
         "files: lost notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rm-files",
       "outside_changed": false,
       "rc": 0,
@@ -1157,10 +1641,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rm-files-yy62w649"
     },
     {
       "command": "mv src lib",
+      "cwd_outside_repo": false,
       "damage": 16,
       "damage_sample": [
         "files: lost src/",
@@ -1168,9 +1654,13 @@
         "files: lost src/lib/",
         "files: lost src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "mv-dir",
       "outside_changed": false,
       "rc": 0,
@@ -1178,17 +1668,26 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/mv-dir-s0_cjg85"
     },
     {
       "command": "mv notes.txt ../moved_notes.txt",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 2,
       "damage_sample": [
-        "files: lost notes.txt"
+        "files: lost notes.txt",
+        "outside: extra moved_notes.txt"
       ],
+      "files_ids": [
+        "20261012T230202.863608Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "mv-out-of-repo",
       "outside_changed": true,
       "rc": 0,
@@ -1196,17 +1695,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/mv-out-of-repo-9jldfb3o"
     },
     {
       "command": "cp README.md src/app.py",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed src/app.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "cp-over",
       "outside_changed": false,
       "rc": 0,
@@ -1214,10 +1719,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/cp-over-z59la7a3"
     },
     {
       "command": "sed -i.bak 's/a/X/g' src/app.py README.md",
+      "cwd_outside_repo": false,
       "damage": 4,
       "damage_sample": [
         "files: extra README.md.bak",
@@ -1225,9 +1732,13 @@
         "files: changed README.md",
         "files: changed src/app.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "sed-in-place",
       "outside_changed": false,
       "rc": 0,
@@ -1235,18 +1746,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/sed-in-place-m98oz467"
     },
     {
       "command": "truncate -s 0 src/util.py data/blob.bin",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: changed data/blob.bin",
         "files: changed src/util.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "truncate",
       "outside_changed": false,
       "rc": 0,
@@ -1254,18 +1771,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/truncate-q8268y5m"
     },
     {
       "command": "echo junk > README.md && echo more >> notes.txt",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: changed README.md",
         "files: changed notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "redirect-write",
       "outside_changed": false,
       "rc": 0,
@@ -1273,18 +1796,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/redirect-write-1m78gnx0"
     },
     {
       "command": "echo x | tee src/app.py src/lib/deep.py",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: changed src/app.py",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "tee",
       "outside_changed": false,
       "rc": 0,
@@ -1292,10 +1821,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/tee-ky2t9oom"
     },
     {
       "command": "find . -name '*.py' -not -path './.git/*' -delete",
+      "cwd_outside_repo": false,
       "damage": 5,
       "damage_sample": [
         "files: lost src/app.py",
@@ -1303,9 +1834,15 @@
         "files: lost src/lib/deep.py",
         "files: lost src/new_staged.py"
       ],
+      "files_ids": [
+        "20261012T230208.523911Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "find-delete",
       "outside_changed": false,
       "rc": 0,
@@ -1313,10 +1850,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/find-delete-jxvabot6"
     },
     {
       "command": "git rm -r -q -f src",
+      "cwd_outside_repo": false,
       "damage": 6,
       "damage_sample": [
         "files: lost src/app.py",
@@ -1324,9 +1863,13 @@
         "files: lost src/lib/deep.py",
         "files: lost src/new_staged.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "git-rm-r-force",
       "outside_changed": false,
       "rc": 0,
@@ -1334,19 +1877,25 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/git-rm-r-force-6wirozdu"
     },
     {
       "command": "git mv README.md README2.md",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "files: lost README.md",
         "files: extra README2.md",
         "index differs"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "git-mv",
       "outside_changed": false,
       "rc": 0,
@@ -1354,18 +1903,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/git-mv-5q273omy"
     },
     {
       "command": "chmod 600 bin/run.sh && chmod 755 notes.txt",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: changed bin/run.sh",
         "files: changed notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "chmod",
       "outside_changed": false,
       "rc": 0,
@@ -1373,19 +1928,25 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/chmod-tv4fdegs"
     },
     {
       "command": "rm src/util.py && mkdir src/util.py && echo x > src/util.py/inner",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "files: lost src/util.py",
         "files: extra src/util.py/",
         "files: extra src/util.py/inner"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "file-becomes-dir",
       "outside_changed": false,
       "rc": 0,
@@ -1393,17 +1954,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/file-becomes-dir-n73wj6ue"
     },
     {
       "command": "rm link && echo plain > link",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed link"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "symlink-becomes-file",
       "outside_changed": false,
       "rc": 0,
@@ -1411,19 +1978,25 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/symlink-becomes-file-fjes5bjb"
     },
     {
       "command": "rm -rf src/lib && ln -s ../docs src/lib",
+      "cwd_outside_repo": false,
       "damage": 3,
       "damage_sample": [
         "files: lost src/lib/",
         "files: lost src/lib/deep.py",
         "files: extra src/lib"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "dir-becomes-symlink",
       "outside_changed": false,
       "rc": 0,
@@ -1431,17 +2004,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/dir-becomes-symlink-e2yeaxmu"
     },
     {
       "command": "head -c 512 /dev/zero > data/blob.bin",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed data/blob.bin"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "binary-overwrite",
       "outside_changed": false,
       "rc": 0,
@@ -1449,10 +2028,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/binary-overwrite-z_o_9pxf"
     },
     {
       "command": "python3 -c \"import shutil; shutil.rmtree('src')\"",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/",
@@ -1460,9 +2041,13 @@
         "files: lost src/lib/",
         "files: lost src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "python-rmtree",
       "outside_changed": false,
       "rc": 0,
@@ -1470,20 +2055,26 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/python-rmtree-wx8i5ba8"
     },
     {
       "command": "rm -rf .git",
-      "damage": 36,
+      "cwd_outside_repo": false,
+      "damage": 39,
       "damage_sample": [
         "files: lost .gitignore",
         "files: lost /",
         "files: lost README.md",
         "files: lost bin/"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rm-rf-dotgit",
       "outside_changed": false,
       "rc": 0,
@@ -1491,10 +2082,12 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rm-rf-dotgit-g8601oas"
     },
     {
       "command": "rm -rf .git && git init -q",
+      "cwd_outside_repo": false,
       "damage": 11,
       "damage_sample": [
         "index differs",
@@ -1502,9 +2095,13 @@
         "refs: lost refs/heads/other",
         "refs: lost refs/stash"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "rm-rf-dotgit-reinit",
       "outside_changed": false,
       "rc": 0,
@@ -1512,17 +2109,23 @@
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/rm-rf-dotgit-reinit-xhxkvp8u"
     },
     {
       "command": "chmod -x bin/run.sh",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed bin/run.sh"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-chmod-dash-x",
       "outside_changed": false,
       "rc": 0,
@@ -1530,10 +2133,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-chmod-dash-x-_galxmjl"
     },
     {
       "command": "chmod -R -w src",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: changed src/",
@@ -1541,9 +2146,13 @@
         "files: changed src/lib/",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-chmod-R-dash-w",
       "outside_changed": false,
       "rc": 0,
@@ -1551,10 +2160,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-chmod-R-dash-w-1k_vilzr"
     },
     {
       "command": "chmod -R a-w src",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: changed src/",
@@ -1562,9 +2173,13 @@
         "files: changed src/lib/",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-chmod-R-a-w",
       "outside_changed": false,
       "rc": 0,
@@ -1572,10 +2187,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-chmod-R-a-w-7plcmuvv"
     },
     {
       "command": "find . -name '*.py' -not -path './.git/*' -print0 | xargs -0 rm -f",
+      "cwd_outside_repo": false,
       "damage": 5,
       "damage_sample": [
         "files: lost src/app.py",
@@ -1583,9 +2200,13 @@
         "files: lost src/lib/deep.py",
         "files: lost src/new_staged.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-find-print0-xargs-rm",
       "outside_changed": false,
       "rc": 0,
@@ -1593,17 +2214,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-find-print0-xargs-rm-mcp82jl2"
     },
     {
       "command": "git ls-files bin | xargs chmod 600",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed bin/run.sh"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-ls-files-xargs-chmod",
       "outside_changed": false,
       "rc": 0,
@@ -1611,10 +2238,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-ls-files-xargs-chmod-1je3pvxz"
     },
     {
       "command": "git ls-files src | xargs gzip -f",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: lost src/app.py",
@@ -1622,9 +2251,13 @@
         "files: lost src/new_staged.py",
         "files: lost src/util.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-ls-files-xargs-gzip",
       "outside_changed": false,
       "rc": 0,
@@ -1632,17 +2265,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-ls-files-xargs-gzip-n6cmq6yz"
     },
     {
       "command": "patch -p0 <<'EOP'\n--- README.md\n+++ README.md\n@@ -1,3 +1,3 @@\n # demo\n-alpha beta\n+alpha gamma\n unstaged line\nEOP",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-patch-heredoc",
       "outside_changed": false,
       "rc": 0,
@@ -1650,17 +2289,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-patch-heredoc-423v55w0"
     },
     {
       "command": "sed -Ei '' 's/alpha/ALPHA/' README.md",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-sed-Ei",
       "outside_changed": false,
       "rc": 0,
@@ -1668,17 +2313,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-sed-Ei-gg_eqel6"
     },
     {
       "command": "sort -ro README.md README.md",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: changed README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-sort-ro",
       "outside_changed": false,
       "rc": 0,
@@ -1686,17 +2337,28 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-sort-ro-ay_ctodz"
     },
     {
       "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 4,
       "damage_sample": [
-        "files: changed README.md"
+        "files: changed README.md",
+        "outside: extra a.tar",
+        "outside: extra stage/",
+        "outside: extra stage/README.md"
       ],
+      "files_ids": [
+        "20261012T230227.556142Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-tar-extract-outside",
       "outside_changed": true,
       "rc": 0,
@@ -1704,17 +2366,28 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-tar-extract-outside-bixmmagm"
     },
     {
       "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 4,
       "damage_sample": [
-        "files: changed README.md"
+        "files: changed README.md",
+        "outside: extra a.zip",
+        "outside: extra stage/",
+        "outside: extra stage/README.md"
       ],
+      "files_ids": [
+        "20261012T230228.510227Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-unzip-outside",
       "outside_changed": true,
       "rc": 0,
@@ -1722,18 +2395,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-unzip-outside-nwrz9c2f"
     },
     {
       "command": "(cd .. && ls) ; rm -f notes.txt README.md",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: lost README.md",
         "files: lost notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-subshell-cd",
       "outside_changed": false,
       "rc": 0,
@@ -1741,17 +2420,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-subshell-cd-qfpxgnp4"
     },
     {
       "command": "cd .. && cd - && rm -f notes.txt",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: lost notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-cd-dash",
       "outside_changed": false,
       "rc": 0,
@@ -1759,18 +2444,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-cd-dash-6xekq84c"
     },
     {
       "command": "env -S 'rm -f notes.txt README.md'",
+      "cwd_outside_repo": false,
       "damage": 2,
       "damage_sample": [
         "files: lost README.md",
         "files: lost notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-env-S",
       "outside_changed": false,
       "rc": 0,
@@ -1778,17 +2469,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-env-S-dl_qdv9f"
     },
     {
       "command": "git -c core.fsmonitor='rm -f notes.txt;' status",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: lost notes.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-git-c-fsmonitor",
       "outside_changed": false,
       "rc": 0,
@@ -1796,17 +2493,23 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-git-c-fsmonitor-nf82_red"
     },
     {
       "command": "GIT_EXTERNAL_DIFF='rm -f' git diff",
+      "cwd_outside_repo": false,
       "damage": 1,
       "damage_sample": [
         "files: lost README.md"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-git-external-diff",
       "outside_changed": false,
       "rc": 128,
@@ -1814,17 +2517,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-git-external-diff-osyqdrq8"
     },
     {
       "command": "echo '*.out' >> .gitignore && echo result > result.out",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 2,
       "damage_sample": [
-        "files: changed .gitignore"
+        "files: changed .gitignore",
+        "ignored: extra result.out"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-ignore-added-then-file",
       "outside_changed": false,
       "rc": 0,
@@ -1832,17 +2542,24 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-ignore-added-then-file-_kt2aed2"
     },
     {
       "command": "printf 'tmp/\\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt",
-      "damage": 1,
+      "cwd_outside_repo": false,
+      "damage": 2,
       "damage_sample": [
-        "files: changed .gitignore"
+        "files: changed .gitignore",
+        "ignored: extra tmp/a.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-ignore-dir-then-file",
       "outside_changed": false,
       "rc": 0,
@@ -1850,10 +2567,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-ignore-dir-then-file-4_wdegga"
     },
     {
       "command": "git stash -q && git merge --squash other",
+      "cwd_outside_repo": false,
       "damage": 11,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -1861,9 +2580,13 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-merge-squash",
       "outside_changed": false,
       "rc": 0,
@@ -1871,10 +2594,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-merge-squash-yblguzkt"
     },
     {
       "command": "git stash -q && git checkout -q other && git revert --no-edit main main~1",
+      "cwd_outside_repo": false,
       "damage": 16,
       "damage_sample": [
         "files: lost src/new_staged.py",
@@ -1882,9 +2607,13 @@
         "files: extra docs/old.md",
         "files: extra other.txt"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "wu5-revert-sequencer",
       "outside_changed": false,
       "rc": 1,
@@ -1892,10 +2621,12 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/wu5-revert-sequencer-_bua3htw"
     },
     {
       "command": "chmod -R go-rx src docs",
+      "cwd_outside_repo": false,
       "damage": 8,
       "damage_sample": [
         "files: changed src/",
@@ -1903,9 +2634,13 @@
         "files: changed src/lib/",
         "files: changed src/lib/deep.py"
       ],
+      "files_ids": [],
+      "files_linked": null,
+      "files_snapshots_taken": 0,
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
+      "left_files": [],
       "name": "chmod-dirs-go-rx",
       "outside_changed": false,
       "rc": 0,
@@ -1913,7 +2648,411 @@
       "restore_rc": 0,
       "route": "direct",
       "snapshot_left_state_untouched": true,
-      "snapshots_taken": 1
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/chmod-dirs-go-rx-m4cdx8v4"
+    },
+    {
+      "command": "rm -f ../outside.txt",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230239.032499Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-rm",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-rm-a2zcgir2"
+    },
+    {
+      "command": "cp README.md ../outside.txt",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "outside: changed outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230239.968766Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-cp-over",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-cp-over-2_906niz"
+    },
+    {
+      "command": "cp README.md bin/run.sh ../outdir/",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "outside: extra outdir/README.md",
+        "outside: changed outdir/run.sh"
+      ],
+      "files_ids": [
+        "20261012T230240.903391Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-cp-into-dir",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-cp-into-dir-zxb9rd8g"
+    },
+    {
+      "command": "sed -i.bak 's/o/0/g' ../outside.txt",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "outside: extra outside.txt.bak",
+        "outside: changed outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230241.842967Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-sed-in-place",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-sed-in-place-lfv3ycei"
+    },
+    {
+      "command": "echo junk > ../outside.txt && echo more >> ../outdir/a.txt",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "outside: changed outdir/a.txt",
+        "outside: changed outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230242.777582Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-redirect",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-redirect-p9l2cco3"
+    },
+    {
+      "command": "rm -rf ../outdir",
+      "cwd_outside_repo": false,
+      "damage": 9,
+      "damage_sample": [
+        "outside: lost outdir/",
+        "outside: lost outdir/a.txt",
+        "outside: lost outdir/empty/",
+        "outside: lost outdir/escape"
+      ],
+      "files_ids": [
+        "20261012T230243.730849Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-rm-rf-dir",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-rm-rf-dir-2tdg6bsf"
+    },
+    {
+      "command": "chmod 755 ../outside.txt && chmod 700 ../outdir ../outdir/secret",
+      "cwd_outside_repo": false,
+      "damage": 3,
+      "damage_sample": [
+        "outside: changed outdir/",
+        "outside: changed outdir/secret",
+        "outside: changed outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230244.666857Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-chmod",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-chmod-hj3vuodv"
+    },
+    {
+      "command": "echo created > ../created.txt && mkdir ../newdir && echo x > ../newdir/f",
+      "cwd_outside_repo": false,
+      "damage": 3,
+      "damage_sample": [
+        "outside: extra created.txt",
+        "outside: extra newdir/",
+        "outside: extra newdir/f"
+      ],
+      "files_ids": [
+        "20261012T230245.606879Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-created",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-created-o4phhyaq"
+    },
+    {
+      "command": "mv ../outside.txt imported.txt",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "files: extra imported.txt",
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230246.555304Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "mv-outside-into-repo",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/mv-outside-into-repo-33n8x2i2"
+    },
+    {
+      "command": "rm .env",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "ignored: lost .env"
+      ],
+      "files_ids": [
+        "20261012T230247.500910Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "ignored-rm-dotenv",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/ignored-rm-dotenv-dgma9i4f"
+    },
+    {
+      "command": "rm -f debug.log build/out.o",
+      "cwd_outside_repo": false,
+      "damage": 2,
+      "damage_sample": [
+        "ignored: lost build/out.o",
+        "ignored: lost debug.log"
+      ],
+      "files_ids": [
+        "20261012T230248.438293Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "ignored-rm-files",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/ignored-rm-files-43b43pxr"
+    },
+    {
+      "command": "rm -rf build",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "ignored: lost build/out.o"
+      ],
+      "files_ids": [
+        "20261012T230249.377386Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "ignored-rm-rf-dir",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/ignored-rm-rf-dir-bn0569mg"
+    },
+    {
+      "command": "echo SECRET=changed > .env",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "ignored: changed .env"
+      ],
+      "files_ids": [
+        "20261012T230250.318200Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "ignored-overwrite-dotenv",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/ignored-overwrite-dotenv-vceczelh"
+    },
+    {
+      "command": "rm -f ~/tilde-notes.txt",
+      "cwd_outside_repo": false,
+      "damage": 1,
+      "damage_sample": [
+        "outside: lost ~/tilde-notes.txt"
+      ],
+      "files_ids": [
+        "20261012T230251.254474Z"
+      ],
+      "files_linked": true,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "outside-tilde",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "store": "<bench root>/store/outside-tilde-1hkdovzp"
+    },
+    {
+      "command": "rm -f outside.txt outdir/a.txt",
+      "cwd_outside_repo": true,
+      "damage": 2,
+      "damage_sample": [
+        "outside: lost outdir/a.txt",
+        "outside: lost outside.txt"
+      ],
+      "files_ids": [
+        "20261012T230252.186427Z"
+      ],
+      "files_linked": null,
+      "files_snapshots_taken": 1,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "left_files": [],
+      "name": "files-only-rm",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0,
+      "store": "<bench root>/store/files-only-rm-9a2z8977"
     }
   ]
 }

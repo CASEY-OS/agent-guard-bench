@@ -82,6 +82,29 @@ Each set was written by a model that saw only the policy sheet, sealed (`chmod 0
 
 The one safe command v6 stops on holdout7 is `S7-097`, a heredoc appended to a hook file. v6 allows an appended `echo` or `printf` with a real command, but not yet a heredoc. It is the next fix. v5 scores the same as v6 on holdout7, so v6's changes did not move this set.
 
+## Version 7: undo outside the repo
+
+A market scan found doover (github.com/CaydenChik/doover). It snapshots the exact paths a command touches, even outside the repo, and ignored ones like `.env`. Mine restored only the repo's non-ignored state. So I closed that gap.
+
+- **What it copies.** The plan already names the paths a command writes. When one is outside the repo, or ignored inside it, the hook copies that exact path before the command runs. Ignored means `git check-ignore` says so, or `git ls-files -o -i` lists it inside a named directory. A leading `~/` counts as `$HOME`. The copy goes into the store, beside the repo snapshots: `~/.local/state/agent-guard/files/<id>/`. Its manifest holds, for every entry, the absolute path, whether it existed, its type (file, dir or symlink), mode, sha256 and size. A path that did not exist is recorded too.
+- **How it ties in.** The repo snapshot from the same hook call names that copy in its `meta.json`. `undo.py restore --last` (or `restore <id>`) then puts both back. It recreates deleted files, puts back overwritten bytes and modes, and removes what the command created at a recorded target. A command run inside a repo whose every target is outside it now gets a repo snapshot anyway, so `restore --last` there finds the copy. A command run outside any repo gets a files-only snapshot. `undo.py files list` shows them and `undo.py files restore --last` restores one. Every restore takes a safety copy of the same paths first, so it can be undone too.
+- **Bounds.** 200 MB and 20,000 entries per command (`AGENT_GUARD_FILES_MAX_BYTES`, `AGENT_GUARD_FILES_MAX`). Over that a target is skipped, with a note on stderr and in the manifest. It never follows a symlink, so a link that points out of a target is kept as a link. It never copies `/`, `$HOME` itself or an ancestor of `$HOME`. The store is owner-only, because a copy of `.env` holds secrets. The newest 50 copies are kept.
+- **Sharper targets.** `cp`, `mv`, `ln` and `install` now name only what they write. `cp app ~/bin/` names `~/bin/app`, not the whole of `~/bin`. `sed -i.bak` also names the `.bak` file it writes.
+- **The bench.** 87 in-scope scenarios, up from 72, and 87 of 87 fully restored. The 15 new ones, outside the repo: `rm`, `cp` over a file, `cp` into a directory, `sed -i.bak`, `>` and `>>`, `rm -rf` of a directory, `chmod`, new files and a new directory, `rm ~/file`, and `mv` of an outside file into the repo. Ignored inside it: `rm .env`, `rm` of an ignored file and of a file in an ignored directory, `rm -rf build`, and `>` over `.env`. And one `rm` run with cwd outside any repo. The old `mv` out of the repo scenario now checks the outside side too. Fully restored now also means every file, symlink and directory beside the repo, with its mode bits, read back by os.walk and lstat, and every ignored file's bytes and mode bits. The one exception is `git clean -fdx`, which deletes ignored files without naming them (see the residuals). All outside files live beside each scenario's repo, under the bench's temp root. `$HOME` is the bench's own dir under that root.
+- **Blind sets.** I wrote none of the holdout undo rows. Three that were labelled residual now come back: `rm -rf build debug.log` (S5-U09), `rm -f debug.log` (S7U21) and `rm -rf build` (S7U22). They delete ignored files by name. Every row labelled restore still restores: 18 of 18, 16 of 16 and 20 of 20.
+- **Red is reachable.** Three new negative controls (an outside file, `.env`, a files-only command) show the loss with `AGENT_GUARD_UNDO=0`: 8 of 8 in all. Three new one-line mutants are caught: a restore that ignores the `files` link in `meta.json`, one that skips the mode bits outside the repo, and one that leaves a file the command created. That is 10 of 10. In-process checks show the bound skips and says so, the three refused paths are refused before any walk, a symlink out of the outside directory is not followed, and `cp` into a directory copies only the names it writes.
+- **Cost.** A read-only command is unchanged: 68 of them went through the hook path with 0 subprocess calls and 0 copies. I timed the v6 hook against the v7 hook on the same 1,000-file repo, 9 runs each, medians:
+
+| command | v6 | v7 |
+|---|---:|---:|
+| read-only (`git status --short`) | 47 ms | 49 ms |
+| in the repo, `rm` of a changed file | 192 ms | 196 ms |
+| in the repo, `rm .env` (ignored) | 190 ms | 191 ms |
+| in the repo, `rm` of a file outside it | 55 ms | 188 ms |
+| outside any repo, `rm` of a file | 55 ms | 57 ms |
+
+The one real price is a command run in a repo that writes only outside it. v6 took no snapshot there. v7 takes the repo snapshot and the copy, about 130 ms more. A files-only restore of one file took 35 ms.
+
 ## Version 6
 
 - **Undo survives `rm -rf .git`.** Every snapshot is also copied, by a fetch run from the store side, into a bare repo outside the worktree (`~/.local/state/agent-guard/<hash>.git`, or `AGENT_GUARD_STORE`). A restore in a repo whose git dir is gone, or was re-initialised, rebuilds it from the store, with its config, `info/exclude`, installed hooks and remote-tracking refs. In that case it prints no repair push, because the remote never moved. Holdout6 undo went from 15 of 16 to 16 of 16. The price: a snapshot costs about 190 ms instead of 125. A read-only command is unchanged at about 46 ms.
@@ -132,12 +155,14 @@ Claude Code's checkpointing does not cover Bash. Its docs say of files changed b
 
 It is one commit under `refs/agent-guard/snapshots/<UTC time>`. Its parents are every recorded tip, so `git gc` cannot prune what it can restore. The same state is stored once. The newest 50 are kept (`AGENT_GUARD_UNDO_KEEP`). Older refs are deleted, and git gc reclaims them later.
 
-It snapshots before any git command that can change the worktree or refs, and before any other command it cannot prove read-only: rm, mv, cp, `sed -i`, truncate, tee, `>`, `find -delete`, and programs it does not know, like python3 or make. It skips a command whose every target is outside the repo. A read-only command costs no git call.
+It snapshots before any git command that can change the worktree or refs, and before any other command it cannot prove read-only: rm, mv, cp, `sed -i`, truncate, tee, `>`, `find -delete`, and programs it does not know, like python3 or make. A command whose every target is outside the repo used to get nothing. Since v7 the outside files are copied, and the repo gets a snapshot that points at the copy (see Version 7). A read-only command costs no git call and no copy.
 
 ```
 python3 undo.py list
 python3 undo.py restore --last
 python3 undo.py restore <id>
+python3 undo.py files list
+python3 undo.py files restore --last
 ```
 
 Restore takes a snapshot first, so a restore can be undone too. It never touches a remote, and it leaves refs/remotes as they are, because they describe the remote. If a push moved a remote branch, it prints the one push that puts it back and does not run it. The hook takes the repo from the hook input's `cwd`. With no `cwd`, or with `AGENT_GUARD_UNDO=0`, it snapshots nothing.
@@ -159,12 +184,13 @@ Fully restored means every non-ignored file's bytes and mode bits, every symlink
 
 Red is reachable. Five negative controls skip the snapshot (reset --hard, clean -fdx, rm -rf src, branch -D, stash drop). All five show the loss, and `restore --last` finds nothing. Two one-line mutants of restore (skip the mode bits, skip the stash reflog) are both caught. The snapshot plan is right on 50 commands that change the repo and 35 that do not. One scenario I first wrote, `git rm -r src`, changed nothing, because git refuses to remove staged work. The bench caught that it proved nothing, and I made it `git rm -r -f src`.
 
-### Residuals: what undo cannot restore (the bench shows the first four happen)
+### Residuals: what undo cannot restore (the bench shows the first three happen)
 
-- **Ignored files.** `git clean -fdX` deletes build output. No snapshot holds it.
-- **Files outside the repo.** `rm ../outside.txt` is not snapshotted.
-- **Empty directories.** Git does not record them.
+- **Ignored files a command deletes without naming them.** `git clean -fdX` deletes build output and `.env`. It names no path, so there is no exact target to copy. Covering it would mean copying every ignored file in the repo, often `node_modules` and build caches, before every `git clean`. The bench shows the loss, and that no copy was taken. A script that deletes files it does not name is the same.
+- **Empty directories inside the repo.** Git does not record them. An empty directory outside the repo that a command names is copied and comes back.
 - **A remote commit you never fetched.** If a force push overwrites it on a real server, only the server can bring it back.
+- **A target over the files bound** (200 MB or 20,000 entries for one command). It is skipped and said so. The bench shows the skip.
+- Named, not benchmarked, for files outside the repo: a path the plan cannot resolve (`$DIR/x`, `~user/x`, a glob, except into a named directory), FIFOs, devices and unreadable files, and a later change by some other process to a copied path, which a restore also puts back.
 - Named, not benchmarked: owner, ACLs, xattrs and mtimes (restore rewrites every file, so a build may rerun); submodule contents and nested repos; skip-worktree and sparse paths; branch reflogs other than the stash; an in-progress rebase directory; a process that keeps writing after the command; tools other than Bash. Also, `git log --all` shows the snapshot commits; `git log --branches` does not.
 
 ### Costs
@@ -175,10 +201,13 @@ On my laptop, a repo of 1,000 files of about 1.6 KB each:
 |---|---:|
 | whole hook, read-only command, Python start-up included | about 40 ms |
 | whole hook, command that gets a snapshot | about 125 ms |
+| whole hook, v7, in a repo, command naming a file outside it or an ignored file | about 190 ms (one bench run) |
+| whole hook, v7, outside any repo (files-only copy) | about 56 ms |
 | snapshot, 10 files changed and 1 new | about 80 ms, 5.5 KB in .git/objects |
 | snapshot, nothing changed (stored once) | about 50 ms, nothing stored |
 | first snapshot, clean tree | 73 to 144 ms over two runs, 42 KB (mostly the raw index) |
 | `restore --last` | about 300 ms; it rewrites all 1,000 files |
+| `files restore --last`, one file (v7) | about 35 ms |
 
 A bigger repo costs more. `git add -A` into the temp index reads every changed and untracked file. I measured only 1,000 files. The bench turns off git's background maintenance. Before I did, a pack git wrote on its own was counted as snapshot cost (806 KB instead of 42 KB).
 
@@ -297,7 +326,7 @@ Those numbers come from a different, larger, real-traffic sample. They come from
 ## What it does NOT prove
 
 - It does not show that agents are safe in general. It checks three policies on one hook.
-- The guard only reads command strings. The undo layer only covers the repo the hook was called from, and what it lists above.
+- The guard only reads command strings. The undo layer covers the repo the hook was called from, plus the outside and ignored paths a command names, and what it lists above.
 - **The static-analysis ceiling.** A string reader cannot see runtime state. v4 turns much of that blindness into a deny with a redirect. A script file, a Makefile, or config set in an earlier tool call is still invisible to it. The undo layer makes most of what slips through undoable, in the repo. **Server-side hooks and branch protection remain the real boundary** for anything already pushed.
 - 1,099 own cases plus 287 holdout cases is a small sample. Holdout4 has 73 bad and 37 safe commands. A score on a sample that size is not a guarantee.
 - Policies A and B are a port of a guard I run in my own agent setup. Policy C and versions 2 and 3 are new.
@@ -316,7 +345,7 @@ A guard like this stops an agent from retrying a synonym. With a deny it also st
 
 Blind to (guard): a script file run by name that this command did not write, config or aliases set by an earlier tool call that change what a plain git command does, a variable or cwd set by an earlier tool call when the command uses it where the guard judges it harmless, programs other than git that delete work without naming `.git` or a hooks path, an archive or patch applied over the hooks, a container image's entrypoint, tools other than Bash, and anything outside the Bash command text.
 
-Blind to (undo): ignored files, files outside the repo, empty directories, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change by a command the hook never saw.
+Blind to (undo): ignored files and files outside the repo that a command does not name, a target over the files bound, empty directories inside the repo, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change by a command the hook never saw.
 
 ## License
 

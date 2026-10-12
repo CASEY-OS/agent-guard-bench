@@ -13,6 +13,8 @@ asks undo.py what it restored.
 Fully restored means: every non-ignored file's bytes and mode bits, every symlink target, the index
 entries with their stages, refs/heads, refs/tags, refs/stash and HEAD, the stash list, the merge
 state files, and refs/remotes plus the bare remote's own refs once the printed repair push has run.
+Since v7 it also means every file, symlink and directory beside the repo (and one file in the bench's own
+$HOME), with mode bits, and every ignored file in the repo, except where git clean -x deletes them unnamed.
 
 Negative controls skip the snapshot (AGENT_GUARD_UNDO=0) and must show the loss. Residual scenarios
 show each named limit: the bench asserts the loss happens and says so.
@@ -93,6 +95,17 @@ def run_destructive(repo, cmd):
     return subprocess.run(argv, cwd=rp, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
 
 
+def run_outside(cwd, cmd):
+    """A scenario command whose cwd is outside any repo (a files-only undo point). Path asserted first."""
+    rp = inside(cwd)
+    p = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=rp, env=ENV, stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
+    assert p.returncode != 0, "REFUSED: %s is inside a git repo" % rp
+    RUNS.append(rp)
+    return subprocess.run(["/bin/bash", "-c", cmd], cwd=rp, env=ENV, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE).returncode
+
+
 def write(path, data, mode=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as fh:
@@ -109,7 +122,7 @@ def build(name):
     git(base, "init", "-q", "--bare", remote)
     git(base, "init", "-q", repo)
     rnd = random.Random(7)
-    write(os.path.join(repo, ".gitignore"), "build/\n*.log\n")
+    write(os.path.join(repo, ".gitignore"), "build/\n*.log\n.env\n")
     write(os.path.join(repo, "README.md"), "# demo\nalpha beta\n")
     write(os.path.join(repo, "src/app.py"), "print('app')\n")
     write(os.path.join(repo, "src/util.py"), "def util():\n    return 1\n")
@@ -152,15 +165,28 @@ def build(name):
     write(os.path.join(repo, "src/untracked_dir/u.txt"), "untracked\n")
     write(os.path.join(repo, "build/out.o"), b"\x7fELF ignored build output")
     write(os.path.join(repo, "debug.log"), "ignored log\n")
+    write(os.path.join(repo, ".env"), "SECRET=demo-only\n", 0o600)            # v7: an ignored secret
+    # v7: files beside the repo, under the scenario's own dir (so under the bench root)
     write(os.path.join(base, "outside.txt"), "outside the repo\n")
+    write(os.path.join(HOME, "tilde-notes.txt"), "notes in $HOME\n", 0o640)   # rewritten for every scenario
+    out = os.path.join(base, "outdir")
+    write(os.path.join(out, "a.txt"), "outside a\n")
+    write(os.path.join(out, "sub", "b.bin"), bytes(rnd.getrandbits(8) for _ in range(1024)))
+    write(os.path.join(out, "run.sh"), "#!/bin/sh\necho out\n", 0o755)
+    write(os.path.join(out, "secret"), "outside secret\n", 0o600)
+    os.makedirs(os.path.join(out, "empty"))
+    os.symlink("a.txt", os.path.join(out, "link"))
+    os.symlink(os.path.join("..", "..", "home"), os.path.join(out, "escape"))   # points out of the target: never followed
+    os.chmod(out, 0o750)
     return base, repo, remote
 
 
 STATE_FILES = ("MERGE_HEAD", "MERGE_MSG", "MERGE_MODE", "CHERRY_PICK_HEAD", "REVERT_HEAD", "ORIG_HEAD", "SQUASH_MSG")
 
 
-def capture(repo, remote=None):
-    """Read the state back by an independent route: the filesystem and git plumbing."""
+def capture(repo, remote=None, base=None):
+    """Read the state back by an independent route: the filesystem and git plumbing. With base, also the
+    files beside the repo (outside_state)."""
     files = {}
     for dp, dns, fns in os.walk(repo):
         rel_dir = os.path.relpath(dp, repo)
@@ -204,6 +230,8 @@ def capture(repo, remote=None):
             s["state"]["sequencer/" + n] = open(os.path.join(seq, n), "rb").read()
     if remote:
         s["bare"] = git(remote, "for-each-ref", "--format=%(refname) %(objectname)").decode()
+    if base:
+        s["outside"] = outside_state(base)
     return s
 
 
@@ -238,10 +266,11 @@ def diff(a, b, keys=("files", "index", "refs", "HEAD", "stash", "state")):
     return out
 
 
-def hook(repo, command, undo_on=True):
+def hook(repo, command, undo_on=True, env=None):
+    """repo is the hook's cwd (for a files-only scenario, a dir outside any repo)."""
     payload = {"session_id": "bench", "hook_event_name": "PreToolUse", "tool_name": "Bash",
                "tool_input": {"command": command}, "cwd": repo}
-    env = dict(ENV, AGENT_GUARD_ROOT=repo, AGENT_GUARD_UNDO="1" if undo_on else "0")
+    env = dict(env or ENV, AGENT_GUARD_ROOT=repo, AGENT_GUARD_UNDO="1" if undo_on else "0")
     p = subprocess.run([sys.executable, GUARD], input=json.dumps(payload).encode(), env=env,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = p.stdout.decode().strip()
@@ -364,8 +393,32 @@ SCENARIOS = [
     ("wu5-merge-squash", "git stash -q && git merge --squash other", None),
     ("wu5-revert-sequencer", "git stash -q && git checkout -q other && git revert --no-edit main main~1", None),
     ("chmod-dirs-go-rx", "chmod -R go-rx src docs", None),
+    # --- v7: files the repo snapshot does not hold. Outside the repo (beside it, under the bench root) and
+    #     ignored inside it. Read back by outside_state and capture's ignored map, not by asking undo.py.
+    ("outside-rm", "rm -f ../outside.txt", None),
+    ("outside-cp-over", "cp README.md ../outside.txt", None),
+    ("outside-cp-into-dir", "cp README.md bin/run.sh ../outdir/", None),   # names outdir/README.md, not all of outdir
+    ("outside-sed-in-place", "sed -i.bak 's/o/0/g' ../outside.txt", None),
+    ("outside-redirect", "echo junk > ../outside.txt && echo more >> ../outdir/a.txt", None),
+    ("outside-rm-rf-dir", "rm -rf ../outdir", None),
+    ("outside-chmod", "chmod 755 ../outside.txt && chmod 700 ../outdir ../outdir/secret", None),
+    ("outside-created", "echo created > ../created.txt && mkdir ../newdir && echo x > ../newdir/f", None),
+    ("mv-outside-into-repo", "mv ../outside.txt imported.txt", None),
+    ("ignored-rm-dotenv", "rm .env", None),
+    ("ignored-rm-files", "rm -f debug.log build/out.o", None),
+    ("ignored-rm-rf-dir", "rm -rf build", None),
+    ("ignored-overwrite-dotenv", "echo SECRET=changed > .env", None),
+    ("outside-tilde", "rm -f ~/tilde-notes.txt", None),                 # $HOME is the bench's own, under the root
+    ("files-only-rm", "rm -f outside.txt outdir/a.txt", None),          # cwd is the dir beside the repo: no repo
 ]
-CONTROLS = ["reset-hard-HEAD~1", "clean-fdx", "rm-rf-src", "branch-D-other", "stash-drop"]
+OUTSIDE_CWD = {"files-only-rm"}           # run with cwd outside any repo; restored by `undo.py files restore --last`
+# must get one files snapshot, linked from the repo snapshot of the same hook call (files-only: no repo snapshot)
+NAMES_FILES = {n for n, _, _ in SCENARIOS if n.startswith(("outside-", "ignored-", "files-only-"))} | {
+    "mv-out-of-repo", "mv-outside-into-repo", "wu5-tar-extract-outside", "wu5-unzip-outside"}
+# git clean -x deletes ignored files without naming one; that limit is the ignored-files residual below
+IGNORED_NOT_NAMED = {"clean-fdx"}
+CONTROLS = ["reset-hard-HEAD~1", "clean-fdx", "rm-rf-src", "branch-D-other", "stash-drop",
+            "outside-rm", "ignored-rm-dotenv", "files-only-rm"]
 # one-line defects in restore, built at run time under the bench root: the readback must catch each
 MUTANTS = [
     ("skips the mode bits", "chmod", "                os.chmod(full, m)", "                pass"),
@@ -379,74 +432,116 @@ MUTANTS = [
     ("does not save SQUASH_MSG", "wu5-merge-squash", '"AUTO_MERGE", "SQUASH_MSG")', '"AUTO_MERGE")'),
     # v6: a restore that never looks in the outside store
     ("does not import from the store", "rm-rf-dotgit", "    rebuilt = _from_store(repo)\n", "    rebuilt = False\n"),
+    # v7: the files layer
+    ("ignores the files link in meta.json", "outside-rm",
+     "    fres = files_restore(fid, safety=False) if fman else None\n", "    fres = None\n"),
+    ("skips the mode bits of files outside the repo", "outside-chmod",
+     "os.chmod(e[\"path\"], int(e[\"mode\"], 8))           # each file's mode bits", "pass"),
+    ("leaves a file the command created outside the repo", "mv-out-of-repo",
+     "                _remove_node(p)\n", "                pass\n"),
 ]
 RESIDUALS = [
-    ("ignored-files", "git clean -fdX", None, "ignored files are not in any snapshot"),
-    ("outside-the-repo", "rm -f ../outside.txt", None, "a file outside the repo is not in any snapshot"),
+    ("ignored-files", "git clean -fdX", None,
+     "git clean -X names no path, so no ignored file is copied; covering it would mean copying every ignored "
+     "file (node_modules, build caches) before every git clean"),
     ("empty-directory", "rmdir empty_dir", setup_empty_dir, "git does not record empty directories"),
     ("remote-only-commit", "git push -q -f origin main", setup_remote_unfetched,
      "a commit that only the remote held is gone once it is overwritten"),
 ]
 
 
+def files_ids(store):
+    """The files snapshots in a store, by the bench's own listing of the directory."""
+    d = os.path.join(store, "files")
+    return sorted(n for n in os.listdir(d) if not n.startswith(".")) if os.path.isdir(d) else []
+
+
 def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     base, repo, remote = build(name)
+    store = os.path.join(ROOT, "store", os.path.basename(base))     # one store per scenario, beside it, under the root
+    env = dict(ENV, AGENT_GUARD_STORE=store)
+    away = name in OUTSIDE_CWD
+    cwd = base if away else repo
     extra = setup(repo) if setup else None
-    pre = capture(repo, remote)
+    pre = capture(repo, remote, base)
     raw_pre = raw_user_state(repo)
-    n0 = len(snap_refs(repo))
-    direct, _ = hook(repo, cmd, undo_on)
+    n0, f0 = len(snap_refs(repo)), files_ids(store)
+    direct, _ = hook(cwd, cmd, undo_on, env)
     route, agent_cmd = "direct", cmd
     if direct == "deny":
         script = os.path.join(base, "steps", name + ".sh")
         write(script, "set -e\n" + cmd + "\n")
         agent_cmd = "bash " + script
-        dec, _ = hook(repo, agent_cmd, undo_on)
+        dec, _ = hook(cwd, agent_cmd, undo_on, env)
         assert dec != "deny", "the guard denied the script route for " + name
         route = "script"
     taken = len(snap_refs(repo)) - n0
-    untouched = capture(repo, remote) == pre and raw_user_state(repo) == raw_pre
-    out_pre = outside_state(base)
-    rc = run_destructive(repo, agent_cmd)
-    outside_changed = outside_state(base) != out_pre
+    fnew = [f for f in files_ids(store) if f not in f0]
+    linked = None                                 # the repo snapshot's meta.json names the files snapshot it took
+    if taken and fnew:
+        newest = sorted(snap_refs(repo))[-1]
+        meta = json.loads(git(repo, "cat-file", "blob", newest + ":meta.json").decode())
+        linked = meta.get("files") == fnew[-1]
+    untouched = capture(repo, remote, base) == pre and raw_user_state(repo) == raw_pre
+    rc = run_outside(base, agent_cmd) if away else run_destructive(repo, agent_cmd)
+    outside_changed = outside_state(base) != pre["outside"]
     try:
-        post = capture(repo, remote)
+        post = capture(repo, remote, base)
     except RuntimeError:                        # the command removed the git dir itself
-        post = {"files": {}, "index": {"(git dir lost)": 1}}
-    damage = diff(pre, post, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare"))
-    p = subprocess.run([sys.executable, undo_cli, "--repo", repo, "restore", "--last"], env=ENV,
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        post = {"files": {}, "index": {"(git dir lost)": 1}, "outside": outside_state(base)}
+    damage = diff(pre, post, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare",
+                                   "ignored", "outside"))
+    argv = ["files", "restore", "--last"] if away else ["--repo", repo, "restore", "--last"]
+    p = subprocess.run([sys.executable, undo_cli] + argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     restore_rc = p.returncode
     hints = []
-    if restore_rc == 0:
+    if restore_rc == 0 and not away:
         hints = json.loads(p.stdout.decode().split("\nREMOTE NOT RESTORED")[0])["remote_repair"]
     for h in hints:                             # the printed repair, run inside the bench root only
         run_destructive(repo, h)
     if hints:
         git(repo, "fetch", "-q", "origin")
     try:
-        after = capture(repo, remote)
+        after = capture(repo, remote, base)
     except RuntimeError:                        # restore did not bring the git dir back
-        after = {"files": {}, "index": {"(git dir still lost after restore)": 1}}
+        after = {"files": {}, "index": {"(git dir still lost after restore)": 1}, "outside": outside_state(base)}
     left = diff(pre, after, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare"))
+    # v7: the files beside the repo, and the ignored files (except where a git command deletes them unnamed)
+    left_files = diff(pre, after, keys=("outside",) if name in IGNORED_NOT_NAMED else ("ignored", "outside"))
     ignored_lost = diff(pre, after, keys=("ignored",))
-    return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "rc": rc,
-            "snapshots_taken": taken, "snapshot_left_state_untouched": untouched, "damage": len(damage),
+    return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "rc": rc, "cwd_outside_repo": away,
+            "snapshots_taken": taken, "files_snapshots_taken": len(fnew), "files_linked": linked,
+            "snapshot_left_state_untouched": untouched, "damage": len(damage),
             "damage_sample": damage[:4], "restore_rc": restore_rc, "remote_repair": hints,
-            "left": left, "ignored_lost": len(ignored_lost), "outside_changed": outside_changed, "extra": extra,
-            "base": base, "repo": repo}
+            "left": left, "left_files": left_files, "ignored_lost": len(ignored_lost),
+            "outside_changed": outside_changed, "extra": extra, "base": base, "repo": repo, "store": store,
+            "files_ids": fnew}
 
 
 def outside_state(base):
-    """Files beside the repo (not the repo, the bare remote or the bench's own steps): name -> sha256."""
+    """Everything beside the repo (not the repo, the bare remote or the bench's own steps), by os.walk and
+    lstat, symlinks never followed, plus the one file in the bench's $HOME: path -> ("file", sha256, mode) |
+    ("link", target) | ("dir", mode)."""
     seen = {}
     for dp, dns, fns in os.walk(base):
         if dp == base:
             dns[:] = [d for d in dns if d not in ("repo", "remote.git", "steps")]
-        for n in fns:
+        for n in list(dns) + fns:
             full = os.path.join(dp, n)
-            with open(full, "rb") as fh:
-                seen[os.path.relpath(full, base)] = hashlib.sha256(fh.read()).hexdigest()
+            rel = os.path.relpath(full, base)
+            st = os.lstat(full)
+            if stat.S_ISLNK(st.st_mode):
+                seen[rel] = ("link", os.readlink(full))
+            elif stat.S_ISDIR(st.st_mode):
+                seen[rel + "/"] = ("dir", "%o" % stat.S_IMODE(st.st_mode))
+            elif stat.S_ISREG(st.st_mode):
+                with open(full, "rb") as fh:
+                    seen[rel] = ("file", hashlib.sha256(fh.read()).hexdigest(), "%o" % stat.S_IMODE(st.st_mode))
+    h = os.path.join(HOME, "tilde-notes.txt")                  # the one file the bench keeps in its own $HOME
+    if os.path.lexists(h):
+        st = os.lstat(h)
+        with open(h, "rb") as fh:
+            seen["~/tilde-notes.txt"] = ("file", hashlib.sha256(fh.read()).hexdigest(), "%o" % stat.S_IMODE(st.st_mode))
     return seen
 
 
@@ -553,6 +648,27 @@ def cost():
         t = time.perf_counter()
         hook(repo, "rm -f untracked/new0%d.txt" % k)
         hook_rw.append((time.perf_counter() - t) * 1000)
+    hook_out, hook_ign, hook_away = [], [], []
+    write(os.path.join(repo, ".gitignore"), ".env\n")
+    for k in range(5):
+        write(os.path.join(base, "outside%d.txt" % k), "outside %d\n" % k * 100)
+        write(os.path.join(repo, names[600 + k]), "outside change %d\n" % k)
+        t = time.perf_counter()
+        hook(repo, "rm -f ../outside%d.txt" % k)
+        hook_out.append((time.perf_counter() - t) * 1000)
+        write(os.path.join(repo, ".env"), "SECRET=%d\n" % k)
+        t = time.perf_counter()
+        hook(repo, "rm -f .env")
+        hook_ign.append((time.perf_counter() - t) * 1000)
+        t = time.perf_counter()
+        hook(base, "rm -f outside%d.txt" % k)                   # cwd outside any repo
+        hook_away.append((time.perf_counter() - t) * 1000)
+    t = time.perf_counter()
+    p = subprocess.run([sys.executable, UNDO, "files", "restore", "--last", "--no-safety"], env=ENV,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    files_restore_ms = (time.perf_counter() - t) * 1000
+    if p.returncode != 0:
+        raise RuntimeError("cost files restore failed: " + p.stderr.decode())
     t = time.perf_counter()
     p = subprocess.run([sys.executable, UNDO, "--repo", repo, "restore", "--last", "--no-safety"], env=ENV,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -563,7 +679,88 @@ def cost():
             "first_snapshot_bytes": s1 - s0, "no_change_ms_median": statistics.median(noop),
             "dirty_snapshot_ms_median": statistics.median(dirty), "dirty_snapshot_bytes_median": statistics.median(sizes),
             "plan_us_read_only": plan_us, "hook_read_only_ms_median": statistics.median(hook_ro),
-            "hook_with_snapshot_ms_median": statistics.median(hook_rw), "restore_ms": restore_ms}
+            "hook_with_snapshot_ms_median": statistics.median(hook_rw), "restore_ms": restore_ms,
+            "hook_outside_ms_median": statistics.median(hook_out), "hook_ignored_ms_median": statistics.median(hook_ign),
+            "hook_files_only_ms_median": statistics.median(hook_away), "files_restore_ms": files_restore_ms}
+
+
+def read_only_cost(cases, repo):
+    """Every clean command the plan proves read-only, through the real hook path in-process: count every
+    subprocess it starts (git or anything else) and every files snapshot it makes. Both must be zero."""
+    ro = [c for c, want in cases if not want and not undo.plan(c, repo)["effects"]]
+    store = os.environ["AGENT_GUARD_STORE"]
+    before = files_ids(store)
+    calls, real = [], subprocess.run
+
+    def counting(*a, **k):
+        calls.append(a[0] if a else k.get("args"))
+        return real(*a, **k)
+    subprocess.run = counting
+    try:
+        for c in ro:
+            undo.pre_tool_use(c, repo)
+    finally:
+        subprocess.run = real
+    return {"commands": len(ro), "calls": len(calls), "files_made": len(files_ids(store)) - len(before)}
+
+
+def files_checks(results):
+    """The files layer's limits, in-process, under the bench root: the bound skips a target and says so, /,
+    $HOME and an ancestor of $HOME are refused before any walk, and a symlink out of a target is not followed."""
+    import contextlib
+    import io
+    base = tempfile.mkdtemp(prefix="files-checks-", dir=ROOT)
+    old = {k: os.environ.get(k) for k in ("AGENT_GUARD_STORE", "AGENT_GUARD_FILES_MAX", "AGENT_GUARD_FILES_MAX_BYTES")}
+    os.environ["AGENT_GUARD_STORE"] = os.path.join(base, "store")
+    out = {}
+    try:
+        big, small = os.path.join(base, "big"), os.path.join(base, "small.txt")
+        for k in range(30):
+            write(os.path.join(big, "f%02d.txt" % k), "x\n")
+        write(small, "small\n")
+        os.environ["AGENT_GUARD_FILES_MAX"] = "10"
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            fid = undo.files_snapshot([(big, []), (small, [])], label="bound")
+        man = json.load(open(os.path.join(base, "store", "files", fid, "manifest.json")))
+        t = {x["path"]: x for x in man["targets"]}
+        out["over_entries_skipped"] = bool(t[big]["skipped"]) and ("NOT copied " + big) in err.getvalue()
+        out["small_copied"] = not t[small]["skipped"] and any(e["path"] == small and e.get("sha256") for e in man["entries"])
+        del os.environ["AGENT_GUARD_FILES_MAX"]
+        os.environ["AGENT_GUARD_FILES_MAX_BYTES"] = "100"
+        write(os.path.join(base, "four_k.bin"), b"\0" * 4096)
+        with contextlib.redirect_stderr(io.StringIO()):
+            fid = undo.files_snapshot([(os.path.join(base, "four_k.bin"), [])], label="bytes")
+        man = json.load(open(os.path.join(base, "store", "files", fid, "manifest.json")))
+        out["over_bytes_skipped"] = bool(man["targets"][0]["skipped"]) and not man["entries"]
+        del os.environ["AGENT_GUARD_FILES_MAX_BYTES"]
+        home = os.path.realpath(os.path.expanduser("~"))
+        t0 = time.perf_counter()
+        with contextlib.redirect_stderr(io.StringIO()):
+            fid = undo.files_snapshot([("/", []), (home, []), (os.path.dirname(home), [])], label="refuse")
+        out["refuse_ms"] = (time.perf_counter() - t0) * 1000
+        man = json.load(open(os.path.join(base, "store", "files", fid, "manifest.json")))
+        out["refused"] = all(x["skipped"] for x in man["targets"]) and not man["entries"] and out["refuse_ms"] < 1000
+    finally:
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    r = next(x for x in results if x["name"] == "outside-rm-rf-dir")
+    man = json.load(open(os.path.join(r["store"], "files", r["files_ids"][0], "manifest.json")))
+    tgt = os.path.realpath(os.path.join(r["base"], "outdir"))
+    r = next(x for x in results if x["name"] == "outside-cp-into-dir")
+    man = json.load(open(os.path.join(r["store"], "files", r["files_ids"][0], "manifest.json")))
+    d = os.path.realpath(os.path.join(r["base"], "outdir"))
+    out["cp_names_file"] = sorted(t["path"] for t in man["targets"]) == [os.path.join(d, "README.md"), os.path.join(d, "run.sh")]
+    r = next(x for x in results if x["name"] == "outside-rm-rf-dir")
+    man = json.load(open(os.path.join(r["store"], "files", r["files_ids"][0], "manifest.json")))
+    tgt = os.path.realpath(os.path.join(r["base"], "outdir"))
+    out["no_escape"] = (bool(man["entries"]) and all(e["path"] == tgt or e["path"].startswith(tgt + os.sep)
+                                                    for e in man["entries"])
+                        and any(e["type"] == "symlink" and e["path"].endswith(os.sep + "escape") for e in man["entries"]))
+    return out
 
 
 def prune_and_dedupe():
@@ -605,8 +802,6 @@ def main():
                 ["git", "cat-file", "-e", r["extra"]], cwd=r["repo"], env=ENV).returncode == 0
             r["their_commit_on_remote"] = r["extra"] in git(r["base"], "--git-dir", os.path.join(r["base"], "remote.git"),
                                                             "for-each-ref").decode()
-        if name == "outside-the-repo":
-            r["outside_exists"] = os.path.exists(os.path.join(r["base"], "outside.txt"))
         if name == "empty-directory":
             r["dir_exists"] = os.path.isdir(os.path.join(r["repo"], "empty_dir"))
         residuals.append(r)
@@ -620,6 +815,7 @@ def main():
         cmd, setup = next((c, s_) for n, c, s_ in SCENARIOS if n == scen)
         r = play(scen, cmd, setup, undo_cli=mpath)
         r["what"] = what
+        r["caught"] = bool(r["left"] or r["left_files"])
         mutants.append(r)
     pbase = tempfile.mkdtemp(prefix="plan-", dir=ROOT)
     prepo, poutside = os.path.join(pbase, "repo"), os.path.join(pbase, "outside")
@@ -631,19 +827,25 @@ def main():
         got = bool(undo.snapshot_targets(c, prepo)[0])
         if got != want:
             plan_wrong.append(c)
+    ro_cost = read_only_cost(cases, prepo)
     pd = prune_and_dedupe()
+    fc = files_checks(results)
     costs = cost()
 
-    ok_rows = [r for r in results if not r["left"] and r["restore_rc"] == 0]
+    ok_rows = [r for r in results if not r["left"] and not r["left_files"] and r["restore_rc"] == 0]
     no_damage = [r["name"] for r in results if r["damage"] == 0]
-    no_snap = [r["name"] for r in results if r["snapshots_taken"] != 1]
+    no_snap = [r["name"] for r in results
+               if (r["cwd_outside_repo"] and (r["files_snapshots_taken"] != 1 or r["snapshots_taken"] != 0))
+               or (not r["cwd_outside_repo"] and r["snapshots_taken"] != 1)]
+    unlinked = [r["name"] for r in results if r["name"] in NAMES_FILES and (
+        r["files_snapshots_taken"] != 1 or (not r["cwd_outside_repo"] and not r["files_linked"]))]
     touched = [r["name"] for r in results + residuals if not r["snapshot_left_state_untouched"]]
-    ctrl_ok = [c for c in controls if c["snapshots_taken"] == 0 and c["damage"] > 0 and c["left"]
-               and c["restore_rc"] != 0]
+    ctrl_ok = [c for c in controls if c["snapshots_taken"] == 0 and c["files_snapshots_taken"] == 0 and c["damage"] > 0
+               and (c["left"] or c["left_files"]) and c["restore_rc"] != 0]
     res_by = {r["name"]: r for r in residuals}
     residual_ok = {
-        "ignored-files": res_by["ignored-files"]["ignored_lost"] > 0 and not res_by["ignored-files"]["left"],
-        "outside-the-repo": not res_by["outside-the-repo"]["outside_exists"],
+        "ignored-files": (res_by["ignored-files"]["ignored_lost"] > 0 and not res_by["ignored-files"]["left"]
+                          and res_by["ignored-files"]["files_snapshots_taken"] == 0),
         "empty-directory": not res_by["empty-directory"]["dir_exists"],
         "remote-only-commit": (not res_by["remote-only-commit"]["their_commit_recoverable"]
                                and not res_by["remote-only-commit"]["their_commit_on_remote"]),
@@ -659,29 +861,34 @@ def main():
          "the guard denied it, so the bench wrote it to a script file outside the repo and sent `bash <script>`, "
          "a route the guard cannot read. Damage counts what changed. Left counts what still differs after "
          "restore (0 is fully restored).", "",
-         "| # | scenario | command | route | damage | left after restore | ignored files lost | remote put back by printed push |",
-         "|---:|---|---|---|---:|---:|---:|---|"]
+         "Outside or ignored left counts what still differs beside the repo, and in its ignored files, after restore. "
+         "Files snapshot: `linked` means the repo snapshot's meta.json names it; `files-only` means the command ran "
+         "outside any repo and `undo.py files restore --last` restored it.", "",
+         "| # | scenario | command | route | damage | left after restore | outside or ignored left | files snapshot | ignored files lost | remote put back by printed push |",
+         "|---:|---|---|---|---:|---:|---:|---|---:|---|"]
     for i, r in enumerate(results, 1):
-        L.append("| %d | %s | `%s` | %s | %d | %d | %d | %s |" % (
-            i, r["name"], r["command"].replace("|", "\\|"), r["route"], r["damage"], len(r["left"]),
-            r["ignored_lost"], "yes" if r["remote_repair"] else "n/a"))
+        fs = "-" if not r["files_snapshots_taken"] else ("files-only" if r["cwd_outside_repo"] else
+                                                        "linked" if r["files_linked"] else "NOT linked")
+        L.append("| %d | %s | `%s` | %s | %d | %d | %s | %s | %d | %s |" % (
+            i, r["name"], r["command"].replace("|", "\\|").replace("\n", " "), r["route"], r["damage"], len(r["left"]),
+            ("%d" % len(r["left_files"])) if r["name"] not in IGNORED_NOT_NAMED else "%d (outside only)" % len(r["left_files"]),
+            fs, r["ignored_lost"], "yes" if r["remote_repair"] else "n/a"))
     L += ["", "Fully restored: %d of %d." % (len(ok_rows), len(results)), ""]
     for r in results:
-        if r["left"]:
-            L.append("- NOT restored %s: %s" % (r["name"], "; ".join(r["left"][:6])))
+        if r["left"] or r["left_files"]:
+            L.append("- NOT restored %s: %s" % (r["name"], "; ".join((r["left"] + r["left_files"])[:6])))
     L += ["## Negative controls: snapshot skipped (AGENT_GUARD_UNDO=0)", "",
-          "| scenario | snapshots taken | damage | still lost after restore --last | restore --last exit |",
+          "| scenario | snapshots taken (repo, files) | damage | still lost after restore --last | restore --last exit |",
           "|---|---:|---:|---:|---:|"]
     for c in controls:
-        L.append("| %s | %d | %d | %d | %d |" % (c["name"], c["snapshots_taken"], c["damage"], len(c["left"]),
-                                                c["restore_rc"]))
+        L.append("| %s | %d, %d | %d | %d | %d |" % (c["name"], c["snapshots_taken"], c["files_snapshots_taken"],
+                                                    c["damage"], len(c["left"]) + len(c["left_files"]), c["restore_rc"]))
     L += ["", "Controls that show the loss: %d of %d." % (len(ctrl_ok), len(controls)), "",
           "## Residuals: named limits, shown not hidden", "",
           "| residual | command | what happened | as documented |", "|---|---|---|---|"]
     for r in residuals:
-        what = {"ignored-files": "%d ignored files lost; everything in scope restored (%d left)"
+        what = {"ignored-files": "%d ignored files lost, no files snapshot taken; everything in scope restored (%d left)"
                                  % (r["ignored_lost"], len(r["left"])),
-                "outside-the-repo": "outside file still exists: %s" % r.get("outside_exists"),
                 "empty-directory": "empty directory back: %s" % r.get("dir_exists"),
                 "remote-only-commit": "their commit recoverable: %s; on the remote: %s"
                                       % (r.get("their_commit_recoverable"), r.get("their_commit_on_remote"))}[r["name"]]
@@ -689,11 +896,24 @@ def main():
     L += ["", "## Mutants: a one-line defect in restore must be caught", "",
           "| mutant | scenario | left after restore | caught |", "|---|---|---:|---|"]
     for m in mutants:
-        L.append("| restore %s | %s | %d | %s |" % (m["what"], m["name"], len(m["left"]), "yes" if m["left"] else "NO"))
+        L.append("| restore %s | %s | %d | %s |" % (m["what"], m["name"], len(m["left"]) + len(m["left_files"]),
+                                                   "yes" if m["caught"] else "NO"))
     L += ["", "## The hook's plan: snapshot or not", "",
           "%d commands that could change the repo and %d that cannot. Wrong: %d%s." % (
               sum(1 for _, w in cases if w), sum(1 for _, w in cases if not w), len(plan_wrong),
               (" (" + "; ".join(plan_wrong) + ")") if plan_wrong else ""), "",
+          "A read-only command through pre_tool_use: %d commands, %d subprocess calls (git or other), %d files "
+          "snapshots made." % (ro_cost["commands"], ro_cost["calls"], ro_cost["files_made"]), "",
+          "## The files layer: bound, refusals, symlinks", "",
+          "- Over the entry bound (AGENT_GUARD_FILES_MAX=10, a 30-file dir): skipped and said on stderr: %s; the small "
+          "target beside it still copied: %s." % (fc["over_entries_skipped"], fc["small_copied"]),
+          "- Over the byte bound (AGENT_GUARD_FILES_MAX_BYTES=100, a 4 KB file): skipped: %s." % fc["over_bytes_skipped"],
+          "- /, $HOME and an ancestor of $HOME, each refused without a walk: %s (%.0f ms for all three)."
+          % (fc["refused"], fc["refuse_ms"]),
+          "- rm -rf of a dir holding a symlink that points out of it: no manifest entry outside the target: %s."
+          % fc["no_escape"],
+          "- cp of two files into a directory outside the repo copies those two names, not the directory: %s."
+          % fc["cp_names_file"], "",
           "## Bound and dedupe", "",
           "Made %d snapshots with the default bound: %d kept, the newest ones (%s). Same state twice gives the "
           "same id, one ref (%s)." % (pd["made"], pd["kept"], "ok" if pd["prune_ok"] else "WRONG",
@@ -706,19 +926,33 @@ def main():
           "| plan() for a read-only command, in-process | %.0f us |" % costs["plan_us_read_only"],
           "| whole hook, read-only command (Python start-up included) | %.0f ms median |" % costs["hook_read_only_ms_median"],
           "| whole hook, command that gets a snapshot | %.0f ms median |" % costs["hook_with_snapshot_ms_median"],
+          "| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | %.0f ms median |" % costs["hook_outside_ms_median"],
+          "| whole hook, in a repo, command naming one ignored file (.env) | %.0f ms median |" % costs["hook_ignored_ms_median"],
+          "| whole hook, outside any repo, files-only | %.0f ms median |" % costs["hook_files_only_ms_median"],
+          "| files restore --last, CLI, one file | %.0f ms |" % costs["files_restore_ms"],
           "| restore --last, CLI | %.0f ms |" % costs["restore_ms"],
           "| .git/objects before any snapshot | %d bytes |" % costs["objects_bytes_before"], ""]
     conds = [
         ("at least 30 in-scope scenarios", len(results) >= 30, "%d" % len(results)),
         ("every in-scope scenario fully restored", len(ok_rows) == len(results), "%d of %d" % (len(ok_rows), len(results))),
         ("every scenario command really changed something", not no_damage, ", ".join(no_damage) or "all did"),
-        ("the hook took exactly one snapshot before each command", not no_snap, ", ".join(no_snap) or "all"),
+        ("the hook took exactly one snapshot before each command (files-only outside a repo)", not no_snap,
+         ", ".join(no_snap) or "all"),
+        ("every command naming an outside or ignored path got one files snapshot, linked from its repo snapshot",
+         not unlinked and len(NAMES_FILES) >= 15, ", ".join(unlinked) or "%d of %d" % (len(NAMES_FILES), len(NAMES_FILES))),
         ("a snapshot left index bytes, HEAD, refs, stash and files untouched", not touched, ", ".join(touched) or "all"),
-        ("all 5 negative controls show the loss", len(controls) == 5 and len(ctrl_ok) == 5, "%d of %d" % (len(ctrl_ok), len(controls))),
+        ("all %d negative controls show the loss" % len(CONTROLS), len(controls) == len(CONTROLS) and len(ctrl_ok) == len(CONTROLS),
+         "%d of %d" % (len(ctrl_ok), len(controls))),
         ("every residual behaves as documented", all(residual_ok.values()),
          ", ".join(k for k, v in residual_ok.items() if not v) or "all"),
-        ("every one-line restore mutant is caught by the readback", all(m["left"] for m in mutants) and len(mutants) == len(MUTANTS),
-         "%d of %d" % (sum(1 for m in mutants if m["left"]), len(MUTANTS))),
+        ("every one-line restore mutant is caught by the readback", all(m["caught"] for m in mutants) and len(mutants) == len(MUTANTS),
+         "%d of %d" % (sum(1 for m in mutants if m["caught"]), len(MUTANTS))),
+        ("a read-only command costs no git call and no copy", ro_cost["calls"] == 0 and ro_cost["files_made"] == 0
+         and ro_cost["commands"] >= 50, "%d commands, %d calls" % (ro_cost["commands"], ro_cost["calls"])),
+        ("the files bound skips and says so; /, $HOME and its ancestors are refused; no symlink is followed",
+         all(fc[k] for k in ("over_entries_skipped", "small_copied", "over_bytes_skipped", "refused", "no_escape", "cp_names_file")),
+         ", ".join(k for k in ("over_entries_skipped", "small_copied", "over_bytes_skipped", "refused", "no_escape", "cp_names_file")
+                   if not fc[k]) or "all"),
         ("the plan is right on every planted and clean command", not plan_wrong, "%d wrong" % len(plan_wrong)),
         ("bound keeps the newest 50; dedupe stores a state once", pd["prune_ok"] and pd["dedupe_ok"], "kept %d" % pd["kept"]),
         ("the printed repair push put every pushed remote back", all(not r["left"] for r in push_rows) and len(push_rows) >= 2,
@@ -727,7 +961,8 @@ def main():
          "%d runs, %d outside" % (len(RUNS), len(outside_runs))),
     ]
     ok = all(c[1] for c in conds)
-    L += ["Blind to: ignored files, files outside the repo, empty directories, owner, ACLs, xattrs and mtimes, "
+    L += ["Blind to: ignored files and files outside the repo that the command does not name (git clean -X, a "
+          "script that deletes them), a target over the files bound, empty directories inside the repo, owner, ACLs, xattrs and mtimes, "
           "submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the "
           "stash, an in-progress rebase directory, remote state the local repo never fetched, and any change "
           "made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps "
