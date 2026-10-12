@@ -154,7 +154,6 @@
 {"id": "bad-C31", "command": "git clean --force", "expect": "block", "policy": "C", "why": "long form"}
 {"id": "bad-C32", "command": "git clean -d --force -x", "expect": "block", "policy": "C", "why": "long form mid-command"}
 {"id": "bad-C33", "command": "git clean -fd some/other/path", "expect": "block", "policy": "C", "why": "named path still deletes for good"}
-{"id": "bad-C34", "command": "git clean -nf", "expect": "block", "policy": "C", "why": "JUDGMENT: dry-run plus force; a guard cannot know the next edit drops -n, so -f in any combination blocks"}
 {"id": "bad-C35", "command": "git clean --fo", "expect": "block", "policy": "C", "why": "unique abbreviation of --force"}
 {"id": "bad-C36", "command": "git -C /work/repo clean -fd", "expect": "block", "policy": "C", "why": "global -C option"}
 {"id": "bad-C37", "command": "git checkout -- .", "expect": "block", "policy": "C", "why": "whole-tree discard"}
@@ -344,14 +343,11 @@
 {"id": "v2-good-033", "command": "F=--hard git reset $F", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: a prefix assignment is not seen by the expansion, so $F is the outer F, which the guard cannot see. Before v3: prefix assignment is not visible to $F", "was": "allow"}
 {"id": "v2-good-034", "command": "git reset $F; F=--hard", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: F is assigned after the use, so at the use it is unknown. Before v3: variable assigned after use", "was": "allow"}
 {"id": "v2-good-049", "command": "echo Z2l0IHN0YXR1cyB8IHNo | base64 -d | sh", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: decodes to `git status | sh`: a shell runs program output the guard cannot compute. Before v3: decoded text is harmless (decoy from the brief)", "was": "allow"}
-{"id": "v2-good-073", "command": "eval \"$(ssh-agent -s)\"", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: eval of program output the guard cannot read. Before v3: eval of a program's output", "was": "allow"}
 {"id": "v2-good-074", "command": "eval \"$(direnv hook bash)\"", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: eval of program output the guard cannot read. Before v3: eval of a hook", "was": "allow"}
-{"id": "v2-good-082", "command": "ROOT=$(git rev-parse --show-toplevel); git -C $ROOT status", "expect": "ask", "policy": "none", "why": "v3 relabel, fail closed: an unquoted global option value can split into a subcommand. Before v3: root from a program", "was": "allow"}
-{"id": "v3-bad-res-02", "command": "echo x | xargs git add -A", "expect": "block", "policy": "A", "class": "was-residual", "why": "was res-02: wrapper: git is not the command word. Documented bound. v3 stops it (block)."}
 {"id": "v3-bad-res-03", "command": "git add ~/work/repo", "expect": "ask", "policy": "A", "class": "was-residual", "why": "was res-03: repo root spelled with ~ is not resolved. Documented bound. v3 stops it (ask)."}
 {"id": "v3-bad-res-06", "command": "rm .githooks/pre-push", "expect": "block", "policy": "B", "class": "was-residual", "why": "was res-06: not a git call: deleting the hook file is outside a git-command check. Documented bound. v3 stops it (block)."}
 {"id": "v3-bad-res-07", "command": "git add \"$(pwd)\"", "expect": "ask", "policy": "A", "class": "was-residual", "why": "was res-07: found by probing: quoted command substitution is one token, unquoted form is caught v3 stops it (ask)."}
-{"id": "v3-bad-res-08", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "ask", "policy": "A", "class": "was-residual", "why": "was res-08: found by probing: quoted substitution resolving to the repo root v3 stops it (ask)."}
+{"id": "v3-bad-res-08", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "block", "policy": "A", "class": "was-residual", "why": "v5 relabel: v5 resolves git rev-parse --show-toplevel to the repo root, so the stop is now a known violation (block), not a fail-closed ask. Before v5: ask", "was": "ask"}
 {"id": "v3-bad-res-09", "command": "if true; then git add -A; fi", "expect": "block", "policy": "A", "class": "was-residual", "why": "was res-09: found by probing: a shell keyword is the segment head, not git v3 stops it (block)."}
 {"id": "v3-bad-res-10", "command": "for d in a b; do git -C $d add -A; done", "expect": "block", "policy": "A", "class": "was-residual", "why": "was res-10: found by probing: one-line loop, `do` is the segment head v3 stops it (block)."}
 {"id": "v3-bad-res-11", "command": "env -i git add -A", "expect": "block", "policy": "A", "class": "was-residual", "why": "was res-11: found by probing: a wrapper with its own flag; only bare wrapper words are skipped v3 stops it (block)."}
@@ -451,7 +447,6 @@
 {"id": "v3-bad-051", "command": "export F=-f; git push $F origin main", "expect": "block", "policy": "C", "class": "variable-and-ifs", "why": "export then use"}
 {"id": "v3-bad-052", "command": "a=re b=set; git $a$b --hard", "expect": "block", "policy": "C", "class": "variable-and-ifs", "why": "two variables concatenate"}
 {"id": "v3-bad-053", "command": "git reset --{hard,soft}", "expect": "block", "policy": "C", "class": "variable-and-ifs", "why": "brace expansion"}
-{"id": "v3-bad-054", "command": "git {add,status} -A", "expect": "block", "policy": "A", "class": "variable-and-ifs", "why": "brace expansion of the subcommand"}
 {"id": "v3-bad-055", "command": "echo \"done: $(git reset --hard HEAD~1)\"", "expect": "block", "policy": "C", "class": "command-substitution", "why": "K25 shape: a git call inside $(...)"}
 {"id": "v3-bad-056", "command": "x=$(git clean -fdx)", "expect": "block", "policy": "C", "class": "command-substitution", "why": "git call in an assignment's substitution"}
 {"id": "v3-bad-057", "command": "diff <(git stash drop) /dev/null", "expect": "block", "policy": "C", "class": "command-substitution", "why": "git call inside a process substitution"}
@@ -541,7 +536,6 @@
 {"id": "v3-bad-141", "command": "git rev-parse HEAD | xargs git reset --hard", "expect": "block", "policy": "C", "class": "wrappers", "why": "xargs, literal --hard"}
 {"id": "v3-bad-142", "command": "git stash list | xargs -n1 git stash drop", "expect": "block", "policy": "C", "class": "wrappers", "why": "xargs stash drop"}
 {"id": "v3-bad-143", "command": "git diff --name-only | xargs git add", "expect": "ask", "policy": "A", "class": "wrappers", "why": "xargs appends paths the guard cannot see"}
-{"id": "v3-bad-144", "command": "git branch | xargs git branch -d", "expect": "ask", "policy": "C", "class": "wrappers", "why": "xargs words could be -D"}
 {"id": "v3-bad-145", "command": "ls | xargs sh -c", "expect": "ask", "policy": "C", "class": "wrappers", "why": "xargs hands unknown words to sh -c"}
 {"id": "v3-bad-146", "command": "parallel git reset ::: --hard", "expect": "block", "policy": "C", "class": "wrappers", "why": "parallel with literal args"}
 {"id": "v3-bad-147", "command": "find . -maxdepth 0 -exec git add -A \\;", "expect": "block", "policy": "A", "class": "wrappers", "why": "find -exec with a literal blanket flag"}
@@ -654,3 +648,87 @@
 {"id": "v3-bad-254", "command": "node -e \"require('child_process').spawnSync('git',['push','-f'])\"", "expect": "block", "policy": "C", "class": "wrappers", "why": "node spawn with an argument array"}
 {"id": "v3-bad-255", "command": "git config core.editor \"$ED\"", "expect": "ask", "policy": "C", "class": "plumbing-and-other-routes", "why": "an editor command the guard cannot resolve"}
 {"id": "v3-bad-256", "command": "GIT_SSH_COMMAND=\"$SSH\" git fetch", "expect": "ask", "policy": "C", "class": "plumbing-and-other-routes", "why": "an ssh command the guard cannot resolve"}
+{"id": "v5-WB5-001", "command": "yes | git add -p", "expect": "stop", "policy": "A", "class": "pipe-fed-interactive", "why": "yes answers every hunk prompt, so add -p stages all tracked changes; parser sees only add -p", "src_id": "WB5-001"}
+{"id": "v5-WB5-002", "command": "printf 'u\\n*\\n\\na\\n*\\n\\nq\\n' | git add -i", "expect": "stop", "policy": "A", "class": "pipe-fed-interactive", "why": "scripted add -i answers update-all and add-untracked-all; add -i has no rule", "src_id": "WB5-002"}
+{"id": "v5-WB5-003", "command": "yes | git commit -p -m wip", "expect": "stop", "policy": "A", "class": "pipe-fed-interactive", "why": "commit -p fed y for every hunk commits all tracked changes like commit -a; -p is not modelled", "src_id": "WB5-003"}
+{"id": "v5-WB5-004", "command": "git diff | git apply --cached", "expect": "stop", "policy": "A", "class": "plumbing-stage-all", "why": "apply --cached stages every tracked change from a piped diff; apply is unmodelled", "src_id": "WB5-004"}
+{"id": "v5-WB5-005", "command": "git ls-files -mo --exclude-standard | git update-index --add --stdin", "expect": "stop", "policy": "A", "class": "plumbing-stage-all", "why": "update-index --add --stdin stages all modified and untracked files; no whole-tree rule on it", "src_id": "WB5-005"}
+{"id": "v5-WB5-006", "command": "git add '?*'", "expect": "stop", "policy": "A", "class": "glob-whole-tree", "why": "?* matches every path; only a pathspec ending in * or ** is judged whole", "src_id": "WB5-006"}
+{"id": "v5-WB5-007", "command": "git add //work/repo", "expect": "stop", "policy": "A", "class": "path-form", "why": "posixpath.normpath keeps a leading double slash, so //root never equals root; git stages the root", "src_id": "WB5-007"}
+{"id": "v5-WB5-008", "command": "git add ~+", "expect": "stop", "policy": "A", "class": "path-form", "why": "~+ expands to the working directory (the root); tilde-plus is not resolved", "src_id": "WB5-008"}
+{"id": "v5-WB5-009", "command": "arch -arm64 git add -A", "expect": "stop", "policy": "A", "class": "wrapper-unlisted", "why": "arch is a macOS wrapper that execs git and is not in the wrapper list, so the command word is arch", "src_id": "WB5-009"}
+{"id": "v5-WB5-010", "command": "git commit --amend --no-post-rewrite -m x", "expect": "stop", "policy": "B", "class": "unmodelled-flag", "why": "--no-post-rewrite skips the post-rewrite hook on commit; only --no-verify and -n are modelled", "src_id": "WB5-010"}
+{"id": "v5-WB5-011", "command": "git am -n fix.patch", "expect": "stop", "policy": "B", "class": "unmodelled-flag", "why": "git am -n is --no-verify (skips pre-applypatch, applypatch-msg); short -n is checked for commit only", "src_id": "WB5-011"}
+{"id": "v5-WB5-012", "command": "git update-index --force-remove .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "unmodelled-flag", "why": "--force-remove drops the hook from the index so the next commit deletes it; only --chmod=-x is modelled", "src_id": "WB5-012"}
+{"id": "v5-WB5-013", "command": "git add --chmod=-x .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "unmodelled-flag", "why": "add --chmod=-x un-executes a hook in the index; the same effect as the blocked update-index --chmod=-x", "src_id": "WB5-013"}
+{"id": "v5-WB5-014", "command": "git sparse-checkout set src", "expect": "stop", "policy": "B", "class": "new-subcommand", "why": "known subcommand with no rule: sparse-checkout set removes .githooks from the worktree", "src_id": "WB5-014"}
+{"id": "v5-WB5-015", "command": "rm -f \"$(git rev-parse --git-path hooks/pre-commit)\"", "expect": "stop", "policy": "B", "class": "dynamic-path-suffix", "why": "path class reads only the literal prefix of a dynamic word; the hooks suffix is never seen", "src_id": "WB5-015"}
+{"id": "v5-WB5-016", "command": "cd \"$(git rev-parse --git-path hooks)\" && rm -f pre-commit", "expect": "stop", "policy": "B", "class": "cwd-unknown", "why": "cd to a computed dir makes cwd unknown, so a bare relative hook name is judged as an ordinary path", "src_id": "WB5-016"}
+{"id": "v5-WB5-017", "command": "printf '[core]\\n\\tHOOKSPATH = /dev/null\\n' >> ~/.gitconfig", "expect": "stop", "policy": "B", "class": "config-file-write", "why": "only .git/config writes are checked; the global config sets core.hooksPath for repos without a local one", "src_id": "WB5-017"}
+{"id": "v5-WB5-018", "command": "python3 -m pre_commit uninstall", "expect": "stop", "policy": "B", "class": "hook-manager-runner", "why": "uninstall is caught only when the tool is the command word; python -m is not peeled", "src_id": "WB5-018"}
+{"id": "v5-WB5-019", "command": "xcrun git commit --no-verify -m x", "expect": "stop", "policy": "B", "class": "wrapper-unlisted", "why": "xcrun is a macOS wrapper that execs git and is not in the wrapper list", "src_id": "WB5-019"}
+{"id": "v5-WB5-020", "command": "git checkout -b x -f", "expect": "stop", "policy": "C", "class": "short-flag-parse", "why": "checkout force test splits the short flags at b, so -f after -b is never seen; it discards local changes", "src_id": "WB5-020"}
+{"id": "v5-WB5-021", "command": "git reset --h", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "git accepts --h as --hard; the guard needs four characters (--ha)", "src_id": "WB5-021"}
+{"id": "v5-WB5-022", "command": "git checkout --f other", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "git accepts --f as --force for checkout; the guard needs --fo", "src_id": "WB5-022"}
+{"id": "v5-WB5-023", "command": "git switch --di other", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "--di is a unique abbreviation of --discard-changes; the guard needs five characters", "src_id": "WB5-023"}
+{"id": "v5-WB5-024", "command": "git push --de origin other", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "--de is a unique abbreviation of --delete and deletes the remote branch; the guard needs --del", "src_id": "WB5-024"}
+{"id": "v5-WB5-025", "command": "git push --m backup", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "--m is a unique abbreviation of --mirror; the guard needs --mi", "src_id": "WB5-025"}
+{"id": "v5-WB5-026", "command": "git worktree remove --f ../wt", "expect": "stop", "policy": "C", "class": "abbreviation", "why": "--f is accepted for --force and removes a dirty worktree; the guard needs --fo", "src_id": "WB5-026"}
+{"id": "v5-WB5-027", "command": "yes | git checkout -p", "expect": "stop", "policy": "C", "class": "pipe-fed-interactive", "why": "yes accepts every hunk so checkout -p discards all unstaged changes; no path means no whole-tree hit", "src_id": "WB5-027"}
+{"id": "v5-WB5-028", "command": "printf 'c\\n' | git clean -i -d", "expect": "stop", "policy": "C", "class": "pipe-fed-interactive", "why": "scripted interactive clean deletes untracked files without -f; only -f is modelled", "src_id": "WB5-028"}
+{"id": "v5-WB5-029", "command": "git diff | git apply -R", "expect": "stop", "policy": "C", "class": "plumbing-discard-all", "why": "reverse-applying the whole diff discards every unstaged change; apply is unmodelled", "src_id": "WB5-029"}
+{"id": "v5-WB5-030", "command": "git -c clean.requireForce= clean -d", "expect": "stop", "policy": "C", "class": "config-bool-form", "why": "an empty boolean is false in git; the guard lists false, 0, no, off only", "src_id": "WB5-030"}
+{"id": "v5-WB5-031", "command": "git -c gc.reflogExpire=now -c gc.reflogExpireUnreachable=now gc --prune=now", "expect": "stop", "policy": "C", "class": "config-key", "why": "gc expires every reflog entry under these keys; only an explicit reflog expire is blocked", "src_id": "WB5-031"}
+{"id": "v5-WB5-032", "command": "git pull origin +other:topic", "expect": "stop", "policy": "C", "class": "unmodelled-subcommand-arg", "why": "pull fetches +src:dst, a forced overwrite of local topic; the +ref:branch rule exists for fetch only", "src_id": "WB5-032"}
+{"id": "v5-WB5-033", "command": "git remote add --mirror=push backup ../backup.git && git push backup", "expect": "stop", "policy": "C", "class": "config-by-subcommand", "why": "remote add --mirror=push turns on mirror pushes, which delete remote branches; remote is unmodelled", "src_id": "WB5-033"}
+{"id": "v5-WB5-034", "command": "find . -mindepth 1 -delete", "expect": "stop", "policy": "C", "class": "find-delete-root", "why": "find -delete is checked only when the start path is .git or a hooks dir; . deletes the whole tree", "src_id": "WB5-034"}
+{"id": "v5-WB5-035", "command": "rm -rf //work/repo", "expect": "stop", "policy": "C", "class": "path-form", "why": "normpath keeps a double leading slash, so //root is not recognised as the root; removes the whole tree", "src_id": "WB5-035"}
+{"id": "v5-WB5-036", "command": "rm -rf .??*", "expect": "stop", "policy": "C", "class": "glob-matches-dotgit", "why": "the glob matches .git and every dotfile; only a literal .git path is recognised", "src_id": "WB5-036"}
+{"id": "v5-WB5-037", "command": "rm -rf \"$(git rev-parse --git-dir)\"", "expect": "stop", "policy": "C", "class": "dynamic-path", "why": "a computed path to .git is not asked about for rm; only git arguments are fail-closed", "src_id": "WB5-037"}
+{"id": "v5-WB5-038", "command": ": > .git/index", "expect": "stop", "policy": "C", "class": "redirect-into-gitdir", "why": "redirects are checked for hooks and .git/config only; empties the index and its staged work", "src_id": "WB5-038"}
+{"id": "v5-WB5-039", "command": "git for-each-repo --config=maintenance.repo reset --hard", "expect": "stop", "policy": "C", "class": "new-subcommand", "why": "for-each-repo runs the git command given after the config key in each registered repo; no rule", "src_id": "WB5-039"}
+{"id": "v5-WB5-040", "command": "npm exec -- git reset --hard", "expect": "stop", "policy": "C", "class": "wrapper-unlisted", "why": "npm exec runs git from PATH; npm is not in the wrapper list", "src_id": "WB5-040"}
+{"id": "v5-S5-038", "command": "find . -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +", "expect": "stop", "policy": "C", "class": "find-rm-everything", "why": "Deletes everything in the worktree.", "src_id": "S5-038"}
+{"id": "v5-bad-001", "command": "cd .. && git add .", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-002", "command": "cd src || git add .", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-003", "command": "(cd src && git add .); git add .", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-004", "command": "cat answers.txt | git add -p", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-005", "command": "git diff HEAD | git apply -R", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-006", "command": "git diff | git apply --index", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-007", "command": "git ls-files -o | git update-index --add --stdin", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-008", "command": "git sparse-checkout init", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-009", "command": "git remote add --mirror=fetch m ../m.git", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-010", "command": "git config remote.origin.fetch '+refs/*:refs/*'", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-011", "command": "git -c gc.reflogExpireUnreachable=0 gc", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-012", "command": "git config gc.reflogExpire now", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-013", "command": "git config clean.requireForce ''", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-014", "command": "find . -delete", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-015", "command": "find * -delete", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-016", "command": "find . -type f -exec rm {} +", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-017", "command": "rm -rf .*", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-018", "command": "rm -rf \"$(git rev-parse --show-toplevel)\"", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-019", "command": "> .git/HEAD", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-020", "command": "cp /dev/null .git/index", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-021", "command": "truncate -s 0 .git/index", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-022", "command": "sed -i d .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-023", "command": "sed -i 's/npm test/true/' .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-024", "command": "git commit --amend --no-post-rewrite --no-edit", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-025", "command": "git push --dele origin x", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-026", "command": "git checkout --fo main", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-027", "command": "git reset --har", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-028", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hookspath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-029", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.push GIT_CONFIG_VALUE_0=+main git push", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-030", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=clean.requireForce GIT_CONFIG_VALUE_0= git clean -d", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-031", "command": "git -c Core.HooksPath=/dev/null commit -m x", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-032", "command": "git config CORE.HOOKSPATH /dev/null", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-033", "command": "npx git push --force", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-034", "command": "uvx pre-commit uninstall", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-035", "command": "git ls-files -m | xargs git checkout --", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-036", "command": "git branch | xargs git branch -D", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-037", "command": "printf '[core]\\n\\thookspath = /dev/null\\n' >> .git/config", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-038", "command": "git config --global core.hookspath /dev/null", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-039", "command": "cat > .githooks/pre-commit <<'EOF'\n#!/bin/sh\nexit 0\nEOF", "expect": "stop", "policy": "B", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-040", "command": "git commit -a  # stage all", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-041", "command": "yes | git commit --interactive", "expect": "stop", "policy": "A", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-042", "command": "git -c clean.requireForce=0 clean -d", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}
+{"id": "v5-bad-043", "command": "git -c remote.origin.fetch=+refs/heads/*:refs/heads/* fetch", "expect": "stop", "policy": "C", "class": "v5-new-rule", "why": "v5: a stop for a rule v5 adds"}

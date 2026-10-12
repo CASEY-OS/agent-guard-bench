@@ -37,6 +37,27 @@ with every alternative written as a command the guard itself allows. What v3 sto
 v3 allowed, v4 allows. Detection is v3's, unchanged (_decide3). The "Stop and ask" and "A human
 decides" tails of v3 reasons are removed, because no human is asked.
 
+VERSION 5. JUDGE WHAT GIT AND THE SHELL REALLY DO. Root causes fixed, each in general, not by string:
+git reads any unique prefix of a long option, so every git call's options are spelled out from that
+subcommand's real option list (GIT_OPTSPEC, read from `git <cmd> -h` on 2.54) the way parse-options does
+it, and an ambiguous prefix such as `commit --no-v` is left alone because git refuses it. A shell comment
+is stripped before anything is judged. A dry run (`add -n`, `clean -fdn`, `commit --dry-run`, `push -n`,
+`reflog expire -n`) changes nothing. cd and -C are followed (not into a pipeline, a background job or
+past ||; a subshell gives its cwd back), so `.` in src is src, and `-A` / `-u` with a pathspec are scoped
+to it. Short option clusters stop at their value letter. Paths are normalized (`//root`, `~+`), a glob
+is judged by what it can match (`?*` is everything, `.??*` matches .git), and programs with a known
+output shape are modelled: git rev-parse paths and ids, the current branch name, mktemp, which, date,
+yes, ssh-agent. A hook file's contents may be edited by name (sed -i with a real edit, a heredoc that
+writes a real script, a copy to a backup name); emptying, deleting, moving or chmod -x still stop. New
+routes modelled: arch, xcrun, npm exec / npx, uvx and python -m pre_commit as wrappers; for-each-repo;
+apply --cached / -R of the whole diff; update-index --add --stdin and --force-remove; add --chmod=-x;
+interactive add, commit, checkout, restore and clean fed scripted answers; sparse-checkout without the
+hooks; pull +src:dst; remote add --mirror; gc.reflogExpire=now; an empty clean.requireForce (git's
+false); GIT_CONFIG_COUNT/KEY/VALUE read as -c; find -delete or -exec rm over the whole tree; redirects
+and copies over .git/index, HEAD and refs; core.hooksPath written into the global config. The version 2
+checks still run on every view; where they misread (a quoted message split at `;`, a comment, a dry run,
+a scoped cd) they were corrected in place, and bench.py lists every v1, v2 or v4 stop that v5 now allows.
+
 Failure behavior (version 3): an internal error in the version 3 reader is an "ask" that names the
 exception. Stdin that is not valid hook JSON is still a visible fail-open systemMessage, because
 then there is no command to ask about.
@@ -143,6 +164,76 @@ def _strip_heredocs(cmd):
     return "\n".join(out)
 
 
+def _cd_target(toks):
+    """The target of a cd / pushd command (\"~\" when it has none), or None when toks is not one."""
+    i = 0
+    while i < len(toks) and (toks[i] in ("builtin", "command") or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
+        i += 1
+    if i >= len(toks) or toks[i] not in ("cd", "pushd", "popd"):
+        return None
+    if toks[i] == "popd":
+        return "-"
+    pos = [a for a in toks[i + 1:] if not a.startswith("-") or a == "-"]
+    return pos[0] if pos else "~"
+
+
+def _cd_apply(target, cwd):
+    """The directory after `cd target` from cwd: a path, None (unknown: judged as the root would be), or
+    DEFER (this view has not resolved the target; the resolved views judge it)."""
+    if "$" in target or "`" in target:
+        return DEFER
+    if target in ("-", "") or target.startswith("~") or re.search("[" + U + Q + PSUB + FOUND + "*?]", target):
+        return None
+    if target.startswith("/"):
+        return _abs(target, "/")
+    return _abs(target, cwd) if cwd not in (None, DEFER) else cwd
+
+
+def _v2_segs(toks_all, root):
+    """[(segment tokens, cwd it runs in)]: split on the operator tokens exactly as version 2 did, and
+    follow cd from one command to the next (version 5). A cd counts after ; && and newline, not in a
+    pipeline, not in the background, not past ||; a subshell ( ) gets its cwd back afterwards."""
+    out, cur, cwd, stack, chain, prev, cdt, redir = [], [], root, [], root, None, None, False
+    for t in list(toks_all) + [None]:
+        if t is not None and t not in OPS:
+            cur.append(t)
+            continue
+        if not redir:
+            cdt = _cd_target(cur)
+        out.append((cur, cwd))
+        cur = []
+        if t in ("<", ">", ">>"):
+            redir = True
+            continue
+        redir = False
+        if cdt is not None and t not in ("|", "&", "||") and prev != "|":
+            cwd = _cd_apply(cdt, cwd)
+        if t == "||" and cwd != chain:
+            cwd = None
+        if t in (";", "\n", "&", None):
+            chain = cwd
+        if t == "(":
+            stack.append(cwd)
+        elif t == ")" and stack:
+            cwd = stack.pop()
+        prev, cdt = t, None
+    return out
+
+
+def _whole_tree_at(a, cwd, root):
+    """_whole_tree, judged from the directory the command runs in (version 5): `.` in src is src."""
+    if cwd == DEFER:
+        return False
+    if cwd is None or cwd == root or a.startswith((":", "`", "$")):
+        return _whole_tree(a, root)
+    p = _abs(a, cwd)
+    if p is None:
+        return True
+    while posixpath.basename(p) in ("*", "**") or _glob_all(posixpath.basename(p)):
+        p = posixpath.dirname(p)
+    return _is_root_or_above(p, root)
+
+
 def blanket_stage_guard(cmd_nohd, root):
     """Return a deny reason, or None."""
     # a newline separates commands exactly as `;` does, but shlex consumes it as whitespace:
@@ -155,15 +246,7 @@ def blanket_stage_guard(cmd_nohd, root):
                      r"(?:[^;&|)\n]*\s)?(?:-\w*[Au]\w*|--a\w*|--u\w*|\.|\./|:/)(?:\s|$)", norm):
             return SAY + "a blanket `git add` inside an unparseable command line."
         toks_all = []
-    segs, cur = [], []
-    for t in toks_all:
-        if t in OPS:
-            segs.append(cur)
-            cur = []
-        else:
-            cur.append(t)
-    segs.append(cur)
-    for toks in segs:
+    for toks, cwd in _v2_segs(toks_all, root):
         i = 0
         while i < len(toks) and (toks[i] in WRAP
                                  or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
@@ -172,28 +255,44 @@ def blanket_stage_guard(cmd_nohd, root):
             continue
         i += 1
         while i < len(toks) and toks[i].startswith("-"):
+            if toks[i] == "-C" and i + 1 < len(toks):
+                cwd = _cd_apply(toks[i + 1], cwd)
+            elif toks[i] in ("--git-dir", "--work-tree") or toks[i].startswith(("--git-dir=", "--work-tree=")):
+                cwd = None if cwd != DEFER else cwd
             i += 2 if toks[i] in GIT_GLOBAL_VAL else 1
         if i >= len(toks):
             continue
-        sub, args, endopts = toks[i], toks[i + 1:], False
+        sub, args, endopts = toks[i], _canon_args(toks[i], toks[i + 1:]), False
+        if sub in ("add", "commit") and _is_dry(sub, args):
+            continue                    # a dry run stages and commits nothing (version 5)
 
         if sub == "add":
+            flag, named, redir = None, 0, False
             for a in args:
+                if a and all(ch in "<>&|" for ch in a):
+                    redir = True                # a redirection: the word after it is not a pathspec
+                    continue
+                if redir and not a.startswith("-"):
+                    redir = False
+                    continue
+                redir = False
                 if a == "--" and not endopts:
                     endopts = True
                     continue
                 if not endopts and a.startswith("--"):
                     name = a.split("=", 1)[0]
                     if len(name) > 2 and any(L.startswith(name) for L in BLANKET_LONG):
-                        return SAY + "git add " + a
+                        flag = flag or a
                     continue
                 if not endopts and a.startswith("-") and a != "-":
                     if "A" in a[1:] or "u" in a[1:]:
-                        return SAY + "git add " + a
+                        flag = flag or a
                     continue
-                core = a.rstrip("/")
-                if core in ("", ".", "..", ":", "*", "$", root) or a.startswith("`"):
+                if _whole_tree_at(a, cwd, root):
                     return SAY + "git add " + (a or "<empty>")
+                named += 1
+            if flag and not named:      # -A / -u with no pathspec is the whole tree from any directory
+                return SAY + "git add " + flag
 
         elif sub == "commit":
             skip = False
@@ -223,15 +322,66 @@ BYPASS_TAIL = (". Git's own hooks are the safety checks that run before a commit
                "Bypassing them is an act for a human in their own terminal. Stop and ask.")
 
 
+def _blank_quotes(s):
+    """Text with every quoted span (escapes honoured) replaced by a space: what is left is shell words."""
+    out, q, i = [], 0, 0
+    while i < len(s):
+        c = s[i]
+        if q == 0 and c == "\\" and i + 1 < len(s):
+            out.append(s[i:i + 2])
+            i += 2
+            continue
+        if q == 2 and c == "\\" and i + 1 < len(s):
+            i += 2
+            continue
+        if q == 0 and c in "'\"":
+            q = 1 if c == "'" else 2
+            out.append(" ")
+        elif (q == 1 and c == "'") or (q == 2 and c == '"'):
+            q = 0
+        elif q == 0:
+            out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _env_config(assigns):
+    """GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n from VAR=value words, as git reads them:
+    -> [(key lowercased, value)], or None when the count or a key is unknown or not literal."""
+    env = {}
+    for a in assigns:
+        k, eq, v = a.partition("=")
+        if eq:
+            env[k] = v
+    if "GIT_CONFIG_COUNT" not in env:
+        return [] if not any(k.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")) for k in env) else None
+    cnt = env["GIT_CONFIG_COUNT"]
+    if not re.match(r"^\d{1,2}$", cnt):
+        return None
+    pairs = []
+    for n in range(int(cnt)):
+        key, val = env.get("GIT_CONFIG_KEY_%d" % n), env.get("GIT_CONFIG_VALUE_%d" % n)
+        if key is None or val is None or re.search(r"[$`" + U + Q + PSUB + "]", key + val):
+            return None
+        pairs.append((key.strip().lower(), val))
+    return pairs
+
+
+def _env_config_bad(assigns):
+    """Do these GIT_CONFIG_* words set core.hooksPath away from .githooks, or hide what they set?"""
+    pairs = _env_config(assigns)
+    return pairs is None or any(k == "core.hookspath" and not _hooks_ok(v) for k, v in pairs)
+
+
 def hook_bypass_guard(cmd_nohd):
     """Per shell segment whose command word is git, resolve the SUBCOMMAND (so a path or --grep
     term containing "commit" is not mistaken for one) and scan the unquoted remainder."""
-    for seg in re.split(r"\|\||&&|[;|\n]", cmd_nohd):
+    for seg, _sep in _segments3(cmd_nohd):         # version 5: never split inside quotes
         m = re.match(r"\s*" + ASSIGN + r"(?:(?:command|env)\s+" + ASSIGN + r")*(?:/\S*/)?git\b", seg)
         if not m:
             continue
         tail = seg[m.end():]
-        rest = re.sub(r"'[^']*'|\"[^\"]*\"", " ", tail).split("<<")[0]
+        rest = _blank_quotes(tail).split("<<")[0]
         bare = tail.replace("'", "").replace('"', "").split("<<")[0]
         sub, skip = "", False
         for t in rest.split():
@@ -246,20 +396,21 @@ def hook_bypass_guard(cmd_nohd):
             sub = t
             break
         why = ""
-        if re.search(r"GIT_CONFIG_(COUNT|KEY_|VALUE_)", seg[:m.end()]):
+        if re.search(r"GIT_CONFIG_(COUNT|KEY_|VALUE_)", seg[:m.end()]) and \
+                _env_config_bad(_tokens(seg[:m.end()]) or ["GIT_CONFIG_COUNT=?"]):
             why = "GIT_CONFIG_* env override (a core.hooksPath flip in disguise)"
-        elif re.search(r"-c\s*(?i:core\.hooksPath)\s*=(?!\s*\.githooks(?:\s|$))", bare):
+        elif any(not _hooks_ok(v) for v in re.findall(r"-c\s*(?i:core\.hooksPath)\s*=\s*(\S*)", bare)):
             why = "-c core.hooksPath=<not .githooks> disarms the hooks for this one command"
         elif sub == "config" and re.search(r"core\.hooksPath", bare, re.I) \
                 and not re.search(r"--get|--list", rest):
             val = re.search(r"core\.hooksPath\s+(\S+)", tail.split("<<")[0], re.I)
-            if (val and val.group(1) != ".githooks") or re.search(r"--unset", rest):
+            if (val and not _hooks_ok(val.group(1))) or re.search(r"--unset", rest):
                 why = "git config core.hooksPath <not .githooks> disarms the hooks for the clone"
         elif sub in PLUMB:
             why = "git plumbing that writes commits/refs without ever invoking pre-push or commit-msg"
-        elif sub in HOOKED and re.search(r"--no-verify\b", rest):
+        elif sub in HOOKED and re.search(r"--no-verify(?![\w-])", rest):
             why = "--no-verify on a hook-carrying git command"
-        elif sub == "push" and re.search(r"--no-verify\b", bare):
+        elif sub == "push" and re.search(r"--no-verify(?![\w-])", bare):
             why = "--no-verify (quoted) on a hook-carrying git command"
         elif sub == "commit" and re.search(r"(?:^|\s)-[A-Za-z]*n[A-Za-z]*(?=\s|$)", rest):
             why = "git commit -n (= --no-verify)"
@@ -290,16 +441,8 @@ def _git_calls_full(cmd_nohd):
     toks_all = _tokens(re.sub(r"[\r\n]+", " ; ", cmd_nohd))
     if toks_all is None:
         return None
-    segs, cur = [], []
-    for t in toks_all:
-        if t in OPS:
-            segs.append(cur)
-            cur = []
-        else:
-            cur.append(t)
-    segs.append(cur)
     calls = []
-    for toks in segs:
+    for toks, cwd in _v2_segs(toks_all, _root()):
         i, env = 0, []
         while i < len(toks) and (toks[i] in WRAP
                                  or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
@@ -313,26 +456,33 @@ def _git_calls_full(cmd_nohd):
         while i < len(toks) and toks[i].startswith("-"):
             if toks[i] in GIT_GLOBAL_VAL:
                 gopts.append((toks[i], toks[i + 1] if i + 1 < len(toks) else None))
+                if toks[i] == "-C" and i + 1 < len(toks):
+                    cwd = _cd_apply(toks[i + 1], cwd)
+                elif toks[i] in ("--git-dir", "--work-tree") and cwd != DEFER:
+                    cwd = None
                 i += 2
             else:
                 gopts.append((toks[i], None))
                 i += 1
         if i < len(toks):
-            calls.append({"env": env, "gopts": gopts, "sub": toks[i], "args": toks[i + 1:]})
+            calls.append({"env": env, "gopts": gopts, "sub": toks[i], "args": _canon_args(toks[i], toks[i + 1:]),
+                          "cwd": cwd})
     return calls
 
 
 def _git_calls(cmd_nohd):
-    """Every (subcommand, args) whose command word is git, or None when the quoting does not parse."""
+    """Every (subcommand, args, cwd) whose command word is git, or None when the quoting does not parse."""
     calls = _git_calls_full(cmd_nohd)
-    return None if calls is None else [(c["sub"], c["args"]) for c in calls]
+    return None if calls is None else [(c["sub"], c["args"], c["cwd"]) for c in calls]
 
 
 def _whole_tree(a, root):
-    return a.rstrip("/") in ("", ".", "..", ":", "*", "$", root) or a.startswith("`")
+    core = a.rstrip("/")
+    return (core in ("", ".", "..", ":", "*", "$", "~+", root) or a.startswith("`")
+            or re.sub(r"^//+", "/", core) == root or _glob_all(core))
 
 
-def _loss_reason(sub, args, root):
+def _loss_reason(sub, args, root, cwd=None):
     """Return the named form that destroys work, or None."""
     if sub == "reset":
         for a in args:
@@ -342,6 +492,8 @@ def _loss_reason(sub, args, root):
             if a.startswith("--") and len(name) >= 4 and "--hard".startswith(name):
                 return "git reset --hard throws away every uncommitted change in the worktree and index"
     elif sub == "clean":
+        if _is_dry("clean", args):
+            return None
         skip = False
         for a in args:
             if skip:
@@ -369,11 +521,13 @@ def _loss_reason(sub, args, root):
             elif not endopts and a.startswith("-") and a != "-":
                 staged = staged or "S" in a[1:]
                 worktree = worktree or "W" in a[1:]
-            elif _whole_tree(a, root):
+            elif _whole_tree_at(a, cwd, root):
                 whole = True
         if whole and (sub == "checkout" or worktree or not staged):
             return "git %s over the whole tree discards every uncommitted change" % sub
     elif sub == "push":
+        if _is_dry("push", args):
+            return None
         skip = endopts = False
         for a in args:
             if skip:
@@ -420,8 +574,8 @@ def data_loss_guard(cmd_nohd, root):
             return ("data_loss_guard: a work-destroying git form inside an unparseable command line"
                     + LOSS_TAIL)
         return None
-    for sub, args in calls:
-        why = _loss_reason(sub, args, root)
+    for sub, args, cwd in calls:
+        why = _loss_reason(sub, args, root, cwd)
         if why:
             return "data_loss_guard: " + why + LOSS_TAIL
     return None
@@ -435,9 +589,8 @@ VALUE_OPTS = COMMIT_VAL | PUSH_VAL
 def _hook_reason(c):
     """Policy B over parsed tokens, so a flag is compared AFTER quote removal and a config key is
     compared without case. Returns a reason or None."""
-    for a in c["env"]:
-        if re.match(r"GIT_CONFIG_(COUNT|KEY_|VALUE_)", a):
-            return "GIT_CONFIG_* env override (a core.hooksPath flip in disguise)"
+    if any(re.match(r"GIT_CONFIG_(COUNT|KEY_|VALUE_)", a) for a in c["env"]) and _env_config_bad(c["env"]):
+        return "GIT_CONFIG_* env override (a core.hooksPath flip in disguise)"
     for flag, val in c["gopts"]:
         if flag.startswith("--config-env"):    # --config-env=core.hooksPath=VAR: the value is read from the environment
             pair = flag.split("=", 1)[1] if "=" in flag else (val or "")
@@ -447,7 +600,7 @@ def _hook_reason(c):
         v = val if flag == "-c" else (flag[2:] if flag.startswith("-c") and not flag.startswith("--") else None)
         if v is not None and "=" in v:
             key, _, setting = v.partition("=")
-            if key.strip().casefold() == "core.hookspath" and setting.strip() != ".githooks":
+            if key.strip().casefold() == "core.hookspath" and not _hooks_ok(setting):
                 return "-c core.hooksPath=<not .githooks> disarms the hooks for this one command"
     sub, args = c["sub"], c["args"]
     for k, a in enumerate(args):       # a here-string or heredoc ends the arguments (as in version 1)
@@ -460,7 +613,7 @@ def _hook_reason(c):
         for k, a in enumerate(args):
             if a.casefold() == "core.hookspath":
                 val = args[k + 1] if k + 1 < len(args) else None
-                if (val and val != ".githooks") or any(x.startswith("--unset") for x in args):
+                if (val and not _hooks_ok(val)) or any(x.startswith("--unset") for x in args):
                     return "git config core.hooksPath <not .githooks> disarms the hooks for the clone"
         return None
     if sub in PLUMB:
@@ -854,6 +1007,9 @@ def _stage(argv, data):
     if head in ("which", "command", "type") and len(rest) >= 1 and rest[-1] == "git" \
             and all(a in ("-v", "-p", "-P", "-a") for a in rest[:-1]):
         return "/usr/bin/git\n"       # a path to git: the command word is git
+    out = _producer(head, rest)
+    if out is not None:
+        return out
     if head == "echo":
         nl, esc = True, False
         while rest and re.match(r"^-[neE]+$", rest[0]):
@@ -932,6 +1088,85 @@ def _stage(argv, data):
             table.setdefault(x, y)
         return "".join(table.get(c, c) for c in data)
     return None
+
+
+SHA_PLACEHOLDER = "0123456789abcdef0123456789abcdef01234567"
+BRANCH_PLACEHOLDER = "current-branch"
+
+
+def _producer(head, rest):
+    """Version 5: the output of a program whose output SHAPE is known, though not its exact bytes. The
+    shape is what matters to the guard: a path git or mktemp prints, a commit id, a branch name (never
+    a flag: git refuses a branch name that starts with -), digits from date, the yes stream, the setup
+    code ssh-agent prints. Nothing is run. None for anything else."""
+    root = _root()
+    if head in ("which", "command", "type") and len(rest) >= 1 and re.match(r"^[A-Za-z0-9._+-]+$", rest[-1]) \
+            and all(a in ("-v", "-p", "-P", "-a") for a in rest[:-1]) and (head != "type" or rest[:-1]):
+        return "/usr/bin/" + rest[-1] + "\n"
+    if head == "yes":
+        return ((" ".join(rest) if rest else "y") + "\n") * 64
+    if head == "date":
+        fmt = next((a[1:] for a in rest if a.startswith("+")), None)
+        return (re.sub(r"%[-_0^#]?[0-9]*[A-Za-z%]", "0", fmt) if fmt is not None else "Mon Jan 5 00:00:00 UTC 2026") + "\n"
+    if head == "mktemp":
+        d, tmpl, tmp, j = None, None, False, 0
+        while j < len(rest):
+            a = rest[j]
+            if a in ("-p", "--tmpdir") and j + 1 < len(rest):
+                d, j = rest[j + 1], j + 2
+                continue
+            if a.startswith("--tmpdir="):
+                d = a.split("=", 1)[1]
+            elif a == "-t":
+                tmp = True
+            elif not a.startswith("-"):
+                tmpl = a
+            j += 1
+        name = posixpath.basename(tmpl) if tmpl else "tmp.agentguard"
+        if d:
+            return posixpath.join(d, name) + "\n"
+        if tmp or tmpl is None:                 # $TMPDIR, outside the repo
+            return "/tmp/" + name + "\n"
+        return tmpl + "\n"                     # a template path is relative to the cwd
+    if head == "ssh-agent" and all(a in ("-s", "-c") for a in rest):
+        return ("SSH_AUTH_SOCK=/tmp/ssh-agent.sock; export SSH_AUTH_SOCK;\nSSH_AGENT_PID=4242; "
+                "export SSH_AGENT_PID;\necho Agent pid 4242;\n")
+    if (head in ("pyenv", "rbenv", "nodenv") and rest[:1] == ["init"]) or (head == "brew" and rest == ["shellenv"]):
+        return "export PATH=/opt/" + head + "/shims:/usr/bin:/bin\n"
+    if head != "git" or not rest:
+        return None
+    sub, a2 = rest[0], rest[1:]
+    if sub == "branch" and a2 == ["--show-current"]:
+        return BRANCH_PLACEHOLDER + "\n"
+    if sub == "symbolic-ref" and [a for a in a2 if a not in ("-q", "--quiet")] in (["--short", "HEAD"], ["HEAD"]):
+        return (BRANCH_PLACEHOLDER if "--short" in a2 else "refs/heads/" + BRANCH_PLACEHOLDER) + "\n"
+    if sub != "rev-parse":
+        return None
+    outl, k = [], 0
+    while k < len(a2):
+        a = a2[k]
+        if a == "--show-toplevel":
+            outl.append(root)
+        elif a in ("--git-dir", "--absolute-git-dir", "--git-common-dir"):
+            outl.append(root + "/.git")
+        elif a == "--git-path" and k + 1 < len(a2):
+            outl.append(posixpath.normpath(root + "/.git/" + a2[k + 1]))
+            k += 1
+        elif a in ("--show-cdup", "--show-prefix"):
+            outl.append("")
+        elif a in ("--abbrev-ref", "--symbolic-full-name") and k + 1 < len(a2):
+            ref = a2[k + 1]
+            name = BRANCH_PLACEHOLDER if ref in ("HEAD", "@") else "origin/" + BRANCH_PLACEHOLDER
+            outl.append(name if a == "--abbrev-ref" else "refs/heads/" + name)
+            k += 1
+        elif a in ("--verify", "-q", "--quiet", "--short", "--end-of-options") or a.startswith("--short="):
+            pass
+        elif a.startswith("-"):
+            return None
+        else:
+            outl.append(SHA_PLACEHOLDER)
+        k += 1
+    return "\n".join(outl) + "\n" if outl else None
 
 
 def _eval_stages(stages):
@@ -1040,7 +1275,7 @@ def _guards(view, root, as_written=True):
 
 
 def _check(cmd, root, depth):
-    nohd = _strip_heredocs(cmd)
+    nohd = _strip_heredocs(_strip_comments(cmd))
     views = [nohd]
     why = _guards(nohd, root)          # the text as written: exactly what version 1 checked
     if why:
@@ -1127,7 +1362,7 @@ _HOOKS_RE = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)(?:/|$)")
 _GITDIR_RE = re.compile(r"(?:^|/)\.git(?:/(?:refs|objects|logs|HEAD|index|packed-refs|config|\*)(?:/.*)?)?/?$")
 _GITLOCK_RE = re.compile(r"(?:^|/)\.git/.*\.lock$")
 _GITANY_RE = re.compile(r"(?:^|/)\.git/")
-_GITCONFIG_RE = re.compile(r"(?:^|/)\.git/config$")
+_GITCONFIG_RE = re.compile(r"(?:^|/)\.git/config(?:\.worktree)?$")
 _CMD_KEY = re.compile(r"^(?:core\.(?:fsmonitor|sshcommand|pager|editor|askpass|alternaterefscommand)|"
                       r"sequence\.editor|diff\.external|diff\..+\.(?:textconv|command)|merge\..+\.driver|"
                       r"filter\..+\.(?:clean|smudge|process)|credential\.helper|credential\..+\.helper|"
@@ -1135,13 +1370,290 @@ _CMD_KEY = re.compile(r"^(?:core\.(?:fsmonitor|sshcommand|pager|editor|askpass|a
                       r"(?:diff|merge)tool\..+\.cmd|browser\..+\.cmd|sendemail\..+\.cmd)$")
 CMD_ENV = ("GIT_SSH_COMMAND", "GIT_SSH", "GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_EDITOR", "EDITOR",
            "VISUAL", "GIT_SEQUENCE_EDITOR", "GIT_ASKPASS", "SSH_ASKPASS", "GIT_PROXY_COMMAND")
+# ---- version 5: what git and the shell really accept ----
+FOUND = "\x04"             # a path find produced under a literal start: one word, no "..", no shell syntax
+DEFER = "\x05"             # v2 views only: a cd to a target this view has not resolved; a later view judges it
+# Each subcommand's long options, read from `git <cmd> -h` on git 2.54. "+" = negatable (--no-X works),
+# "s/" = its short letter, "=" = takes a value (glued or the next word), "?" = an optional glued value.
+# git accepts any unique prefix of a long option (parse-options.c); _long_canon resolves it the same way.
+GIT_OPTSPEC = {
+    'add': '+n/dry-run +v/verbose +i/interactive +p/patch +auto-advance U/unified= inter-hunk-context= +e/edit +f/force +u/update +renormalize +N/intent-to-add +A/all +ignore-removal +refresh +ignore-errors +ignore-missing +sparse +chmod= +pathspec-from-file= +pathspec-file-nul',
+    'commit': '+q/quiet +v/verbose +F/file= +author= +date= +m/message= +c/reedit-message= +C/reuse-message= +fixup= +squash= +reset-author +trailer= +s/signoff +t/template= +e/edit +cleanup= +status +S/gpg-sign? +a/all +i/include +interactive +p/patch U/unified= inter-hunk-context= +o/only +n/no-verify +dry-run +short +branch +ahead-behind +porcelain +long +z/null +amend no-post-rewrite +u/untracked-files? +pathspec-from-file= +pathspec-file-nul',
+    'push': '+v/verbose +q/quiet +repo= +all +branches +mirror +d/delete +tags +n/dry-run +porcelain +f/force +force-with-lease? +force-if-includes +recurse-submodules= +thin +receive-pack= +exec= +u/set-upstream +progress +prune +no-verify +follow-tags +signed? +atomic +o/push-option= 4/ipv4 6/ipv6',
+    'pull': '+v/verbose +q/quiet +progress +recurse-submodules? +r/rebase? n/ +stat +compact-summary +log? +signoff? +squash +commit +edit +cleanup= +ff ff-only +verify +verify-signatures +autostash +s/strategy= +X/strategy-option= +S/gpg-sign? +allow-unrelated-histories +all +a/append +upload-pack= +f/force +t/tags +p/prune +j/jobs? +dry-run +k/keep +depth= +shallow-since= +shallow-exclude= +deepen= unshallow +update-shallow refmap= +o/server-option= +4/ipv4 +6/ipv6 +negotiation-tip= +show-forced-updates +set-upstream',
+    'fetch': '+v/verbose +q/quiet +all +set-upstream +a/append +atomic +upload-pack= +f/force +m/multiple +t/tags n/ +j/jobs= +prefetch +p/prune +P/prune-tags +recurse-submodules? +dry-run +porcelain +write-fetch-head +k/keep +u/update-head-ok +progress +depth= +shallow-since= +shallow-exclude= +deepen= unshallow refetch +update-shallow refmap= +o/server-option= 4/ipv4 6/ipv6 +negotiation-tip= +negotiate-only +filter= +auto-maintenance +auto-gc +show-forced-updates +write-commit-graph +stdin',
+    'reset': '+q/quiet +no-refresh mixed soft hard merge keep +recurse-submodules? +p/patch +auto-advance U/unified= inter-hunk-context= +N/intent-to-add +pathspec-from-file= +pathspec-file-nul',
+    'clean': '+q/quiet +n/dry-run +f/force +i/interactive d/ e/exclude= x/ X/',
+    'checkout': 'b/= B/= l/ +guess +overlay +auto-advance +q/quiet +recurse-submodules? +progress +m/merge +conflict= +d/detach +t/track? +f/force +orphan= +overwrite-ignore +ignore-other-worktrees 2/ours 3/theirs +p/patch U/unified= inter-hunk-context= +ignore-skip-worktree-bits +pathspec-from-file= +pathspec-file-nul',
+    'switch': '+c/create= +C/force-create= +guess +discard-changes +q/quiet +recurse-submodules? +progress +m/merge +conflict= +d/detach +t/track? +f/force +orphan= +overwrite-ignore +ignore-other-worktrees',
+    'restore': '+s/source= +S/staged +W/worktree +ignore-unmerged +overlay +q/quiet +recurse-submodules? +progress +m/merge +conflict= 2/ours 3/theirs +p/patch U/unified= inter-hunk-context= +ignore-skip-worktree-bits +pathspec-from-file= +pathspec-file-nul',
+    'branch': '+v/verbose +q/quiet +t/track? +u/set-upstream-to= +unset-upstream +color? r/remotes contains= no-contains= +abbrev? a/all +d/delete D/ +m/move M/ +omit-empty +c/copy C/ +l/list +show-current +create-reflog +edit-description +f/force merged= no-merged= +column? +sort= +points-at= +i/ignore-case +recurse-submodules +format=',
+    'merge': 'n/ +stat +summary +compact-summary +log? +squash +commit +e/edit +cleanup= +ff ff-only +rerere-autoupdate +verify-signatures +s/strategy= +X/strategy-option= +m/message= F/file= +into-name= +v/verbose +q/quiet +abort +quit +continue +allow-unrelated-histories +progress +S/gpg-sign? +autostash +overwrite-ignore +signoff +no-verify',
+    'rebase': '+onto= +keep-base +no-verify +q/quiet +v/verbose +n/no-stat +trailer= +signoff +committer-date-is-author-date +reset-author-date C/= +ignore-whitespace +whitespace= +f/force-rebase +no-ff continue skip abort quit edit-todo show-current-patch apply m/merge i/interactive +rerere-autoupdate empty= +autosquash +update-refs +S/gpg-sign? +autostash +x/exec= +r/rebase-merges? +fork-point +s/strategy= +X/strategy-option= +root +reschedule-failed-exec +reapply-cherry-picks',
+    'am': '+i/interactive +n/no-verify +3/3way +q/quiet +s/signoff +u/utf8 +k/keep +keep-non-patch +m/message-id +keep-cr +c/scissors quoted-cr= +whitespace= +ignore-space-change +ignore-whitespace +directory= +exclude= +include= C/= p/= +patch-format= +reject +resolvemsg= continue r/resolved skip abort quit show-current-patch? retry allow-empty +committer-date-is-author-date +ignore-date +rerere-autoupdate +S/gpg-sign? empty=',
+    'cherry-pick': 'quit continue abort skip +cleanup= +n/no-commit +e/edit +s/signoff +m/mainline= +rerere-autoupdate +strategy= +X/strategy-option= +S/gpg-sign? x/ +ff +allow-empty +allow-empty-message +keep-redundant-commits empty=',
+    'revert': 'quit continue abort skip +cleanup= +n/no-commit +e/edit +s/signoff +m/mainline= +rerere-autoupdate +strategy= +X/strategy-option= +S/gpg-sign? +reference',
+    'rm': '+n/dry-run +q/quiet +cached +f/force r/ +ignore-unmatch +sparse +pathspec-from-file= +pathspec-file-nul',
+    'mv': '+v/verbose +n/dry-run +f/force k/ +sparse',
+    'stash push': '+k/keep-index +S/staged +p/patch +auto-advance U/unified= inter-hunk-context= +q/quiet +u/include-untracked +a/all +m/message= +pathspec-from-file= +pathspec-file-nul',
+    'reflog expire': '+n/dry-run +rewrite +updateref +verbose expire= expire-unreachable= +stale-fix +all +single-worktree',
+    'reflog delete': '+n/dry-run +rewrite +updateref +verbose',
+    'worktree remove': '+f/force',
+    'apply': 'exclude= include= p/= +no-add +stat +numstat +summary +check +index +N/intent-to-add +cached +unsafe-paths +apply +3/3way ours theirs union +build-fake-ancestor= z/ C/= +whitespace= +ignore-space-change +ignore-whitespace +R/reverse +unidiff-zero +reject +allow-overlap +v/verbose +q/quiet +inaccurate-eof +recount +directory= +allow-empty',
+    'update-index': 'q/ +ignore-submodules +add +replace +remove +unmerged refresh really-refresh cacheinfo= chmod assume-unchanged no-assume-unchanged skip-worktree no-skip-worktree +ignore-skip-worktree-entries +info-only +force-remove z/ stdin index-info unresolve g/again +ignore-missing +verbose clear-resolve-undo +index-version= +show-index-version +split-index +untracked-cache +test-untracked-cache +force-untracked-cache +force-write-index +fsmonitor fsmonitor-valid no-fsmonitor-valid',
+    'gc': '+q/quiet +prune? +cruft max-cruft-size= +aggressive +auto +detach +force +keep-largest-pack +expire-to=',
+    'sparse-checkout set': '+cone +sparse-index skip-checks stdin',
+    'sparse-checkout init': '+cone +sparse-index',
+    'remote add': '+f/fetch +tags +t/track= +m/master= +mirror?',
+    'for-each-repo': '+config= +keep-going',
+    'symbolic-ref': '+q/quiet +d/delete +short +recurse m/=',
+    'read-tree': 'index-output= +empty +v/verbose m/ +trivial +aggressive +reset prefix= u/ exclude-per-directory= i/ +n/dry-run +no-sparse-checkout +debug-unpack +recurse-submodules? +q/quiet',
+    'checkout-index': '+a/all +ignore-skip-worktree-bits +f/force +q/quiet +n/no-create +u/index z/ +stdin +temp +prefix= stage=',
+    'config': 'global system local worktree f/file= blob= get get-all get-regexp get-urlmatch replace-all add unset unset-all rename-section remove-section l/list fixed-value e/edit get-color get-colorbool t/type= bool int bool-or-int bool-or-str path expiry-date no-type z/null name-only +includes show-origin show-scope default= comment= value= all regexp url=',
+}
+GIT_ACTIONS = {"stash", "reflog", "worktree", "sparse-checkout", "remote"}     # specs keyed "sub action"
+_OPT_CACHE = {}
+
+
+def _optspec(key):
+    """-> (long names {name: (negatable, value kind)}, short letters that take a value), or None."""
+    if key not in GIT_OPTSPEC:
+        return None
+    if key not in _OPT_CACHE:
+        longs, vshort = {}, set()
+        for item in GIT_OPTSPEC[key].split():
+            neg, item = item.startswith("+"), item.lstrip("+")
+            short, _, name = item.rpartition("/")
+            kind = name[-1] if name and name[-1] in "=?" else ""
+            name = name.rstrip("=?")
+            if name:
+                longs[name] = (neg, kind)
+            if short and kind == "=":
+                vshort.add(short)
+        _OPT_CACHE[key] = (longs, vshort)
+    return _OPT_CACHE[key]
+
+
+def _long_canon(spec, arg):
+    """`--abc[=v]` -> (the full spelling git reads, "=" if it takes the next word as its value). An
+    ambiguous or unknown prefix is left as written: git refuses it ("ambiguous option") and does
+    nothing. This follows parse_long_opt in git's parse-options.c, with negation and "no-" options."""
+    name, eq, val = arg[2:].partition("=")
+    abbrev, ambiguous = None, False
+    for ln, (neg, kind) in spec[0].items():
+        base, unset = ln, False
+        if not name.startswith("no-") and neg and ln.startswith("no-"):
+            base, unset = ln[3:], True              # --verify is the negation of --no-verify
+        if name == base:
+            return arg, ("" if unset else kind)
+        hits = []
+        if base.startswith(name):
+            hits.append((base, "" if unset else kind))
+        if neg:
+            if "no-".startswith(name):
+                hits.append(("no-" + base, ""))
+            elif name.startswith("no-"):
+                if name[3:] == base:
+                    return arg, ""
+                if base.startswith(name[3:]):
+                    hits.append(("no-" + base, ""))
+        for h in hits:
+            if abbrev is not None and abbrev[0] != h[0]:
+                ambiguous = True
+            abbrev = h
+    if ambiguous or abbrev is None:
+        return arg, ""
+    return "--" + abbrev[0] + eq + val, abbrev[1]
+
+
+def _canon_args(sub, args):
+    """The args of one git subcommand with every abbreviated long option spelled out in full, the
+    way git itself reads it. Values and pathspecs after -- are left alone; one token stays one token."""
+    key, out, k, endopts = sub, [], 0, False
+    if sub in GIT_ACTIONS:
+        act = next((a for a in args if not a.startswith("-")), None)
+        key = (sub + " " + act) if act and (sub + " " + act) in GIT_OPTSPEC else None
+        if sub == "stash" and act is None:
+            key = "stash push"
+    spec = _optspec(key) if key else None
+    if spec is None:
+        return list(args)
+    while k < len(args):
+        a = args[k]
+        if endopts or a == "--" or _dyn(a) or FOUND in a:
+            endopts = endopts or a == "--"
+            out.append(a)
+        elif a.startswith("--") and len(a) > 2:
+            full, kind = _long_canon(spec, a)
+            out.append(full)
+            if kind == "=" and "=" not in a and k + 1 < len(args):
+                out.append(args[k + 1])
+                k += 1
+        elif a.startswith("-") and len(a) > 1:
+            out.append(a)
+            for j, ch in enumerate(a[1:]):
+                if ch in spec[1]:
+                    if j + 2 == len(a) and k + 1 < len(args):
+                        out.append(args[k + 1])
+                        k += 1
+                    break
+        else:
+            out.append(a)
+        k += 1
+    return out
+
+
+def _shorts(sub, opts):
+    """The short flag letters of option clusters, each cluster cut at its first letter that takes a
+    value: in `-bf`, f is the value of -b; in `-b x -f`, f is a flag."""
+    spec = _optspec(sub)
+    vals = (spec[1] if spec else set()) | {o[1] for o in VAL3.get(sub, set()) if len(o) == 2}
+    out = []
+    for o in opts:
+        if o.startswith("--") or not o.startswith("-"):
+            continue
+        for ch in o[1:]:
+            out.append(ch)
+            if ch in vals:
+                break
+    return "".join(out)
+
+
+DRY_RUN = {"add": ("n", "--dry-run"), "clean": ("n", "--dry-run"), "push": ("n", "--dry-run"),
+           "rm": ("n", "--dry-run"), "mv": ("n", "--dry-run"), "commit": ("", "--dry-run"),
+           "reflog": ("n", "--dry-run"), "prune": ("n", "--dry-run"), "read-tree": ("n", "--dry-run"),
+           "apply": ("", "--check"), "fetch": ("", "--dry-run"), "pull": ("", "--dry-run")}
+
+
+def _is_dry(sub, args):
+    """git itself changes nothing: a dry run (`clean -fdn`, `add -n .`, `push --dry-run --force`)."""
+    if sub not in DRY_RUN:
+        return False
+    short, long_ = DRY_RUN[sub]
+    a2 = _canon_args(sub, args)
+    for a in a2:
+        if a == "--":
+            break
+        if a == long_ or (sub == "apply" and a in ("--stat", "--numstat", "--summary") and "--apply" not in a2):
+            return True
+        if short and a.startswith("-") and not a.startswith("--") and short in _shorts(sub, [a]):
+            return True
+    return False
+
+
+_HOOK_BACKUP = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)/[^/*?\[\]]+(?:\.(?:bak|orig|old|backup|save|"
+                          r"copy|tmp|sample)|~)$")
+_GIT_BENIGN = re.compile(r"(?:^|/)\.git/(?:gc\.log|COMMIT_EDITMSG)$")
+_CFGFILE_HOME = re.compile(r"^(?:~[^/]*|[\x01\x02][^/]*|/(?:Users|home)/[^/]+|/root)/(?:\.gitconfig|\.config/git/config)$"
+                           r"|^/etc/gitconfig$")
+_GLOB_SAMPLE = ("a", "Z", "9", "_", ".x", "README.md", ".gitignore", "src/app.py", "docs/x/y.txt", "bin/run.sh")
+
+
+def _glob_all(pat):
+    """Does this glob match every path? (git's default pathspec match, where * and ? also match /)"""
+    if not re.search(r"[*?\[]", pat):
+        return False
+    import fnmatch
+    return all(fnmatch.fnmatchcase(p, pat) for p in _GLOB_SAMPLE)
+
+
+def _cfg_false(v):
+    """git's boolean false for a config value: "" (an empty value), false, no, off, 0. None means the
+    key was given with no "=" at all, which git reads as true."""
+    if v is None:
+        return False
+    v = v.strip().lower()
+    return v in ("", "false", "no", "off") or bool(re.match(r"^[+-]?0+$", v))
+
+
+def _expire_now(v):
+    """A reflog expiry that removes the reflog's safety net now: now, all, 0, empty, or under a day."""
+    v = (v or "").strip().lower().replace("_", ".")
+    if v in ("now", "all", "0", "", "today") or v.startswith("now"):
+        return True
+    return bool(re.match(r"^(\d+)[ .]*(?:seconds?|secs?|minutes?|mins?|hours?|hrs?|s|m|h)(?:[ .]*ago)?$", v))
+
+
+def _hooks_ok(val, cwd=None):
+    """core.hooksPath at the repo's own hooks: .githooks, ./.githooks, .githooks/ or its full path."""
+    v = (val or "").strip().strip("'\"")
+    if v.rstrip("/") in (".githooks", "./.githooks"):
+        return True
+    root = _root()
+    return bool(v) and not _dyn(v) and "$" not in v and \
+        posixpath.normpath(posixpath.join(cwd or root, v)) == posixpath.join(root, ".githooks")
+
+
+def _strip_comments(cmd):
+    """Shell comments removed: an unquoted # that starts a word, to the end of its line. Quotes,
+    escapes, $'..' and heredoc bodies are kept exactly, so `echo a#b`, `${#x}` and a `#!` line inside
+    a heredoc stay. A comment is never run, so its text is not judged (version 5)."""
+    if "#" not in cmd:
+        return cmd
+    out, i, n, q, pend = [], 0, len(cmd), 0, []
+    while i < n:
+        c = cmd[i]
+        if q == 1:
+            out.append(c)
+            q = 0 if c == "'" else 1
+            i += 1
+            continue
+        if q == 3:                                  # $'...': backslash escapes, ends at an unescaped '
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(cmd[i + 1])
+                i += 2
+                continue
+            q = 0 if c == "'" else 3
+            i += 1
+            continue
+        if c == "\\" and i + 1 < n:
+            out.append(cmd[i:i + 2])
+            i += 2
+            continue
+        if q == 0 and cmd.startswith("$'", i):
+            out.append("$'")
+            q = 3
+            i += 2
+            continue
+        if c == "'" and q == 0:
+            q = 1
+        elif c == '"':
+            q = 2 if q == 0 else 0
+        elif q == 0 and cmd.startswith("<<", i) and not cmd.startswith("<<<", i):
+            m = re.match(r"<<-?\s*\\?(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1", cmd[i:])
+            if m:
+                pend.append(m.group(2))
+                out.append(m.group(0))
+                i += len(m.group(0))
+                continue
+        elif q == 0 and c == "#" and (i == 0 or cmd[i - 1] in " \t\n;&|()"):
+            j = cmd.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        elif c == "\n" and q == 0 and pend:
+            out.append(c)
+            i += 1
+            while pend and i < n:                   # each heredoc body, verbatim, through its delimiter
+                d = pend.pop(0)
+                while i < n:
+                    j = cmd.find("\n", i)
+                    line = cmd[i:] if j < 0 else cmd[i:j + 1]
+                    out.append(line)
+                    i += len(line)
+                    if line.strip() == d:
+                        break
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
 FAIL = "fail_closed: "
 ASK_TAIL = (". A string reader cannot see this until run time, so it cannot prove the command safe. "
             "A human decides.")
 
 
 def _dyn(s):
-    return U in s or Q in s
+    return U in s or Q in s or FOUND in s
 
 
 def _lit3(s):
@@ -1821,16 +2333,19 @@ def _parse3(text, bodies):
     used = set()
     new = lambda pipe_in: {"argv": [], "here": None, "out": False, "file_in": False, "redirs": [],
                            "pipe_in": pipe_in}
-    pls, cur, k, n = [[]], new(False), 0, len(toks)
+    pls, cur, k, n, depth = [[]], new(False), 0, len(toks), 0
     while k < n:
         t = toks[k]
         if t and all(ch in ";&|()" for ch in t):
+            cur["end"] = t
             pls[-1].append(cur)
+            depth = max(0, depth + t.count("(") - t.count(")"))
             if t.endswith("|") or t.endswith("|&"):
                 cur = new(True)
             else:
                 pls.append([])
                 cur = new(False)
+            cur["depth"], cur["sep"] = depth, t
         elif t in ("<", ">", ">>", ">|", "<>", "&>", "&>>", ">&", "<&", "<<", "<<<", "<<-"):
             tgt = toks[k + 1] if k + 1 < n else ""
             if cur["argv"] and re.match(r"^[0-9]$", cur["argv"][-1]):
@@ -1869,6 +2384,7 @@ class _St(object):
         self.asks, self.payloads, self.canon = [], [], []
         self.git_aliases = {}
         self.files = {}             # a file written earlier in this string: path -> text (or U)
+        self.up = []                # the stages piped into the command being judged (version 5)
 
     def script(self, path, what):
         """A script file run by a shell or by path. Known only if this string wrote it."""
@@ -1888,16 +2404,20 @@ class _St(object):
 
 # ---- paths ----
 def _abs(p, cwd):
+    if p and (p == "~+" or p.startswith("~+/")):       # ~+ is $PWD (version 5)
+        return _abs(cwd + p[2:], cwd) if cwd else None
     if not p or _dyn(p) or p.startswith("~") or PSUB in p:
         return None
     if p.startswith("/"):
-        return posixpath.normpath(p)
-    return posixpath.normpath(posixpath.join(cwd, p)) if cwd else posixpath.normpath(p)
+        a = posixpath.normpath(p)
+    else:
+        a = posixpath.normpath(posixpath.join(cwd, p)) if cwd else posixpath.normpath(p)
+    return "/" + a.lstrip("/") if a.startswith("//") else a   # //work/repo is /work/repo
 
 
 def _pclass(p, cwd):
     if p and (_dyn(p) or PSUB in p):
-        pre = re.split("[" + U + Q + PSUB + "]", p)[0]
+        pre = re.split("[" + U + Q + PSUB + FOUND + "]", p)[0]
         if "/" not in pre:
             return None
         a = _abs(pre.rsplit("/", 1)[0] + "/x", cwd)
@@ -1906,6 +2426,17 @@ def _pclass(p, cwd):
     a = _abs(p, cwd)
     if a is None:
         return None
+    base = posixpath.basename(a)
+    if re.search(r"[*?\[]", base) and base.startswith("."):    # a glob that can match a dotfile (version 5)
+        import fnmatch
+        if fnmatch.fnmatchcase(".git", base) and not _HOOKS_RE.search(a):
+            return "gitdir"
+        if any(fnmatch.fnmatchcase(h, base) for h in (".githooks", ".husky")) or _HOOKS_RE.search(a):
+            return "hooks"
+    if _HOOK_BACKUP.search(a) and not re.search(r"(?:^|/)\.husky/_/", a):
+        return "path"                           # a backup copy beside the hooks is not a hook git runs
+    if _GIT_BENIGN.search(a):
+        return "path"                           # .git/gc.log: git itself says to remove it
     if _HOOKS_RE.search(a) or _HOOKS_RE.search(p):
         return "hooks"
     if _GITLOCK_RE.search(a):
@@ -1944,13 +2475,17 @@ def _pathspec_whole(arg, cwd, root):
         path = arg[k:]
     if excl:
         return "exclude"
-    if _whole_tree(path, root) and not top:
+    if (cwd is None or cwd == root or top) and _whole_tree(path, root) and not top:
         return "whole"
+    if path in ("~+",) or path.startswith("~+/"):
+        path = (cwd or root) + path[2:]
     base = root if top else cwd
     if base is None:
         return "whole" if path.rstrip("/") in ("./*", "**", "**/*", "*/**") else None
-    a = posixpath.normpath(posixpath.join(base, path)) if path else base
-    while posixpath.basename(a) in ("*", "**"):
+    a = _abs(path, base) if path else base
+    if a is None:
+        return None
+    while posixpath.basename(a) in ("*", "**") or _glob_all(posixpath.basename(a)):
         a = posixpath.dirname(a)
     return "whole" if _is_root_or_above(a, root) else None
 
@@ -2023,6 +2558,56 @@ def _peel(argv, stage, upstream, st):
         if b == "busybox" and rest:
             argv = rest
             i = 0
+            continue
+        if b == "arch" and rest:                # macOS: arch -arm64 cmd runs cmd (version 5)
+            j = 0
+            while j < len(rest) and rest[j].startswith("-"):
+                j += 2 if rest[j] in ("-arch", "-e", "-d") else 1
+            argv, i = rest[j:], 0
+            continue
+        if b == "xcrun" and rest:               # macOS: xcrun [-sdk x] tool args runs tool
+            j = 0
+            while j < len(rest) and rest[j].startswith("-"):
+                if rest[j] in ("-f", "--find", "-h", "--help", "--version") or rest[j].startswith("--show-"):
+                    return []                   # prints a path or a version, runs nothing
+                j += 2 if rest[j] in ("-sdk", "--sdk", "-toolchain", "--toolchain") else 1
+            argv, i = rest[j:], 0
+            continue
+        if (b in ("npm", "pnpm", "yarn", "bun") and rest and rest[0] in ("exec", "x", "dlx")) or \
+                b in ("npx", "pnpx", "bunx"):
+            r2, j = (rest[1:] if b in ("npm", "pnpm", "yarn", "bun") else rest), 0
+            while j < len(r2) and r2[j].startswith("-"):
+                a = r2[j]
+                if a == "--":
+                    j += 1
+                    break
+                if a in ("-c", "--call") and j + 1 < len(r2):
+                    st.run(r2[j + 1])
+                    return []
+                if a.startswith("--call="):
+                    st.run(a.split("=", 1)[1])
+                    return []
+                j += 2 if a in ("-p", "--package", "-w", "--workspace", "--prefix") else 1
+            argv, i = r2[j:], 0
+            continue
+        if b in ("uvx", "pipx", "uv") and rest:
+            r2 = rest
+            if b == "pipx" and r2[0] == "run":
+                r2 = r2[1:]
+            elif b == "uv" and r2[:2] == ["tool", "run"]:
+                r2 = r2[2:]
+            elif b == "uv" and r2[0] == "run":
+                r2 = r2[1:]
+            elif b != "uvx":
+                break
+            j = 0
+            while j < len(r2) and r2[j].startswith("-"):
+                j += 2 if r2[j] in ("--from", "--with", "-p", "--python", "--spec", "--directory") else 1
+            argv, i = r2[j:], 0
+            continue
+        if re.match(r"^python[0-9.]*$", b) and "-m" in rest and rest.index("-m") + 1 < len(rest) and \
+                rest[rest.index("-m") + 1] in ("pre_commit", "prek"):
+            argv, i = ["pre-commit"] + rest[rest.index("-m") + 2:], 0     # python -m pre_commit is pre-commit
             continue
         if b in ("ssh", "docker", "podman", "kubectl", "oc") and rest:
             j = 0
@@ -2113,6 +2698,8 @@ def _peel(argv, stage, upstream, st):
                 lit = _eval_stages(upstream)
                 if lit is not None:     # xargs splits on blanks unless -0, -d, -I or -L says otherwise
                     words = lit.split() if delim is None else [w for w in lit.rstrip("\n").split(delim) if w]
+                elif _listing(upstream):
+                    words = ["n" + Q]   # names git listed: one name per word, never a flag (version 5)
             if words is None:
                 words = [U]
             if b == "parallel" and repl is None and any("{}" in a for a in inner):
@@ -2131,8 +2718,9 @@ def _peel(argv, stage, upstream, st):
                 if a.startswith("-") or a in ("(", "!", ")"):
                     break
                 starts.append(a)
-            stub = (starts[0].rstrip("/") + "/" + U) if (b == "find" and len(starts) == 1
-                                                        and starts[0] not in (".", "./")) else U
+            # version 5: find hands -exec each path as ONE word under its start, never "..": FOUND
+            stub = (starts[0].rstrip("/") + "/" + FOUND) if (b == "find" and len(starts) == 1
+                                                            and not _dyn(starts[0])) else U
             j = 0
             while j < len(rest):
                 a = rest[j]
@@ -2187,6 +2775,124 @@ def _peel(argv, stage, upstream, st):
             return []
         break
     return [(env, argv[i:])]
+
+
+LIST_FILTERS = {"grep", "egrep", "fgrep", "sort", "uniq", "head", "tail", "cat"}
+
+
+def _listing(stages):
+    """Is this pipeline a git listing of branch, tag or file NAMES, filtered only by programs that keep or
+    drop whole lines? Then each word it prints is a name (version 5)."""
+    if not stages or not stages[0]["argv"]:
+        return False
+    for s in stages[1:]:
+        a = s["argv"]
+        if not a or posixpath.basename(a[0]) not in LIST_FILTERS or any(
+                x in ("-o", "--only-matching", "-r", "-R", "-f") for x in a[1:]) or s["redirs"]:
+            return False
+    a = stages[0]["argv"]
+    if posixpath.basename(a[0]) != "git" or len(a) < 2 or not all(_lit3(x) for x in a):
+        return False
+    sub, args = a[1], a[2:]
+    if sub == "branch":
+        ok = ("-a", "-r", "--all", "--remotes", "-l", "--list", "--no-color", "--color=never", "--merged",
+              "--no-merged", "--contains", "--no-contains", "--points-at")
+        return all(x in ok or x.startswith(("--sort=", "--format=%(refname")) or not x.startswith("-") for x in args) \
+            and not any(x.startswith("--format=") and re.sub(r"%\(refname[^)]*\)", "", x[9:]) for x in args)
+    if sub in ("ls-files", "diff", "diff-index", "diff-tree", "diff-files"):
+        return (sub == "ls-files" or "--name-only" in args or "--name-status" in args) and \
+            not any(x.startswith(("--format", "--stat", "-p", "--patch")) for x in args)
+    if sub == "tag":
+        return any(x in ("-l", "--list") for x in args) and not any(x.startswith(("-n", "--format")) for x in args)
+    return False
+
+
+_TRIVIAL_LINE = re.compile(r"^(?:exit(?:\s+0)?|true|:|echo\b.*|printf\b.*|set\s+[-+][a-z]+|exec\s+true)\s*;?$")
+
+
+def _real_script(txt):
+    """Does this new hook text run a real check (not only #!, comments, exit 0, true, echo)?"""
+    lines = [l.strip() for l in txt.replace("\\n", "\n").splitlines()]
+    return any(l and not l.startswith("#") and not _TRIVIAL_LINE.match(l) for l in lines)
+
+
+def _sed_judge(script):
+    """"empties" when this sed script empties a file (d or c on every line, q at line 1 or 2, every line
+    replaced by nothing); "weakens" when it deletes lines or turns text into a no-op (s/make test/true/);
+    None for an ordinary edit."""
+    if _sed_empties(script):
+        return "empties"
+    for part in re.split(r"[;\n]", script):
+        c = part.strip()
+        m = re.match(r"^((?:\d+|\$)(?:,(?:\d+|\$))?|/(?:[^/\\]|\\.)*/)?\s*(!?)\s*([a-zA-Z])(.*)$", c)
+        if not m:
+            continue
+        op, rest = m.group(3), m.group(4)
+        if op in "dcqQ":
+            return "weakens"
+        if op == "s" and rest:
+            d = re.escape(rest[0])
+            sm = re.match(r"^" + d + r"((?:[^\\]|\\.)*?)" + d + r"((?:[^\\]|\\.)*?)" + d, rest)
+            if sm is None or _TRIVIAL_LINE.match(sm.group(2).strip()) or not sm.group(2).strip() or \
+                    sm.group(2).strip().startswith("#"):
+                return "weakens"
+    return None
+
+
+def _sed_empties(script):
+    """Does this sed script empty a file (d or c on every line, q at line 1 or 2, s/.*// to nothing)?"""
+    for part in re.split(r"[;\n]", script):
+        c = part.strip()
+        m = re.match(r"^((?:\d+|\$)(?:,(?:\d+|\$))?|/(?:[^/\\]|\\.)*/)?\s*(!?)\s*([a-zA-Z])(.*)$", c)
+        if not m:
+            continue
+        addr, bang, op, rest = m.groups()
+        alladdr = addr in (None, "", "1,$", "2,$", "/./", "/.*/", "/^/") and not bang
+        if op in "dc" and alladdr:
+            return True
+        if op == "q" and addr in (None, "", "1", "2") and not bang:
+            return True
+        if op == "s" and rest and alladdr:
+            d = re.escape(rest[0])
+            sm = re.match(r"^" + d + r"((?:[^\\]|\\.)*?)" + d + r"((?:[^\\]|\\.)*?)" + d, rest)
+            if sm and sm.group(1) in (".*", "^.*$", "^.*", ".*$", "^.\\+$", ".\\+", "^.*\\n.*$") and \
+                    sm.group(2).strip() in ("", "exit 0", "true", ":", "#"):
+                return True
+    return False
+
+
+FIND_FILTERS = {"-name", "-iname", "-path", "-ipath", "-wholename", "-iwholename", "-regex", "-iregex", "-newer",
+                "-newermt", "-anewer", "-cnewer", "-size", "-user", "-group", "-uid", "-gid", "-perm", "-empty",
+                "-links", "-inum", "-samefile", "-mtime", "-mmin", "-ctime", "-cmin", "-atime", "-amin", "-lname",
+                "-ilname", "-used", "-fstype"}
+
+
+def _find_filtered(expr):
+    """Does a find expression keep only some paths (a name, path, time or size test that is not negated)?
+    Only the branch after the last -o counts, because that is where -delete or -exec sits."""
+    for k in range(len(expr) - 1, -1, -1):
+        if expr[k] in ("-o", "-or"):
+            expr = expr[k + 1:]
+            break
+    neg = False
+    for t in expr:
+        if t in ("!", "-not"):
+            neg = True
+            continue
+        if t in FIND_FILTERS and not neg:
+            return True
+        neg = False
+    return False
+
+
+def _is_cfgfile(p, cwd, root):
+    """A git config file: the repo's .git/config, or the global or system one (version 5)."""
+    a = _abs(p, cwd)
+    if _GITCONFIG_RE.search(a or p):
+        return "repo"
+    if _CFGFILE_HOME.match(p) or (a and _CFGFILE_HOME.match(a) and not a.startswith(root + "/")):
+        return "global"
+    return None
 
 
 def _stdin_code(stage, upstream, st):
@@ -2297,6 +3003,7 @@ def _judge(env, argv, stage, upstream, st):
     if "/" in head and _lit3(head):
         st.script(head, "this runs")
     if b == "git":
+        st.up = upstream
         return _git3(env, argv, stage, st, 0)
     if b in SHELLS3:
         k, has_c, script, stdin = 0, False, None, False
@@ -2421,13 +3128,25 @@ def _redir_rules(b, args, stage, st):
                     (content is not None and re.sub(r"#![^\s\\]*|\\n|\s", "", content) in ("", "exit0", "exit", "true", ":")):
                 return ("hook_bypass_guard: overwrites a git hook with nothing that runs (" + tgt + ")"
                         + BYPASS_TAIL)
+            # version 5: rewriting a hook by name with a real script (a heredoc, echo or printf of
+            # literal text that runs a check) is a normal edit of its contents
+            txt = None
+            if b == "cat" and not args and stage.get("here") is not None:
+                txt = stage["here"]
+            elif b in ("echo", "printf") and all(_lit3(a) and _lit(a) for a in args):
+                txt = _stage([b] + args, None)
+            if txt is not None and _lit3(txt) and _real_script(txt):
+                continue
             st.ask("a write over a git hook file (" + tgt + ")")
         elif c == "hooks" and op in (">>", "&>>"):
             st.ask("a write into a git hook file (" + tgt + ")")
-        elif op in (">", ">>", ">|", "&>", "&>>") and _GITCONFIG_RE.search(_abs(tgt, cwd) or tgt):
-            if re.search(r"hookspath", " ".join(stage["argv"]), re.I):
-                return "hook_bypass_guard: writes core.hooksPath into .git/config directly" + BYPASS_TAIL
-            st.ask("a direct write to .git/config")
+        elif op in (">", ">>", ">|", "&>", "&>>") and _is_cfgfile(tgt, cwd, st.root):
+            if re.search(r"hookspath", " ".join(stage["argv"]) + " " + (stage.get("here") or ""), re.I):
+                return "hook_bypass_guard: writes core.hooksPath into a git config file directly" + BYPASS_TAIL
+            if _is_cfgfile(tgt, cwd, st.root) == "repo":
+                st.ask("a direct write to .git/config")
+        elif op in (">", ">>", ">|", "&>", "&>>") and c == "gitdir":
+            return "data_loss_guard: a redirect overwrites the repository's own state (" + tgt + ")" + LOSS_TAIL
     return None
 
 
@@ -2459,6 +3178,22 @@ def _fs_rules(b, args, stage, st):
             elif rec and p in (".", "./", "*", "./*") and cwd is None:
                 st.ask("a recursive delete of the current directory (" + p + ")")
         return None
+    if b in ("mkdir", "touch"):
+        return None                             # creating a file or folder disarms nothing (version 5)
+    if b in ("tar", "bsdtar", "gtar", "zip"):
+        first = args[0] if args else ""
+        create = b == "zip" or bool(re.match(r"^-?[A-Za-z]*[ct]", first)) and not re.match(r"^-?[A-Za-z]*x", first) \
+            or "--create" in args or "--list" in args
+        if create and not any(a.startswith("--remove-files") or a == "--delete" for a in args):
+            out = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--file") and j + 1 < len(args)), None)
+            m = re.match(r"^-?[A-Za-z]*f[A-Za-z]*$", first)
+            if out is None and m and len(args) > 1:
+                out = args[1]
+            if b == "zip" and pos:
+                out = pos[0]
+            if out and _pclass(out, cwd) in ("hooks", "gitdir"):
+                st.ask(b + " writes an archive over a git hook or a .git file (" + out + ")")
+            return None                         # creating or listing an archive only reads its sources
     if b == "mv":
         tdir = next((args[j + 1] for j, a in enumerate(args) if a in ("-t", "--target-directory")
                      and j + 1 < len(args)), None)
@@ -2502,10 +3237,16 @@ def _fs_rules(b, args, stage, st):
                 if "if=/dev/null" in args:
                     return "hook_bypass_guard: dd empties a git hook" + BYPASS_TAIL
                 st.ask("dd writes a git hook")
+            for o in outs:
+                if _pclass(o, cwd) == "gitdir" and not _is_cfgfile(o, cwd, st.root):
+                    return "data_loss_guard: dd overwrites the repository's own state (" + o + ")" + LOSS_TAIL
             return None
         if b == "truncate":
             if any(_pclass(p, cwd) == "hooks" for p in pos):
                 return "hook_bypass_guard: truncate empties a git hook" + BYPASS_TAIL
+            for p in pos:
+                if _pclass(p, cwd) == "gitdir" and not _is_cfgfile(p, cwd, st.root):
+                    return "data_loss_guard: truncate overwrites the repository's own state (" + p + ")" + LOSS_TAIL
             return None
         if b in ("sed", "perl") and not any(a.startswith("-i") or a.startswith("--in-place") or
                                             (b == "perl" and re.match(r"^-[a-z]*i", a)) for a in args):
@@ -2514,7 +3255,33 @@ def _fs_rules(b, args, stage, st):
             return None
         tdir = next((args[j + 1] for j, a in enumerate(args) if a in ("-t", "--target-directory")
                      and j + 1 < len(args)), None)
-        if b in ("tee", "sed", "perl"):
+        scripts = None
+        if b == "sed":                          # version 5: the script is not a file; read it
+            scripts, files, j = [], [], 0
+            while j < len(args):
+                a = args[j]
+                if a in ("-e", "--expression") and j + 1 < len(args):
+                    scripts.append(args[j + 1])
+                    j += 2
+                    continue
+                if a.startswith("--expression="):
+                    scripts.append(a.split("=", 1)[1])
+                elif a in ("-f", "--file"):
+                    scripts.append(U)
+                    j += 2
+                    continue
+                elif a == "-i" and j + 1 < len(args) and args[j + 1] == "":
+                    j += 2                      # BSD sed -i '' (no backup suffix)
+                    continue
+                elif a.startswith("-") and a != "-":
+                    pass
+                else:
+                    files.append(a)
+                j += 1
+            if not scripts and files:
+                scripts = [files.pop(0)]
+            dests = files
+        elif b in ("tee", "perl"):
             dests = pos
         else:
             dests = [tdir] if tdir else pos[-1:]
@@ -2523,11 +3290,20 @@ def _fs_rules(b, args, stage, st):
             if c == "hooks":
                 if b in ("cp", "install", "ln") and "/dev/null" in pos[:-1]:
                     return "hook_bypass_guard: replaces a git hook with /dev/null" + BYPASS_TAIL
+                if scripts is not None and all(_lit3(s) for s in scripts):
+                    kinds = [_sed_judge(s) for s in scripts]
+                    if "empties" in kinds:
+                        return "hook_bypass_guard: sed empties a git hook (" + d + ")" + BYPASS_TAIL
+                    if not any(kinds):
+                        continue                # an edit of the hook's contents by name
                 st.ask("a write over a git hook (" + d + ")")
-            elif _GITCONFIG_RE.search(_abs(d, cwd) or d):
+            elif _is_cfgfile(d, cwd, st.root):
                 if re.search(r"hookspath", " ".join(args), re.I):
-                    return "hook_bypass_guard: writes core.hooksPath into .git/config directly" + BYPASS_TAIL
-                st.ask("a direct write to .git/config")
+                    return "hook_bypass_guard: writes core.hooksPath into a git config file directly" + BYPASS_TAIL
+                if _is_cfgfile(d, cwd, st.root) == "repo":
+                    st.ask("a direct write to .git/config")
+            elif c == "gitdir" and b in ("cp", "install", "ln", "rsync", "tee", "dd"):
+                return "data_loss_guard: " + b + " overwrites the repository's own state (" + d + ")" + LOSS_TAIL
         return None
     if b == "find":
         starts = []
@@ -2542,6 +3318,19 @@ def _fs_rules(b, args, stage, st):
                     return "hook_bypass_guard: find -delete removes git hooks" + BYPASS_TAIL
                 if c == "gitdir":
                     return "data_loss_guard: find -delete removes the repository's history" + LOSS_TAIL
+        # version 5: -delete or -exec rm over the whole tree, with no test that keeps only some paths
+        expr = args[len(starts):]
+        how = "-delete" if "-delete" in expr else next(
+            ("-exec " + expr[j + 1] for j, a in enumerate(expr[:-1]) if a in ("-exec", "-execdir", "-ok", "-okdir")
+             and posixpath.basename(expr[j + 1]) in ("rm", "unlink", "shred", "srm", "trash")), None)
+        if how and not _find_filtered(expr):
+            for s in (starts or ["."]):
+                if s in (".", "./") and cwd is None:
+                    st.ask("a recursive delete of the current directory (find " + how + ")")
+                    continue
+                a = _abs(s, cwd) if s not in ("*", "./*") else cwd
+                if a and _is_root_or_above(a, st.root):
+                    return "data_loss_guard: find " + how + " over the whole tree removes every file" + LOSS_TAIL
         return None
     if b not in READONLY and not _INTERP.match(b):
         for a in args:
@@ -2583,6 +3372,7 @@ def _git3(env, argv, stage, st, depth):
         if a.startswith("<<"):
             args = args[:k]
             break
+    args = _canon_args(sub, args)           # version 5: --h is --hard, the way git reads it
     cwd = st.cwd
     cfg = {}
     for flag, val in gopts:
@@ -2594,11 +3384,11 @@ def _git3(env, argv, stage, st, depth):
                 if sub in RISKY:
                     st.ask("a git -c setting the guard cannot resolve")
                 continue
-            key, _, setting = v.partition("=")
-            cfg[key.strip().lower()] = setting
+            key, eq, setting = v.partition("=")
+            cfg[key.strip().lower()] = setting if eq else None     # -c key with no = is true
     # git aliases: -c alias.X=V on this call, or `git config alias.X V` earlier in this string
     aliases = dict(st.git_aliases)
-    aliases.update({k[6:]: v for k, v in cfg.items() if k.startswith("alias.")})
+    aliases.update({k[6:]: v for k, v in cfg.items() if k.startswith("alias.") and v is not None})
     if sub not in KNOWN_GIT and sub in aliases and depth < 3:
         val = aliases[sub]
         gtoks = []
@@ -2611,7 +3401,23 @@ def _git3(env, argv, stage, st, depth):
     if sub not in KNOWN_GIT:
         st.ask("`git " + sub + "` is not a git command the guard knows; a git alias can stand for anything")
         return None
+    gtoks = []
+    for flag, v in gopts:
+        gtoks += [flag] + ([v] if v is not None else [])
+    if sub == "for-each-repo":              # version 5: it runs the rest as a git command in each repo
+        k = 0
+        while k < len(args) and args[k].startswith("-") and args[k] != "--":
+            k += 2 if args[k] == "--config" else 1
+        if k < len(args) and args[k] == "--":
+            k += 1
+        if args[k:] and depth < 3:
+            return _git3(env, ["git"] + gtoks + args[k:], stage, st, depth + 1)
+        return None
+    for k, v in (_env_config(env) or []):   # GIT_CONFIG_COUNT/KEY/VALUE are -c settings by another name
+        cfg.setdefault(k, v)
     for k, v in cfg.items():                # a setting whose value git runs as a shell command
+        if v is None:
+            continue
         if _CMD_KEY.match(k) and not (k.startswith("credential") and not v.strip().startswith("!")):
             code = v.strip().lstrip("!")
             if _lit3(code):
@@ -2626,10 +3432,8 @@ def _git3(env, argv, stage, st, depth):
             else:
                 st.ask("an environment variable git runs as a command, with a value the guard cannot resolve (" + k + ")")
     canon_sub = "add" if sub == "stage" else sub
-    gtoks = []
-    for flag, v in gopts:
-        gtoks += [flag] + ([v] if v is not None else [])
-    st.canon.append(" ".join(shlex.quote(t) for t in env + ["git"] + gtoks + [canon_sub] + args))
+    here = ["-C", st.cwd] if st.cwd not in (None, st.root) else []     # where it runs (version 5)
+    st.canon.append(" ".join(shlex.quote(t) for t in env + ["git"] + here + gtoks + [canon_sub] + args))
     # environment: hook runners switched off, config injected from outside
     envd = {}
     for e in env:
@@ -2658,17 +3462,134 @@ def _git3(env, argv, stage, st, depth):
             st.ask("-c include.path loads a config file the guard does not read")
     if sub == "push":
         for k, v in cfg.items():
-            if k.startswith("remote.") and k.endswith(".push") and v.strip().startswith("+"):
+            if k.startswith("remote.") and k.endswith(".push") and (v or "").strip().startswith("+"):
                 return "data_loss_guard: -c remote.*.push=+... makes this push a force push" + LOSS_TAIL
-            if k.startswith("remote.") and k.endswith(".mirror") and v.strip().lower() in ("true", "1", "yes", "on", ""):
+            if k.startswith("remote.") and k.endswith(".mirror") and (v is None or v.strip().lower() in ("true", "1", "yes", "on", "")):
                 return "data_loss_guard: -c remote.*.mirror makes this push overwrite and delete remote refs" + LOSS_TAIL
-    if sub == "clean" and cfg.get("clean.requireforce", "").strip().lower() in ("false", "0", "no", "off") \
+    if sub in ("fetch", "pull", "remote"):
+        for k, v in cfg.items():
+            if k.startswith("remote.") and k.endswith(".fetch") and _forced_into_branches(v or ""):
+                return ("data_loss_guard: -c remote.*.fetch=" + v + " makes git fetch force-update local branches"
+                        + LOSS_TAIL)
+    for k, v in cfg.items():                # version 5: reflog expiry set to now through -c
+        if re.match(r"^gc\.(?:.+\.)?reflogexpire(?:unreachable)?$", k) and v is not None:
+            if _dyn(v):
+                st.ask("a git -c setting the guard cannot resolve (" + k + ")")
+            elif _expire_now(v):
+                return ("data_loss_guard: -c " + k + "=" + v + " makes git expire the reflog (gc.reflogExpire) that "
+                        "recovers lost commits" + LOSS_TAIL)
+    if sub == "clean" and "clean.requireforce" in cfg and _cfg_false(cfg["clean.requireforce"]) \
             and not any(a in ("-n", "--dry-run", "-i", "--interactive") or re.match(r"^-[A-Za-z]*n", a) for a in args):
-        return "data_loss_guard: git clean with clean.requireForce=false deletes untracked files" + LOSS_TAIL
-    why = _git_rules3(sub, args, cwd, st)
+        return ("data_loss_guard: git clean with clean.requireForce=%s deletes untracked files"
+                % (cfg["clean.requireforce"] or '""')) + LOSS_TAIL
+    why = _fed_rules(sub, args, cwd, stage, st) or _git_rules3(sub, args, cwd, st)
     if why:
         return why
-    _git_dyn3(sub, args, st)
+    _git_dyn3(sub, args, st, cwd)
+    return None
+
+
+def _forced_into_branches(spec):
+    """A fetch refspec that force-overwrites local branches: +src:refs/heads/... or +refs/*:refs/*."""
+    spec = spec.strip()
+    if not spec.startswith("+") or ":" not in spec:
+        return False
+    dst = spec.split(":", 1)[1]
+    return dst.startswith("refs/heads/") or dst in ("refs/*", "refs/heads/*") or not dst.startswith("refs/")
+
+
+def _whole_diff(up):
+    """Is the text piped in a git diff of the whole tree (no pathspec that names files)?"""
+    if not up or not up[0]["argv"] or posixpath.basename(up[0]["argv"][0]) != "git":
+        return False
+    a = up[0]["argv"][1:]
+    while a and a[0].startswith("-"):
+        a = a[2:] if a[0] in GIT_GLOBAL_VAL else a[1:]
+    if not a or a[0] not in ("diff", "diff-files", "diff-index", "stash"):
+        return False
+    rest = a[1:]
+    if a[0] == "stash":
+        return False
+    if "--" in rest:
+        paths = rest[rest.index("--") + 1:]
+        return not paths or any(_pathspec_whole(p, _root(), _root()) == "whole" for p in paths if _lit3(p))
+    return not any(not p.startswith("-") and re.search(r"[^/.]\.[A-Za-z0-9]+$", p) and ".." not in p for p in rest)
+
+
+def _fed_rules(sub, args, cwd, stage, st):
+    """Version 5: git commands that take their real input on stdin. Interactive add, commit, checkout,
+    restore and clean fed scripted answers; apply fed the whole diff; update-index fed a listing."""
+    up = st.up if stage.get("pipe_in") else []
+    fed = bool(up) or stage.get("here") is not None or stage.get("file_in")
+    if not fed:
+        return None
+    tp = _opts_and_pos(sub, args)
+    opts = [t for t, k in tp if k == "opt"]
+    pos = [t for t, k in tp if k in ("pos", "path")]
+    longs = [o.split("=", 1)[0] for o in opts if o.startswith("--")]
+    shorts = _shorts(sub, opts)
+    root = st.root
+
+    def answers():
+        txt, why = _stdin_code(stage, up, st)
+        return txt, (why or "a file or program the guard cannot read")
+
+    def named(ps):
+        return bool(ps) and not any(_pathspec_whole(p, cwd, root) == "whole" for p in ps if _lit3(p)) \
+            and all(_lit3(p) for p in ps)
+    patch = "p" in shorts or "--patch" in longs
+    inter = (sub in ("add", "clean") and "i" in shorts) or "--interactive" in longs
+    if sub in ("add", "stage", "commit", "checkout", "restore") and (patch or inter):
+        paths = pos if sub in ("add", "stage", "commit", "restore") else (
+            pos[pos.index("--") + 1:] if "--" in args else [p for p in pos if "/" in p or re.search(r"[^.]\.\w+$", p)])
+        if "--" in args and sub in ("add", "stage", "commit", "restore"):
+            paths = [t for t, k in tp if k == "path"] or pos
+        if sub == "restore" and ("S" in shorts or "--staged" in longs) and not ("W" in shorts or "--worktree" in longs):
+            return None                         # unstaging hunks keeps the work
+        if named(paths):
+            return None
+        txt, why = answers()
+        if txt is None:
+            st.ask("git " + sub + " -" + ("p" if patch else "i") + " reads its answers from " + why)
+            return None
+        lines = [l.strip().lower() for l in txt.splitlines()]
+        if patch and not any(l[:1] in ("y", "a") for l in lines):
+            return None                         # every answer is no: nothing is staged or discarded
+        if inter and not patch and all(l in ("", "q", "quit", "7", "s", "status", "1", "h", "help", "8", "d", "diff", "6")
+                                       for l in lines):
+            return None
+        if sub in ("checkout", "restore"):
+            return ("data_loss_guard: git " + sub + " -p with scripted answers over the whole tree discards every "
+                    "uncommitted change" + LOSS_TAIL)
+        return (SAY + "git " + ("add" if sub == "stage" else sub) + " -" + ("p" if patch else "i")
+                + " with scripted answers (every hunk is staged: that is staging by scope, not by name)")
+    if sub == "clean" and inter:
+        txt, why = answers()
+        if txt is None:
+            st.ask("git clean -i reads its answers from " + why)
+            return None
+        if all(l.strip().lower() in ("", "q", "quit", "5", "h", "help", "6") for l in txt.splitlines()):
+            return None
+        return "data_loss_guard: git clean -i with scripted answers deletes untracked files for good" + LOSS_TAIL
+    if sub == "apply" and not _is_dry(sub, args) and not [p for p in pos if p != "-"] and _whole_diff(up):
+        rev = "R" in shorts or "--reverse" in longs
+        if rev and "--cached" not in longs:
+            return ("data_loss_guard: git apply -R of the whole diff over the whole tree discards every "
+                    "uncommitted change" + LOSS_TAIL)
+        if not rev and ("--cached" in longs or "--index" in longs):
+            return SAY + "git apply --cached of the whole diff (stages every change at once)"
+    if sub == "update-index" and "--stdin" in longs and any(o in longs for o in ("--add", "--remove", "--force-remove")):
+        txt, why = answers()
+        if txt is None:
+            if up and _listing(up):
+                return SAY + "git update-index --add --stdin of a whole file listing (stages every listed file)"
+            st.ask("git update-index --stdin reads the paths to stage from " + why)
+            return None
+        names = [l for l in (txt.split("\0") if "-z" in opts else txt.splitlines()) if l.strip()]
+        if any(_pclass(p, cwd) == "hooks" for p in names) and "--force-remove" in longs:
+            return "hook_bypass_guard: git update-index --force-remove drops a git hook from the index" + BYPASS_TAIL
+        if any(_pathspec_whole(p, cwd, root) == "whole" for p in names):
+            return SAY + "git update-index --add --stdin of the whole tree"
     return None
 
 
@@ -2708,8 +3629,9 @@ def _git_rules3(sub, args, cwd, st):
     tp = _opts_and_pos(sub, args)
     opts = [t for t, k in tp if k == "opt"]
     pos = [t for t, k in tp if k in ("pos", "path")]
-    shorts = "".join(o[1:] for o in opts if not o.startswith("--"))
+    shorts = _shorts(sub, opts)             # version 5: each cluster cut at its value letter
     longs = [o.split("=", 1)[0] for o in opts if o.startswith("--")]
+    dry = _is_dry(sub, args)
 
     def has_long(full, minlen):
         return any(len(n) >= minlen and full.startswith(n) for n in longs)
@@ -2721,7 +3643,10 @@ def _git_rules3(sub, args, cwd, st):
         return bool(kinds) and all(k == "exclude" for k in kinds) and len(kinds) == len(ps)
 
     if sub in ("add", "stage"):
-        if whole(pos):
+        if any(o == "--chmod=-x" for o in opts) or any(a == "--chmod" and b == "-x" for a, b in zip(args, args[1:])):
+            if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)):
+                return "hook_bypass_guard: git add --chmod=-x turns a hook off for everyone" + BYPASS_TAIL
+        if whole(pos) and not dry:
             return SAY + "git " + sub + " " + " ".join(pos) + " (the pathspec resolves to the whole tree)"
         if any(o.startswith("--pathspec-from-file") for o in opts):
             st.ask("git add --pathspec-from-file reads its paths from a file at run time")
@@ -2735,8 +3660,10 @@ def _git_rules3(sub, args, cwd, st):
                 if a in VAL3["commit"]:
                     k += 2
                     continue
-                if a == "--all":
+                if a == "--all" and not dry:
                     return SAY + "git commit --all (stages every tracked modification, then commits, in one step)."
+                if a == "--no-post-rewrite" and "--amend" in args:
+                    return "hook_bypass_guard: --no-post-rewrite skips the post-rewrite hook" + BYPASS_TAIL
             elif a.startswith("-") and len(a) > 1:
                 for j, ch in enumerate(a[1:]):
                     if ch in "mFCct":
@@ -2745,33 +3672,36 @@ def _git_rules3(sub, args, cwd, st):
                         break
                     if ch in "Su":
                         break
-                    if ch == "a":
+                    if ch == "a" and not dry:
                         return SAY + "git commit " + a + " (stages every tracked modification, then commits, in one step)."
                     if ch == "n":
                         return "hook_bypass_guard: git commit -n (= --no-verify)" + BYPASS_TAIL
             k += 1
-        if whole(pos):
+        if whole(pos) and not dry:
             return SAY + "git commit " + " ".join(pos) + " (commits every tracked change under the whole tree)"
         if any(o.startswith("--pathspec-from-file") for o in opts):
             st.ask("git commit --pathspec-from-file reads its paths from a file at run time")
     elif sub == "checkout":
-        if "f" in shorts.split("b")[0].split("B")[0] or has_long("--force", 4):
+        if "f" in shorts or has_long("--force", 4):
             return "data_loss_guard: git checkout --force throws away local changes" + LOSS_TAIL
         if "B" in shorts:
             return "data_loss_guard: git checkout -B resets an existing branch and can orphan its commits" + LOSS_TAIL
         if whole(pos):
             return "data_loss_guard: git checkout over the whole tree discards every uncommitted change" + LOSS_TAIL
-        if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)):
+        hp = [p for p in pos if _lit3(p) and _pclass(p, cwd) == "hooks"]
+        ppos = [t for t, k in tp if k == "pos"]
+        tree = bool(ppos) if "--" in args else bool(ppos) and _pclass(ppos[0], cwd) != "hooks"
+        if hp and tree:                         # version 5: from the index it is the repo's own version
             st.ask("git checkout rewrites hook files from another version")
     elif sub == "restore":
-        if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)):
+        if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)) and ("s" in shorts or has_long("--source", 3)):
             st.ask("git restore rewrites hook files from another version")
         staged = "S" in shorts or has_long("--staged", 4)
         worktree = "W" in shorts or has_long("--worktree", 3)
         if whole(pos) and (worktree or not staged):
             return "data_loss_guard: git restore over the whole tree discards every uncommitted change" + LOSS_TAIL
     elif sub == "switch":
-        if "f" in shorts or "C" in shorts.split("c")[0] or has_long("--discard-changes", 5) or \
+        if "f" in shorts or "C" in shorts or has_long("--discard-changes", 5) or \
                 any(n.startswith("--force") or (len(n) >= 6 and "--force".startswith(n)) for n in longs):
             return "data_loss_guard: git switch that discards local changes or resets a branch" + LOSS_TAIL
     elif sub == "branch":
@@ -2782,8 +3712,10 @@ def _git_rules3(sub, args, cwd, st):
         if p and p[0] in ("drop", "clear"):
             return "data_loss_guard: git stash " + p[0] + " throws stashed work away" + LOSS_TAIL
     elif sub == "reflog":
-        if pos and pos[0] in ("expire", "delete"):
+        if pos and pos[0] in ("expire", "delete") and not dry:
             return "data_loss_guard: git reflog " + pos[0] + " removes the record that recovers lost commits" + LOSS_TAIL
+    elif sub == "push" and dry:
+        return None
     elif sub == "push":
         if "d" in shorts or has_long("--delete", 5):
             return "data_loss_guard: git push --delete removes a remote branch" + LOSS_TAIL
@@ -2831,6 +3763,9 @@ def _git_rules3(sub, args, cwd, st):
     elif sub == "update-index":
         if any(o.startswith("--chmod=-x") for o in opts) and any(_pclass(p, cwd) == "hooks" for p in pos):
             return "hook_bypass_guard: git update-index --chmod=-x turns a hook off for everyone" + BYPASS_TAIL
+        if "--force-remove" in longs and any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)):
+            return ("hook_bypass_guard: git update-index --force-remove drops a git hook from the index, so the "
+                    "next commit deletes it for everyone" + BYPASS_TAIL)
         if "g" in shorts or has_long("--again", 4):
             st.ask("git update-index --again restages paths the guard cannot list")
     elif sub == "submodule":
@@ -2864,18 +3799,34 @@ def _git_rules3(sub, args, cwd, st):
                 st.run(code)
             else:
                 st.ask("git bisect run runs a command the guard cannot resolve")
-    elif sub == "fetch":
+    elif sub in ("fetch", "pull"):
+        if sub == "pull" and any(len(n) >= 8 and "--no-verify".startswith(n) for n in longs):
+            return "hook_bypass_guard: --no-verify on git pull" + BYPASS_TAIL
+        if dry:
+            return None
         force = "f" in shorts or has_long("--force", 4)
         for p in pos[1:]:
             if _lit3(p) and ":" in p:
                 dst = p.split(":", 1)[1]
                 if dst and (p.startswith("+") or force) and not dst.startswith("refs/remotes/") \
                         and not dst.startswith("refs/tags/"):
-                    return ("data_loss_guard: git fetch " + p + " force-updates a local branch and can "
+                    return ("data_loss_guard: git " + sub + " " + p + " force-updates a local branch and can "
                             "orphan its commits" + LOSS_TAIL)
-    elif sub == "pull":
-        if any(len(n) >= 8 and "--no-verify".startswith(n) for n in longs):
-            return "hook_bypass_guard: --no-verify on git pull" + BYPASS_TAIL
+    elif sub == "am":
+        if "n" in shorts or "--no-verify" in longs:
+            return "hook_bypass_guard: --no-verify (-n) on git am skips the applypatch hooks" + BYPASS_TAIL
+    elif sub == "sparse-checkout":
+        if pos and pos[0] in ("set", "init"):
+            if "--stdin" in longs:
+                st.ask("git sparse-checkout --stdin reads its patterns at run time")
+            elif not any(p.strip("/") in (".githooks", ".husky", "*", "") or p in ("/*", ".") or
+                         p.lstrip("/").startswith((".githooks/", ".husky/")) for p in pos[1:]):
+                return ("hook_bypass_guard: git sparse-checkout " + pos[0] + " leaves .githooks out of the "
+                        "worktree, so the git hook files are removed and stop running" + BYPASS_TAIL)
+    elif sub == "remote":
+        if pos and pos[0] == "add" and any(o == "--mirror" or o.startswith("--mirror=") for o in opts):
+            return ("data_loss_guard: git remote add --mirror makes a push delete remote branches and a fetch "
+                    "overwrite local ones" + LOSS_TAIL)
     elif sub in REWRITERS:
         st.ask("git " + sub + " rewrites history or refs; the guard cannot tell what it keeps")
     return None
@@ -2918,20 +3869,26 @@ def _config3(args, st):
             return "hook_bypass_guard: git config unset core.hooksPath disarms the hooks" + BYPASS_TAIL
         if val is not None and _dyn(val):
             st.ask("git config core.hooksPath set to a value the guard cannot resolve")
-        elif val is not None and val != ".githooks":
+        elif val is not None and not _hooks_ok(val):
             return "hook_bypass_guard: git config core.hooksPath " + (val or '""') + " disarms the hooks" + BYPASS_TAIL
         return None
     if val is None or unset:
         return None
     if _dyn(val):
         if lk.startswith("alias.") or lk in ("clean.requireforce",) or lk.startswith("include") or _CMD_KEY.match(lk) or \
-                (lk.startswith("remote.") and (lk.endswith(".push") or lk.endswith(".mirror"))):
+                (lk.startswith("remote.") and (lk.endswith(".push") or lk.endswith(".mirror") or lk.endswith(".fetch"))) \
+                or re.match(r"^gc\.(?:.+\.)?reflogexpire(?:unreachable)?$", lk):
             st.ask("git config " + key + " set to a value the guard cannot resolve")
         return None
     if _CMD_KEY.match(lk) and not (lk.startswith("credential") and not val.strip().startswith("!")):
         st.run(val.strip().lstrip("!"))
-    if lk == "clean.requireforce" and val.lower() in ("false", "0", "no", "off"):
+    if lk == "clean.requireforce" and _cfg_false(val):
         return "data_loss_guard: clean.requireForce=false lets git clean delete files without -f" + LOSS_TAIL
+    if re.match(r"^gc\.(?:.+\.)?reflogexpire(?:unreachable)?$", lk) and _expire_now(val):
+        return ("data_loss_guard: git config " + key + " " + val + " makes every git gc expire the reflog "
+                "(gc.reflogExpire) that recovers lost commits" + LOSS_TAIL)
+    if lk.startswith("remote.") and lk.endswith(".fetch") and _forced_into_branches(val):
+        return "data_loss_guard: a forced remote.*.fetch refspec makes git fetch force-update local branches" + LOSS_TAIL
     if lk.startswith("remote.") and lk.endswith(".push") and val.startswith("+"):
         return "data_loss_guard: a +refspec in remote.*.push makes every push a force push" + LOSS_TAIL
     if lk.startswith("remote.") and lk.endswith(".mirror") and val.lower() in ("true", "1", "yes", "on"):
@@ -2943,7 +3900,18 @@ def _config3(args, st):
     return None
 
 
-def _git_dyn3(sub, args, st):
+def _found_below(t, cwd, root):
+    """A FOUND word under a literal folder strictly below the root (and not a hooks or .git folder)."""
+    if U in t or Q in t or PSUB in t:
+        return False
+    pre = t.split(FOUND)[0]
+    if not pre.endswith("/"):
+        return False
+    a = _abs(pre.rstrip("/") or ".", cwd)
+    return bool(a) and a.startswith(root + "/") and _pclass(pre + "x", cwd) == "path"
+
+
+def _git_dyn3(sub, args, st, cwd=None):
     """Ask when a part the guard cannot resolve could turn this git call into a violation."""
     if sub not in RISKY or sub == "config":
         return
@@ -2966,6 +3934,8 @@ def _git_dyn3(sub, args, st):
         if not _dyn(t) and PSUB not in t:
             continue
         if PSUB in t and _lit3(t.replace(PSUB, "")):
+            continue
+        if FOUND in t and _found_below(t, cwd if cwd is not None else st.cwd, st.root):
             continue
         if kind == "val":
             if U in t:
@@ -2998,7 +3968,20 @@ def _walk(text, st):
         if re.search(r"\bgit\b|\bsh\b|\bbash\b|\beval\b|\bsource\b", text):
             st.ask("quoting the guard cannot parse")
         return None
+    stack, chain = [], st.cwd
     for pl in pls:
+        first = pl[0] if pl else {}
+        d = first.get("depth", 0)
+        while len(stack) > d:
+            st.cwd = stack.pop()                # a subshell ( ) gives its cwd back (version 5)
+        while len(stack) < d:
+            stack.append(st.cwd)
+        sep = first.get("sep") or ""
+        if "||" in sep and st.cwd != chain:
+            st.cwd = None                       # after || the cwd may be either one
+        if not sep or ";" in sep or (sep.rstrip("()").endswith("&") and not sep.rstrip("()").endswith("&&")):
+            chain = st.cwd
+        saved = st.cwd
         for idx, stage in enumerate(pl):
             upstream = pl[:idx] if stage["pipe_in"] else []
             for op, tgt in stage["redirs"]:
@@ -3019,11 +4002,15 @@ def _walk(text, st):
                                    stage, st)
                 if why:
                     return why
+        end = (pl[-1].get("end") or "") if pl else ""
+        if len(pl) > 1 or end.startswith("||") or (end.rstrip(")").endswith("&") and not end.rstrip(")").endswith("&&")):
+            st.cwd = saved                      # a pipeline or background job runs in a subshell
     return None
 
 
 def _check3(cmd, root, depth, known=None, pos=None, funcs=None):
     """-> ("block" | "ask" | "allow", reason). Blocks anywhere win over asks anywhere."""
+    cmd = _strip_comments(cmd)
     nohd = _strip_heredocs(cmd)
     if depth > 0:
         why = _guards(nohd, root)              # what version 1 and 2 read, on this payload as written
@@ -3083,7 +4070,7 @@ def _decide3(command):
     unchanged, so every v2 block stays a block. Then version 3 reads further and fails closed: when
     it cannot resolve a part that could make the command a violation, it returns "ask". An internal
     error in version 3 is also an "ask", with the exception named."""
-    command = command or ""
+    command = _strip_comments(command or "")
     try:
         why = _check(command, _root(), 0)
         if why:
@@ -3145,10 +4132,24 @@ REDIRECTS = [
     ("B-plumbing", r"^hook_bypass_guard: git plumbing",
      "Use the commands that run the hooks: `git commit -m \"message\"` to commit, `git push origin "
      "branch-name` to publish, and `git branch new-branch commit-id` to point a new branch at a commit."),
+    ("B-skip-hook-flag", r"^hook_bypass_guard: --no-post-rewrite",
+     "Run the same command without --no-post-rewrite, for example `git commit --amend --no-edit`. The "
+     "post-rewrite hook then runs as the repo set it."),
+    ("B-sparse", r"^hook_bypass_guard: git sparse-checkout",
+     "Keep the hooks folder in the sparse set: `git sparse-checkout set .githooks src`, or add a folder with "
+     "`git sparse-checkout add path/to/folder`."),
     ("B-hook-file", r"^hook_bypass_guard: .*(?:git hook|hooks? off|hooks? for everyone)",
      "Leave the hook files in place. Read the hook with `cat .git/hooks/pre-commit` to see what it checks, "
      "fix the code it complains about, and run the command again."),
     # policy A: stage by name only
+    ("A-fed-interactive", r"^blanket_stage_guard: .*with scripted answers",
+     "Stage the files you mean by name. See them with `git diff --stat`, then run "
+     "`git add path/to/file1 path/to/file2`."),
+    ("A-apply", r"^blanket_stage_guard: .*Form seen: git apply",
+     "Stage the files by name instead of applying the whole diff: `git add path/to/file`. To apply one patch "
+     "file to the index, run `git apply --cached path/to/fix.patch`."),
+    ("A-update-index", r"^blanket_stage_guard: .*Form seen: git update-index",
+     "Stage the files by name: `git add path/to/file1 path/to/file2`. List them first with `git status --short`."),
     ("A-rm-cached-all", r"^blanket_stage_guard: .*Form seen: git rm",
      "Untrack files by name: `git rm --cached path/to/file`, or one folder with "
      "`git rm -r --cached path/to/folder`. Add the path to .gitignore so it stays out."),
@@ -3181,7 +4182,8 @@ REDIRECTS = [
     ("C-switch-discard", r"^data_loss_guard: (?:git checkout --force|git switch that discards)",
      "Save your changes first with `git stash push -m \"wip\"`, then switch with `git switch branch-name`. "
      "Bring the changes back later with `git stash apply`."),
-    ("C-branch-move", r"^data_loss_guard: (?:git checkout -B|git branch --force moves|git fetch \S+ force-updates)",
+    ("C-branch-move", r"^data_loss_guard: (?:git checkout -B|git branch --force moves|git (?:fetch|pull) \S+ force-updates|"
+                      r".*remote\.\*\.fetch)",
      "Do not move an existing branch. Make a new one where you need it: "
      "`git switch -c new-branch origin/main`. To update a branch from its remote, use "
      "`git pull --rebase origin branch-name`."),
@@ -3192,6 +4194,18 @@ REDIRECTS = [
     ("C-force-push", r"^data_loss_guard: .*force push",
      "Use `git push origin branch-name` without --force. If the push is rejected because the remote moved, "
      "run `git fetch origin` and `git rebase origin/branch-name`, then push again."),
+    ("C-remote-mirror", r"^data_loss_guard: git remote add --mirror",
+     "Add the remote without --mirror: `git remote add backup path/to/backup.git`, then push the one branch you "
+     "mean: `git push backup branch-name`."),
+    ("C-reflog-config", r"^data_loss_guard: .*\(gc\.reflogExpire\)",
+     "Leave the reflog expiry at its default and run `git gc` without it. To see what the reflog keeps, run "
+     "`git reflog`."),
+    ("C-find-whole", r"^data_loss_guard: find .* over the whole tree",
+     "Limit find to the files you mean with a name test, and look before you delete: "
+     "`find . -name '*.pyc' -print`, then `find . -name '*.pyc' -delete`."),
+    ("C-gitdir-write", r"^data_loss_guard: .*overwrites the repository's own state",
+     "Leave the files in .git to git. To unstage a file, run `git restore --staged path/to/file`. To check the "
+     "repository, run `git fsck`."),
     ("C-remote-delete", r"^data_loss_guard: (?:git push --delete|git push :|git push --prune|git push --mirror|"
                         r"remote\.\*\.mirror)",
      "Leave the remote branches in place and push only the branch you mean: `git push origin branch-name`. "
@@ -3224,7 +4238,12 @@ REDIRECTS = [
     ("F-gitdir-delete", r"^fail_closed: a delete inside \.git",
      "Use git's own command to clear an operation in progress: `git rebase --abort`, `git merge --abort` "
      "or `git cherry-pick --abort`."),
-    ("F-worktree-delete", r"^fail_closed: a recursive delete of the whole worktree",
+    ("F-fed-answers", r"^fail_closed: git \S+ -[pi] reads its answers",
+     "Do not script the answers. Stage named files with `git add path/to/file`, or look at one file's changes "
+     "first with `git diff path/to/file`."),
+    ("F-stdin-paths", r"^fail_closed: git (?:update-index|sparse-checkout) --stdin reads",
+     "Name the paths on the command line instead of stdin, for example `git add path/to/file`."),
+    ("F-worktree-delete", r"^fail_closed: a recursive delete of the (?:whole worktree|current directory)",
      "Delete named paths only: `rm -r path/to/dir`. Check what is there first with `git status --short`."),
     ("F-symbolic-ref", r"^fail_closed: git symbolic-ref",
      "Move HEAD with `git switch branch-name`, or start an empty branch with "
@@ -3248,7 +4267,7 @@ REDIRECTS = [
     ("F-config-key", r"^fail_closed: git config with a key",
      "Write the config key and value literally, for example `git config user.name \"Name\"`."),
     ("F-command-setting", r"^fail_closed: (?:git config \S+ set to a value|an environment variable git runs|"
-                          r"a config file swapped in|-c include)",
+                          r"a config file swapped in|-c include|a git -c setting the guard cannot resolve)",
      "Write the program literally, for example `git config core.editor vim` or "
      "`GIT_SSH_COMMAND=\"ssh -i path/to/key\" git fetch origin`. Do not load git config from another file."),
     ("F-eval", r"^fail_closed: eval of text",
@@ -3326,7 +4345,7 @@ def decide_full(command):
 
 
 def decide(command):
-    """Return ("block" | "allow", reason). Version 4 never returns "ask": every v3 stop is a block
+    """Return ("block" | "allow", reason). Versions 4 and 5 never return "ask": every stop is a block
     whose reason ends with a redirect the agent can follow."""
     d = decide_full(command)
     return ("block", d["reason"]) if d["verdict"] == "deny" else ("allow", "")

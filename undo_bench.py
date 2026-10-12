@@ -155,7 +155,7 @@ def build(name):
     return base, repo, remote
 
 
-STATE_FILES = ("MERGE_HEAD", "MERGE_MSG", "MERGE_MODE", "CHERRY_PICK_HEAD", "REVERT_HEAD", "ORIG_HEAD")
+STATE_FILES = ("MERGE_HEAD", "MERGE_MSG", "MERGE_MODE", "CHERRY_PICK_HEAD", "REVERT_HEAD", "ORIG_HEAD", "SQUASH_MSG")
 
 
 def capture(repo, remote=None):
@@ -175,6 +175,13 @@ def capture(repo, remote=None):
                 with open(full, "rb") as fh:
                     files[rel] = ("file", hashlib.sha256(fh.read()).hexdigest(), "%o" % stat.S_IMODE(st.st_mode))
     ignored = set(os.fsdecode(x) for x in git(repo, "ls-files", "-z", "-o", "-i", "--exclude-standard").split(b"\0") if x)
+    for rel in [r for r, v in files.items() if r not in ignored]:      # a directory holding a captured file: its mode bits
+        d = os.path.dirname(rel)
+        while d + "/" not in files:
+            files[d + "/"] = ("dir", "%o" % stat.S_IMODE(os.lstat(os.path.join(repo, d or ".")).st_mode))
+            if not d:
+                break
+            d = os.path.dirname(d)
     refs = {}
     for l in git(repo, "for-each-ref", "--format=%(refname) %(objectname) %(symref)").decode().splitlines():
         f = l.split(" ")
@@ -190,6 +197,10 @@ def capture(repo, remote=None):
          "stash": git(repo, "stash", "list", "--format=%H %gd %gs").decode(),
          "state": {f: (open(os.path.join(gd, f), "rb").read() if os.path.exists(os.path.join(gd, f)) else None)
                    for f in STATE_FILES}}
+    seq = os.path.join(gd, "sequencer")                # a multi-commit revert or cherry-pick keeps its todo list here
+    if os.path.isdir(seq):
+        for n in sorted(os.listdir(seq)):
+            s["state"]["sequencer/" + n] = open(os.path.join(seq, n), "rb").read()
     if remote:
         s["bare"] = git(remote, "for-each-ref", "--format=%(refname) %(objectname)").decode()
     return s
@@ -327,12 +338,41 @@ SCENARIOS = [
     ("dir-becomes-symlink", "rm -rf src/lib && ln -s ../docs src/lib", None),
     ("binary-overwrite", "head -c 512 /dev/zero > data/blob.bin", None),
     ("python-rmtree", "python3 -c \"import shutil; shutil.rmtree('src')\"", None),
+    # --- v5: the 20 blind scenarios of wb_undo.jsonl (WRITER_SHEET.md), then one of mine for directory modes
+    ("wu5-chmod-dash-x", "chmod -x bin/run.sh", None),
+    ("wu5-chmod-R-dash-w", "chmod -R -w src", None),
+    ("wu5-chmod-R-a-w", "chmod -R a-w src", None),
+    ("wu5-find-print0-xargs-rm", "find . -name '*.py' -not -path './.git/*' -print0 | xargs -0 rm -f", None),
+    ("wu5-ls-files-xargs-chmod", "git ls-files bin | xargs chmod 600", None),
+    ("wu5-ls-files-xargs-gzip", "git ls-files src | xargs gzip -f", None),
+    ("wu5-patch-heredoc", "patch -p0 <<'EOP'\n--- README.md\n+++ README.md\n@@ -1,3 +1,3 @@\n # demo\n-alpha beta\n+alpha gamma\n unstaged line\nEOP", None),
+    ("wu5-sed-Ei", "sed -Ei '' 's/alpha/ALPHA/' README.md", None),
+    ("wu5-sort-ro", "sort -ro README.md README.md", None),
+    ("wu5-tar-extract-outside", "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar", None),
+    ("wu5-unzip-outside", "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip", None),
+    ("wu5-subshell-cd", "(cd .. && ls) ; rm -f notes.txt README.md", None),
+    ("wu5-cd-dash", "cd .. && cd - && rm -f notes.txt", None),
+    ("wu5-env-S", "env -S 'rm -f notes.txt README.md'", None),
+    ("wu5-git-c-fsmonitor", "git -c core.fsmonitor='rm -f notes.txt;' status", None),
+    ("wu5-git-external-diff", "GIT_EXTERNAL_DIFF='rm -f' git diff", None),
+    ("wu5-ignore-added-then-file", "echo '*.out' >> .gitignore && echo result > result.out", None),
+    ("wu5-ignore-dir-then-file", "printf 'tmp/\\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt", None),
+    ("wu5-merge-squash", "git stash -q && git merge --squash other", None),
+    ("wu5-revert-sequencer", "git stash -q && git checkout -q other && git revert --no-edit main main~1", None),
+    ("chmod-dirs-go-rx", "chmod -R go-rx src docs", None),
 ]
 CONTROLS = ["reset-hard-HEAD~1", "clean-fdx", "rm-rf-src", "branch-D-other", "stash-drop"]
 # one-line defects in restore, built at run time under the bench root: the readback must catch each
 MUTANTS = [
-    ("skips the mode bits", "chmod", "                os.chmod(full, int(m, 8))", "                pass"),
+    ("skips the mode bits", "chmod", "                os.chmod(full, m)", "                pass"),
     ("skips the stash reflog", "stash-drop", "            fh.write(stash_log)", "            pass"),
+    # v5: the restore-permissions path and the other new restore steps
+    ("does not reopen read-only directories", "wu5-chmod-R-a-w", "    _open_dirs(top, anc)\n", "    pass\n"),
+    ("skips the directory mode bits", "chmod-dirs-go-rx",
+     '_apply_modes(top, _blob(top, st + "/dirmodes.bin"), dirs=True)', "pass"),
+    ("judges ignores by the post-command .gitignore", "wu5-ignore-added-then-file",
+     'if posixpath.basename(rel) == ".gitignore" and mode in ("100644", "100755"):', "if False:"),
+    ("does not save SQUASH_MSG", "wu5-merge-squash", '"AUTO_MERGE", "SQUASH_MSG")', '"AUTO_MERGE")'),
 ]
 RESIDUALS = [
     ("ignored-files", "git clean -fdX", None, "ignored files are not in any snapshot"),
@@ -409,14 +449,40 @@ def plan_cases(outside, repo):
             "git pull", "git rebase main", "git merge x", "git stash drop", "ln -s a b", "touch new",
             "mkdir d", "ls\nrm -rf src", "if true; then rm f; fi", "for f in a b; do rm $f; done",
             "perl -pi -e s/a/b/ f", "echo hi 2>&1 > out.txt", "cd %s && git -C %s reset --hard" % (outside, repo),
-            "git stash pop", "git config core.hooksPath x", "base64 -d -o f in.b64"]
+            "git stash pop", "git config core.hooksPath x", "base64 -d -o f in.b64",
+            # v5: forms the v4 plan called read-only or aimed at the wrong place
+            "chmod -x f", "chmod -R -w src", "chmod -R a-w src", "chmod 600 f", "find . -print0 | xargs -0 rm -f",
+            "git ls-files bin | xargs chmod 600", "git ls-files src | xargs gzip -f", "echo f | xargs rm",
+            "patch -p0 < x.diff", "patch -p1 -i x.diff", "sed -Ei '' s/a/b/ f", "sed -ni s/a/b/p f", "sed -i s/a/b/ f",
+            "sed 's/a/b/ge' f", "sed -n 'w out' f", "sed -f script.sed f", "sort -ro f f", "sort --output=f f",
+            "sort --compress-program=./p f", "tar -xf ../a.tar", "tar xzf ../a.tgz", "tar -xf %s/a.tar" % outside,
+            "unzip -qo ../a.zip", "unzip -d src ../a.zip", "(cd .. && ls); rm -f f", "cd .. && cd - && rm -f f",
+            "cd /nonexistent; rm -f f", "cd .. || true; rm -f f", "(cd %s); rm f" % outside, "echo x | (cd %s; true); rm f" % outside,
+            "env -S 'rm -f f'", "env -i rm f", "sudo -u root rm f", "git -c core.fsmonitor=x status",
+            "git -c alias.st='!rm -f f' st", "git -c core.pager='rm f' log", "git --config-env=core.fsmonitor=V status",
+            "GIT_EXTERNAL_DIFF='rm -f' git diff", "export GIT_PAGER='rm -f f'; git log", "GIT_SSH_COMMAND=x git ls-remote origin",
+            "git ls-remote 'ext::sh -c x'", "git grep -Ofoo x", "git diff --output=f", "rm -rf ..", "rm -- -f",
+            "cp --target-directory=src %s/a" % outside, "mv -t src %s/a" % outside, "find . -delete", "find src docs -delete",
+            "find . -fprint f", "split %s/big.txt" % outside, "tar -cf a.tar src --remove-files", "rg --pre=./p x",
+            "echo ok > f 2>&1", "(cd %s && true) && rm f" % outside, "nice rm f", "nohup rm f", "time rm f"]
     keep = ["ls -la", "cat f", "git status", "git log --oneline -5", "git diff", "git show HEAD", "git branch",
             "git branch -a", "git stash list", "git clean -n", "git config --get user.name", "grep -r x .",
             "echo hi", "echo hi > /dev/null", "ls 2>&1", "rm -rf %s/x" % outside, "find . -name '*.py'",
             "sed -n 1p f", "sort f", "head -5 f | wc -l", "git tag", "git remote -v", "wc -l f", "pwd",
             "cd src && ls", "cp %s/a %s/b" % (outside, outside), "git rev-parse HEAD", "git ls-files",
             "cd %s && rm -f x" % outside, "git -C %s status" % outside, "echo a && echo b; ls | head",
-            "git log --format=%H -n 3", "test -f x && echo yes", "diff a b", "git worktree list"]
+            "git log --format=%H -n 3", "test -f x && echo yes", "diff a b", "git worktree list",
+            # v5: read-only decoys that look like the planted forms and must still cost no git call
+            "chmod -x %s/f" % outside, "chmod -R a-w %s" % outside, "chmod 600 ../outside/f", "git ls-files | xargs cat",
+            "git ls-files -z | xargs -0 grep -l x", "find . -name x -print0 | xargs -0 wc -l", "echo a | xargs -I{} echo {}",
+            "patch --dry-run -p0 -i x.diff", "sed -E 's/a/b/' f", "sed -n 's/e/E/p' f", "sed -n '2,4p' f",
+            "sort -r f", "sort -k2,3 -n f", "sort -u f | head", "tar -tf a.tar", "tar -tzf a.tgz", "tar -xOf a.tar f",
+            "tar -cf %s/out.tar f" % outside, "unzip -l a.zip", "unzip -p a.zip f", "gzip -c f | wc -c",
+            "(cd .. && ls)", "(cd %s && rm -f x); ls" % outside, "cd .. && cd - && ls", "cd %s; rm -f x" % outside,
+            "env FOO=1 ls", "env -i ls", "env -C %s rm x" % outside, "sudo -n ls", "command -v rm", "timeout 5 ls",
+            "git -c color.ui=always status", "git -c core.quotepath=false diff", "GIT_PAGER=cat git log -3",
+            "GIT_TERMINAL_PROMPT=0 git status", "git --no-pager log -1", "git diff --stat", "git ls-remote origin",
+            "git grep -n foo", "git show HEAD:README.md", "git cat-file -p HEAD", "git config --list", "zcat f.gz"]
     return [(c, True) for c in snap] + [(c, False) for c in keep]
 
 

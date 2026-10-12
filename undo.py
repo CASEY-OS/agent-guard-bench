@@ -12,7 +12,7 @@ stash list:
   - the real index, as its raw bytes (keeps conflict stages, intent-to-add, flags) and as a tree;
   - every ref under refs/heads, refs/tags, refs/remotes and refs/stash, symbolic refs, HEAD, the raw
     stash reflog, annotated tag objects, and the in-progress state files (MERGE_HEAD and friends);
-  - the permission bits of every captured file.
+  - the permission bits of every captured file and of every directory that holds one.
 It stores one commit under refs/agent-guard/snapshots/<UTC timestamp>. Its parents are HEAD and every
 recorded ref tip and stash entry, so `git gc` cannot prune a commit a snapshot can restore. A snapshot
 identical to the newest one is not stored twice. Only the newest KEEP (default 50, AGENT_GUARD_UNDO_KEEP)
@@ -26,7 +26,9 @@ describe the remote. When a remote-tracking ref moved since the snapshot (a forc
 if the undone command pushed; if you fetched someone else's work since, do not.
 
 pre_tool_use(command, cwd) is the hook path: plan(command, cwd) decides whether the command could
-change the repo, and if so a snapshot is taken first. Read-only commands cost no git call.
+change the repo, and if so a snapshot is taken first. Read-only commands cost no git call. The plan skips a snapshot only for a command it can PROVE read-only:
+an unknown program, a form it cannot parse, a git -c key or a GIT_* variable that makes git run a program,
+xargs operands, or an extraction from an archive all get one.
 
 CLI: python3 undo.py [--repo PATH] list | snapshot [--label L] | restore <id> | restore --last
      [--no-safety] | plan <command>
@@ -51,7 +53,8 @@ REF_NS = "refs/agent-guard/snapshots/"
 KEEP_DEFAULT = 50
 REF_SPACES = ("refs/heads/", "refs/tags/", "refs/remotes/", "refs/stash")
 STATE_FILES = ("MERGE_HEAD", "MERGE_MSG", "MERGE_MODE", "MERGE_AUTOSTASH", "CHERRY_PICK_HEAD",
-               "REVERT_HEAD", "ORIG_HEAD", "AUTO_MERGE")
+               "REVERT_HEAD", "ORIG_HEAD", "AUTO_MERGE", "SQUASH_MSG")
+STATE_DIRS = ("sequencer",)                    # a multi-commit cherry-pick or revert keeps its todo list here
 IDENT = {"GIT_AUTHOR_NAME": "agent-guard", "GIT_AUTHOR_EMAIL": "agent-guard@localhost",
          "GIT_COMMITTER_NAME": "agent-guard", "GIT_COMMITTER_EMAIL": "agent-guard@localhost"}
 _KEEP_ENV = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_SYSTEM", "GIT_CEILING_DIRECTORIES",
@@ -182,19 +185,31 @@ def snapshot(repo, label="", keep=None, force=False):
         wtree = _out(top, ["write-tree"], env=tenv)
         # permission bits of every captured regular file
         listing = _git(top, ["ls-tree", "-r", "-z", "--full-tree", wtree]).stdout.split(b"\0")
-        modes = []
+        modes, dirs = [], {b"."}
         for ent in listing:
             if not ent:
                 continue
             meta, path = ent.split(b"\t", 1)
             if meta.split(b" ")[1] != b"blob":
                 continue
+            d_ = os.path.dirname(path)
+            while d_ and d_ not in dirs:
+                dirs.add(d_)
+                d_ = os.path.dirname(d_)
             try:
                 st = os.lstat(os.path.join(os.fsencode(top), path))
             except OSError:
                 continue
             if stat.S_ISREG(st.st_mode):
                 modes.append(b"%o %s" % (stat.S_IMODE(st.st_mode), path))
+        dirmodes = []                                   # the permission bits of every directory that holds a captured file
+        for d_ in sorted(dirs):
+            try:
+                st = os.lstat(os.path.join(os.fsencode(top), d_))
+            except OSError:
+                continue
+            if stat.S_ISDIR(st.st_mode):
+                dirmodes.append(b"%o %s" % (stat.S_IMODE(st.st_mode), d_))
         refs = _refs(top)
         head = _head(top)
         lines, parents, tagobjs, keepobjs = [], [], [], []
@@ -246,6 +261,8 @@ def snapshot(repo, label="", keep=None, force=False):
         blobs.append(("\n".join(lines) + "\n").encode("utf-8", "surrogateescape"))
         names.append(("modes.bin",))
         blobs.append(b"\0".join(modes))
+        names.append(("dirmodes.bin",))
+        blobs.append(b"\0".join(dirmodes))
         if stash_log is not None:
             names.append(("stash-log.bin",))
             blobs.append(stash_log)
@@ -254,6 +271,14 @@ def snapshot(repo, label="", keep=None, force=False):
             if b is not None:
                 names.append(("state", f))
                 blobs.append(b)
+        for dname in STATE_DIRS:
+            ddir = os.path.join(gitdir, dname)
+            if os.path.isdir(ddir):
+                for f in sorted(os.listdir(ddir)):
+                    b = _read(os.path.join(ddir, f))
+                    if b is not None:
+                        names.append((dname, f))
+                        blobs.append(b)
         for t, raw in sorted(tag_raw.items()):
             names.append(("tagobjs", t))
             blobs.append(raw)
@@ -324,6 +349,52 @@ def _remove_empty_parents(top, path):
         d = os.path.dirname(d)
 
 
+def _open_dirs(top, rels):
+    """Make each directory (a path relative to top, "" is top) readable, writable and searchable for its
+    owner, parents first, so restore can delete and write inside it. Their recorded modes go back later."""
+    for rel in sorted(set(rels), key=lambda r: (r.count("/"), r)):
+        full = os.path.join(top, rel) if rel else top
+        try:
+            st = os.lstat(full)
+            if stat.S_ISDIR(st.st_mode) and (st.st_mode & 0o700) != 0o700:
+                os.chmod(full, stat.S_IMODE(st.st_mode) | 0o700)
+        except OSError:
+            pass
+
+
+def _open_tree(full):
+    """_open_dirs for a directory and everything below it (symlinks are not followed)."""
+    try:
+        st = os.lstat(full)
+        if not stat.S_ISDIR(st.st_mode):
+            return
+        if (st.st_mode & 0o700) != 0o700:
+            os.chmod(full, stat.S_IMODE(st.st_mode) | 0o700)
+        for e in os.scandir(full):
+            if e.is_dir(follow_symlinks=False):
+                _open_tree(e.path)
+    except OSError:
+        pass
+
+
+def _apply_modes(top, blob, dirs):
+    ents = [e for e in (blob or b"").split(b"\0") if e]
+    ents = [(int(e.split(b" ", 1)[0], 8), e.split(b" ", 1)[1]) for e in ents]
+    if dirs:
+        ents.sort(key=lambda e: -e[1].count(b"/") if e[1] != b"." else 1)    # children first, then parents, top last
+    for m, path in ents:
+        full = os.path.join(os.fsencode(top), path)
+        if dirs:
+            ok = os.path.isdir(full) and not os.path.islink(full)
+        else:
+            ok = os.path.isfile(full) and not os.path.islink(full)
+        if ok:
+            try:
+                os.chmod(full, m)
+            except OSError:
+                pass
+
+
 def restore(repo, sid, safety=True):
     """Put the worktree, index, local refs, HEAD, stash list and state files back to snapshot sid.
     refs/remotes are left alone; the repair push for each moved one is returned, never run."""
@@ -352,18 +423,50 @@ def restore(repo, sid, safety=True):
         if ent:
             meta_, path = ent.split(b"\t", 1)
             target[os.fsdecode(path)] = meta_.split(b" ")[0].decode()
-    current = _git(top, ["ls-files", "-z", "-c", "-o", "--exclude-standard"]).stdout.split(b"\0")
-    ignored = set(_git(top, ["ls-files", "-z", "-c", "-i", "--exclude-standard"]).stdout.split(b"\0"))
+    # a command may have made directories read-only (chmod -R a-w): open every directory restore touches
+    tracked = [os.fsdecode(x) for x in _git(top, ["ls-files", "-z", "-c"]).stdout.split(b"\0") if x]
+    anc = {""}
+    for rel in list(target) + tracked:
+        d_ = posixpath.dirname(rel)
+        while d_ and d_ not in anc:
+            anc.add(d_)
+            d_ = posixpath.dirname(d_)
+    _open_dirs(top, anc)
+    # the ignore rules first: what counts as "ignored" must be judged by the snapshot's .gitignore files, not
+    # by the ones the command wrote (echo '*.out' >> .gitignore hides the new result.out until it is undone)
+    for rel, mode in target.items():
+        if posixpath.basename(rel) == ".gitignore" and mode in ("100644", "100755"):
+            full = os.path.join(top, rel)
+            try:
+                os.makedirs(os.path.dirname(full), exist_ok=True)
+                if os.path.lexists(full):
+                    os.unlink(full)
+                with open(full, "wb") as fh:
+                    fh.write(_blob(top, wtree + ":" + rel) or b"")
+            except OSError:
+                pass                                     # a file is in the way: the general pass below clears it
+    for raw in _git(top, ["ls-files", "-z", "-o", "--exclude-standard", "--directory"]).stdout.split(b"\0"):
+        if raw.endswith(b"/"):
+            _open_tree(os.path.join(top, os.fsdecode(raw)))
     deleted = 0
-    for raw in current:
-        rel = os.fsdecode(raw)
-        if not rel or rel.endswith("/") or rel in target or raw in ignored:
-            continue                                     # "x/" is a nested repo: never touched
-        full = os.path.join(top, rel)
-        if os.path.islink(full) or os.path.isfile(full):
-            os.unlink(full)
-            deleted += 1
-            _remove_empty_parents(top, full)
+    for _ in range(4):                                   # a stray .gitignore can hide other strays: look again
+        current = _git(top, ["ls-files", "-z", "-c", "-o", "--exclude-standard"]).stdout.split(b"\0")
+        ignored = set(_git(top, ["ls-files", "-z", "-c", "-i", "--exclude-standard"]).stdout.split(b"\0"))
+        gone = 0
+        for raw in current:
+            rel = os.fsdecode(raw)
+            if not rel or rel.endswith("/") or rel in target or raw in ignored:
+                continue                                 # "x/" is a nested repo: never touched
+            full = os.path.join(top, rel)
+            if os.path.islink(full) or os.path.isfile(full):
+                os.unlink(full)
+                gone += 1
+                _remove_empty_parents(top, full)
+        deleted += gone
+        if not any(posixpath.basename(os.fsdecode(r)) == ".gitignore" for r in current):
+            break
+        if not gone:
+            break
     for rel, mode in target.items():
         if mode == "160000":
             continue
@@ -374,6 +477,7 @@ def restore(repo, sid, safety=True):
             if os.path.islink(pre) or (os.path.lexists(pre) and not os.path.isdir(pre)):
                 os.unlink(pre)
         if os.path.isdir(full) and not os.path.islink(full):
+            _open_tree(full)
             shutil.rmtree(full)                          # a directory where a file must be
     tmpdir = tempfile.mkdtemp(prefix="agent-guard-undo-")
     try:
@@ -382,13 +486,8 @@ def restore(repo, sid, safety=True):
         _git(top, ["checkout-index", "-a", "-f"], env=tenv)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
-    modes = _blob(top, st + "/modes.bin") or b""
-    for ent in modes.split(b"\0"):
-        if ent:
-            m, path = ent.split(b" ", 1)
-            full = os.path.join(os.fsencode(top), path)
-            if os.path.isfile(full) and not os.path.islink(full):
-                os.chmod(full, int(m, 8))
+    _apply_modes(top, _blob(top, st + "/modes.bin"), dirs=False)
+    _apply_modes(top, _blob(top, st + "/dirmodes.bin"), dirs=True)       # last: a read-only directory is sealed after its files are written
     # 2. the index, raw bytes, under git's own lock protocol
     idx = _blob(top, st + "/index.bin")
     lock = os.path.join(gitdir, "index.lock")
@@ -457,6 +556,17 @@ def restore(repo, sid, safety=True):
                 fh.write(b)
         elif os.path.exists(path):
             os.unlink(path)
+    for dname in STATE_DIRS:
+        ddir = os.path.join(gitdir, dname)
+        if os.path.isdir(ddir):
+            shutil.rmtree(ddir, ignore_errors=True)
+        if _git(top, ["rev-parse", "-q", "--verify", st + "/" + dname], check=False).returncode == 0:
+            os.makedirs(ddir, exist_ok=True)
+            for ent in _git(top, ["ls-tree", "-z", st + "/" + dname]).stdout.split(b"\0"):
+                if ent:
+                    nm = ent.split(b"\t", 1)[1].decode()
+                    with open(os.path.join(ddir, nm), "wb") as fh:
+                        fh.write(_blob(top, st + "/" + dname + "/" + nm) or b"")
     # 4. refs/remotes describe the remote, which restore never touches. Where one moved since the
     #    snapshot, print the push that would put the remote back. Run it only if the undone command
     #    pushed (a force push, a push --delete). If you fetched someone else's work, do not.
@@ -479,10 +589,53 @@ READONLY = {"cat", "head", "tail", "ls", "stat", "file", "wc", "grep", "egrep", 
             "cmp", "md5", "md5sum", "shasum", "sha1sum", "sha256sum", "du", "df", "echo", "printf", "test",
             "[", "[[", "]]", "realpath", "readlink", "basename", "dirname", "od", "hexdump", "strings", "cut",
             "true", "false", ":", "pwd", "which", "type", "whoami", "id", "uname", "date", "hostname",
-            "jq", "less", "more", "nl", "column", "tr", "seq", "sleep", "wait", "export", "unset", "set",
-            "local", "declare", "read", "ps", "env", "printenv", "cal", "bc", "expr"}
-WRAPPERS = {"sudo", "doas", "command", "builtin", "exec", "nohup", "time", "nice", "ionice", "stdbuf",
-            "timeout", "xargs", "env"}
+            "jq", "less", "more", "zcat", "gzcat", "bzcat", "xzcat", "nl", "column", "tr", "seq", "sleep", "wait", "export", "unset", "set",
+            "local", "declare", "read", "ps", "printenv", "cal", "bc", "expr"}
+# wrapper -> (flags, options that take a value). An option not listed makes the plan snapshot.
+WRAP = {
+    "sudo": (set("EnHSkbABP"), set("ughprCtUTDR")),
+    "doas": (set("n"), set("uC")),
+    "command": (set("p"), set()),
+    "builtin": (set(), set()),
+    "exec": (set("cl"), set("a")),
+    "nohup": (set(), set()),
+    "time": (set("plv"), set("fo")),
+    "nice": (set(), set("n") | {"--adjustment"}),
+    "ionice": (set("t"), set("cnpPu")),
+    "stdbuf": (set(), set("ioe")),
+    "timeout": (set("v") | {"--foreground", "--preserve-status", "--verbose"}, set("ks") | {"--kill-after", "--signal"}),
+    "xargs": (set("0roptx") | {"--null", "--no-run-if-empty", "--verbose", "--interactive", "--exit", "--open-tty"},
+              set("adEILnPs") | {"--arg-file", "--delimiter", "--eof", "--max-lines", "--max-args", "--max-procs",
+                                 "--max-chars", "--process-slot-var"}),
+    "env": (set(), set()),                               # parsed by hand in _unwrap
+}
+XARGS_OPTIONAL = set("eil")                              # -e, -i, -l take an attached value only
+TAR_VAL = set("fCITXbLNVgKHF")
+ASSIGN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\+?=")
+ASSIGNERS = {"export", "declare", "typeset", "local", "readonly"}
+# a variable that makes a program run (git's pager, editor, ssh, external diff, config injection, the dynamic
+# loader, the search path ...). Setting one anywhere in a command gets a snapshot.
+DANGER_ENV = re.compile(r"^(GIT_[A-Z0-9_]*|LD_[A-Z_]*|DYLD_[A-Z_]*|PATH|PAGER|MANPAGER|EDITOR|VISUAL|BASH_ENV|ENV|IFS|"
+                        r"LESSOPEN|LESSCLOSE|SHELLOPTS|PROMPT_COMMAND|PERL5OPT|PYTHONSTARTUP|NODE_OPTIONS|RUBYOPT)$")
+SAFE_ENV = re.compile(r"^GIT_(TERMINAL_PROMPT|OPTIONAL_LOCKS|MERGE_AUTOEDIT|AUTHOR_[A-Z]+|COMMITTER_[A-Z]+|NO_REPLACE_OBJECTS|"
+                      r"CONFIG_NOSYSTEM|LITERAL_PATHSPECS|GLOB_PATHSPECS|NOGLOB_PATHSPECS|ICASE_PATHSPECS)$")
+SAFE_PAGER = re.compile(r"^(cat|less|more|true|:|)( -[A-Za-z]+)*$")
+# git -c keys that cannot make git run a program
+SAFE_CFG = re.compile(r"^(color\.[a-z0-9.-]+|core\.(quotepath|abbrev|filemode|precomposeunicode|ignorecase|autocrlf|"
+                      r"safecrlf|whitespace)|status\.[a-z]+|advice\.[a-z]+|user\.(name|email)|diff\.(renames|context|"
+                      r"algorithm|noprefix|mnemonicprefix|colormoved|ignoresubmodules)|column\.[a-z]+|safe\.directory|"
+                      r"init\.defaultbranch|i18n\.[a-z]+)$", re.I)
+
+
+def _danger(name, val):
+    if name.startswith("GIT_TRACE") and val in ("0", "1", "2", "true", "false", ""):
+        return False
+    if name in ("GIT_PAGER", "PAGER", "MANPAGER", "GIT_EDITOR", "GIT_SEQUENCE_EDITOR", "EDITOR", "VISUAL") \
+            and SAFE_PAGER.match(val):
+        return False
+    return bool(DANGER_ENV.match(name)) and not SAFE_ENV.match(name)
+
+
 KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "!", "{", "}", "(", ")",
             "for", "in", "select", "case", "esac", "function", "coproc"}
 MUTATORS = {"rm", "rmdir", "unlink", "mv", "cp", "ln", "touch", "mkdir", "chmod", "chown", "chgrp",
@@ -503,7 +656,7 @@ def _strip_heredocs(cmd):
     out, lines, i = [], cmd.split("\n"), 0
     while i < len(lines):
         out.append(lines[i])
-        m = re.search(r"<<-?\s*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?", lines[i])
+        m = re.search(r"(?<!<)<<(?!<)-?\s*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?", lines[i])
         i += 1
         if m:
             end = next((j for j in range(i, len(lines)) if lines[j].strip() == m.group(1)), None)
@@ -512,23 +665,41 @@ def _strip_heredocs(cmd):
     return "\n".join(out)
 
 
-def _split(cmd):
+def _events(cmd):
+    """-> list of ("cmd", words) | ("sep", ";" "&&" "||" "|" "|&" "&") | ("open",) | ("close",)."""
     lx = shlex.shlex(cmd.replace("\\\n", " "), posix=True, punctuation_chars=";&|()<>\n")
     lx.whitespace_split = True
     lx.commenters = ""
     lx.whitespace = " \t\r"
-    toks = list(lx)
-    segs, cur = [], []
-    for t in toks:
-        if t in SEP or t == "\n" or (t and set(t) <= set(";&|()\n") and not t.startswith(">")):
-            if cur:
-                segs.append(cur)
-            cur = []
+    ev, cur = [], []
+
+    def flush():
+        if cur:
+            ev.append(("cmd", list(cur)))
+            del cur[:]
+
+    def sep(s):
+        s = s.replace("\n", ";") if set(s) <= set(";\n") else s.replace("\n", "")
+        if s:
+            ev.append(("sep", ";" if set(s) <= {";"} else s))
+
+    for t in lx:
+        if t and set(t) <= set(";&|()\n"):
+            s = ""
+            for ch in t:
+                if ch in "()":
+                    flush()
+                    sep(s)
+                    s = ""
+                    ev.append(("open",) if ch == "(" else ("close",))
+                else:
+                    s += ch
+            flush()
+            sep(s)
         else:
             cur.append(t)
-    if cur:
-        segs.append(cur)
-    return segs
+    flush()
+    return ev
 
 
 def _literal(w):
@@ -550,19 +721,473 @@ def _resolve(w, cwd):
     return os.path.join(parent, os.path.basename(p))
 
 
+def _paths(words, cwds):
+    return [("path", _resolve(w, h)) for h in cwds for w in words]
+
+
+def _opts(a, flags, vals, optatt=(), numeric=False):
+    """Consume the leading options of a wrapper command. -> index of the first operand, or None when an
+    option is not one the plan knows (then the plan cannot tell what runs)."""
+    k = 0
+    while k < len(a):
+        w = a[k]
+        if w == "--":
+            return k + 1
+        if not w.startswith("-") or w == "-":
+            return k
+        if w.startswith("--"):
+            nm, eq, _ = w.partition("=")
+            if nm in vals:
+                k += 1 if eq else 2
+            elif nm in flags:
+                k += 1
+            else:
+                return None
+            continue
+        if numeric and re.fullmatch(r"-\d+", w):
+            k += 1
+            continue
+        cl, used = w[1:], 1
+        for i, c in enumerate(cl):
+            if c in vals:
+                used = 2 if i == len(cl) - 1 else 1
+                break
+            if c in optatt:
+                break
+            if c not in flags:
+                return None
+        k += used
+    return k if k <= len(a) else None
+
+
+def _unwrap(argv, cwds):
+    """Strip sudo, env, xargs and the like. -> (argv, dyn, cwds) or None when the plan cannot parse a
+    wrapper. dyn: the operands come from standard input (xargs). An env -S string is split and run."""
+    dyn, local, n = False, cwds, 0
+    while argv and n < 30:
+        n += 1
+        w = argv[0]
+        m = ASSIGN.match(w)
+        if m:
+            if _danger(m.group(1), w[m.end():]):
+                return None
+            argv = argv[1:]
+            continue
+        name = posixpath.basename(w)
+        if name not in WRAP:
+            break
+        rest = argv[1:]
+        if name == "command" and rest and rest[0] in ("-v", "-V"):
+            return [], dyn, local
+        if name == "env":
+            k, pre = 0, []
+            while k < len(rest):
+                a = rest[k]
+                if a == "--":
+                    k += 1
+                    break
+                if a == "-":
+                    k += 1
+                    continue
+                if not a.startswith("-"):
+                    break
+                if a.startswith("--"):
+                    nm, eq, val = a.partition("=")
+                    if nm in ("--ignore-environment", "--null", "--debug"):
+                        k += 1
+                        continue
+                    if nm in ("--unset", "--chdir", "--split-string", "--argv0"):
+                        if not eq:
+                            if k + 1 >= len(rest):
+                                return None
+                            val, k = rest[k + 1], k + 2
+                        else:
+                            k += 1
+                        if nm == "--chdir":
+                            local = [_resolve(val, h) for h in local]
+                        elif nm == "--split-string":
+                            pre += shlex.split(val)
+                        continue
+                    return None
+                cl, adv = a[1:], 1
+                for i, c in enumerate(cl):
+                    if c in "i0v":
+                        continue
+                    if c in "uCSaP":
+                        if i < len(cl) - 1:
+                            val = cl[i + 1:]
+                        elif k + 1 < len(rest):
+                            val, adv = rest[k + 1], 2
+                        else:
+                            return None
+                        if c == "C":
+                            local = [_resolve(val, h) for h in local]
+                        elif c == "S":
+                            pre += shlex.split(val)
+                        break
+                    return None
+                k += adv
+            argv = pre + rest[k:]
+            continue
+        flags, vals = WRAP[name]
+        k = _opts(rest, flags, vals, XARGS_OPTIONAL if name == "xargs" else (), numeric=(name == "nice"))
+        if k is None:
+            return None
+        rest = rest[k:]
+        if name == "timeout":
+            rest = rest[1:]                              # the duration
+        if name == "xargs":
+            dyn = True
+        argv = rest
+    return argv, dyn, local
+
+
+def _safe_cfg(kv):
+    return bool(SAFE_CFG.match(kv.split("=", 1)[0]))
+
+
+def _short_has(args, letters, stop=""):
+    """True when some short-option cluster in args holds one of letters (a value-taking letter in
+    stop ends the cluster: the rest of it is that option's value)."""
+    for a in args:
+        if a == "--":
+            return False
+        if a.startswith("-") and not a.startswith("--") and len(a) > 1:
+            for c in a[1:]:
+                if c in letters:
+                    return True
+                if c in stop:
+                    break
+    return False
+
+
+def _operands(args):
+    pos, end = [], False
+    for a in args:
+        if end:
+            pos.append(a)
+        elif a == "--":
+            end = True
+        elif a.startswith("--target-directory="):
+            pos.append(a.split("=", 1)[1])
+        elif a and (not a.startswith("-") or a == "-"):
+            pos.append(a)
+    return pos
+
+
+def _sed(args):
+    """-> ("ro", []) | ("edit", operands) | ("unknown", []). An edit is -i in any cluster (-Ei, -ni, -i.bak,
+    --in-place); unknown is a w, W or e command or an s///w, s///e flag, or a script file (-f)."""
+    scripts, pos, k, edit = [], [], 0, False
+    while k < len(args):
+        a = args[k]
+        k += 1
+        if a == "--":
+            pos += args[k:]
+            break
+        if a.startswith("--"):
+            nm, eq, val = a.partition("=")
+            if nm == "--in-place":
+                edit = True
+            elif nm == "--file":
+                return "unknown", []
+            elif nm == "--expression":
+                if not eq and k < len(args):
+                    val, k = args[k], k + 1
+                scripts.append(val)
+            elif nm == "--line-length" and not eq:
+                k += 1
+            continue
+        if a.startswith("-") and len(a) > 1:
+            cl = a[1:]
+            for i, c in enumerate(cl):
+                if c == "i":
+                    edit = True
+                    break                                # the rest of the cluster is the backup suffix
+                if c == "f":
+                    return "unknown", []
+                if c in "el":
+                    val = cl[i + 1:]
+                    if not val and k < len(args):
+                        val, k = args[k], k + 1
+                    if c == "e":
+                        scripts.append(val)
+                    break
+            continue
+        pos.append(a)
+    if not scripts and pos:
+        scripts.append(pos[0])
+    sub = r"s(.)((?:\\.|(?!\1).)*)\1((?:\\.|(?!\1).)*)\1([A-Za-z0-9]*)"
+    for s_ in scripts:
+        for m in re.finditer(sub, s_, re.S):
+            if re.search(r"[we]", m.group(4)):
+                return "unknown", []
+        t = re.sub(sub, "s", s_, flags=re.S)
+        t = re.sub(r"y(.)(?:\\.|(?!\1).)*\1(?:\\.|(?!\1).)*\1", "y", t, flags=re.S)
+        t = re.sub(r"/(?:\\.|[^/])*/", "/", t)
+        if re.search(r"(^|[\s;{}!,$0-9/])[wWe]($|[\s;}]|[^A-Za-z])", t):
+            return "unknown", []
+    return ("edit", [p for p in pos if p]) if edit else ("ro", [])
+
+
+def _sort_out(args):
+    """-> None (it runs a program) | (writes, operands). sort writes with -o in a cluster, --output."""
+    out, writes, end = [], False, False
+    for a in args:
+        if end:
+            out.append(a)
+        elif a == "--":
+            end = True
+        elif a.startswith("--"):
+            nm, _, val = a.partition("=")
+            if nm == "--compress-program":
+                return None
+            if nm == "--output":
+                writes = True
+                out.append(val)
+        elif a.startswith("-") and len(a) > 1:
+            for i, c in enumerate(a[1:]):
+                if c == "o":
+                    writes = True
+                    out.append(a[i + 2:])
+                    break
+                if c in "kftTS":
+                    break
+        else:
+            out.append(a)
+    return writes, [p for p in out if p]
+
+
+def _find(args, cwds):
+    U = [("unknown", None)]
+    k, starts = 0, []
+    while k < len(args) and (args[k] in ("-H", "-L", "-P") or re.match(r"^-[DO]", args[k])):
+        k += 1
+    while k < len(args) and not args[k].startswith("-") and args[k] not in ("(", ")", "!", ","):
+        starts.append(args[k])
+        k += 1
+    out, deleting = [], False
+    for j in range(k, len(args)):
+        a = args[j]
+        if a in ("-exec", "-execdir", "-ok", "-okdir"):
+            return U
+        if a == "-delete":
+            deleting = True
+        elif a in ("-fprint", "-fprint0", "-fprintf", "-fls") and j + 1 < len(args):
+            out.append(args[j + 1])
+    if deleting:
+        out += starts or ["."]
+    return _paths(out, cwds)
+
+
+def _tar(args, cwds):
+    U = [("unknown", None)]
+    modes, files, dirs, need, ops = set(), [], [], [], []
+    stdout = remove = False
+    LONG = {"--create": "c", "--extract": "x", "--get": "x", "--list": "t", "--append": "r", "--update": "u",
+            "--concatenate": "A", "--catenate": "A", "--delete": "D", "--diff": "d", "--compare": "d"}
+    CODE = ("--to-command", "--checkpoint-action", "--use-compress-program", "--info-script",
+            "--new-volume-script", "--rsh-command", "--rmt-command", "--index-file", "--lzop", "--use-compress")
+    k = 0
+    while k < len(args):
+        a = args[k]
+        k += 1
+        if a == "--":
+            ops += args[k:]
+            break
+        if a.startswith("--"):
+            nm, eq, val = a.partition("=")
+            if nm in LONG:
+                modes.add(LONG[nm])
+            elif nm in CODE:
+                return U
+            elif nm in ("--file", "--directory"):
+                if not eq:
+                    if k >= len(args):
+                        return U
+                    val, k = args[k], k + 1
+                (files if nm == "--file" else dirs).append(val)
+            elif nm == "--to-stdout":
+                stdout = True
+            elif nm == "--remove-files":
+                remove = True
+            elif nm in ("--one-top-level",):
+                dirs.append(val or ".")
+            continue
+        first = k == 1 and not a.startswith("-")
+        if a.startswith("-") or first:
+            cl = a if first else a[1:]
+            for i, c in enumerate(cl):
+                if c in "cxtruAd":
+                    modes.add(c)
+                elif c == "O":
+                    stdout = True
+                elif c in "IF":
+                    return U
+                elif c in TAR_VAL:
+                    if first:
+                        need.append(c)                   # old style: the value is a later argument
+                        continue
+                    val = cl[i + 1:]
+                    if not val:
+                        if k >= len(args):
+                            return U
+                        val, k = args[k], k + 1
+                    (files if c == "f" else dirs if c == "C" else []).append(val)
+                    break
+            continue
+        if need:
+            c = need.pop(0)
+            (files if c == "f" else dirs if c == "C" else []).append(a)
+        else:
+            ops.append(a)
+    if need or len(modes) != 1:
+        return U
+    m = modes.pop()
+    if m in ("t", "d"):
+        return []
+    if m == "x":
+        return [] if stdout else _paths(dirs or ["."], cwds)
+    out = [f for f in files if f != "-"]
+    if m == "c" and remove:
+        out += ops
+    return _paths(out, cwds)
+
+
+def _unzip(args, cwds):
+    dest = None
+    k = 0
+    while k < len(args):
+        a = args[k]
+        k += 1
+        if a.startswith("-") and len(a) > 1:
+            for i, c in enumerate(a[1:]):
+                if c in "ltpvZz":
+                    return []
+                if c in "dPOI":
+                    val = a[i + 2:]
+                    if not val and k < len(args):
+                        val, k = args[k], k + 1
+                    if c == "d":
+                        dest = val
+                    break
+    return _paths([dest or "."], cwds)
+
+
+def _mut(name, args, cwds, dyn):
+    """Effects of a command that can write files. [] means this use of it only reads."""
+    U = [("unknown", None)]
+    if name == "perl":
+        return U                                         # perl can write anything
+    if name == "patch":
+        return [] if any(a in ("--dry-run", "--check") for a in args) else U   # targets are in the diff
+    if name == "sed":
+        kind, pos = _sed(args)
+        if kind == "ro":
+            return []
+        return U if dyn or kind == "unknown" else _paths(pos, cwds)
+    if name == "find":
+        eff = _find(args, cwds)
+        return U if dyn and eff else eff
+    if name == "sort":
+        r = _sort_out(args)
+        if r is None:
+            return U
+        return [] if not r[0] else (U if dyn else _paths(r[1], cwds))
+    if name == "uniq":
+        pos = _operands(args)
+        return [] if len(pos) < 2 else (U if dyn else _paths(pos, cwds))
+    if name == "tree":
+        return [] if not _short_has(args, "o") and not any(a.startswith("--output") for a in args) else U
+    if name == "tar":
+        return U if dyn else _tar(args, cwds)
+    if name == "unzip":
+        return U if dyn else _unzip(args, cwds)
+    if name in ("gzip", "gunzip", "bzip2", "xz"):
+        if _short_has(args, "clt", "S") or any(a in ("--stdout", "--to-stdout", "--list", "--test") for a in args):
+            return []
+    if dyn:
+        return U                                         # its operands come from standard input
+    if name == "dd":
+        return _paths([a[3:] for a in args if a.startswith("of=")], cwds)
+    pos = _operands(args)
+    if name in ("chmod", "chown", "chgrp"):
+        ref = any(a.startswith("--reference") for a in args)
+        pos, end = [], False
+        for a in args:
+            if end:
+                pos.append(a)
+            elif a == "--":
+                end = True
+            elif a.startswith("--"):
+                continue
+            elif a.startswith("-") and len(a) > 1 and all(c in "RfvchHLP" for c in a[1:]):
+                continue
+            else:
+                pos.append(a)
+        if not ref:
+            pos = pos[1:]                                # the first operand is the mode or owner (may start with -)
+    if name in ("split", "csplit"):
+        pos = pos + ["."]                                # the pieces land in the current directory
+    return _paths(pos, cwds)
+
+
+def _ro_unsafe(name, args):
+    """A program on the read-only list used in a way that writes or runs a program."""
+    if name in ("rg", "ag"):
+        return any(a.startswith(("--pre", "--hostname-bin", "--pager")) for a in args)
+    if name == "file":
+        return _short_has(args, "C")
+    if name in ("less", "more"):
+        return any(a.startswith(("-o", "-O", "--log-file", "--LOG-FILE")) for a in args)
+    return False
+
+
 def plan(command, cwd):
     """-> {"effects": [...], "why": str}. An effect is ("git", dir), ("path", abs path or None) or
-    ("unknown", None). No effects means provably read-only: no snapshot."""
+    ("unknown", None). No effects means provably read-only: no snapshot. The rule: a snapshot is skipped
+    only for a command the plan can prove read-only. A program it does not know, a form it cannot parse,
+    a git setting or an environment variable that makes git run a program, all get a snapshot."""
     effects, why = [], []
+    U = ("unknown", None)
     if re.search(r"\$\(|`|<\(|>\(", command):
-        return {"effects": [("unknown", None)], "why": "command substitution runs code the plan cannot read"}
+        return {"effects": [U], "why": "command substitution runs code the plan cannot read"}
     try:
-        segs = _split(_strip_heredocs(command))
+        ev = _events(_strip_heredocs(command))
     except ValueError:
-        return {"effects": [("unknown", None)], "why": "quoting the plan cannot parse"}
-    here = cwd
-    for seg in segs:
-        argv, redirs, k = [], [], 0
+        return {"effects": [U], "why": "quoting the plan cannot parse"}
+    cwds, prev, stack, pipe, pend = [cwd], [None], [], False, None
+
+    def settle(sep):
+        # a cd takes effect for what follows it, except in a pipeline or in the background; when the cd
+        # could fail, what follows may run in either directory, so both are kept
+        nonlocal cwds, prev, pend
+        if pend is None:
+            return
+        new, in_pipe = pend
+        pend = None
+        if in_pipe or sep in ("|", "|&", "&"):
+            return
+        sure = sep != "||" and all(p and os.path.isdir(p) for p in new)
+        nxt = new if (sure or sep == "&&") else cwds + [p for p in new if p not in cwds]
+        prev, cwds = cwds, nxt
+
+    for e in ev:
+        if e[0] == "sep":
+            settle(e[1])
+            pipe = e[1] in ("|", "|&")
+            continue
+        if e[0] == "open":
+            settle(";")
+            stack.append((cwds, prev))
+            pipe = False
+            continue
+        if e[0] == "close":
+            settle(";")
+            if stack:
+                cwds, prev = stack.pop()
+            continue
+        seg, argv, redirs, k = e[1], [], [], 0
         while k < len(seg):
             t = seg[k]
             if t in OUT_OPS or (t.endswith(">") and t[:-1].isdigit()):
@@ -584,105 +1209,113 @@ def plan(command, cwd):
         for tgt in redirs:
             if tgt in SAFE_SINKS or tgt.startswith("/dev/fd/"):
                 continue
-            effects.append(("path", _resolve(tgt, here)))
+            effects += _paths([tgt], cwds)
             why.append("writes " + tgt)
-        while argv and (argv[0] in KEYWORDS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", argv[0])):
-            if argv[0] in ("for", "select", "case"):
-                argv = []
-                break
-            argv = argv[1:]
-        while argv and argv[0] in WRAPPERS:
-            w = argv.pop(0)
-            if w in ("timeout",) and argv and not argv[0].startswith("-"):
-                argv.pop(0)
-            while argv and (argv[0].startswith("-") or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", argv[0])):
-                opt = argv.pop(0)
-                if w in ("nice", "xargs", "timeout", "env") and opt in ("-n", "-I", "-L", "-P", "-d", "-s",
-                                                                        "-u", "-k", "-s", "-E", "-S"):
-                    if argv:
-                        argv.pop(0)
-                if w == "timeout" and argv and not argv[0].startswith("-"):
-                    argv.pop(0)
+        while argv:
+            if argv[0] in KEYWORDS:
+                if argv[0] in ("for", "select", "case"):
+                    argv = []
                     break
+                argv = argv[1:]
+            elif ASSIGN.match(argv[0]):
+                m_ = ASSIGN.match(argv[0])
+                if _danger(m_.group(1), argv[0][m_.end():]):
+                    effects.append(U)
+                    why.append("sets " + argv[0].split("=")[0])
+                argv = argv[1:]
+            else:
+                break
+        if argv and posixpath.basename(argv[0]) in ASSIGNERS:
+            for a in argv[1:]:
+                m = ASSIGN.match(a)
+                if m and _danger(m.group(1), a[m.end():]):
+                    effects.append(U)
+                    why.append("exports " + m.group(1))
+        un = _unwrap(argv, cwds)
+        if un is None:
+            effects.append(U)
+            why.append("a wrapper the plan cannot parse")
+            continue
+        argv, dyn, lcwd = un
         if not argv:
             continue
         name = posixpath.basename(argv[0])
         args = argv[1:]
-        if name == "cd":
-            here = _resolve(args[0], here) if args else None
+        if name in ("cd", "pushd", "popd"):
+            a = [x for x in args if x not in ("-L", "-P", "-e", "-@", "--")]
+            if name == "popd" or not a:
+                new = [None]
+            elif a[0] == "-":
+                new = prev
+            else:
+                new = [_resolve(a[0], h) for h in cwds]
+            pend = (new, pipe)
             continue
         if name == "git":
-            sub, k, target = None, 0, here
+            sub, k, target, unsafe = None, 0, list(lcwd), False
             while k < len(args):
                 a = args[k]
-                if a in GIT_GLOBAL_VAL:
-                    if a == "-C":
-                        target = _resolve(args[k + 1], target) if k + 1 < len(args) else None
-                    elif a in ("--git-dir", "--work-tree"):
-                        target = None
+                if a == "-C":
+                    target = [_resolve(args[k + 1], t) if k + 1 < len(args) else None for t in target]
                     k += 2
-                    continue
-                if a.startswith("--git-dir=") or a.startswith("--work-tree="):
-                    target = None
-                if a.startswith("-"):
+                elif a == "-c":
+                    unsafe = unsafe or not _safe_cfg(args[k + 1] if k + 1 < len(args) else "")
+                    k += 2
+                elif a in ("--git-dir", "--work-tree"):
+                    target = [None]
+                    k += 2
+                elif a == "--namespace":
+                    k += 2
+                elif a == "--config-env":
+                    unsafe = True
+                    k += 2
+                elif a.startswith(("--git-dir=", "--work-tree=")):
+                    target = [None]
                     k += 1
-                    continue
-                sub = a
-                break
+                elif a.startswith(("--exec-path", "--config-env=")) or a in ("-p", "--paginate") \
+                        or (a.startswith("-c") and not a.startswith("--")):
+                    unsafe = True                        # may run a program
+                    k += 1
+                elif a.startswith("-"):
+                    k += 1
+                else:
+                    sub = a
+                    break
             rest = args[k + 1:]
-            if sub is not None and _git_readonly(sub, rest):
+            if sub is not None and not unsafe and _git_readonly(sub, rest):
                 continue
-            effects.append(("git", target))
-            why.append("git " + (sub or "?"))
+            effects += [("git", t) for t in target]
+            why.append("git " + (sub or "?") + (" (config that can run a program)" if unsafe else ""))
             continue
         if name in READONLY:
+            if _ro_unsafe(name, args):
+                effects.append(U)
+                why.append(name + " option that writes or runs a program")
             continue
         if name in MUTATORS:
-            if name == "sed" and not any(a.startswith("-i") or a.startswith("--in-place") for a in args) \
-                    and not any(re.search(r"(^|[^A-Za-z])[wWe]([^A-Za-z]|$)", a) for a in args):
-                continue                                 # no in-place edit and no w, W or e command
-            if name == "find" and any(a in ("-exec", "-execdir", "-ok", "-okdir") for a in args):
-                effects.append(("unknown", None))        # it runs a command on paths it finds
-                why.append("find -exec")
-                continue
-            if name == "find" and not any(a in ("-delete", "-fprint", "-fprint0", "-fprintf", "-fls")
-                                          for a in args):
-                continue
-            if name == "sort" and not any(a == "-o" or a.startswith("-o") or a.startswith("--output")
-                                          for a in args):
-                continue
-            if name == "uniq" and len([a for a in args if not a.startswith("-")]) < 2:
-                continue
-            if name == "tree" and "-o" not in args:
-                continue
-            if name == "perl":
-                effects.append(("unknown", None))        # perl can write anything
-                why.append("perl")
-                continue
-            pos = []
-            for a in args:
-                if name == "dd":
-                    if a.startswith("of="):
-                        pos.append(a[3:])
-                elif not a.startswith("-") or a == "-":
-                    pos.append(a)
-            if name in ("chmod", "chown", "chgrp") and pos:
-                pos = pos[1:]                            # the first operand is the mode or owner
-            if name == "find":
-                pos = [a for a in args if not a.startswith("-") and a not in ("(", ")", "!")][:1] or ["."]
-            for a in pos:
-                effects.append(("path", _resolve(a, here)))
-            if pos:
+            eff = _mut(name, args, lcwd, dyn)
+            effects += eff
+            if eff:
                 why.append(name)
             continue
-        effects.append(("unknown", None))
+        effects.append(U)
         why.append(name + " (cannot prove it read-only)")
+    settle(";")
     return {"effects": effects, "why": ", ".join(why) or "read-only"}
 
 
 def _git_readonly(sub, rest):
     pos = [a for a in rest if not a.startswith("-")]
     if any(a.startswith("--output") for a in rest):
+        return False
+    if sub == "grep" and any(a.startswith("-O") or a.startswith("--open-files-in-pager") for a in rest):
+        return False                                     # runs a pager program
+    if sub == "ls-remote" and (any(a.startswith(("--upload-pack", "--exec", "-u")) for a in rest)
+                               or any("::" in a for a in pos)):
+        return False                                     # runs a program, or an ext:: remote helper
+    if sub == "fsck" and any(a.startswith("--lost-found") for a in rest):
+        return False
+    if sub == "cat-file" and any(a in ("--filters", "--textconv") for a in rest):
         return False
     if sub in GIT_READONLY:
         return True
@@ -704,6 +1337,8 @@ def _git_readonly(sub, rest):
     if sub == "reflog":
         return not rest or rest[0] in ("show", "exists")
     if sub == "config":
+        if any(a in ("-e", "--edit") for a in rest):
+            return False                                 # opens an editor
         return any(a in ("--get", "--get-all", "--get-regexp", "--list", "-l", "--show-origin", "get", "list")
                    for a in rest) or (len(pos) == 1 and not any(a.startswith("--unset") or
                                                                  a.startswith("--remove") for a in rest))
@@ -738,7 +1373,7 @@ def snapshot_targets(command, cwd):
             t = _toplevel(val) if val else home
         elif kind == "path" and val is not None:
             hr = os.path.realpath(home) if home else None
-            t = home if hr and (val == hr or val.startswith(hr + os.sep)) else None
+            t = home if hr and (val == hr or val.startswith(hr + os.sep) or hr.startswith(val.rstrip(os.sep) + os.sep)) else None
         else:
             t = home
         if t and t not in repos:

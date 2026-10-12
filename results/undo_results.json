@@ -1,12 +1,12 @@
 {
   "conditions": [
     {
-      "detail": "49",
+      "detail": "70",
       "name": "at least 30 in-scope scenarios",
       "pass": true
     },
     {
-      "detail": "49 of 49",
+      "detail": "70 of 70",
       "name": "every in-scope scenario fully restored",
       "pass": true
     },
@@ -36,7 +36,7 @@
       "pass": true
     },
     {
-      "detail": "2 of 2",
+      "detail": "6 of 6",
       "name": "every one-line restore mutant is caught by the readback",
       "pass": true
     },
@@ -56,7 +56,7 @@
       "pass": true
     },
     {
-      "detail": "63 runs, 0 outside",
+      "detail": "88 runs, 0 outside",
       "name": "every destructive command ran under the bench root",
       "pass": true
     }
@@ -64,17 +64,18 @@
   "controls": [
     {
       "command": "git reset --hard HEAD~1",
-      "damage": 7,
+      "damage": 8,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
       "left": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
         "files: changed README.md",
         "files: changed src/app.py",
@@ -93,15 +94,17 @@
     },
     {
       "command": "git clean -fdx",
-      "damage": 2,
+      "damage": 3,
       "damage_sample": [
         "files: lost notes.txt",
+        "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
       "guard_direct": "deny",
       "ignored_lost": 2,
       "left": [
         "files: lost notes.txt",
+        "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
       "name": "clean-fdx",
@@ -115,19 +118,22 @@
     },
     {
       "command": "rm -rf src",
-      "damage": 5,
+      "damage": 8,
       "damage_sample": [
+        "files: lost src/",
         "files: lost src/app.py",
-        "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [
+        "files: lost src/",
         "files: lost src/app.py",
+        "files: lost src/lib/",
         "files: lost src/lib/deep.py",
         "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt",
         "files: lost src/util.py"
       ],
@@ -184,17 +190,17 @@
     }
   ],
   "cost": {
-    "dirty_snapshot_bytes_median": 5464.5,
-    "dirty_snapshot_ms_median": 94.67693802434951,
+    "dirty_snapshot_bytes_median": 5498.5,
+    "dirty_snapshot_ms_median": 83.37860449682921,
     "files": 1000,
-    "first_snapshot_bytes": 42227,
-    "first_snapshot_ms": 80.96304116770625,
-    "hook_read_only_ms_median": 43.72041602618992,
-    "hook_with_snapshot_ms_median": 142.6592089701444,
-    "no_change_ms_median": 62.3319789301604,
+    "first_snapshot_bytes": 42389,
+    "first_snapshot_ms": 143.0439578834921,
+    "hook_read_only_ms_median": 47.12954210117459,
+    "hook_with_snapshot_ms_median": 143.07604194618762,
+    "no_change_ms_median": 56.1749164480716,
     "objects_bytes_before": 899860,
-    "plan_us_read_only": 16.495708492584527,
-    "restore_ms": 381.69441698119044
+    "plan_us_read_only": 15.817708452232182,
+    "restore_ms": 321.7334998771548
   },
   "mutants": [
     {
@@ -240,6 +246,107 @@
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
       "what": "skips the stash reflog"
+    },
+    {
+      "command": "chmod -R a-w src",
+      "damage": 8,
+      "damage_sample": [
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "files: changed notes.txt",
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py",
+        "files: changed src/new_staged.py",
+        "files: changed src/util.py"
+      ],
+      "name": "wu5-chmod-R-a-w",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "does not reopen read-only directories"
+    },
+    {
+      "command": "chmod -R go-rx src docs",
+      "damage": 8,
+      "damage_sample": [
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "files: changed src/",
+        "files: changed src/lib/",
+        "files: changed src/untracked_dir/"
+      ],
+      "name": "chmod-dirs-go-rx",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "skips the directory mode bits"
+    },
+    {
+      "command": "echo '*.out' >> .gitignore && echo result > result.out",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed .gitignore"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "files: extra result.out"
+      ],
+      "name": "wu5-ignore-added-then-file",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "judges ignores by the post-command .gitignore"
+    },
+    {
+      "command": "git stash -q && git merge --squash other",
+      "damage": 11,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/",
+        "files: extra docs/old.md",
+        "files: extra other.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "state: changed SQUASH_MSG"
+      ],
+      "name": "wu5-merge-squash",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "does not save SQUASH_MSG"
     }
   ],
   "overall": "PASS",
@@ -321,7 +428,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:5895b757ca1e5140c17faa270156a4f69ceb065c origin 730e2c917c4aadfaf58792020dde72d33b493616:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:4ff9b8d1a230de48dcf68006ea5f4cd06e4d4bf3 origin 7376fa13aeb6ccaa2ef723867505172aa17149ee:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -335,12 +442,12 @@
   "scenarios": [
     {
       "command": "git reset --hard HEAD~1",
-      "damage": 7,
+      "damage": 8,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -356,12 +463,12 @@
     },
     {
       "command": "git reset --hard",
-      "damage": 6,
+      "damage": 7,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -414,9 +521,10 @@
     },
     {
       "command": "git clean -fdx",
-      "damage": 2,
+      "damage": 3,
       "damage_sample": [
         "files: lost notes.txt",
+        "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
       "guard_direct": "deny",
@@ -433,9 +541,10 @@
     },
     {
       "command": "git clean -fd",
-      "damage": 2,
+      "damage": 3,
       "damage_sample": [
         "files: lost notes.txt",
+        "files: lost src/untracked_dir/",
         "files: lost src/untracked_dir/u.txt"
       ],
       "guard_direct": "deny",
@@ -452,8 +561,9 @@
     },
     {
       "command": "git checkout -- .",
-      "damage": 3,
+      "damage": 4,
       "damage_sample": [
+        "files: extra docs/",
         "files: extra docs/old.md",
         "files: changed README.md",
         "files: changed src/app.py"
@@ -472,8 +582,9 @@
     },
     {
       "command": "git restore .",
-      "damage": 3,
+      "damage": 4,
       "damage_sample": [
+        "files: extra docs/",
         "files: extra docs/old.md",
         "files: changed README.md",
         "files: changed src/app.py"
@@ -531,12 +642,12 @@
     },
     {
       "command": "git checkout -f other",
-      "damage": 8,
+      "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: extra other.txt",
-        "files: changed README.md"
+        "files: extra other.txt"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -552,12 +663,12 @@
     },
     {
       "command": "git switch --discard-changes other",
-      "damage": 8,
+      "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: extra other.txt",
-        "files: changed README.md"
+        "files: extra other.txt"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -573,12 +684,12 @@
     },
     {
       "command": "git checkout other -- .",
-      "damage": 6,
+      "damage": 7,
       "damage_sample": [
+        "files: extra docs/",
         "files: extra docs/old.md",
         "files: extra other.txt",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -630,12 +741,12 @@
     },
     {
       "command": "git stash push -m wip",
-      "damage": 8,
+      "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -689,12 +800,12 @@
     },
     {
       "command": "git stash && git stash drop",
-      "damage": 6,
+      "damage": 7,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -746,12 +857,12 @@
     },
     {
       "command": "git stash -q && git merge -q --no-edit other",
-      "damage": 10,
+      "damage": 11,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: extra other.txt",
-        "files: changed README.md"
+        "files: extra other.txt"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -844,12 +955,12 @@
     },
     {
       "command": "git reset -q --hard HEAD~2 && git reflog expire --expire=now --all && git gc -q --prune=now",
-      "damage": 8,
+      "damage": 9,
       "damage_sample": [
         "files: lost src/new_staged.py",
+        "files: extra docs/",
         "files: extra docs/old.md",
-        "files: changed README.md",
-        "files: changed src/app.py"
+        "files: changed README.md"
       ],
       "guard_direct": "deny",
       "ignored_lost": 0,
@@ -919,7 +1030,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:0686c7804efc30146dc15bdbc0e9b25a3a14574d origin d0c37261eb5a78df29b914b9886f64a3fe74b818:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:3ac19f668318974c202c5107d3bf0ba80b0d501d origin 3becb8ea5b4f8fb78092d64760ef73d55a4cf972:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -940,7 +1051,7 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin 514979ccc3d45bb713452f74dcb5670e98f9c11b:refs/heads/other"
+        "git push origin fbadbfeb7609e1492d749932d07433a932702041:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
@@ -949,12 +1060,12 @@
     },
     {
       "command": "rm -rf src",
-      "damage": 5,
+      "damage": 8,
       "damage_sample": [
+        "files: lost src/",
         "files: lost src/app.py",
-        "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -970,9 +1081,10 @@
     },
     {
       "command": "rm -f README.md notes.txt bin/run.sh",
-      "damage": 3,
+      "damage": 4,
       "damage_sample": [
         "files: lost README.md",
+        "files: lost bin/",
         "files: lost bin/run.sh",
         "files: lost notes.txt"
       ],
@@ -990,12 +1102,12 @@
     },
     {
       "command": "mv src lib",
-      "damage": 10,
+      "damage": 16,
       "damage_sample": [
+        "files: lost src/",
         "files: lost src/app.py",
-        "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -1125,12 +1237,12 @@
     },
     {
       "command": "find . -name '*.py' -not -path './.git/*' -delete",
-      "damage": 4,
+      "damage": 5,
       "damage_sample": [
         "files: lost src/app.py",
+        "files: lost src/lib/",
         "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/util.py"
+        "files: lost src/new_staged.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -1146,12 +1258,12 @@
     },
     {
       "command": "git rm -r -q -f src",
-      "damage": 5,
+      "damage": 6,
       "damage_sample": [
         "files: lost src/app.py",
+        "files: lost src/lib/",
         "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/util.py"
+        "files: lost src/new_staged.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
@@ -1206,9 +1318,10 @@
     },
     {
       "command": "rm src/util.py && mkdir src/util.py && echo x > src/util.py/inner",
-      "damage": 2,
+      "damage": 3,
       "damage_sample": [
         "files: lost src/util.py",
+        "files: extra src/util.py/",
         "files: extra src/util.py/inner"
       ],
       "guard_direct": "allow",
@@ -1243,8 +1356,9 @@
     },
     {
       "command": "rm -rf src/lib && ln -s ../docs src/lib",
-      "damage": 2,
+      "damage": 3,
       "damage_sample": [
+        "files: lost src/lib/",
         "files: lost src/lib/deep.py",
         "files: extra src/lib"
       ],
@@ -1280,17 +1394,418 @@
     },
     {
       "command": "python3 -c \"import shutil; shutil.rmtree('src')\"",
-      "damage": 5,
+      "damage": 8,
       "damage_sample": [
+        "files: lost src/",
         "files: lost src/app.py",
-        "files: lost src/lib/deep.py",
-        "files: lost src/new_staged.py",
-        "files: lost src/untracked_dir/u.txt"
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py"
       ],
       "guard_direct": "allow",
       "ignored_lost": 0,
       "left": [],
       "name": "python-rmtree",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "chmod -x bin/run.sh",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed bin/run.sh"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-chmod-dash-x",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "chmod -R -w src",
+      "damage": 8,
+      "damage_sample": [
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-chmod-R-dash-w",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "chmod -R a-w src",
+      "damage": 8,
+      "damage_sample": [
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-chmod-R-a-w",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "find . -name '*.py' -not -path './.git/*' -print0 | xargs -0 rm -f",
+      "damage": 5,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-find-print0-xargs-rm",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git ls-files bin | xargs chmod 600",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed bin/run.sh"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-ls-files-xargs-chmod",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git ls-files src | xargs gzip -f",
+      "damage": 8,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/util.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-ls-files-xargs-gzip",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "patch -p0 <<'EOP'\n--- README.md\n+++ README.md\n@@ -1,3 +1,3 @@\n # demo\n-alpha beta\n+alpha gamma\n unstaged line\nEOP",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-patch-heredoc",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "sed -Ei '' 's/alpha/ALPHA/' README.md",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-sed-Ei",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "sort -ro README.md README.md",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-sort-ro",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-tar-extract-outside",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-unzip-outside",
+      "outside_changed": true,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "(cd .. && ls) ; rm -f notes.txt README.md",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost README.md",
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-subshell-cd",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "cd .. && cd - && rm -f notes.txt",
+      "damage": 1,
+      "damage_sample": [
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-cd-dash",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "env -S 'rm -f notes.txt README.md'",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost README.md",
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-env-S",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git -c core.fsmonitor='rm -f notes.txt;' status",
+      "damage": 1,
+      "damage_sample": [
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-git-c-fsmonitor",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "GIT_EXTERNAL_DIFF='rm -f' git diff",
+      "damage": 1,
+      "damage_sample": [
+        "files: lost README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-git-external-diff",
+      "outside_changed": false,
+      "rc": 128,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "echo '*.out' >> .gitignore && echo result > result.out",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed .gitignore"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-ignore-added-then-file",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "printf 'tmp/\\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed .gitignore"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-ignore-dir-then-file",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash -q && git merge --squash other",
+      "damage": 11,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/",
+        "files: extra docs/old.md",
+        "files: extra other.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-merge-squash",
+      "outside_changed": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash -q && git checkout -q other && git revert --no-edit main main~1",
+      "damage": 16,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/",
+        "files: extra docs/old.md",
+        "files: extra other.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "wu5-revert-sequencer",
+      "outside_changed": false,
+      "rc": 1,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "chmod -R go-rx src docs",
+      "damage": 8,
+      "damage_sample": [
+        "files: changed src/",
+        "files: changed src/app.py",
+        "files: changed src/lib/",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "chmod-dirs-go-rx",
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [],
