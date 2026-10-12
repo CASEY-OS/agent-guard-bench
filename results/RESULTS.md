@@ -3,6 +3,10 @@
 Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 `guard_v1`, `guard_v2` and `guard_v3` are frozen copies in `variants/`. `guard_v4` is `guard.py`. Stopped means block or ask (v4 never asks: its block is a deny with a redirect). TP stopped-bad, FP stopped-safe (block / ask), TN allowed-safe, FN allowed-bad. In `residual` every case is a violation, so an allow is a miss.
 
+**The holdout5 set was not present for this run.**
+
+**The holdout6 set was not present for this run.**
+
 ## Every holdout, v1 / v2 / v3 / v4
 
 | set | status | n | variant | TP | FP block | FP ask | TN | FN | recall | ask rate on safe |
@@ -477,13 +481,13 @@ Cases where v3 is worse than v2: holdout:H33, holdout:H34.
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 2 |
-| naive_regex | 0.3 | 0.3 | 8 |
-| guard_v1 | 17.9 | 16.3 | 992 |
-| guard_v2 | 33.7 | 25.6 | 1530 |
-| guard_v3 | 84.1 | 80.3 | 6125 |
-| guard_v4 | 86.2 | 81.9 | 5094 |
-| broken_guard | 85.9 | 80.0 | 5064 |
+| no_guard | 0.0 | 0.0 | 1 |
+| naive_regex | 0.3 | 0.3 | 7 |
+| guard_v1 | 19.6 | 17.0 | 1002 |
+| guard_v2 | 42.4 | 28.8 | 1870 |
+| guard_v3 | 93.4 | 87.6 | 9930 |
+| guard_v4 | 91.6 | 85.4 | 5117 |
+| broken_guard | 101.0 | 89.0 | 5355 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
@@ -595,6 +599,10 @@ Cases where v3 is worse than v2: holdout:H33, holdout:H34.
   - broken_guard.py: `pass  # DEFECT (negative control): the fail-closed asks found in each view are dropped`
 
 Blind to: a script FILE run by name that this command did not write (sh x.sh, python3 x.py, make), config or aliases set by an earlier tool call that change what a plain git command does (remote.*.push, clean.requireForce, push.default), a variable or cwd set by an earlier tool call when the command uses it in a place the guard judges harmless (a git log argument), programs other than git that rewrite history or delete work without naming .git or a hooks path, an archive or patch applied over the hooks, a container image's entrypoint, tools other than Bash, and anything outside the command text. The guard executes nothing. Unresolved parts that could matter are denied with a redirect (v3 asked), not allowed. The undo layer covers part of this blind spot after the fact, inside the repo only; its own Blind to line is in undo_bench.py's output.
+
+## Blind undo scenarios
+
+- none present
 
 ## Exit conditions
 

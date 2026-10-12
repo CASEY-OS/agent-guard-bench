@@ -54,6 +54,7 @@ sys.path.insert(0, HERE)
 import undo  # noqa: E402
 
 RUNS = []                        # every destructive command run, with the repo it ran in
+JAIL = []                        # set by --holdouts: blind commands run with writes jailed to ROOT, no network
 
 
 def inside(path):
@@ -85,8 +86,10 @@ def run_destructive(repo, cmd):
     top = os.path.realpath(git(repo, "rev-parse", "--show-toplevel").decode().strip())
     assert top == rp, "REFUSED: git toplevel %s is not the scenario repo %s" % (top, rp)
     RUNS.append(rp)
-    return subprocess.run(["/bin/bash", "-c", cmd], cwd=rp, env=ENV, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE).returncode
+    argv = ["/bin/bash", "-c", cmd]
+    if JAIL:
+        argv = JAIL + argv
+    return subprocess.run(argv, cwd=rp, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
 
 
 def write(path, data, mode=None):
@@ -357,7 +360,9 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
         route = "script"
     taken = len(snap_refs(repo)) - n0
     untouched = capture(repo, remote) == pre and raw_user_state(repo) == raw_pre
+    out_pre = outside_state(base)
     rc = run_destructive(repo, agent_cmd)
+    outside_changed = outside_state(base) != out_pre
     post = capture(repo, remote)
     damage = diff(pre, post, keys=("files", "index", "refs", "HEAD", "stash", "state", "remotes", "bare"))
     p = subprocess.run([sys.executable, undo_cli, "--repo", repo, "restore", "--last"], env=ENV,
@@ -376,7 +381,21 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "rc": rc,
             "snapshots_taken": taken, "snapshot_left_state_untouched": untouched, "damage": len(damage),
             "damage_sample": damage[:4], "restore_rc": restore_rc, "remote_repair": hints,
-            "left": left, "ignored_lost": len(ignored_lost), "extra": extra, "base": base, "repo": repo}
+            "left": left, "ignored_lost": len(ignored_lost), "outside_changed": outside_changed, "extra": extra,
+            "base": base, "repo": repo}
+
+
+def outside_state(base):
+    """Files beside the repo (not the repo, the bare remote or the bench's own steps): name -> sha256."""
+    seen = {}
+    for dp, dns, fns in os.walk(base):
+        if dp == base:
+            dns[:] = [d for d in dns if d not in ("repo", "remote.git", "steps")]
+        for n in fns:
+            full = os.path.join(dp, n)
+            with open(full, "rb") as fh:
+                seen[os.path.relpath(full, base)] = hashlib.sha256(fh.read()).hexdigest()
+    return seen
 
 
 def plan_cases(outside, repo):
@@ -655,9 +674,70 @@ def main():
     return 0 if ok else 1
 
 
+def jail():
+    """A write jail for commands nobody here wrote: writes only under ROOT, no network. macOS sandbox-exec,
+    else bubblewrap. With neither, blind scenarios are not run at all."""
+    tmp = os.path.join(ROOT, "tmp")
+    os.makedirs(tmp, exist_ok=True)
+    ENV["TMPDIR"] = tmp
+    if shutil.which("sandbox-exec"):
+        prof = ('(version 1)(allow default)(deny network*)(deny file-write* (require-not (subpath "%s")))'
+                '(allow file-write* (literal "/dev/null") (literal "/dev/zero") (literal "/dev/tty"))' % ROOT)
+        return ["sandbox-exec", "-p", prof]
+    if shutil.which("bwrap"):
+        return ["bwrap", "--ro-bind", "/", "/", "--dev", "/dev", "--bind", ROOT, ROOT, "--unshare-net", "--"]
+    return []
+
+
+def holdouts():
+    """Every cases/holdout*/undo_cases.jsonl: play each scenario jailed, judge it against its label."""
+    j = jail()
+    if not j:
+        print("UNDO HOLDOUT none run: no write jail (sandbox-exec or bwrap) on this machine")
+        return 0
+    JAIL[:] = j
+    import glob
+    out = {}
+    for path in sorted(glob.glob(os.path.join(HERE, "cases", "holdout*", "undo_cases.jsonl"))):
+        set_name = os.path.basename(os.path.dirname(path))
+        rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+        res = []
+        for row in rows:
+            want = str(row.get("expect", "")).lower()
+            try:
+                r = play("h-" + str(row["id"]), row["command"], None)
+                if r["damage"] == 0 and not r["ignored_lost"] and not r["outside_changed"]:
+                    verdict = "no-op"            # changed nothing: proves nothing either way
+                elif want == "restore":
+                    verdict = "restored" if (not r["left"] and r["restore_rc"] == 0) else "NOT-restored"
+                else:
+                    verdict = ("residual-loss" if r["left"] or r["ignored_lost"] or r["outside_changed"]
+                               else "restored-anyway")
+                r = {k: v for k, v in r.items() if k not in ("base", "repo", "extra")}
+            except Exception as e:               # a guard that denies even the script route, a setup error
+                r, verdict = {"error": "%s: %s" % (type(e).__name__, e)}, "error"
+            r.update({"id": row["id"], "expect": want, "verdict": verdict, "class": row.get("class")})
+            res.append(r)
+        restore_rows = [r for r in res if r["expect"] == "restore" and r["verdict"] != "no-op"]
+        ok = [r for r in restore_rows if r["verdict"] == "restored"]
+        noop = [r["id"] for r in res if r["verdict"] == "no-op"]
+        bad = ["%s (%s)" % (r["id"], "; ".join(r.get("left", [])[:3]) or r.get("error", "")) for r in restore_rows
+               if r["verdict"] != "restored"]
+        print("UNDO HOLDOUT %s: restored fully %d of %d restore scenarios that changed something; no-op %d%s; "
+              "residual scenarios %d; NOT restored: %s" % (
+                  set_name, len(ok), len(restore_rows), len(noop), (" (" + ", ".join(noop) + ")") if noop else "",
+                  sum(1 for r in res if r["expect"] != "restore"), "; ".join(bad) or "none"))
+        out[set_name] = res
+    os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
+    with open(os.path.join(HERE, "results", "undo_holdouts.json"), "w", encoding="utf-8") as fh:
+        json.dump(json.loads(json.dumps(out).replace(ROOT, "<bench root>")), fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    return 0
+
+
 if __name__ == "__main__":
     try:
-        code = main()
+        code = holdouts() if "--holdouts" in sys.argv[1:] else main()
     finally:
         shutil.rmtree(ROOT, ignore_errors=True)
         print("Bench root deleted: %s" % (not os.path.exists(ROOT)))

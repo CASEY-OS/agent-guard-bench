@@ -69,15 +69,19 @@ CASE_FILES = [
     ("holdout2", os.path.join(HERE, "cases", "holdout2", "holdout2.jsonl")),
     ("holdout3", os.path.join(HERE, "cases", "holdout3", "holdout3.jsonl")),
     ("holdout4", os.path.join(HERE, "cases", "holdout4", "holdout4.jsonl")),
+    ("holdout5", os.path.join(HERE, "cases", "holdout5", "holdout5.jsonl")),
+    ("holdout6", os.path.join(HERE, "cases", "holdout6", "holdout6.jsonl")),
 ]
-HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4")
+HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6")
 HOLDOUT_STATUS = {
     "holdout": "blind for v1; seen before v2, v3 and v4 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3 and v4",
     "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3; seen before v4",
     "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection)",
+    "holdout5": "blind for v1 to v4 (Claude Sonnet, sheet only)",
+    "holdout6": "blind for v1 to v4 (Claude Haiku, sheet only); sealed until the next version is frozen",
 }
-CLASS_SETS = ("holdout2", "holdout3", "holdout4")
+CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
 EXPECT_WORDS = {"block": "block", "deny": "block", "blocked": "block", "denied": "block",
                 "ask": "ask", "stop": "stop", "stopped": "stop",
@@ -385,6 +389,9 @@ def main():
     ub_overall = next((l for l in reversed(ub_lines) if l.startswith("OVERALL: ")), "OVERALL: (missing)")
     ub_restored = next((l for l in ub_lines if l.startswith("Fully restored: ")), "Fully restored: (missing)")
     ub_controls = next((l for l in ub_lines if l.startswith("Controls that show the loss: ")), "(missing)")
+    # blind undo scenarios (cases/holdout*/undo_cases.jsonl), run jailed; reported, never in the exit code
+    uh = subprocess.run([sys.executable, os.path.join(HERE, "undo_bench.py"), "--holdouts"], capture_output=True, text=True)
+    uh_lines = [l for l in uh.stdout.splitlines() if l.startswith("UNDO HOLDOUT ")]
 
     flips = [r["id"] for r in sets["residual"] if verdicts["guard_v4"][r["id"]] != "allow"]
 
@@ -601,6 +608,10 @@ def main():
              "with a redirect (v3 asked), not allowed. The undo layer covers part of this blind spot after the fact, inside "
              "the repo only; its own Blind to line is in undo_bench.py's output.")
     L.append("")
+    L.append("## Blind undo scenarios")
+    L.append("")
+    L.extend(["- " + l for l in uh_lines] or ["- none present"])
+    L.append("")
     L.append("## Exit conditions")
     L.append("")
     for text, passed, detail in conds:
@@ -628,7 +639,7 @@ def main():
                       "redirect_bad": redirect_bad, "redirect_shapes": shape_count,
                       "redirect_alternatives": alts_all, "planted_redirects_caught": planted_caught,
                       "undo_bench": {"overall": ub_overall, "exit": ub.returncode, "restored": ub_restored,
-                                     "controls": ub_controls}},
+                                     "controls": ub_controls, "holdouts": uh_lines}},
            "conditions": [{"name": c[0], "pass": c[1], "detail": c[2]} for c in conds],
            "overall": "PASS" if ok else "FAIL"}
     with open(os.path.join(HERE, "results", "results.json"), "w", encoding="utf-8") as fh:

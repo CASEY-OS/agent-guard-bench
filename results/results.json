@@ -6882,6 +6882,7 @@
     "undo_bench": {
       "controls": "Controls that show the loss: 5 of 5.",
       "exit": 0,
+      "holdouts": [],
       "overall": "OVERALL: PASS",
       "restored": "Fully restored: 49 of 49."
     },
@@ -6943,13 +6944,17 @@
     "holdout": "blind for v1; seen before v2, v3 and v4 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3 and v4",
     "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3; seen before v4",
-    "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection)"
+    "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection)",
+    "holdout5": "blind for v1 to v4 (Claude Sonnet, sheet only)",
+    "holdout6": "blind for v1 to v4 (Claude Haiku, sheet only); sealed until the next version is frozen"
   },
   "holdouts_present": {
     "holdout": true,
     "holdout2": true,
     "holdout3": true,
-    "holdout4": true
+    "holdout4": true,
+    "holdout5": false,
+    "holdout6": false
   },
   "overall": "PASS",
   "python": "3.14.5",
@@ -16952,38 +16957,38 @@
   "root_pinned": "/work/repo",
   "timing_us": {
     "broken_guard": {
-      "max": 5063.875112682581,
-      "mean_median_of_runs": 85.93589045475098,
-      "median_per_command": 80.04193659871817
+      "max": 5354.832857847214,
+      "mean_median_of_runs": 100.9624757509524,
+      "median_per_command": 88.95795326679945
     },
     "guard_v1": {
-      "max": 992.082990705967,
-      "mean_median_of_runs": 17.928737495494246,
-      "median_per_command": 16.292091459035873
+      "max": 1002.1249763667583,
+      "mean_median_of_runs": 19.564526488682063,
+      "median_per_command": 17.041806131601334
     },
     "guard_v2": {
-      "max": 1529.9578662961721,
-      "mean_median_of_runs": 33.6672925857963,
-      "median_per_command": 25.645596906542778
+      "max": 1869.7918858379126,
+      "mean_median_of_runs": 42.37109594691934,
+      "median_per_command": 28.77088263630867
     },
     "guard_v3": {
-      "max": 6124.832900241017,
-      "mean_median_of_runs": 84.10541840345307,
-      "median_per_command": 80.27104195207357
+      "max": 9929.750114679337,
+      "mean_median_of_runs": 93.40063225110201,
+      "median_per_command": 87.56248280405998
     },
     "guard_v4": {
-      "max": 5094.290943816304,
-      "mean_median_of_runs": 86.2403433351579,
-      "median_per_command": 81.87454659491777
+      "max": 5117.250140756369,
+      "mean_median_of_runs": 91.59832471350104,
+      "median_per_command": 85.37503890693188
     },
     "naive_regex": {
-      "max": 7.8750308603048325,
-      "mean_median_of_runs": 0.2691044254982591,
+      "max": 7.2498805820941925,
+      "mean_median_of_runs": 0.2631137829716284,
       "median_per_command": 0.250060111284256
     },
     "no_guard": {
-      "max": 1.5408731997013092,
-      "mean_median_of_runs": 0.04005719653100244,
+      "max": 0.7501803338527679,
+      "mean_median_of_runs": 0.03186115816512674,
       "median_per_command": 0.04190951585769653
     }
   },
