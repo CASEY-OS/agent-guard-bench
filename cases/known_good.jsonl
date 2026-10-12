@@ -1,0 +1,144 @@
+{"id": "good-001", "command": "git add docs/CHANGELOG.md", "expect": "allow", "policy": "none", "why": "ported: one path"}
+{"id": "good-002", "command": "git add docs/CHANGELOG.md config/settings.json", "expect": "allow", "policy": "none", "why": "ported: two paths"}
+{"id": "good-003", "command": "git add -- src/guard.py", "expect": "allow", "policy": "none", "why": "ported: path after end-of-options"}
+{"id": "good-004", "command": "git add \"my file.md\"", "expect": "allow", "policy": "none", "why": "ported: quoted path with a space"}
+{"id": "good-005", "command": "git add $FILE", "expect": "allow", "policy": "none", "why": "ported: a variable as the one path"}
+{"id": "good-006", "command": "git add src/*.ts", "expect": "allow", "policy": "none", "why": "ported: a glob under a directory"}
+{"id": "good-007", "command": "scripts/commit_paths.sh docs/X.md 'msg'", "expect": "allow", "policy": "none", "why": "ported: a reviewed script, not git"}
+{"id": "good-008", "command": "git commit -m 'REVIEW (notes; a; b) -a thing --all of it'", "expect": "allow", "policy": "none", "why": "ported: message text mentions -a and --all"}
+{"id": "good-009", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "why": "ported: amend, no stage-all"}
+{"id": "good-010", "command": "git commit -F /tmp/msg.txt", "expect": "allow", "policy": "none", "why": "ported: message from file"}
+{"id": "good-011", "command": "git commit -m \"fix: add -A retired\"", "expect": "allow", "policy": "none", "why": "ported: message mentions add -A"}
+{"id": "good-012", "command": "git status --short", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-013", "command": "git log --all --name-only", "expect": "allow", "policy": "none", "why": "ported: --all on a read-only verb"}
+{"id": "good-014", "command": "grep -rn 'git add -A' config/settings.json", "expect": "allow", "policy": "none", "why": "ported: grep for the form"}
+{"id": "good-015", "command": "echo 'never run git add --all'", "expect": "allow", "policy": "none", "why": "ported: echo of the form"}
+{"id": "good-016", "command": "git diff --cached --numstat", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-017", "command": "git push origin main", "expect": "allow", "policy": "none", "why": "ported: plain push"}
+{"id": "good-018", "command": "git add -p", "expect": "allow", "policy": "none", "why": "ported: patch mode is by hunk"}
+{"id": "good-019", "command": "git add -n docs/x.md", "expect": "allow", "policy": "none", "why": "ported: dry run by name"}
+{"id": "good-020", "command": "git -C /work/repo add docs/x.md", "expect": "allow", "policy": "none", "why": "ported: -C then one path"}
+{"id": "good-021", "command": "ls -la", "expect": "allow", "policy": "none", "why": "ported: unrelated"}
+{"id": "good-022", "command": "git restore --staged docs/x.md", "expect": "allow", "policy": "none", "why": "ported: unstage one path"}
+{"id": "good-023", "command": "git stash push docs/x.md", "expect": "allow", "policy": "none", "why": "ported: stash one path"}
+{"id": "good-024", "command": "cat > /tmp/runbook.md <<'EOF'\ngit add -A is retired; stage by name\nEOF", "expect": "allow", "policy": "none", "why": "ported: heredoc body is data"}
+{"id": "good-025", "command": "cat > /tmp/e.txt <<'EOF'\nThe class was open: `git add --all`, `git add ./`, `git add -u`.\nEOF", "expect": "allow", "policy": "none", "why": "ported: heredoc with backticked forms"}
+{"id": "good-026", "command": "cat > /tmp/msg <<'EOF'\nStage guard: `git add -A` / `git add --all` now denied\n\nLane: example\nEOF", "expect": "allow", "policy": "none", "why": "ported: commit message heredoc"}
+{"id": "good-027", "command": "cd /work/repo\ngit add src/guard.py docs/POLICY.md\ngit diff --cached --name-only", "expect": "allow", "policy": "none", "why": "ported: real close sequence by name"}
+{"id": "good-028", "command": "for f in a b c; do\n  git add \"$f\"\ndone", "expect": "allow", "policy": "none", "why": "ported: loop that stages by name"}
+{"id": "good-029", "command": "git commit -m \"it's the 'add -A' rule\" ", "expect": "allow", "policy": "none", "why": "ported: nested quotes in a message"}
+{"id": "good-030", "command": "git commit -m'Add a feature'", "expect": "allow", "policy": "none", "why": "ported: glued -m containing the letter a"}
+{"id": "good-031", "command": "python3 - <<'PY'\nprint('git add --all defeats the deny')\nPY", "expect": "allow", "policy": "none", "why": "ported: python heredoc printing the form"}
+{"id": "good-032", "command": "git log --oneline | grep 'add -A'", "expect": "allow", "policy": "none", "why": "ported: grep of log"}
+{"id": "good-033", "command": "git add src/guard.py src/bench.py README.md docs/POLICY.md docs/CHANGELOG.md", "expect": "allow", "policy": "none", "why": "ported: five paths by name"}
+{"id": "good-034", "command": "bash scripts/commit_with_message.sh /tmp/msg.txt", "expect": "allow", "policy": "none", "why": "ported: a reviewed wrapper script"}
+{"id": "good-035", "command": "echo line0\necho line1\necho line2\necho line3\necho line4\necho line5\necho line6\necho line7\necho line8\necho line9\necho line10\necho line11\necho line12\necho line13\necho line14\necho line15\necho line16\necho line17\necho line18\necho line19\necho line20\necho line21\necho line22\necho line23\necho line24\necho line25\necho line26\necho line27\necho line28\necho line29\necho line30\necho line31\necho line32\necho line33\necho line34\necho line35\necho line36\necho line37\necho line38\necho line39\necho line40\necho line41\necho line42\necho line43\necho line44\necho line45\necho line46\necho line47\necho line48\necho line49\necho line50\necho line51\necho line52\necho line53\necho line54\necho line55\necho line56\necho line57\necho line58\necho line59\necho line60\necho line61\necho line62\necho line63\necho line64\necho line65\necho line66\necho line67\necho line68\necho line69\necho line70\necho line71\necho line72\necho line73\necho line74\necho line75\necho line76\necho line77\necho line78\necho line79\necho line80\necho line81\necho line82\necho line83\necho line84\necho line85\necho line86\necho line87\necho line88\necho line89\necho line90\necho line91\necho line92\necho line93\necho line94\necho line95\necho line96\necho line97\necho line98\necho line99\necho line100\necho line101\necho line102\necho line103\necho line104\necho line105\necho line106\necho line107\necho line108\necho line109\necho line110\necho line111\necho line112\necho line113\necho line114\necho line115\necho line116\necho line117\necho line118\necho line119\necho line120\necho line121\necho line122\necho line123\necho line124\necho line125\necho line126\necho line127\necho line128\necho line129\necho line130\necho line131\necho line132\necho line133\necho line134\necho line135\necho line136\necho line137\necho line138\necho line139\necho line140\necho line141\necho line142\necho line143\necho line144\necho line145\necho line146\necho line147\necho line148\necho line149\necho line150\necho line151\necho line152\necho line153\necho line154\necho line155\necho line156\necho line157\necho line158\necho line159\necho line160\necho line161\necho line162\necho line163\necho line164\necho line165\necho line166\necho line167\necho line168\necho line169\necho line170\necho line171\necho line172\necho line173\necho line174\necho line175\necho line176\necho line177\necho line178\necho line179\necho line180\necho line181\necho line182\necho line183\necho line184\necho line185\necho line186\necho line187\necho line188\necho line189\necho line190\necho line191\necho line192\necho line193\necho line194\necho line195\necho line196\necho line197\necho line198\necho line199\ngit add docs/x.md", "expect": "allow", "policy": "none", "why": "ported: 200 lines then add by name"}
+{"id": "good-036", "command": "cat > /tmp/e.txt <<'EOF'\ngit push --no-verify is itself an incident\nEOF", "expect": "allow", "policy": "none", "why": "ported: heredoc body quoting a bypass is data"}
+{"id": "good-037", "command": "cat > /tmp/e.txt <<'EOF'\ngit add -A is retired\nEOF\ngit add docs/x.md", "expect": "allow", "policy": "none", "why": "ported: terminated heredoc, then a real command by name"}
+{"id": "good-038", "command": "git status", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-039", "command": "git log -n 5", "expect": "allow", "policy": "none", "why": "ported: log -n is a count, not commit -n"}
+{"id": "good-040", "command": "git log -n 20 --format=%H", "expect": "allow", "policy": "none", "why": "ported: log -n with format"}
+{"id": "good-041", "command": "git show -s --format='%(trailers:key=Signed-off-by,valueonly)' HEAD", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-042", "command": "git commit -m 'close: guard five'", "expect": "allow", "policy": "none", "why": "ported: plain commit"}
+{"id": "good-043", "command": "git push", "expect": "allow", "policy": "none", "why": "ported: plain push"}
+{"id": "good-044", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "why": "ported: read the hooks path"}
+{"id": "good-045", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "why": "ported: the arming command"}
+{"id": "good-046", "command": "git config core.hooksPath", "expect": "allow", "policy": "none", "why": "ported: bare read"}
+{"id": "good-047", "command": "git grep -n 'no-verify' -- .githooks", "expect": "allow", "policy": "none", "why": "ported: search for the string"}
+{"id": "good-048", "command": "grep -rn 'git push --no-verify' docs/", "expect": "allow", "policy": "none", "why": "ported: search for the string"}
+{"id": "good-049", "command": "git blame -L 60,70 .githooks/pre-push", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-050", "command": "git interpret-trailers --parse /tmp/msg.txt", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-051", "command": "git log -n 5 --grep=commit", "expect": "allow", "policy": "none", "why": "ported: word commit in a grep term"}
+{"id": "good-052", "command": "git log -n 5 -- scripts/commit_paths.sh", "expect": "allow", "policy": "none", "why": "ported: word commit in a path"}
+{"id": "good-053", "command": "git blame -n scripts/commit_paths.sh", "expect": "allow", "policy": "none", "why": "ported: blame -n"}
+{"id": "good-054", "command": "git diff -n -- scripts/commit_paths.sh", "expect": "allow", "policy": "none", "why": "ported: diff -n"}
+{"id": "good-055", "command": "git log -n 3 --grep commit", "expect": "allow", "policy": "none", "why": "ported: grep term as a separate word"}
+{"id": "good-056", "command": "git commit --allow-empty-message -F /tmp/m", "expect": "allow", "policy": "none", "why": "ported: an unrelated long flag"}
+{"id": "good-057", "command": "git shortlog -n -s", "expect": "allow", "policy": "none", "why": "ported: shortlog -n"}
+{"id": "good-058", "command": "git rev-list -n 1 HEAD", "expect": "allow", "policy": "none", "why": "ported: rev-list -n"}
+{"id": "good-059", "command": "git push --dry-run", "expect": "allow", "policy": "none", "why": "ported: dry run"}
+{"id": "good-060", "command": "git config --list | grep hooksPath", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-061", "command": "git config --get-all core.hooksPath", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-062", "command": "git config --get-regexp hooksPath", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-063", "command": "git log --all --oneline | grep -c commit", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-064", "command": "git commit --amend -F /tmp/m", "expect": "allow", "policy": "none", "why": "ported: amend from file"}
+{"id": "good-065", "command": "git commit --no-post-rewrite -F /tmp/m", "expect": "allow", "policy": "none", "why": "ported: an unrelated --no- flag"}
+{"id": "good-066", "command": "git commit --dry-run", "expect": "allow", "policy": "none", "why": "ported: dry run"}
+{"id": "good-067", "command": "git help commit", "expect": "allow", "policy": "none", "why": "ported: help page"}
+{"id": "good-068", "command": "git commit -m \"records the --no-verify bypass as an incident\"", "expect": "allow", "policy": "none", "why": "ported: message names the flag"}
+{"id": "good-069", "command": "git log --grep=core.hooksPath -n 5", "expect": "allow", "policy": "none", "why": "ported: grep term"}
+{"id": "good-070", "command": "git log -S '--no-verify' --oneline -n 10", "expect": "allow", "policy": "none", "why": "ported: pickaxe search"}
+{"id": "good-071", "command": "git add .githooks/commit-msg src/guard.py", "expect": "allow", "policy": "none", "why": "ported: stage hook files by name"}
+{"id": "good-072", "command": "git commit -F /tmp/msg.txt && git push", "expect": "allow", "policy": "none", "why": "ported: commit then push"}
+{"id": "good-073", "command": "git -c color.ui=false log --oneline -n 5", "expect": "allow", "policy": "none", "why": "ported: harmless -c"}
+{"id": "good-074", "command": "git -c core.pager=cat log -n 3", "expect": "allow", "policy": "none", "why": "ported: harmless -c"}
+{"id": "good-075", "command": "git cherry-pick --continue", "expect": "allow", "policy": "none", "why": "ported: continue"}
+{"id": "good-076", "command": "git worktree list", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-077", "command": "git rev-parse --git-path hooks", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-078", "command": "printf 'refs/heads/main %s refs/heads/main %s\\n' \"$H\" \"$H1\" | .githooks/pre-push origin url", "expect": "allow", "policy": "none", "why": "ported: running the hook itself"}
+{"id": "good-079", "command": "git fetch --dry-run", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-080", "command": "git ls-remote --heads origin", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-081", "command": "git cat-file -p HEAD", "expect": "allow", "policy": "none", "why": "ported: read-only"}
+{"id": "good-082", "command": "git add src/", "expect": "allow", "policy": "none", "why": "realistic: one directory by name"}
+{"id": "good-083", "command": "git add src tests", "expect": "allow", "policy": "none", "why": "realistic: two directories by name"}
+{"id": "good-084", "command": "git add ./src", "expect": "allow", "policy": "none", "why": "realistic: dot-slash with a name"}
+{"id": "good-085", "command": "git add .gitignore", "expect": "allow", "policy": "none", "why": "realistic: dotfile by name"}
+{"id": "good-086", "command": "git add .github/workflows/ci.yml", "expect": "allow", "policy": "none", "why": "realistic: dot-directory path by name"}
+{"id": "good-087", "command": "git add .env.example", "expect": "allow", "policy": "none", "why": "realistic: a sample env file by name"}
+{"id": "good-088", "command": "git add *.py", "expect": "allow", "policy": "none", "why": "realistic: glob of one extension"}
+{"id": "good-089", "command": "git add src/*", "expect": "allow", "policy": "none", "why": "realistic: glob under a directory"}
+{"id": "good-090", "command": "git add --intent-to-add src/new.py", "expect": "allow", "policy": "none", "why": "realistic: intent-to-add one path"}
+{"id": "good-091", "command": "git add -v src/a.py src/b.py", "expect": "allow", "policy": "none", "why": "realistic: verbose, by name"}
+{"id": "good-092", "command": "git add -f docs/generated.md", "expect": "allow", "policy": "none", "why": "realistic: force one ignored path by name"}
+{"id": "good-093", "command": "git commit -m 'wip' -- src/a.py", "expect": "allow", "policy": "none", "why": "realistic: commit one path"}
+{"id": "good-094", "command": "git commit src/a.py -m x", "expect": "allow", "policy": "none", "why": "realistic: commit one path, path first"}
+{"id": "good-095", "command": "git commit -m 'Update: fix -n flag handling'", "expect": "allow", "policy": "none", "why": "realistic: message names -n"}
+{"id": "good-096", "command": "git commit -m \"don't use --no-verify\"", "expect": "allow", "policy": "none", "why": "realistic: message names the bypass"}
+{"id": "good-097", "command": "git commit -m x --author='A B <a@b.c>'", "expect": "allow", "policy": "none", "why": "realistic: author flag"}
+{"id": "good-098", "command": "git commit -m 'x' -s", "expect": "allow", "policy": "none", "why": "realistic: sign-off flag"}
+{"id": "good-099", "command": "git commit -S -m x", "expect": "allow", "policy": "none", "why": "realistic: gpg sign"}
+{"id": "good-100", "command": "git commit --amend", "expect": "allow", "policy": "none", "why": "realistic: amend"}
+{"id": "good-101", "command": "git commit --fixup=HEAD~1", "expect": "allow", "policy": "none", "why": "realistic: fixup"}
+{"id": "good-102", "command": "git commit --allow-empty -m 'trigger ci'", "expect": "allow", "policy": "none", "why": "realistic: empty commit"}
+{"id": "good-103", "command": "git config user.name 'A'", "expect": "allow", "policy": "none", "why": "realistic: ordinary config"}
+{"id": "good-104", "command": "git config --global user.email a@b.c", "expect": "allow", "policy": "none", "why": "realistic: ordinary config"}
+{"id": "good-105", "command": "git config --local core.hooksPath .githooks", "expect": "allow", "policy": "none", "why": "realistic: arming with scope"}
+{"id": "good-106", "command": "git -c core.hooksPath=.githooks commit -m x", "expect": "allow", "policy": "none", "why": "realistic: one-shot override to the real hooks dir"}
+{"id": "good-107", "command": "git rebase -i HEAD~3", "expect": "allow", "policy": "none", "why": "realistic: interactive rebase"}
+{"id": "good-108", "command": "git rebase main", "expect": "allow", "policy": "none", "why": "realistic: rebase"}
+{"id": "good-109", "command": "git merge --no-ff feature", "expect": "allow", "policy": "none", "why": "realistic: --no-ff is not --no-verify"}
+{"id": "good-110", "command": "git merge --no-commit x", "expect": "allow", "policy": "none", "why": "realistic: --no-commit"}
+{"id": "good-111", "command": "git merge -n x", "expect": "allow", "policy": "none", "why": "realistic: merge -n is no-stat"}
+{"id": "good-112", "command": "git revert -n HEAD", "expect": "allow", "policy": "none", "why": "realistic: revert -n is no-commit"}
+{"id": "good-113", "command": "git cherry-pick -n abc123", "expect": "allow", "policy": "none", "why": "realistic: cherry-pick -n is no-commit"}
+{"id": "good-114", "command": "git pull --rebase", "expect": "allow", "policy": "none", "why": "realistic: pull"}
+{"id": "good-115", "command": "git push --force-with-lease", "expect": "allow", "policy": "none", "why": "realistic: safe force"}
+{"id": "good-116", "command": "git push -u origin feat", "expect": "allow", "policy": "none", "why": "realistic: set upstream"}
+{"id": "good-117", "command": "git push -n", "expect": "allow", "policy": "none", "why": "realistic: push -n is dry run"}
+{"id": "good-118", "command": "git revert HEAD", "expect": "allow", "policy": "none", "why": "realistic: revert"}
+{"id": "good-119", "command": "git checkout -- src/a.py", "expect": "allow", "policy": "none", "why": "realistic: discard one path"}
+{"id": "good-120", "command": "git restore src/a.py", "expect": "allow", "policy": "none", "why": "realistic: restore one path"}
+{"id": "good-121", "command": "git restore --staged .", "expect": "allow", "policy": "none", "why": "realistic: unstage; not staging"}
+{"id": "good-122", "command": "git reset --hard", "expect": "allow", "policy": "none", "why": "realistic: not staging"}
+{"id": "good-123", "command": "git stash -u", "expect": "allow", "policy": "none", "why": "realistic: stash includes untracked, not a stage"}
+{"id": "good-124", "command": "git diff -u", "expect": "allow", "policy": "none", "why": "realistic: unified diff"}
+{"id": "good-125", "command": "git log -a", "expect": "allow", "policy": "none", "why": "realistic: log"}
+{"id": "good-126", "command": "git branch -a", "expect": "allow", "policy": "none", "why": "realistic: list"}
+{"id": "good-127", "command": "git branch -u origin/main", "expect": "allow", "policy": "none", "why": "realistic: set upstream"}
+{"id": "good-128", "command": "git fetch --all", "expect": "allow", "policy": "none", "why": "realistic: fetch all remotes"}
+{"id": "good-129", "command": "git push --all", "expect": "allow", "policy": "none", "why": "realistic: push all branches, not staging"}
+{"id": "good-130", "command": "git ls-files -u", "expect": "allow", "policy": "none", "why": "realistic: list unmerged"}
+{"id": "good-131", "command": "git status -uno", "expect": "allow", "policy": "none", "why": "realistic: status flag"}
+{"id": "good-132", "command": "git rm -r --cached src/build", "expect": "allow", "policy": "none", "why": "realistic: unstage one path"}
+{"id": "good-133", "command": "git mv a.py b.py", "expect": "allow", "policy": "none", "why": "realistic: rename"}
+{"id": "good-134", "command": "git tag -a v1 -m x", "expect": "allow", "policy": "none", "why": "realistic: annotated tag"}
+{"id": "good-135", "command": "pre-commit run --all-files", "expect": "allow", "policy": "none", "why": "realistic: a different tool"}
+{"id": "good-136", "command": "grep -r 'git add -A' docs/", "expect": "allow", "policy": "none", "why": "realistic: search"}
+{"id": "good-137", "command": "cat README.md | grep 'no-verify'", "expect": "allow", "policy": "none", "why": "realistic: search"}
+{"id": "good-138", "command": "printf 'git commit -n'", "expect": "allow", "policy": "none", "why": "realistic: print only"}
+{"id": "good-139", "command": "git log --grep='--no-verify'", "expect": "allow", "policy": "none", "why": "realistic: search"}
+{"id": "good-140", "command": "npm run build && git add dist/ && git commit -m build", "expect": "allow", "policy": "none", "why": "realistic: stage a named directory"}
+{"id": "good-141", "command": "npm test && git add src/a.js && git commit -m 'fix a'", "expect": "allow", "policy": "none", "why": "realistic: chain by name"}
+{"id": "good-142", "command": "python3 -m pytest -q", "expect": "allow", "policy": "none", "why": "realistic: unrelated"}
+{"id": "good-143", "command": "git diff --stat HEAD~1", "expect": "allow", "policy": "none", "why": "realistic: read-only"}
+{"id": "good-144", "command": "git show HEAD:src/guard.py", "expect": "allow", "policy": "none", "why": "realistic: read-only"}

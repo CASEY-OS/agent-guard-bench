@@ -1,0 +1,33 @@
+{"id": "res-01", "command": "bash -c \"git add -A\"", "expect": "allow", "policy": "A", "why": "wrapper: the command is inside a string argument to a shell. Documented bound."}
+{"id": "res-02", "command": "echo x | xargs git add -A", "expect": "allow", "policy": "A", "why": "wrapper: git is not the command word. Documented bound."}
+{"id": "res-03", "command": "git add ~/work/repo", "expect": "allow", "policy": "A", "why": "repo root spelled with ~ is not resolved. Documented bound."}
+{"id": "res-04", "command": "bash -c 'git push --no-verify'", "expect": "allow", "policy": "B", "why": "wrapper: bypass inside a shell string. Documented bound."}
+{"id": "res-05", "command": "eval 'git push --no-verify'", "expect": "allow", "policy": "B", "why": "wrapper: eval of a string. Documented bound."}
+{"id": "res-06", "command": "rm .githooks/pre-push", "expect": "allow", "policy": "B", "why": "not a git call: deleting the hook file is outside a git-command check. Documented bound."}
+{"id": "res-07", "command": "git add \"$(pwd)\"", "expect": "allow", "policy": "A", "why": "found by probing: quoted command substitution is one token, unquoted form is caught"}
+{"id": "res-08", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "allow", "policy": "A", "why": "found by probing: quoted substitution resolving to the repo root"}
+{"id": "res-09", "command": "if true; then git add -A; fi", "expect": "allow", "policy": "A", "why": "found by probing: a shell keyword is the segment head, not git"}
+{"id": "res-10", "command": "for d in a b; do git -C $d add -A; done", "expect": "allow", "policy": "A", "why": "found by probing: one-line loop, `do` is the segment head"}
+{"id": "res-11", "command": "env -i git add -A", "expect": "allow", "policy": "A", "why": "found by probing: a wrapper with its own flag; only bare wrapper words are skipped"}
+{"id": "res-12", "command": "sudo -u builder git add -A", "expect": "allow", "policy": "A", "why": "found by probing: sudo with a flag and value"}
+{"id": "res-13", "command": "/usr/bin/env git add -A", "expect": "allow", "policy": "A", "why": "found by probing: env by absolute path is not a listed wrapper"}
+{"id": "res-14", "command": "! git add -A", "expect": "allow", "policy": "A", "why": "found by probing: negation is the segment head"}
+{"id": "res-15", "command": "PATHS=.; git add $PATHS", "expect": "allow", "policy": "A", "why": "variables are not expanded; the string shows no blanket form"}
+{"id": "res-16", "command": "F=-A; git add $F", "expect": "allow", "policy": "A", "why": "variables are not expanded; the flag is hidden in $F"}
+{"id": "res-17", "command": "git add ./*", "expect": "allow", "policy": "A", "why": "glob that expands to nearly the whole tree is not recognized"}
+{"id": "res-18", "command": "git add src/..", "expect": "allow", "policy": "A", "why": "path that resolves to the root through .. is not resolved"}
+{"id": "res-19", "command": "git add ':(top)'", "expect": "allow", "policy": "A", "why": "pathspec magic that means the whole tree is not parsed"}
+{"id": "res-20", "command": "git add \\\n -A", "expect": "allow", "policy": "A", "why": "found by probing: backslash-newline continuation hides the flag"}
+{"id": "res-21", "command": "git ca -m x", "expect": "allow", "policy": "A", "why": "an alias (commit -a) defined earlier; the string shows nothing"}
+{"id": "res-22", "command": "sh scripts/commit_all.sh", "expect": "allow", "policy": "A", "why": "a committed script that stages everything is outside the command text"}
+{"id": "res-23", "command": "python3 -c \"import subprocess; subprocess.run(['git','add','-A'])\"", "expect": "allow", "policy": "A", "why": "git called from an interpreter, not from the shell"}
+{"id": "res-24", "command": "git commit --gpg-sign -a -m x", "expect": "allow", "policy": "A", "why": "found by probing: --gpg-sign is listed as value-taking so the next flag (-a) is skipped"}
+{"id": "res-25", "command": "git commit \"--no-verify\" -m x", "expect": "allow", "policy": "B", "why": "found by probing: quote stripping is handled for push only, not commit"}
+{"id": "res-26", "command": "git rebase \"--no-verify\" main", "expect": "allow", "policy": "B", "why": "found by probing: quoted flag on rebase"}
+{"id": "res-27", "command": "git commit -m x '-n'", "expect": "allow", "policy": "B", "why": "found by probing: quoted -n is stripped as if it were message text"}
+{"id": "res-28", "command": "git config core.hookspath /dev/null", "expect": "allow", "policy": "B", "why": "found by probing: git config keys are case-insensitive, the guard matches case-sensitively"}
+{"id": "res-29", "command": "HUSKY=0 git commit -m x", "expect": "allow", "policy": "B", "why": "tool-specific env switches for hook runners are not git's own flags"}
+{"id": "res-30", "command": "SKIP=lint git commit -m x", "expect": "allow", "policy": "B", "why": "pre-commit's SKIP env var disables hooks and is not recognized"}
+{"id": "res-31", "command": "git --config-env=core.hooksPath=NOHOOKS commit -m x", "expect": "allow", "policy": "B", "why": "found by probing: --config-env is another route to a config override"}
+{"id": "res-32", "command": "chmod -x .git/hooks/pre-commit", "expect": "allow", "policy": "B", "why": "not a git call: disabling the hook by file mode"}
+{"id": "res-33", "command": "mv .git/hooks .git/hooks.off", "expect": "allow", "policy": "B", "why": "not a git call: moving the hooks directory away"}

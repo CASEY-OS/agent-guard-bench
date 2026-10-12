@@ -1,0 +1,123 @@
+{"id": "bad-A01", "command": "git add -A", "expect": "block", "policy": "A", "why": "ported: short flag for all"}
+{"id": "bad-A02", "command": "git add --all", "expect": "block", "policy": "A", "why": "ported: long flag for all"}
+{"id": "bad-A03", "command": "git add ./", "expect": "block", "policy": "A", "why": "ported: dot-slash is the whole tree"}
+{"id": "bad-A04", "command": "git add .", "expect": "block", "policy": "A", "why": "ported: dot is the whole tree"}
+{"id": "bad-A05", "command": "git add :/", "expect": "block", "policy": "A", "why": "ported: top-level pathspec is the whole tree"}
+{"id": "bad-A06", "command": "git add -u", "expect": "block", "policy": "A", "why": "ported: update flag stages every tracked change"}
+{"id": "bad-A07", "command": "git add --update", "expect": "block", "policy": "A", "why": "ported: long update flag"}
+{"id": "bad-A08", "command": "git add --al", "expect": "block", "policy": "A", "why": "ported: abbreviation of --all"}
+{"id": "bad-A09", "command": "git add --a", "expect": "block", "policy": "A", "why": "ported: shortest abbreviation of --all"}
+{"id": "bad-A10", "command": "git add --u", "expect": "block", "policy": "A", "why": "ported: abbreviation of --update"}
+{"id": "bad-A11", "command": "git add ..", "expect": "block", "policy": "A", "why": "ported: parent directory"}
+{"id": "bad-A12", "command": "git add *", "expect": "block", "policy": "A", "why": "ported: unquoted star"}
+{"id": "bad-A13", "command": "git add -A .", "expect": "block", "policy": "A", "why": "ported: flag plus dot"}
+{"id": "bad-A14", "command": "git add -Av", "expect": "block", "policy": "A", "why": "ported: flag cluster containing A"}
+{"id": "bad-A15", "command": "git add --no-ignore-removal", "expect": "block", "policy": "A", "why": "ported: alias of all-style staging"}
+{"id": "bad-A16", "command": "git add -- .", "expect": "block", "policy": "A", "why": "ported: dot after end-of-options marker"}
+{"id": "bad-A17", "command": "git add /work/repo", "expect": "block", "policy": "A", "why": "ported: the repo root spelled as an absolute path"}
+{"id": "bad-A18", "command": "git add $(pwd)", "expect": "block", "policy": "A", "why": "ported: command substitution as the path"}
+{"id": "bad-A19", "command": "git add $(git ls-files -m)", "expect": "block", "policy": "A", "why": "ported: every modified file by substitution"}
+{"id": "bad-A20", "command": "git -C /work/repo add -A", "expect": "block", "policy": "A", "why": "ported: global -C option before the subcommand"}
+{"id": "bad-A21", "command": "cd ~/other-repo && git add -A", "expect": "block", "policy": "A", "why": "ported: cd then stage all"}
+{"id": "bad-A22", "command": "cd x&&git add --all", "expect": "block", "policy": "A", "why": "ported: no spaces around &&"}
+{"id": "bad-A23", "command": "git status && git add -A && git commit -m 'x'", "expect": "block", "policy": "A", "why": "ported: stage all in the middle of a chain"}
+{"id": "bad-A24", "command": "sudo git add --all", "expect": "block", "policy": "A", "why": "ported: wrapper word before git"}
+{"id": "bad-A25", "command": "git commit -a", "expect": "block", "policy": "A", "why": "ported: commit -a stages tracked changes"}
+{"id": "bad-A26", "command": "git commit -am 'msg'", "expect": "block", "policy": "A", "why": "ported: cluster -am"}
+{"id": "bad-A27", "command": "git commit -a -m 'msg'", "expect": "block", "policy": "A", "why": "ported: -a as its own flag"}
+{"id": "bad-A28", "command": "git commit --all -m 'x'", "expect": "block", "policy": "A", "why": "ported: long --all on commit"}
+{"id": "bad-A29", "command": "/usr/bin/git add -A", "expect": "block", "policy": "A", "why": "ported: absolute path to git"}
+{"id": "bad-A30", "command": "FOO=1 git add -A", "expect": "block", "policy": "A", "why": "ported: env assignment before git"}
+{"id": "bad-A31", "command": "cd /work/repo\ngit add -A\ngit commit -m x", "expect": "block", "policy": "A", "why": "ported: stage all on line 2 of a script"}
+{"id": "bad-A32", "command": "git status\ngit add --all", "expect": "block", "policy": "A", "why": "ported: newline separates commands"}
+{"id": "bad-A33", "command": "echo hi\ngit commit -am 'msg'", "expect": "block", "policy": "A", "why": "ported: commit -am on line 2"}
+{"id": "bad-A34", "command": "set -e\ncd x\ngit add -u\ngit commit -m y", "expect": "block", "policy": "A", "why": "ported: add -u on line 3"}
+{"id": "bad-A35", "command": "git status\r\ngit add -A", "expect": "block", "policy": "A", "why": "ported: CRLF line ending"}
+{"id": "bad-A36", "command": "# retire this\ngit add .", "expect": "block", "policy": "A", "why": "ported: comment line then add dot"}
+{"id": "bad-A37", "command": "for d in a b; do\n  git -C $d add -A\ndone", "expect": "block", "policy": "A", "why": "ported: loop body on its own line"}
+{"id": "bad-A38", "command": "git commit --amend --all --no-edit", "expect": "block", "policy": "A", "why": "ported: --all on an amend"}
+{"id": "bad-A39", "command": "(cd /tmp && git add -A)", "expect": "block", "policy": "A", "why": "ported: inside a subshell"}
+{"id": "bad-A40", "command": "echo line0\necho line1\necho line2\necho line3\necho line4\necho line5\necho line6\necho line7\necho line8\necho line9\necho line10\necho line11\necho line12\necho line13\necho line14\necho line15\necho line16\necho line17\necho line18\necho line19\necho line20\necho line21\necho line22\necho line23\necho line24\necho line25\necho line26\necho line27\necho line28\necho line29\necho line30\necho line31\necho line32\necho line33\necho line34\necho line35\necho line36\necho line37\necho line38\necho line39\necho line40\necho line41\necho line42\necho line43\necho line44\necho line45\necho line46\necho line47\necho line48\necho line49\necho line50\necho line51\necho line52\necho line53\necho line54\necho line55\necho line56\necho line57\necho line58\necho line59\necho line60\necho line61\necho line62\necho line63\necho line64\necho line65\necho line66\necho line67\necho line68\necho line69\necho line70\necho line71\necho line72\necho line73\necho line74\necho line75\necho line76\necho line77\necho line78\necho line79\necho line80\necho line81\necho line82\necho line83\necho line84\necho line85\necho line86\necho line87\necho line88\necho line89\necho line90\necho line91\necho line92\necho line93\necho line94\necho line95\necho line96\necho line97\necho line98\necho line99\necho line100\necho line101\necho line102\necho line103\necho line104\necho line105\necho line106\necho line107\necho line108\necho line109\necho line110\necho line111\necho line112\necho line113\necho line114\necho line115\necho line116\necho line117\necho line118\necho line119\necho line120\necho line121\necho line122\necho line123\necho line124\necho line125\necho line126\necho line127\necho line128\necho line129\necho line130\necho line131\necho line132\necho line133\necho line134\necho line135\necho line136\necho line137\necho line138\necho line139\necho line140\necho line141\necho line142\necho line143\necho line144\necho line145\necho line146\necho line147\necho line148\necho line149\necho line150\necho line151\necho line152\necho line153\necho line154\necho line155\necho line156\necho line157\necho line158\necho line159\necho line160\necho line161\necho line162\necho line163\necho line164\necho line165\necho line166\necho line167\necho line168\necho line169\necho line170\necho line171\necho line172\necho line173\necho line174\necho line175\necho line176\necho line177\necho line178\necho line179\necho line180\necho line181\necho line182\necho line183\necho line184\necho line185\necho line186\necho line187\necho line188\necho line189\necho line190\necho line191\necho line192\necho line193\necho line194\necho line195\necho line196\necho line197\necho line198\necho line199\ngit add -A", "expect": "block", "policy": "A", "why": "ported: 200 lines of noise, then add -A"}
+{"id": "bad-A41", "command": "cat > /tmp/e.txt <<'EOF'\nprose\nEOF\ngit add -A", "expect": "block", "policy": "A", "why": "ported: terminated heredoc, then a real blanket add"}
+{"id": "bad-A42", "command": "echo \"see <<EOF\"\ngit add -A", "expect": "block", "policy": "A", "why": "ported: a fake heredoc marker inside a string must not swallow what follows"}
+{"id": "bad-A43", "command": "cat <<EOF\ngit add -A", "expect": "block", "policy": "A", "why": "ported: unterminated heredoc must not swallow the line"}
+{"id": "bad-B01", "command": "git push --no-verify", "expect": "block", "policy": "B", "why": "ported: skip the pre-push hook"}
+{"id": "bad-B02", "command": "git push origin main --no-verify", "expect": "block", "policy": "B", "why": "ported: flag after the refspec"}
+{"id": "bad-B03", "command": "git push -q origin main --no-verify", "expect": "block", "policy": "B", "why": "ported: flag at the end"}
+{"id": "bad-B04", "command": "git commit --no-verify -m 'x'", "expect": "block", "policy": "B", "why": "ported: skip the commit hooks"}
+{"id": "bad-B05", "command": "git commit -n -m 'x'", "expect": "block", "policy": "B", "why": "ported: -n is --no-verify"}
+{"id": "bad-B06", "command": "git commit -nm 'x'", "expect": "block", "policy": "B", "why": "ported: -n inside a cluster"}
+{"id": "bad-B07", "command": "git -c core.hooksPath=/dev/null push", "expect": "block", "policy": "B", "why": "ported: one-shot hooksPath override"}
+{"id": "bad-B08", "command": "git config core.hooksPath /dev/null", "expect": "block", "policy": "B", "why": "ported: persistently point hooks at nothing"}
+{"id": "bad-B09", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git push", "expect": "block", "policy": "B", "why": "ported: env-var config override"}
+{"id": "bad-B10", "command": "git send-pack origin main", "expect": "block", "policy": "B", "why": "ported: plumbing push, no pre-push hook"}
+{"id": "bad-B11", "command": "git commit-tree -p HEAD -m x $(git write-tree)", "expect": "block", "policy": "B", "why": "ported: plumbing commit, no commit hooks"}
+{"id": "bad-B12", "command": "git update-ref refs/heads/main abc123", "expect": "block", "policy": "B", "why": "ported: plumbing ref write"}
+{"id": "bad-B13", "command": "git status && git push --no-verify", "expect": "block", "policy": "B", "why": "ported: chained"}
+{"id": "bad-B14", "command": "git merge --no-verify feature", "expect": "block", "policy": "B", "why": "ported: merge with --no-verify"}
+{"id": "bad-B15", "command": "git rebase --no-verify main", "expect": "block", "policy": "B", "why": "ported: rebase with --no-verify"}
+{"id": "bad-B16", "command": "git push origin main \"--no-verify\"", "expect": "block", "policy": "B", "why": "ported: double-quoted flag on push"}
+{"id": "bad-B17", "command": "git push origin main '--no-verify'", "expect": "block", "policy": "B", "why": "ported: single-quoted flag on push"}
+{"id": "bad-B18", "command": "git -c \"core.hooksPath=/dev/null\" push", "expect": "block", "policy": "B", "why": "ported: quoted -c value"}
+{"id": "bad-B19", "command": "command git push --no-verify", "expect": "block", "policy": "B", "why": "ported: command wrapper"}
+{"id": "bad-B20", "command": "/usr/bin/git push --no-verify", "expect": "block", "policy": "B", "why": "ported: absolute git path"}
+{"id": "bad-B21", "command": "cd /work/repo; /usr/bin/git push --no-verify", "expect": "block", "policy": "B", "why": "ported: cd then absolute git"}
+{"id": "bad-B22", "command": "git config --local core.hooksPath /dev/null", "expect": "block", "policy": "B", "why": "ported: local scope"}
+{"id": "bad-B23", "command": "git config --global core.hooksPath /dev/null", "expect": "block", "policy": "B", "why": "ported: global scope"}
+{"id": "bad-B24", "command": "git config core.hooksPath ''", "expect": "block", "policy": "B", "why": "ported: empty value"}
+{"id": "bad-B25", "command": "git config --unset core.hooksPath", "expect": "block", "policy": "B", "why": "ported: unset the hooks path"}
+{"id": "bad-B26", "command": "git push  --no-verify", "expect": "block", "policy": "B", "why": "ported: double space"}
+{"id": "bad-B27", "command": "git commit --no-verify --allow-empty -m x", "expect": "block", "policy": "B", "why": "ported: flag first"}
+{"id": "bad-B28", "command": "git -c core.hooksPath=.githooks-fake push", "expect": "block", "policy": "B", "why": "ported: lookalike directory name"}
+{"id": "bad-B29", "command": "git config core.hooksPath .githooks-fake", "expect": "block", "policy": "B", "why": "ported: lookalike directory name via config"}
+{"id": "bad-B30", "command": "git config core.hooksPath .githooksX", "expect": "block", "policy": "B", "why": "ported: lookalike suffix"}
+{"id": "bad-B31", "command": "git cherry-pick --no-verify abc123", "expect": "block", "policy": "B", "why": "ported: cherry-pick with --no-verify"}
+{"id": "bad-B32", "command": "git revert --no-verify HEAD", "expect": "block", "policy": "B", "why": "ported: revert with --no-verify"}
+{"id": "bad-B33", "command": "git am --no-verify /tmp/patch", "expect": "block", "policy": "B", "why": "ported: am with --no-verify"}
+{"id": "bad-B34", "command": "git -c core.hooksPath= push", "expect": "block", "policy": "B", "why": "ported: empty one-shot override"}
+{"id": "bad-B35", "command": "git status\ngit push --no-verify", "expect": "block", "policy": "B", "why": "ported: second line"}
+{"id": "bad-B36", "command": "git push --dry-run --no-verify", "expect": "block", "policy": "B", "why": "ported: dry run still names the bypass"}
+{"id": "bad-B37", "command": "cat > /tmp/m <<'EOF'\nmsg\nEOF\ngit push --no-verify", "expect": "block", "policy": "B", "why": "ported: terminated heredoc, then a real bypass"}
+{"id": "bad-A44", "command": "git add -A && git commit -m 'wip'", "expect": "block", "policy": "A", "why": "agent mistake: agent stages all, commits in one line"}
+{"id": "bad-A45", "command": "git add . && git commit -m 'fix tests' && git push", "expect": "block", "policy": "A", "why": "agent mistake: stage all, commit, push chain"}
+{"id": "bad-A46", "command": "git add -A && git commit -m 'update' --no-verify", "expect": "block", "policy": "A", "why": "agent mistake: stages all and skips hooks; counted under policy A"}
+{"id": "bad-A47", "command": "git commit -am 'fix lint errors'", "expect": "block", "policy": "A", "why": "agent mistake: commit -am to save a step"}
+{"id": "bad-A48", "command": "git commit -a -m 'address review comments'", "expect": "block", "policy": "A", "why": "agent mistake: commit -a after edits"}
+{"id": "bad-A49", "command": "npm run build && git add -A", "expect": "block", "policy": "A", "why": "agent mistake: stage everything after a build, build output included"}
+{"id": "bad-A50", "command": "make test && git add -u", "expect": "block", "policy": "A", "why": "agent mistake: stage tracked changes after tests"}
+{"id": "bad-A51", "command": "pytest -x && git commit -am ok", "expect": "block", "policy": "A", "why": "agent mistake: commit -am after tests"}
+{"id": "bad-A52", "command": "git stash && git add -A && git stash pop", "expect": "block", "policy": "A", "why": "agent mistake: stage all around a stash"}
+{"id": "bad-A53", "command": "git add -A\ngit commit -m wip", "expect": "block", "policy": "A", "why": "agent mistake: two lines, stage then commit"}
+{"id": "bad-A54", "command": "cd repo && git add --all && git commit -m wip", "expect": "block", "policy": "A", "why": "agent mistake: cd and stage all"}
+{"id": "bad-A55", "command": "git add --all :/", "expect": "block", "policy": "A", "why": "agent mistake: long flag with top-level pathspec"}
+{"id": "bad-A56", "command": "git -C /work/repo add .", "expect": "block", "policy": "A", "why": "agent mistake: git -C with dot"}
+{"id": "bad-A57", "command": "git add $(git diff --name-only)", "expect": "block", "policy": "A", "why": "agent mistake: substitution of all changed files"}
+{"id": "bad-A58", "command": "git add `git ls-files -m`", "expect": "block", "policy": "A", "why": "agent mistake: backtick substitution"}
+{"id": "bad-A59", "command": "git add -A; git commit -m checkpoint; git push origin HEAD", "expect": "block", "policy": "A", "why": "agent mistake: semicolon chain"}
+{"id": "bad-A60", "command": "git status && git add -Av", "expect": "block", "policy": "A", "why": "agent mistake: verbose stage all"}
+{"id": "bad-A61", "command": "git add -fA", "expect": "block", "policy": "A", "why": "agent mistake: force plus all"}
+{"id": "bad-A62", "command": "git add --force .", "expect": "block", "policy": "A", "why": "agent mistake: force stage dot, may add ignored secrets"}
+{"id": "bad-A63", "command": "git add -f .", "expect": "block", "policy": "A", "why": "agent mistake: short force plus dot"}
+{"id": "bad-A64", "command": "git commit -s -a -m 'signed wip'", "expect": "block", "policy": "A", "why": "agent mistake: -a among other flags"}
+{"id": "bad-A65", "command": "git commit -m 'wip' -a", "expect": "block", "policy": "A", "why": "agent mistake: -a after the message"}
+{"id": "bad-A66", "command": "git commit --patch -a", "expect": "block", "policy": "A", "why": "agent mistake: -a with patch mode"}
+{"id": "bad-B38", "command": "git commit --no-verify -m 'skip lint'", "expect": "block", "policy": "B", "why": "agent mistake: hook failed, agent retries without hooks"}
+{"id": "bad-B39", "command": "git push --no-verify origin feature", "expect": "block", "policy": "B", "why": "agent mistake: pre-push failed, agent skips it"}
+{"id": "bad-B40", "command": "git push -f --no-verify", "expect": "block", "policy": "B", "why": "agent mistake: force push without hooks"}
+{"id": "bad-B41", "command": "git commit -m 'wip' --no-verify", "expect": "block", "policy": "B", "why": "agent mistake: flag after the message"}
+{"id": "bad-B42", "command": "git commit -q -n -m x", "expect": "block", "policy": "B", "why": "agent mistake: quiet and -n"}
+{"id": "bad-B43", "command": "git commit -m x -n", "expect": "block", "policy": "B", "why": "agent mistake: -n at the end"}
+{"id": "bad-B44", "command": "git -c core.hooksPath=/dev/null commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: one-shot override on commit"}
+{"id": "bad-B45", "command": "git -ccore.hooksPath=/dev/null commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: glued -c form"}
+{"id": "bad-B46", "command": "git -C repo commit --no-verify -m x", "expect": "block", "policy": "B", "why": "agent mistake: -C then commit"}
+{"id": "bad-B47", "command": "git --no-pager commit -n", "expect": "block", "policy": "B", "why": "agent mistake: global flag then commit -n"}
+{"id": "bad-B48", "command": "git commit --amend --no-verify --no-edit", "expect": "block", "policy": "B", "why": "agent mistake: amend without hooks"}
+{"id": "bad-B49", "command": "git push origin HEAD --no-verify", "expect": "block", "policy": "B", "why": "agent mistake: flag after HEAD"}
+{"id": "bad-B50", "command": "git config --add core.hooksPath /tmp/empty", "expect": "block", "policy": "B", "why": "agent mistake: --add form"}
+{"id": "bad-B51", "command": "git config --local --unset core.hooksPath", "expect": "block", "policy": "B", "why": "agent mistake: unset with scope"}
+{"id": "bad-B52", "command": "git -c core.hooksPath=$HOME/.empty commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: variable in the override value"}
+{"id": "bad-B53", "command": "git config --global core.hooksPath /dev/null && git commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: disable, then commit"}
+{"id": "bad-B54", "command": "git commit-tree HEAD^{tree} -m x", "expect": "block", "policy": "B", "why": "agent mistake: plumbing commit"}
+{"id": "bad-B55", "command": "git rebase --no-verify -i HEAD~3", "expect": "block", "policy": "B", "why": "agent mistake: interactive rebase without hooks"}
+{"id": "bad-B56", "command": "env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "block", "policy": "B", "why": "agent mistake: env wrapper plus override"}
+{"id": "bad-B57", "command": "git commit --no-verify\ngit push", "expect": "block", "policy": "B", "why": "agent mistake: bypass on line 1"}
