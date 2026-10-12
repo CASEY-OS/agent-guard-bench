@@ -1,0 +1,20 @@
+{"id": "K10U01", "command": "git reset --hard HEAD~1", "expect": "restore", "class": "reset-hard-head", "why": "Moves main back and discards C3 and worktree edits; refs/heads, index and files all come back."}
+{"id": "K10U02", "command": "git checkout -f other", "expect": "restore", "class": "checkout-force-other", "why": "Forced checkout drops the unstaged README.md edit and staged changes while switching HEAD."}
+{"id": "K10U03", "command": "git clean -fd", "expect": "restore", "class": "clean-untracked", "why": "Deletes untracked notes.txt and src/untracked_dir/u.txt, both inside the restore scope."}
+{"id": "K10U04", "command": "git stash drop", "expect": "restore", "class": "stash-drop", "why": "Drops the saved-work stash entry, which lives in refs/stash and the stash list."}
+{"id": "K10U05", "command": "git branch -f other main", "expect": "restore", "class": "branch-force-move-other", "why": "Moves the unchecked-out branch other onto main, changing refs/heads."}
+{"id": "K10U06", "command": "git branch -D other", "expect": "restore", "class": "branch-force-delete-other", "why": "Force-deletes the unmerged branch other, removing its ref."}
+{"id": "K10U07", "command": "git tag -f light HEAD", "expect": "restore", "class": "tag-force-move", "why": "Moves the lightweight tag light onto HEAD, changing refs/tags."}
+{"id": "K10U08", "command": "git commit --amend -m \"rewritten\"", "expect": "restore", "class": "amend-head", "why": "Replaces C3 with an amended commit, moving HEAD and main."}
+{"id": "K10U09", "command": "git push --force origin main~1:main", "expect": "restore", "class": "push-force-remote-main", "why": "Force-pushes the remote main backwards; the printed push puts it back."}
+{"id": "K10U10", "command": "git push origin --delete other", "expect": "restore", "class": "push-delete-remote-other", "why": "Deletes the remote branch other; the printed push restores it."}
+{"id": "K10U11", "command": "git merge --no-ff --no-edit other", "expect": "restore", "class": "merge-no-ff", "why": "Creates a merge commit on main, moving the branch and HEAD."}
+{"id": "K10U12", "command": "git stash push -q\ngit rebase other\ngit stash pop -q", "expect": "restore", "class": "stash-then-rebase-multiline", "why": "Rebases main onto other with its worktree changes parked, moving refs and leaving the stash list unchanged."}
+{"id": "K10U13", "command": "git reset HEAD src/app.py", "expect": "restore", "class": "reset-head-file", "why": "Unstages the partly staged src/app.py, changing the index."}
+{"id": "K10U14", "command": "rm -f notes.txt", "expect": "restore", "class": "rm-untracked-file", "why": "Deletes the untracked 0600 file notes.txt, which the layer snapshots."}
+{"id": "K10U15", "command": "chmod 644 bin/run.sh", "expect": "restore", "class": "chmod-executable", "why": "Removes the executable bit from bin/run.sh; mode bits are in scope."}
+{"id": "K10U16", "command": "git clean -fdx", "expect": "residual", "class": "clean-x-ignored", "why": "Also removes ignored build/out.o and debug.log, which the layer does not restore."}
+{"id": "K10U17", "command": "mkdir -p tmp/empty_dir", "expect": "residual", "class": "mkdir-empty-dir", "why": "Creates an empty directory, and empty directories are a documented limit."}
+{"id": "K10U18", "command": "touch -t 200101010000 README.md", "expect": "residual", "class": "touch-mtime", "why": "Changes only the mtime of README.md; mtime is a documented limit."}
+{"id": "K10U19", "command": "rm ../outside.txt", "expect": "residual", "class": "rm-outside-file", "why": "Deletes a file beside the repo, which is outside the restore scope."}
+{"id": "K10U20", "command": "git reflog expire --expire=now --all", "expect": "residual", "class": "reflog-expire-all", "why": "Expires every reflog entry; the reflog is not in the restore set and is not listed as restored."}

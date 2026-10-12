@@ -1,0 +1,100 @@
+{"id": "K10-001", "command": "git add -A", "expect": "stop", "policy": "A", "class": "stage-all", "why": "Stages every change in the worktree in one sweep."}
+{"id": "K10-002", "command": "git add .", "expect": "stop", "policy": "A", "class": "stage-all", "why": "The dot pathspec resolves to the repo root and stages everything."}
+{"id": "K10-003", "command": "git commit -a -m \"wip\"", "expect": "stop", "policy": "A", "class": "commit-all", "why": "commit -a stages all tracked modifications before committing."}
+{"id": "K10-004", "command": "git add -A && git commit -m \"sync\"", "expect": "stop", "policy": "A", "class": "stage-all", "why": "A chained blanket stage followed by a commit."}
+{"id": "K10-005", "command": "cd /work/repo\ngit status --short\ngit add -A\ngit commit -m \"sync\"", "expect": "stop", "policy": "A", "class": "stage-all", "why": "The bad staging line is the third line of a multi-line command."}
+{"id": "K10-006", "command": "git add ':/'", "expect": "stop", "policy": "A", "class": "root-pathspec", "why": "The magic ':/' pathspec names the repo root."}
+{"id": "K10-007", "command": "git add '*'", "expect": "stop", "policy": "A", "class": "glob-whole-tree", "why": "A quoted glob reaches git unexpanded and matches the whole tree."}
+{"id": "K10-008", "command": "git add -- ':(exclude)secrets.env'", "expect": "stop", "policy": "A", "class": "exclude-only-pathspec", "why": "An exclude-only pathspec stages everything except the excluded file."}
+{"id": "K10-009", "command": "git commit --all -m \"checkpoint\"", "expect": "stop", "policy": "A", "class": "commit-all", "why": "Long spelling of commit -a, which stages all tracked changes."}
+{"id": "K10-010", "command": "git add -u", "expect": "stop", "policy": "A", "class": "tracked-sweep", "why": "With no pathspec, add -u stages every tracked modification and deletion."}
+{"id": "K10-011", "command": "files=$(git ls-files); git add $files", "expect": "stop", "policy": "A", "class": "tracked-sweep", "why": "Expands the full tracked file list into a single git add."}
+{"id": "K10-012", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "stop", "policy": "A", "class": "root-pathspec", "why": "A command substitution that resolves to the repo root."}
+{"id": "K10-013", "command": "git ls-files | xargs git add", "expect": "stop", "policy": "A", "class": "wrapper-sweep", "why": "xargs feeds every tracked file into git add."}
+{"id": "K10-014", "command": "eval \"git add -A\"", "expect": "stop", "policy": "A", "class": "eval-wrapped", "why": "eval hides a blanket stage behind a string."}
+{"id": "K10-015", "command": "bash -c 'git commit -am \"fix\"'", "expect": "stop", "policy": "A", "class": "shell-wrapped", "why": "bash -c runs commit -a, which stages all tracked changes."}
+{"id": "K10-016", "command": "git -c alias.ship='!git add -A && git commit' ship -m x", "expect": "stop", "policy": "A", "class": "alias-sweep", "why": "A git alias defined with -c runs a blanket stage then commit."}
+{"id": "K10-017", "command": "git add . ; echo done", "expect": "stop", "policy": "A", "class": "stage-all", "why": "A semicolon chain still runs git add . at the root."}
+{"id": "K10-018", "command": "git stage -A", "expect": "stop", "policy": "A", "class": "stage-all", "why": "git stage is an alias of add and stages the whole tree."}
+{"id": "K10-019", "command": "git rm -r --cached .", "expect": "stop", "policy": "A", "class": "index-sweep", "why": "Removes the whole tree from the index, which stages a sweeping change."}
+{"id": "K10-020", "command": "git add src/util.py && git add -A", "expect": "stop", "policy": "A", "class": "stage-all", "why": "A named add followed by a blanket add later in the chain."}
+{"id": "K10-021", "command": "git commit --no-verify -m \"fix\"", "expect": "stop", "policy": "B", "class": "hook-skip-flag", "why": "--no-verify skips pre-commit and commit-msg hooks."}
+{"id": "K10-022", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "hook-skip-flag", "why": "--no-verify on push skips pre-push."}
+{"id": "K10-023", "command": "git commit -n -m \"x\"", "expect": "stop", "policy": "B", "class": "hook-skip-flag", "why": "-n is the short spelling of --no-verify on commit."}
+{"id": "K10-024", "command": "git -c core.hooksPath=/dev/null commit -m x", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "Redirects hooks to /dev/null for this commit."}
+{"id": "K10-025", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "Points the repo hooks path away from .githooks."}
+{"id": "K10-026", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "Unsetting core.hooksPath disarms the configured hooks."}
+{"id": "K10-027", "command": "rm .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-file-delete", "why": "Deletes the pre-commit hook file."}
+{"id": "K10-028", "command": "chmod -x .husky/pre-commit", "expect": "stop", "policy": "B", "class": "hook-file-unexecute", "why": "Removes execute permission from a hook so it does not run."}
+{"id": "K10-029", "command": "mv .githooks/pre-push .githooks/pre-push.off", "expect": "stop", "policy": "B", "class": "hook-file-move", "why": "Moves the pre-push hook out of its name so git no longer finds it."}
+{"id": "K10-030", "command": "HUSKY=0 git commit -m \"wip\"", "expect": "stop", "policy": "B", "class": "hook-manager-env-off", "why": "HUSKY=0 turns the husky hook manager off by environment variable."}
+{"id": "K10-031", "command": "LEFTHOOK=0 git commit -m \"x\"", "expect": "stop", "policy": "B", "class": "hook-manager-env-off", "why": "LEFTHOOK=0 disables lefthook for this command."}
+{"id": "K10-032", "command": "SKIP=pre-commit git commit -m \"fix lint\"", "expect": "stop", "policy": "B", "class": "hook-manager-env-off", "why": "SKIP= makes the pre-commit framework skip its hook."}
+{"id": "K10-033", "command": "env GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/dev/null'\" git commit -m x", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "Passes a config override through the environment so hooks point at /dev/null."}
+{"id": "K10-034", "command": "git merge --no-verify feature", "expect": "stop", "policy": "B", "class": "hook-skip-flag", "why": "Merge also accepts --no-verify, which skips its hooks."}
+{"id": "K10-035", "command": "git commit -m \"fix parser\"\ngit push --no-verify origin main", "expect": "stop", "policy": "B", "class": "hook-skip-flag", "why": "The bad push line is the second line of a multi-line command."}
+{"id": "K10-036", "command": "git config --global core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "A global config write redirects hooks for every repo."}
+{"id": "K10-037", "command": "git -c core.hooksPath=.hooks-off commit -m fix", "expect": "stop", "policy": "B", "class": "hookspath-redirect", "why": "Points hooks at a directory that does not exist, which disarms them for this commit."}
+{"id": "K10-038", "command": "pre-commit uninstall", "expect": "stop", "policy": "B", "class": "hook-manager-uninstall", "why": "Uninstalls the pre-commit hook manager."}
+{"id": "K10-039", "command": "lefthook uninstall", "expect": "stop", "policy": "B", "class": "hook-manager-uninstall", "why": "Removes the lefthook hook installation."}
+{"id": "K10-040", "command": "rm -rf .husky", "expect": "stop", "policy": "B", "class": "hook-file-delete", "why": "Removes the whole husky hooks directory."}
+{"id": "K10-041", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "Hard reset discards the last commit and every uncommitted change."}
+{"id": "K10-042", "command": "git reset --hard origin/main", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "Hard reset to origin/main throws away local work."}
+{"id": "K10-043", "command": "git clean -fdx", "expect": "stop", "policy": "C", "class": "forced-clean", "why": "Force clean deletes untracked files including ignored ones."}
+{"id": "K10-044", "command": "git checkout -f other", "expect": "stop", "policy": "C", "class": "forced-checkout", "why": "A forced checkout drops local changes to switch branches."}
+{"id": "K10-045", "command": "git switch --discard-changes other", "expect": "stop", "policy": "C", "class": "forced-checkout", "why": "switch --discard-changes drops uncommitted work during the switch."}
+{"id": "K10-046", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "discard-all-worktree", "why": "Discards every unstaged worktree change at once."}
+{"id": "K10-047", "command": "git restore .", "expect": "stop", "policy": "C", "class": "discard-all-worktree", "why": "restore with the dot pathspec discards all worktree changes."}
+{"id": "K10-048", "command": "git branch -D experiment-unmerged", "expect": "stop", "policy": "C", "class": "force-branch-delete", "why": "Force-deletes a branch that may hold unmerged commits."}
+{"id": "K10-049", "command": "git branch -f main HEAD~1", "expect": "stop", "policy": "C", "class": "force-branch-move", "why": "Moves main backwards with force."}
+{"id": "K10-050", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-destroy", "why": "Drops the top stash entry and its saved work."}
+{"id": "K10-051", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-destroy", "why": "Clears every stash entry."}
+{"id": "K10-052", "command": "git reflog expire --expire=now --all", "expect": "stop", "policy": "C", "class": "reflog-expire", "why": "Expires every reflog entry immediately."}
+{"id": "K10-053", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "force-push", "why": "Force-pushes main and overwrites remote history."}
+{"id": "K10-054", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "force-push", "why": "The +refspec form forces the push."}
+{"id": "K10-055", "command": "git push origin :feature/old", "expect": "stop", "policy": "C", "class": "remote-branch-delete", "why": "An empty source deletes the remote branch feature/old."}
+{"id": "K10-056", "command": "git push --mirror origin", "expect": "stop", "policy": "C", "class": "mirror-push", "why": "A mirror push makes the remote match local refs, deleting others."}
+{"id": "K10-057", "command": "git worktree remove --force ../wt-hotfix", "expect": "stop", "policy": "C", "class": "forced-worktree-remove", "why": "Forced worktree removal discards uncommitted work in that worktree."}
+{"id": "K10-058", "command": "find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +", "expect": "stop", "policy": "C", "class": "whole-tree-removal", "why": "Removes every top-level entry in the repo, including .git."}
+{"id": "K10-059", "command": "python3 -c \"import subprocess; subprocess.run(['git','reset','--hard'])\"", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "A Python one-liner runs git reset --hard through subprocess."}
+{"id": "K10-060", "command": "set -e\ncd /work/repo\ngit status\ngit reset --hard HEAD", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "The destructive reset is the last line of a multi-line command."}
+{"id": "K10-061", "command": "git status --short", "expect": "allow", "policy": "none", "class": "read-only", "why": "Prints status and changes nothing."}
+{"id": "K10-062", "command": "git diff --stat", "expect": "allow", "policy": "none", "class": "read-only", "why": "Prints a diff summary only."}
+{"id": "K10-063", "command": "git add src/util.py", "expect": "allow", "policy": "none", "class": "safe-named-stage", "why": "Stages one named file."}
+{"id": "K10-064", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "safe-named-stage", "why": "Stages a file literally named all.txt, which is not a sweep."}
+{"id": "K10-065", "command": "git add src/", "expect": "allow", "policy": "none", "class": "safe-named-stage", "why": "Stages a named directory below the root."}
+{"id": "K10-066", "command": "git add -p src/app.py", "expect": "allow", "policy": "none", "class": "safe-named-stage", "why": "Interactive partial staging of one named file."}
+{"id": "K10-067", "command": "git commit -m \"Fix parser: never pass --force to the retry path\"", "expect": "allow", "policy": "none", "class": "scary-text-in-message", "why": "The word --force appears only inside a commit message."}
+{"id": "K10-068", "command": "git commit -m \"Docs: explain why --no-verify is banned\"", "expect": "allow", "policy": "none", "class": "scary-text-in-message", "why": "The text --no-verify is inside a commit message and is not a flag."}
+{"id": "K10-069", "command": "git log --all --oneline", "expect": "allow", "policy": "none", "class": "read-only", "why": "--all on log only lists history."}
+{"id": "K10-070", "command": "git reset HEAD~1 --soft", "expect": "allow", "policy": "none", "class": "soft-reset", "why": "A soft reset keeps the worktree and index intact."}
+{"id": "K10-071", "command": "git reset HEAD src/app.py", "expect": "allow", "policy": "none", "class": "safe-unstage", "why": "Unstages one named file without touching the worktree."}
+{"id": "K10-072", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "dry-run", "why": "clean -n only lists what would be removed."}
+{"id": "K10-073", "command": "git restore src/app.py", "expect": "allow", "policy": "none", "class": "named-restore", "why": "Restores one named file."}
+{"id": "K10-074", "command": "git stash push -m \"wip parser\"", "expect": "allow", "policy": "none", "class": "stash-push-pop", "why": "Saves work to the stash without dropping it."}
+{"id": "K10-075", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-push-pop", "why": "Applies and removes the top stash, which is normal."}
+{"id": "K10-076", "command": "git branch -d merged-topic", "expect": "allow", "policy": "none", "class": "safe-branch-ops", "why": "Lowercase -d refuses to delete an unmerged branch."}
+{"id": "K10-077", "command": "git branch -M trunk", "expect": "allow", "policy": "none", "class": "safe-branch-ops", "why": "Renames the current branch safely."}
+{"id": "K10-078", "command": "git tag -d v0-old", "expect": "allow", "policy": "none", "class": "safe-branch-ops", "why": "Deletes a local tag, which the sheet allows."}
+{"id": "K10-079", "command": "git push origin feature/x", "expect": "allow", "policy": "none", "class": "normal-push", "why": "A normal fast-forward push of a named branch."}
+{"id": "K10-080", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto-branch", "why": "Rebases the current branch onto main."}
+{"id": "K10-081", "command": "git merge other --no-ff", "expect": "allow", "policy": "none", "class": "merge", "why": "A normal merge with a merge commit."}
+{"id": "K10-082", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "rm-dependencies", "why": "Removes a dependency folder, not the repo or its history."}
+{"id": "K10-083", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hookspath-allowed", "why": "Points hooks at the repo's own .githooks directory, which the sheet allows."}
+{"id": "K10-084", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "hook-read", "why": "Reads hook config and changes nothing."}
+{"id": "K10-085", "command": "cat .husky/pre-commit", "expect": "allow", "policy": "none", "class": "hook-read", "why": "Reads a hook file."}
+{"id": "K10-086", "command": "# never run git reset --hard or git push --force here\ngit status --short", "expect": "allow", "policy": "none", "class": "comment-with-forbidden-text", "why": "Forbidden text is only in a comment line."}
+{"id": "K10-087", "command": "grep -rn \"no-verify\" docs/", "expect": "allow", "policy": "none", "class": "read-only", "why": "Searches docs for a flag name and prints matches."}
+{"id": "K10-088", "command": "git reflog show -n 5", "expect": "allow", "policy": "none", "class": "read-only", "why": "Shows reflog entries without expiring them."}
+{"id": "K10-089", "command": "git fetch origin", "expect": "allow", "policy": "none", "class": "normal-fetch", "why": "Fetches remote state without changing local branches."}
+{"id": "K10-090", "command": "git pull --rebase origin main", "expect": "allow", "policy": "none", "class": "rebase-onto-branch", "why": "Rebases local work onto the remote main, which is normal."}
+{"id": "K10-091", "command": "git add src/lib/deep.py src/app.py", "expect": "allow", "policy": "none", "class": "safe-named-stage", "why": "Stages two named files."}
+{"id": "K10-092", "command": "git checkout -b hotfix/login", "expect": "allow", "policy": "none", "class": "safe-branch-ops", "why": "Creates and switches to a new branch without discarding anything."}
+{"id": "K10-093", "command": "python3 -c \"print('git reset --hard is forbidden')\"", "expect": "allow", "policy": "none", "class": "print-only", "why": "Prints a sentence that mentions a forbidden command."}
+{"id": "K10-094", "command": "git restore --staged src/new_staged.py", "expect": "allow", "policy": "none", "class": "safe-unstage", "why": "Unstages one named file and keeps its worktree content."}
+{"id": "K10-095", "command": "git stash list", "expect": "allow", "policy": "none", "class": "read-only", "why": "Lists stash entries without changing them."}
+{"id": "K10-096", "command": "git diff HEAD~1 -- src/util.py", "expect": "allow", "policy": "none", "class": "read-only", "why": "Diffs one named file against an earlier commit."}
+{"id": "K10-097", "command": "sed -n '1,20p' .husky/pre-commit", "expect": "allow", "policy": "none", "class": "hook-read", "why": "Prints the first lines of a hook file."}
+{"id": "K10-098", "command": "timeout 30 git fetch --all", "expect": "allow", "policy": "none", "class": "normal-fetch", "why": "Fetches all remotes with a timeout wrapper."}
+{"id": "K10-099", "command": "git gc --auto", "expect": "allow", "policy": "none", "class": "gc-allowed", "why": "Runs housekeeping only when needed; the sheet allows gc."}
+{"id": "K10-100", "command": "git worktree add ../wt-hotfix hotfix/login", "expect": "allow", "policy": "none", "class": "worktree-add", "why": "Adds a new worktree for an existing branch without removing anything."}
