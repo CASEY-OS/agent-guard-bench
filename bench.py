@@ -73,17 +73,19 @@ CASE_FILES = [
     ("holdout4", os.path.join(HERE, "cases", "holdout4", "holdout4.jsonl")),
     ("holdout5", os.path.join(HERE, "cases", "holdout5", "holdout5.jsonl")),
     ("holdout6", os.path.join(HERE, "cases", "holdout6", "holdout6.jsonl")),
+    ("holdout7", os.path.join(HERE, "cases", "holdout7", "holdout7.jsonl")),
 ]
-HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6")
+HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 HOLDOUT_STATUS = {
     "holdout": "blind for v1; seen before v2, v3, v4 and v5 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3, v4 and v5",
     "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3; seen before v4 and v5",
     "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection) and v5",
     "holdout5": "blind for v1 to v4 (Claude Sonnet, sheet only); DEVELOPMENT set for v5 (its misses were read)",
-    "holdout6": "blind for v1 to v5 (Claude Haiku, sheet only); sealed until v5 is frozen",
+    "holdout6": "blind for v1 to v5 (Claude Haiku, sheet only); DEVELOPMENT set for v6 (its misses were read)",
+    "holdout7": "blind for v1 to v6 (Claude Sonnet, sheet only); sealed until v6 was frozen",
 }
-CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6")
+CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
 EXPECT_WORDS = {"block": "block", "deny": "block", "blocked": "block", "denied": "block",
                 "ask": "ask", "stop": "stop", "stopped": "stop",
