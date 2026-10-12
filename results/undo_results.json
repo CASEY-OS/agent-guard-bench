@@ -1,0 +1,1243 @@
+{
+  "conditions": [
+    {
+      "detail": "49",
+      "name": "at least 30 in-scope scenarios",
+      "pass": true
+    },
+    {
+      "detail": "49 of 49",
+      "name": "every in-scope scenario fully restored",
+      "pass": true
+    },
+    {
+      "detail": "all did",
+      "name": "every scenario command really changed something",
+      "pass": true
+    },
+    {
+      "detail": "all",
+      "name": "the hook took exactly one snapshot before each command",
+      "pass": true
+    },
+    {
+      "detail": "all",
+      "name": "a snapshot left index bytes, HEAD, refs, stash and files untouched",
+      "pass": true
+    },
+    {
+      "detail": "5 of 5",
+      "name": "all 5 negative controls show the loss",
+      "pass": true
+    },
+    {
+      "detail": "all",
+      "name": "every residual behaves as documented",
+      "pass": true
+    },
+    {
+      "detail": "2 of 2",
+      "name": "every one-line restore mutant is caught by the readback",
+      "pass": true
+    },
+    {
+      "detail": "0 wrong",
+      "name": "the plan is right on every planted and clean command",
+      "pass": true
+    },
+    {
+      "detail": "kept 50",
+      "name": "bound keeps the newest 50; dedupe stores a state once",
+      "pass": true
+    },
+    {
+      "detail": "2 push scenarios",
+      "name": "the printed repair push put every pushed remote back",
+      "pass": true
+    },
+    {
+      "detail": "63 runs, 0 outside",
+      "name": "every destructive command ran under the bench root",
+      "pass": true
+    }
+  ],
+  "controls": [
+    {
+      "command": "git reset --hard HEAD~1",
+      "damage": 7,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py",
+        "files: changed src/util.py",
+        "index differs",
+        "refs: changed refs/heads/main"
+      ],
+      "name": "reset-hard-HEAD~1",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0
+    },
+    {
+      "command": "git clean -fdx",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost notes.txt",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 2,
+      "left": [
+        "files: lost notes.txt",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "name": "clean-fdx",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0
+    },
+    {
+      "command": "rm -rf src",
+      "damage": 5,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/u.txt",
+        "files: lost src/util.py"
+      ],
+      "name": "rm-rf-src",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0
+    },
+    {
+      "command": "git branch -D other",
+      "damage": 1,
+      "damage_sample": [
+        "refs: lost refs/heads/other"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [
+        "refs: lost refs/heads/other"
+      ],
+      "name": "branch-D-other",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0
+    },
+    {
+      "command": "git stash drop",
+      "damage": 2,
+      "damage_sample": [
+        "refs: lost refs/stash",
+        "stash differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [
+        "refs: lost refs/stash",
+        "stash differs"
+      ],
+      "name": "stash-drop",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0
+    }
+  ],
+  "cost": {
+    "dirty_snapshot_bytes_median": 5464.0,
+    "dirty_snapshot_ms_median": 82.21197908278555,
+    "files": 1000,
+    "first_snapshot_bytes": 42233,
+    "first_snapshot_ms": 72.6035418920219,
+    "hook_read_only_ms_median": 39.62399996817112,
+    "hook_with_snapshot_ms_median": 126.21883302927017,
+    "no_change_ms_median": 53.570771124213934,
+    "objects_bytes_before": 899860,
+    "plan_us_read_only": 12.6547294203192,
+    "restore_ms": 311.28962500952184
+  },
+  "mutants": [
+    {
+      "command": "chmod 600 bin/run.sh && chmod 755 notes.txt",
+      "damage": 2,
+      "damage_sample": [
+        "files: changed bin/run.sh",
+        "files: changed notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [
+        "files: changed notes.txt"
+      ],
+      "name": "chmod",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "skips the mode bits"
+    },
+    {
+      "command": "git stash drop",
+      "damage": 2,
+      "damage_sample": [
+        "refs: lost refs/stash",
+        "stash differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [
+        "stash differs"
+      ],
+      "name": "stash-drop",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "what": "skips the stash reflog"
+    }
+  ],
+  "overall": "PASS",
+  "plan_wrong": [],
+  "prune_dedupe": {
+    "dedupe_ok": true,
+    "kept": 50,
+    "made": 55,
+    "prune_ok": true
+  },
+  "residuals": [
+    {
+      "command": "git clean -fdX",
+      "damage": 0,
+      "damage_sample": [],
+      "guard_direct": "deny",
+      "ignored_lost": 2,
+      "left": [],
+      "name": "ignored-files",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "why": "ignored files are not in any snapshot"
+    },
+    {
+      "command": "rm -f ../outside.txt",
+      "damage": 0,
+      "damage_sample": [],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "outside-the-repo",
+      "outside_exists": false,
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 2,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 0,
+      "why": "a file outside the repo is not in any snapshot"
+    },
+    {
+      "command": "rmdir empty_dir",
+      "damage": 0,
+      "damage_sample": [],
+      "dir_exists": false,
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "empty-directory",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "why": "git does not record empty directories"
+    },
+    {
+      "command": "git push -q -f origin main",
+      "damage": 3,
+      "damage_sample": [
+        "remotes: changed refs/remotes/origin/HEAD",
+        "remotes: changed refs/remotes/origin/main",
+        "bare differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [
+        "bare differs"
+      ],
+      "name": "remote-only-commit",
+      "rc": 0,
+      "remote_repair": [
+        "git push --force-with-lease=refs/heads/main:c7282290196173e8b09dfe5d5312898aa991b3cd origin 7d2dd2b2f191e41e1169d06c90b5a8acc2fbb270:refs/heads/main"
+      ],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1,
+      "their_commit_on_remote": false,
+      "their_commit_recoverable": false,
+      "why": "a commit that only the remote held is gone once it is overwritten"
+    }
+  ],
+  "scenarios": [
+    {
+      "command": "git reset --hard HEAD~1",
+      "damage": 7,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "reset-hard-HEAD~1",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git reset --hard",
+      "damage": 6,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "reset-hard",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git reset --mixed HEAD~2",
+      "damage": 2,
+      "damage_sample": [
+        "index differs",
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "reset-mixed-HEAD~2",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git reset --soft HEAD~2",
+      "damage": 1,
+      "damage_sample": [
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "reset-soft-HEAD~2",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git clean -fdx",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost notes.txt",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 2,
+      "left": [],
+      "name": "clean-fdx",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git clean -fd",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost notes.txt",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "clean-fd",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git checkout -- .",
+      "damage": 3,
+      "damage_sample": [
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "checkout-dash-dash-dot",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git restore .",
+      "damage": 3,
+      "damage_sample": [
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "restore-dot",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git restore --staged .",
+      "damage": 1,
+      "damage_sample": [
+        "index differs"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "restore-staged-dot",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git restore --source=HEAD~2 --staged --worktree src",
+      "damage": 4,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: changed src/app.py",
+        "files: changed src/util.py",
+        "index differs"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "restore-source-src",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git checkout -f other",
+      "damage": 8,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: extra other.txt",
+        "files: changed README.md"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "checkout-force-other",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git switch --discard-changes other",
+      "damage": 8,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: extra other.txt",
+        "files: changed README.md"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "switch-discard-other",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git checkout other -- .",
+      "damage": 6,
+      "damage_sample": [
+        "files: extra docs/old.md",
+        "files: extra other.txt",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "checkout-other-whole-tree",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git branch -D other",
+      "damage": 1,
+      "damage_sample": [
+        "refs: lost refs/heads/other"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "branch-D-other",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git branch -f other HEAD~2",
+      "damage": 1,
+      "damage_sample": [
+        "refs: changed refs/heads/other"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "branch-f-other",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash push -m wip",
+      "damage": 8,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "stash-push",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash drop",
+      "damage": 2,
+      "damage_sample": [
+        "refs: lost refs/stash",
+        "stash differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "stash-drop",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash clear",
+      "damage": 2,
+      "damage_sample": [
+        "refs: lost refs/stash",
+        "stash differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "stash-clear",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash && git stash drop",
+      "damage": 6,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "stash-then-drop",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git commit -q -m 'agent commit'",
+      "damage": 1,
+      "damage_sample": [
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "commit",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git commit -q --amend -m amended",
+      "damage": 1,
+      "damage_sample": [
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "commit-amend",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git stash -q && git merge -q --no-edit other",
+      "damage": 10,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: extra other.txt",
+        "files: changed README.md"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "stash-then-merge",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git rebase -q --autostash other",
+      "damage": 3,
+      "damage_sample": [
+        "files: extra other.txt",
+        "index differs",
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rebase-autostash",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git rebase -q --autostash --onto HEAD~2 HEAD~1",
+      "damage": 5,
+      "damage_sample": [
+        "files: changed src/app.py",
+        "index differs",
+        "refs: changed refs/heads/main",
+        "refs: changed refs/stash"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rebase-drop-commit",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git update-ref -d refs/heads/other",
+      "damage": 1,
+      "damage_sample": [
+        "refs: lost refs/heads/other"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "update-ref-delete",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git update-ref refs/heads/main HEAD~2",
+      "damage": 1,
+      "damage_sample": [
+        "refs: changed refs/heads/main"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "update-ref-move",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git reset -q --hard HEAD~2 && git reflog expire --expire=now --all && git gc -q --prune=now",
+      "damage": 8,
+      "damage_sample": [
+        "files: lost src/new_staged.py",
+        "files: extra docs/old.md",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "reset-then-gc",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git tag -d v1 light && git reflog expire --expire=now --all && git gc -q --prune=now",
+      "damage": 3,
+      "damage_sample": [
+        "refs: lost refs/tags/light",
+        "refs: lost refs/tags/v1",
+        "stash differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "tag-delete-then-gc",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git merge --abort",
+      "damage": 5,
+      "damage_sample": [
+        "files: changed README.md",
+        "index differs",
+        "state: changed MERGE_HEAD",
+        "state: changed MERGE_MODE"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "merge-abort-conflict",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git push -q -f origin main",
+      "damage": 3,
+      "damage_sample": [
+        "remotes: changed refs/remotes/origin/HEAD",
+        "remotes: changed refs/remotes/origin/main",
+        "bare differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "force-push",
+      "rc": 0,
+      "remote_repair": [
+        "git push --force-with-lease=refs/heads/main:ab14b4779742179a71959d280d37322a44097e3a origin b4a654846fc7d9d80735c1665cce450116bcd713:refs/heads/main"
+      ],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git push -q origin --delete other",
+      "damage": 2,
+      "damage_sample": [
+        "remotes: lost refs/remotes/origin/other",
+        "bare differs"
+      ],
+      "guard_direct": "deny",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "push-delete",
+      "rc": 0,
+      "remote_repair": [
+        "git push origin 0d2a73ea6f3da887c3ff870bcffe37c0f49446d0:refs/heads/other"
+      ],
+      "restore_rc": 0,
+      "route": "script",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm -rf src",
+      "damage": 5,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rm-rf-src",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm -f README.md notes.txt bin/run.sh",
+      "damage": 3,
+      "damage_sample": [
+        "files: lost README.md",
+        "files: lost bin/run.sh",
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "rm-files",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "mv src lib",
+      "damage": 10,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "mv-dir",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "mv notes.txt ../moved_notes.txt",
+      "damage": 1,
+      "damage_sample": [
+        "files: lost notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "mv-out-of-repo",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "cp README.md src/app.py",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "cp-over",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "sed -i.bak 's/a/X/g' src/app.py README.md",
+      "damage": 4,
+      "damage_sample": [
+        "files: extra README.md.bak",
+        "files: extra src/app.py.bak",
+        "files: changed README.md",
+        "files: changed src/app.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "sed-in-place",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "truncate -s 0 src/util.py data/blob.bin",
+      "damage": 2,
+      "damage_sample": [
+        "files: changed data/blob.bin",
+        "files: changed src/util.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "truncate",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "echo junk > README.md && echo more >> notes.txt",
+      "damage": 2,
+      "damage_sample": [
+        "files: changed README.md",
+        "files: changed notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "redirect-write",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "echo x | tee src/app.py src/lib/deep.py",
+      "damage": 2,
+      "damage_sample": [
+        "files: changed src/app.py",
+        "files: changed src/lib/deep.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "tee",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "find . -name '*.py' -not -path './.git/*' -delete",
+      "damage": 4,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/util.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "find-delete",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git rm -r -q -f src",
+      "damage": 5,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/util.py"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "git-rm-r-force",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "git mv README.md README2.md",
+      "damage": 3,
+      "damage_sample": [
+        "files: lost README.md",
+        "files: extra README2.md",
+        "index differs"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "git-mv",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "chmod 600 bin/run.sh && chmod 755 notes.txt",
+      "damage": 2,
+      "damage_sample": [
+        "files: changed bin/run.sh",
+        "files: changed notes.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "chmod",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm src/util.py && mkdir src/util.py && echo x > src/util.py/inner",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost src/util.py",
+        "files: extra src/util.py/inner"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "file-becomes-dir",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm link && echo plain > link",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed link"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "symlink-becomes-file",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "rm -rf src/lib && ln -s ../docs src/lib",
+      "damage": 2,
+      "damage_sample": [
+        "files: lost src/lib/deep.py",
+        "files: extra src/lib"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "dir-becomes-symlink",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "head -c 512 /dev/zero > data/blob.bin",
+      "damage": 1,
+      "damage_sample": [
+        "files: changed data/blob.bin"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "binary-overwrite",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    },
+    {
+      "command": "python3 -c \"import shutil; shutil.rmtree('src')\"",
+      "damage": 5,
+      "damage_sample": [
+        "files: lost src/app.py",
+        "files: lost src/lib/deep.py",
+        "files: lost src/new_staged.py",
+        "files: lost src/untracked_dir/u.txt"
+      ],
+      "guard_direct": "allow",
+      "ignored_lost": 0,
+      "left": [],
+      "name": "python-rmtree",
+      "rc": 0,
+      "remote_repair": [],
+      "restore_rc": 0,
+      "route": "direct",
+      "snapshot_left_state_untouched": true,
+      "snapshots_taken": 1
+    }
+  ]
+}

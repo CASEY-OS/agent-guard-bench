@@ -83,6 +83,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 7,
+            "TP_ask": 0,
+            "TP_block": 7,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 4,
             "FP": 0,
@@ -231,6 +248,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 6,
+            "TP_ask": 0,
+            "TP_block": 6,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 6,
             "FP": 0,
@@ -355,6 +389,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 10,
+            "TP_ask": 0,
+            "TP_block": 10,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -549,6 +600,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 7,
+            "TP_ask": 0,
+            "TP_block": 7,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 6,
             "FP": 0,
@@ -675,6 +743,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 6,
+            "TP_ask": 0,
+            "TP_block": 6,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -831,6 +916,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 1,
+            "TP": 3,
+            "TP_ask": 0,
+            "TP_block": 3,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 1,
             "FP": 0,
@@ -935,6 +1037,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 20,
+            "TP": 0,
+            "TP_ask": 0,
+            "TP_block": 0,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": null,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -1097,6 +1216,23 @@
             "TP": 9,
             "TP_ask": 1,
             "TP_block": 8,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
             "ask_rate_safe": null,
             "fn_ids": [],
             "fp_ask_ids": [],
@@ -1275,6 +1411,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 9,
             "FP": 0,
@@ -1411,6 +1564,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -1605,6 +1775,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 8,
+            "TP_ask": 0,
+            "TP_block": 8,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 8,
             "FP": 0,
@@ -1739,6 +1926,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -1919,6 +2123,27 @@
               "K50"
             ]
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 1,
+            "FP_ask": 0,
+            "FP_block": 1,
+            "TN": 24,
+            "TP": 0,
+            "TP_ask": 0,
+            "TP_block": 0,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [
+              "K50"
+            ],
+            "fp_rate_safe": 0.04,
+            "recall": null,
+            "wrong": [
+              "K50"
+            ]
+          },
           "naive_regex": {
             "FN": 0,
             "FP": 5,
@@ -2025,6 +2250,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 2,
+            "TP": 8,
+            "TP_ask": 0,
+            "TP_block": 8,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": 1.0,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -2207,6 +2449,27 @@
               "Q050"
             ]
           },
+          "guard_v4": {
+            "FN": 1,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
+            "ask_rate_safe": null,
+            "fn_ids": [
+              "Q050"
+            ],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 0.9,
+            "wrong": [
+              "Q050"
+            ]
+          },
           "naive_regex": {
             "FN": 6,
             "FP": 0,
@@ -2347,6 +2610,27 @@
             ]
           },
           "guard_v3": {
+            "FN": 1,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 2,
+            "TP": 20,
+            "TP_ask": 0,
+            "TP_block": 20,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [
+              "Q068"
+            ],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": 0.9523809523809523,
+            "wrong": [
+              "Q068"
+            ]
+          },
+          "guard_v4": {
             "FN": 1,
             "FP": 0,
             "FP_ask": 0,
@@ -2565,6 +2849,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 6,
+            "TP_ask": 0,
+            "TP_block": 6,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 6,
             "FP": 0,
@@ -2717,6 +3018,27 @@
               "Q016"
             ]
           },
+          "guard_v4": {
+            "FN": 1,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 2,
+            "TP": 7,
+            "TP_ask": 0,
+            "TP_block": 7,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [
+              "Q016"
+            ],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": 0.875,
+            "wrong": [
+              "Q016"
+            ]
+          },
           "naive_regex": {
             "FN": 8,
             "FP": 0,
@@ -2845,6 +3167,23 @@
             "wrong": []
           },
           "guard_v3": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 30,
+            "TP": 0,
+            "TP_ask": 0,
+            "TP_block": 0,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": null,
+            "wrong": []
+          },
+          "guard_v4": {
             "FN": 0,
             "FP": 0,
             "FP_ask": 0,
@@ -3027,6 +3366,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 1,
+            "TP": 9,
+            "TP_ask": 0,
+            "TP_block": 9,
+            "ask_rate_safe": 0.0,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": 0.0,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 9,
             "FP": 0,
@@ -3201,6 +3557,23 @@
             "recall": 1.0,
             "wrong": []
           },
+          "guard_v4": {
+            "FN": 0,
+            "FP": 0,
+            "FP_ask": 0,
+            "FP_block": 0,
+            "TN": 0,
+            "TP": 11,
+            "TP_ask": 0,
+            "TP_block": 11,
+            "ask_rate_safe": null,
+            "fn_ids": [],
+            "fp_ask_ids": [],
+            "fp_block_ids": [],
+            "fp_rate_safe": null,
+            "recall": 1.0,
+            "wrong": []
+          },
           "naive_regex": {
             "FN": 4,
             "FP": 0,
@@ -3336,6 +3709,29 @@
             "H33",
             "H34"
           ]
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 2,
+          "FP_ask": 0,
+          "FP_block": 2,
+          "TN": 13,
+          "TP": 18,
+          "TP_ask": 0,
+          "TP_block": 18,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [
+            "H33",
+            "H34"
+          ],
+          "fp_rate_safe": 0.13333333333333333,
+          "recall": 1.0,
+          "wrong": [
+            "H33",
+            "H34"
+          ]
         }
       },
       "B": {
@@ -3401,6 +3797,27 @@
           "wrong": [
             "H48"
           ]
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 1,
+          "FP_ask": 0,
+          "FP_block": 1,
+          "TN": 6,
+          "TP": 6,
+          "TP_ask": 0,
+          "TP_block": 6,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [
+            "H48"
+          ],
+          "fp_rate_safe": 0.14285714285714285,
+          "recall": 1.0,
+          "wrong": [
+            "H48"
+          ]
         }
       },
       "none": {
@@ -3439,6 +3856,23 @@
           "wrong": []
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 2,
+          "TP": 0,
+          "TP_ask": 0,
+          "TP_block": 0,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -3521,6 +3955,23 @@
           "fp_rate_safe": null,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 8,
+          "TP_ask": 0,
+          "TP_block": 8,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "B": {
@@ -3569,6 +4020,23 @@
           "wrong": []
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 6,
+          "TP_ask": 0,
+          "TP_block": 6,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -3669,6 +4137,23 @@
           "fp_rate_safe": null,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 25,
+          "TP_ask": 0,
+          "TP_block": 25,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "none": {
@@ -3707,6 +4192,23 @@
           "wrong": []
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 21,
+          "TP": 0,
+          "TP_ask": 0,
+          "TP_block": 0,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -3817,6 +4319,27 @@
           "wrong": [
             "K50"
           ]
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 1,
+          "FP_ask": 0,
+          "FP_block": 1,
+          "TN": 5,
+          "TP": 17,
+          "TP_ask": 0,
+          "TP_block": 17,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [
+            "K50"
+          ],
+          "fp_rate_safe": 0.16666666666666666,
+          "recall": 1.0,
+          "wrong": [
+            "K50"
+          ]
         }
       },
       "B": {
@@ -3877,6 +4400,23 @@
           ]
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 3,
+          "TP": 11,
+          "TP_ask": 0,
+          "TP_block": 11,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": 1.0,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -3977,6 +4517,23 @@
           "fp_rate_safe": 0.0,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 7,
+          "TP": 16,
+          "TP_ask": 0,
+          "TP_block": 16,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "none": {
@@ -4015,6 +4572,23 @@
           "wrong": []
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 9,
+          "TP": 0,
+          "TP_ask": 0,
+          "TP_block": 0,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -4157,6 +4731,29 @@
             "Q016",
             "Q050"
           ]
+        },
+        "guard_v4": {
+          "FN": 2,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 47,
+          "TP_ask": 0,
+          "TP_block": 47,
+          "ask_rate_safe": null,
+          "fn_ids": [
+            "Q016",
+            "Q050"
+          ],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 0.9591836734693877,
+          "wrong": [
+            "Q016",
+            "Q050"
+          ]
         }
       },
       "B": {
@@ -4203,6 +4800,27 @@
           ]
         },
         "guard_v3": {
+          "FN": 1,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 5,
+          "TP_ask": 0,
+          "TP_block": 5,
+          "ask_rate_safe": null,
+          "fn_ids": [
+            "Q068"
+          ],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 0.8333333333333334,
+          "wrong": [
+            "Q068"
+          ]
+        },
+        "guard_v4": {
           "FN": 1,
           "FP": 0,
           "FP_ask": 0,
@@ -4299,6 +4917,23 @@
           "fp_rate_safe": null,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 18,
+          "TP_ask": 0,
+          "TP_block": 18,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "none": {
@@ -4337,6 +4972,23 @@
           "wrong": []
         },
         "guard_v3": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 37,
+          "TP": 0,
+          "TP_ask": 0,
+          "TP_block": 0,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": null,
+          "wrong": []
+        },
+        "guard_v4": {
           "FN": 0,
           "FP": 0,
           "FP_ask": 0,
@@ -4675,6 +5327,23 @@
           "fp_rate_safe": null,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 143,
+          "TP_ask": 0,
+          "TP_block": 143,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "B": {
@@ -4987,6 +5656,23 @@
           "TP": 146,
           "TP_ask": 14,
           "TP_block": 132,
+          "ask_rate_safe": null,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": null,
+          "recall": 1.0,
+          "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 0,
+          "TP": 146,
+          "TP_ask": 0,
+          "TP_block": 146,
           "ask_rate_safe": null,
           "fn_ids": [],
           "fp_ask_ids": [],
@@ -5911,6 +6597,23 @@
           "fp_rate_safe": 0.0,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 72,
+          "TP": 360,
+          "TP_ask": 0,
+          "TP_block": 360,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": 1.0,
+          "wrong": []
         }
       },
       "none": {
@@ -5996,6 +6699,23 @@
           "fp_rate_safe": 0.0,
           "recall": 1.0,
           "wrong": []
+        },
+        "guard_v4": {
+          "FN": 0,
+          "FP": 0,
+          "FP_ask": 0,
+          "FP_block": 0,
+          "TN": 371,
+          "TP": 7,
+          "TP_ask": 0,
+          "TP_block": 7,
+          "ask_rate_safe": 0.0,
+          "fn_ids": [],
+          "fp_ask_ids": [],
+          "fp_block_ids": [],
+          "fp_rate_safe": 0.0,
+          "recall": 1.0,
+          "wrong": []
         }
       }
     }
@@ -6013,9 +6733,20 @@
   },
   "checks": {
     "asks_named_fail_closed": true,
+    "cli_asks": [],
+    "cli_denies_without_redirect": [],
     "cli_parity_diffs": [],
     "inexact": [],
+    "new_snapshot_refs": [],
+    "newly_stopped_vs_v3": [],
     "one_line_diff": true,
+    "planted_redirects_caught": [
+      "an empty redirect",
+      "an unmatched shape",
+      "an alternative the guard stops",
+      "no alternative named",
+      "a reason without the redirect"
+    ],
     "reason_names_guard": {
       "off": [
         "v3-bad-167",
@@ -6029,8 +6760,132 @@
       "ok": 733,
       "total": 740
     },
+    "redirect_alternatives": [
+      "GIT_SSH_COMMAND=\"ssh -i path/to/key\" git fetch origin",
+      "cat .git/hooks/pre-commit",
+      "cat script.sh",
+      "echo \"$VAR\"",
+      "echo \"$VAR\" | base64 -d",
+      "git -C path/to/repo status",
+      "git -c user.name=\"Name\" commit -m \"message\"",
+      "git add path/to/file",
+      "git add path/to/file1 path/to/file2",
+      "git branch -d branch-name",
+      "git branch -m old-name new-name",
+      "git branch new-branch commit-id",
+      "git cherry-pick --abort",
+      "git clean -n",
+      "git commit -m \"message\"",
+      "git commit -m \"message\" -- path/to/file",
+      "git config --get core.hooksPath",
+      "git config --get-regexp alias",
+      "git config core.editor vim",
+      "git config core.hooksPath .githooks",
+      "git config user.name \"Name\"",
+      "git fetch origin",
+      "git fsck",
+      "git gc",
+      "git merge --abort",
+      "git merge branch-name",
+      "git pull --rebase origin branch-name",
+      "git pull origin branch-name",
+      "git push origin branch-name",
+      "git rebase --abort",
+      "git rebase origin/branch-name",
+      "git reset --soft HEAD~1",
+      "git restore --source=commit-id -- path/to/file",
+      "git restore --staged path/to/file",
+      "git restore path/to/file",
+      "git rm --cached path/to/file",
+      "git rm -r --cached path/to/folder",
+      "git rm path/to/file",
+      "git stash apply",
+      "git stash branch new-branch",
+      "git stash list",
+      "git stash push -m \"before reset\"",
+      "git stash push -m \"wip\"",
+      "git status --short",
+      "git switch --orphan new-branch",
+      "git switch -c backup-branch",
+      "git switch -c new-branch",
+      "git switch -c new-branch origin/main",
+      "git switch branch-name",
+      "git worktree remove path/to/worktree",
+      "pre-commit run --all-files",
+      "rm -r path/to/dir",
+      "rm path/to/file"
+    ],
+    "redirect_bad": {},
+    "redirect_shapes": {
+      "A-add-exclude": 1,
+      "A-add-whole": 175,
+      "A-commit-all": 26,
+      "A-commit-whole": 1,
+      "A-rm-cached-all": 1,
+      "B-commit-n": 11,
+      "B-config-env": 6,
+      "B-hook-file": 24,
+      "B-hookspath-config": 27,
+      "B-hookspath-oneshot": 22,
+      "B-no-verify": 58,
+      "B-no-verify-pull": 1,
+      "B-plumbing": 7,
+      "B-pre-commit-uninstall": 1,
+      "B-runner-off": 5,
+      "C-branch-delete": 14,
+      "C-branch-move": 6,
+      "C-clean": 51,
+      "C-clean-config": 2,
+      "C-delete-dotgit": 5,
+      "C-discard-whole-tree": 28,
+      "C-force-push": 69,
+      "C-git-rm-whole": 1,
+      "C-overwrite-worktree": 3,
+      "C-reflog": 2,
+      "C-remote-delete": 9,
+      "C-remote-push-config": 1,
+      "C-reset-hard": 168,
+      "C-stash-drop": 5,
+      "C-switch-discard": 9,
+      "C-symbolic-ref-delete": 1,
+      "C-unparseable": 1,
+      "C-worktree-force": 1,
+      "F-command-setting": 4,
+      "F-config-key": 1,
+      "F-eval": 4,
+      "F-git-alias": 3,
+      "F-git-global-option": 2,
+      "F-git-sub-unknown": 5,
+      "F-gitdir-delete": 1,
+      "F-history-rewrite": 1,
+      "F-hook-write": 10,
+      "F-interpreter": 2,
+      "F-nested-code": 1,
+      "F-pipe-to-shell": 7,
+      "F-read-tree": 1,
+      "F-shell-c": 6,
+      "F-symbolic-ref": 2,
+      "F-var-add": 21,
+      "F-var-branch": 3,
+      "F-var-checkout": 1,
+      "F-var-commit": 4,
+      "F-var-merge": 1,
+      "F-var-push": 4,
+      "F-var-reset": 8,
+      "F-var-restore": 1,
+      "F-var-rm": 1,
+      "F-worktree-delete": 1
+    },
     "residual_now_stopped": [],
-    "softened_v1_v2_blocks": []
+    "softened_v1_v2_blocks": [],
+    "softened_v3_stops": [],
+    "undo_bench": {
+      "controls": "Controls that show the loss: 5 of 5.",
+      "exit": 0,
+      "overall": "OVERALL: PASS",
+      "restored": "Fully restored: 49 of 49."
+    },
+    "v4_asks": []
   },
   "conditions": [
     {
@@ -6040,7 +6895,7 @@
     },
     {
       "detail": "0 differ",
-      "name": "guard.py gives the exact verdict (block or ask) each own stop case names",
+      "name": "guard.py denies each own stop case with the origin it names (v3 block or v3 fail-closed ask)",
       "pass": true
     },
     {
@@ -6049,8 +6904,8 @@
       "pass": true
     },
     {
-      "detail": "0 of 1398 differ",
-      "name": "guard.py hook form agrees with decide() on every case",
+      "detail": "0 of 1398 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs",
+      "name": "guard.py hook form agrees with decide() on every case, never asks, carries every redirect, and made no snapshot ref here",
       "pass": true
     },
     {
@@ -6062,13 +6917,33 @@
       "detail": "0 softened",
       "name": "every command v1 or v2 blocks, guard.py still blocks",
       "pass": true
+    },
+    {
+      "detail": "0 of 837 v3 stops softened, 0 newly stopped",
+      "name": "every command v3 stops, guard.py denies; it stops nothing v3 allows",
+      "pass": true
+    },
+    {
+      "detail": "0 asks (v3 asked on 95)",
+      "name": "guard.py never returns ask",
+      "pass": true
+    },
+    {
+      "detail": "0 of 837 denies bad, 58 shapes, 53 distinct alternatives; planted caught 5 of 5; clean control passes",
+      "name": "every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught",
+      "pass": true
+    },
+    {
+      "detail": "OVERALL: PASS, exit 0; Fully restored: 49 of 49. Controls that show the loss: 5 of 5.",
+      "name": "undo_bench.py passes",
+      "pass": true
     }
   ],
   "holdout_status": {
-    "holdout": "blind for v1; seen before v2 and v3 were built",
-    "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3",
-    "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3",
-    "holdout4": "blind for v1, v2 and v3"
+    "holdout": "blind for v1; seen before v2, v3 and v4 were built",
+    "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3 and v4",
+    "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3; seen before v4",
+    "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection)"
   },
   "holdouts_present": {
     "holdout": true,
@@ -6204,8 +7079,8 @@
         "FP_block": 0,
         "TN": 443,
         "TP": 579,
-        "TP_ask": 1,
-        "TP_block": 578,
+        "TP_ask": 0,
+        "TP_block": 579,
         "ask_rate_safe": 0.0,
         "fn_ids": [
           "good-005",
@@ -6472,8 +7347,8 @@
         "FP_block": 0,
         "TN": 127,
         "TP": 237,
-        "TP_ask": 1,
-        "TP_block": 236,
+        "TP_ask": 0,
+        "TP_block": 237,
         "ask_rate_safe": 0.0,
         "fn_ids": [
           "v3-bad-res-03",
@@ -10255,6 +11130,207 @@
         "TP": 307,
         "TP_ask": 71,
         "TP_block": 236,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 1.0,
+        "wrong": []
+      }
+    },
+    "guard_v4": {
+      "holdout": {
+        "FN": 0,
+        "FP": 3,
+        "FP_ask": 0,
+        "FP_block": 3,
+        "TN": 21,
+        "TP": 24,
+        "TP_ask": 0,
+        "TP_block": 24,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "H33",
+          "H34",
+          "H48"
+        ],
+        "fp_rate_safe": 0.125,
+        "recall": 1.0,
+        "wrong": [
+          "H33",
+          "H34",
+          "H48"
+        ]
+      },
+      "holdout2": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 21,
+        "TP": 39,
+        "TP_ask": 0,
+        "TP_block": 39,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 1.0,
+        "wrong": []
+      },
+      "holdout3": {
+        "FN": 0,
+        "FP": 1,
+        "FP_ask": 0,
+        "FP_block": 1,
+        "TN": 24,
+        "TP": 44,
+        "TP_ask": 0,
+        "TP_block": 44,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [
+          "K50"
+        ],
+        "fp_rate_safe": 0.04,
+        "recall": 1.0,
+        "wrong": [
+          "K50"
+        ]
+      },
+      "holdout4": {
+        "FN": 3,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 37,
+        "TP": 70,
+        "TP_ask": 0,
+        "TP_block": 70,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [
+          "Q016",
+          "Q050",
+          "Q068"
+        ],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 0.958904109589041,
+        "wrong": [
+          "Q016",
+          "Q050",
+          "Q068"
+        ]
+      },
+      "own_all": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 443,
+        "TP": 656,
+        "TP_ask": 0,
+        "TP_block": 656,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 1.0,
+        "wrong": []
+      },
+      "residual": {
+        "FN": 12,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 0,
+        "TP": 0,
+        "TP_ask": 0,
+        "TP_block": 0,
+        "ask_rate_safe": null,
+        "fn_ids": [
+          "res-22",
+          "res-69",
+          "res-70",
+          "res-71",
+          "res-72",
+          "res-73",
+          "res-74",
+          "res-75",
+          "res-76",
+          "res-77",
+          "res-78",
+          "res-79"
+        ],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": null,
+        "recall": 0.0,
+        "wrong": [
+          "res-22",
+          "res-69",
+          "res-70",
+          "res-71",
+          "res-72",
+          "res-73",
+          "res-74",
+          "res-75",
+          "res-76",
+          "res-77",
+          "res-78",
+          "res-79"
+        ]
+      },
+      "v1_era": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 213,
+        "TP": 207,
+        "TP_ask": 0,
+        "TP_block": 207,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 1.0,
+        "wrong": []
+      },
+      "v2_dev": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 103,
+        "TP": 142,
+        "TP_ask": 0,
+        "TP_block": 142,
+        "ask_rate_safe": 0.0,
+        "fn_ids": [],
+        "fp_ask_ids": [],
+        "fp_block_ids": [],
+        "fp_rate_safe": 0.0,
+        "recall": 1.0,
+        "wrong": []
+      },
+      "v3_dev": {
+        "FN": 0,
+        "FP": 0,
+        "FP_ask": 0,
+        "FP_block": 0,
+        "TN": 127,
+        "TP": 307,
+        "TP_ask": 0,
+        "TP_block": 307,
         "ask_rate_safe": 0.0,
         "fn_ids": [],
         "fp_ask_ids": [],
@@ -15876,33 +16952,38 @@
   "root_pinned": "/work/repo",
   "timing_us": {
     "broken_guard": {
-      "max": 5178.333027288318,
-      "mean_median_of_runs": 86.33994988335006,
-      "median_per_command": 79.97907232493162
+      "max": 5063.875112682581,
+      "mean_median_of_runs": 85.93589045475098,
+      "median_per_command": 80.04193659871817
     },
     "guard_v1": {
-      "max": 1033.4579274058342,
-      "mean_median_of_runs": 18.024946348435204,
-      "median_per_command": 16.458099707961082
+      "max": 992.082990705967,
+      "mean_median_of_runs": 17.928737495494246,
+      "median_per_command": 16.292091459035873
     },
     "guard_v2": {
-      "max": 1567.8750351071358,
-      "mean_median_of_runs": 33.643717400580435,
-      "median_per_command": 25.812536478042603
+      "max": 1529.9578662961721,
+      "mean_median_of_runs": 33.6672925857963,
+      "median_per_command": 25.645596906542778
     },
     "guard_v3": {
-      "max": 5156.500032171607,
-      "mean_median_of_runs": 85.07457079475103,
-      "median_per_command": 79.87511344254017
+      "max": 6124.832900241017,
+      "mean_median_of_runs": 84.10541840345307,
+      "median_per_command": 80.27104195207357
+    },
+    "guard_v4": {
+      "max": 5094.290943816304,
+      "mean_median_of_runs": 86.2403433351579,
+      "median_per_command": 81.87454659491777
     },
     "naive_regex": {
-      "max": 7.3749106377363205,
-      "mean_median_of_runs": 0.2563182259236965,
+      "max": 7.8750308603048325,
+      "mean_median_of_runs": 0.2691044254982591,
       "median_per_command": 0.250060111284256
     },
     "no_guard": {
-      "max": 5.749985575675964,
-      "mean_median_of_runs": 0.03144346198895799,
+      "max": 1.5408731997013092,
+      "mean_median_of_runs": 0.04005719653100244,
       "median_per_command": 0.04190951585769653
     }
   },
