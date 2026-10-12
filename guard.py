@@ -23,10 +23,19 @@ file>`, `restore --staged .`, a normal `push`, `branch -d`. Same tokenizer, same
 Motivation: anthropics/claude-code issue 97881, where `git reset --hard` on line 3 of a
 multi-line command got past a permission check.
 
-Usage as a hook: reads {"tool_name":"Bash","tool_input":{"command":"..."}} on stdin. Prints a
-deny decision with a named reason to block, an ask decision with a named reason to hand the call to
-a human, and nothing to allow.
-Usage as a library: decide(command) -> ("block"|"ask"|"allow", reason).
+Usage as a hook: reads {"tool_name":"Bash","tool_input":{"command":"..."},"cwd":"..."} on stdin.
+Prints a deny decision whose reason ends with a redirect ("DO THIS INSTEAD: ..."), or nothing to
+allow. Version 4 never prints an ask decision. On an allow it hands the command to undo.py, which
+takes a snapshot of the repo at "cwd" first when the command could change it (see undo.py).
+Usage as a library: decide(command) -> ("block"|"allow", reason). decide_full(command) -> a dict
+with the verdict, its origin (a v3 block or a v3 fail-closed ask), the redirect shape, the redirect
+text and the safe alternative commands it names.
+
+VERSION 4. NEVER ASK. Every v3 "ask" is now a deny, and every deny ends with a redirect: a concrete
+step the agent can take to finish its task safely, chosen per shape of violation (REDIRECTS below),
+with every alternative written as a command the guard itself allows. What v3 stopped, v4 stops; what
+v3 allowed, v4 allows. Detection is v3's, unchanged (_decide3). The "Stop and ask" and "A human
+decides" tails of v3 reasons are removed, because no human is asked.
 
 Failure behavior (version 3): an internal error in the version 3 reader is an "ask" that names the
 exception. Stdin that is not valid hook JSON is still a visible fail-open systemMessage, because
@@ -3069,11 +3078,11 @@ def _check3(cmd, root, depth, known=None, pos=None, funcs=None):
     return "allow", ""
 
 
-def decide(command):
-    """Return ("block" | "ask" | "allow", reason). The version 2 check runs first and unchanged, so
-    every v2 block stays a block. Then version 3 reads further and fails closed: when it cannot
-    resolve a part that could make the command a violation, it returns "ask". An internal error in
-    version 3 is also an "ask", with the exception named."""
+def _decide3(command):
+    """Version 3, unchanged: ("block" | "ask" | "allow", reason). The version 2 check runs first and
+    unchanged, so every v2 block stays a block. Then version 3 reads further and fails closed: when
+    it cannot resolve a part that could make the command a violation, it returns "ask". An internal
+    error in version 3 is also an "ask", with the exception named."""
     command = command or ""
     try:
         why = _check(command, _root(), 0)
@@ -3087,6 +3096,263 @@ def decide(command):
         return "ask", "fail_closed: guard error %s: %s. A human decides." % (type(exc).__name__, str(exc)[:160])
 
 
+# =====================================================================================
+# VERSION 4: NEVER ASK. Every stop is a deny that carries a redirect the agent can follow.
+# Detection is _decide3, unchanged. Each redirect is chosen by the SHAPE of the v3 reason (first
+# match wins), and every command in backticks inside a redirect is a safe alternative that this
+# guard allows. bench.py checks both: no deny without a specific redirect, and no alternative that
+# the guard itself would stop.
+# =====================================================================================
+REDIRECT_MARK = " DO THIS INSTEAD: "
+_V3_TAILS = (" Stop and ask. Name the paths or refs, and let a human run it.",
+             " Bypassing them is an act for a human in their own terminal. Stop and ask.",
+             " A human decides.")
+_VAR_ALT = {"add": "git add path/to/file", "stage": "git add path/to/file",
+            "commit": "git commit -m \"message\" -- path/to/file", "push": "git push origin branch-name",
+            "reset": "git reset --soft HEAD~1", "branch": "git branch -d branch-name",
+            "checkout": "git switch branch-name", "switch": "git switch branch-name",
+            "restore": "git restore path/to/file", "merge": "git merge branch-name",
+            "rm": "git rm path/to/file", "mv": "git mv old/path new/path", "stash": "git stash list",
+            "clean": "git clean -n", "config": "git config user.name \"Name\"",
+            "rebase": "git rebase origin/branch-name", "pull": "git pull --rebase origin branch-name"}
+# (shape id, regex over the v3 reason, redirect). Order matters: the first match wins.
+REDIRECTS = [
+    # policy B: never disarm the hooks
+    ("B-no-verify-pull", r"^hook_bypass_guard: --no-verify on git pull",
+     "Run `git pull origin branch-name` without --no-verify. If a hook fails, read its output, fix what it "
+     "names, and run it again."),
+    ("B-no-verify", r"^hook_bypass_guard: --no-verify",
+     "Run the same command without --no-verify, for example `git commit -m \"message\"` or "
+     "`git push origin branch-name`. If a hook fails, read its output, fix what it names, and run it again."),
+    ("B-commit-n", r"^hook_bypass_guard: git commit -n",
+     "Drop -n, which means --no-verify on commit: `git commit -m \"message\"`. If the hook fails, fix what "
+     "it names and commit again."),
+    ("B-hookspath-oneshot", r"^hook_bypass_guard: (?:-c core\.hooksPath|--config-env core\.hooksPath)",
+     "Drop the core.hooksPath override and run the plain command, for example `git commit -m \"message\"`. "
+     "The hooks then run as the repo set them."),
+    ("B-config-env", r"^hook_bypass_guard: GIT_CONFIG_",
+     "Drop the GIT_CONFIG_* variables. To pass a setting that does not touch hooks, write it literally "
+     "with -c: `git -c user.name=\"Name\" commit -m \"message\"`."),
+    ("B-hookspath-config", r"^hook_bypass_guard: (?:git config core\.hooksPath|git config unset core\.hooksPath|"
+                           r"removing the \[core\] section|writes core\.hooksPath)",
+     "Leave core.hooksPath pointing at the repo's hooks: `git config core.hooksPath .githooks`. Check the "
+     "value with `git config --get core.hooksPath`."),
+    ("B-runner-off", r"^hook_bypass_guard: .*switches the hook runner off",
+     "Run the command without HUSKY=0, LEFTHOOK=0, HUSKY_SKIP_HOOKS or SKIP=, for example "
+     "`git commit -m \"message\"`. If a hook fails, fix what it names and run it again."),
+    ("B-pre-commit-uninstall", r"^hook_bypass_guard: pre-commit uninstall",
+     "Keep the hooks installed. Run them by hand with `pre-commit run --all-files` and fix what they report."),
+    ("B-plumbing", r"^hook_bypass_guard: git plumbing",
+     "Use the commands that run the hooks: `git commit -m \"message\"` to commit, `git push origin "
+     "branch-name` to publish, and `git branch new-branch commit-id` to point a new branch at a commit."),
+    ("B-hook-file", r"^hook_bypass_guard: .*(?:git hook|hooks? off|hooks? for everyone)",
+     "Leave the hook files in place. Read the hook with `cat .git/hooks/pre-commit` to see what it checks, "
+     "fix the code it complains about, and run the command again."),
+    # policy A: stage by name only
+    ("A-rm-cached-all", r"^blanket_stage_guard: .*Form seen: git rm",
+     "Untrack files by name: `git rm --cached path/to/file`, or one folder with "
+     "`git rm -r --cached path/to/folder`. Add the path to .gitignore so it stays out."),
+    ("A-commit-all", r"^blanket_stage_guard: .*Form seen: git commit (?:--all|-[A-Za-z]*a)",
+     "Stage the files by name, then commit without -a: `git add path/to/file1 path/to/file2` and then "
+     "`git commit -m \"message\"`. Run `git status --short` first to see what changed."),
+    ("A-commit-whole", r"^blanket_stage_guard: .*Form seen: git commit",
+     "Commit only named paths: `git commit -m \"message\" -- path/to/file`. Run `git status --short` "
+     "first to see what changed."),
+    ("A-add-exclude", r"^blanket_stage_guard: .*Form seen: git add \S*(?::\(exclude\)|:!|:\^)",
+     "Name what to stage, not what to skip. `git status --short` lists the changed files; then "
+     "`git add path/to/file1 path/to/file2`."),
+    ("A-add-whole", r"^blanket_stage_guard: ",
+     "Stage the files you changed by name. Run `git status --short` to list them, then "
+     "`git add path/to/file1 path/to/file2`."),
+    # policy C: never destroy uncommitted or pushed work
+    ("C-reset-hard", r"^data_loss_guard: .*reset --hard",
+     "Keep the work. Set it aside with `git stash push -m \"before reset\"`, or keep it on a new branch with "
+     "`git switch -c backup-branch`. To move the branch back but keep the changes, use "
+     "`git reset --soft HEAD~1`. To unstage one file, use `git restore --staged path/to/file`."),
+    ("C-clean-config", r"^data_loss_guard: .*clean\.requireForce",
+     "Leave clean.requireForce on. Preview what git clean would remove with `git clean -n`, then delete "
+     "named files with `rm path/to/file`."),
+    ("C-clean", r"^data_loss_guard: git clean",
+     "Do not delete untracked files in bulk. Preview with `git clean -n`, then remove the files you mean "
+     "by name with `rm path/to/file`, or add them to .gitignore."),
+    ("C-discard-whole-tree", r"^data_loss_guard: .*over the whole tree discards",
+     "Discard changes one file at a time, by name: `git restore path/to/file`. To set everything aside "
+     "instead, run `git stash push -m \"wip\"`."),
+    ("C-switch-discard", r"^data_loss_guard: (?:git checkout --force|git switch that discards)",
+     "Save your changes first with `git stash push -m \"wip\"`, then switch with `git switch branch-name`. "
+     "Bring the changes back later with `git stash apply`."),
+    ("C-branch-move", r"^data_loss_guard: (?:git checkout -B|git branch --force moves|git fetch \S+ force-updates)",
+     "Do not move an existing branch. Make a new one where you need it: "
+     "`git switch -c new-branch origin/main`. To update a branch from its remote, use "
+     "`git pull --rebase origin branch-name`."),
+    ("C-overwrite-worktree", r"^data_loss_guard: (?:git checkout-index|git read-tree --reset)",
+     "Restore named files from the commit you want: `git restore --source=commit-id -- path/to/file`."),
+    ("C-remote-push-config", r"^data_loss_guard: -c remote\.\*\.push",
+     "Push one named branch: `git push origin branch-name`. Do not set a forcing push refspec."),
+    ("C-force-push", r"^data_loss_guard: .*force push",
+     "Use `git push origin branch-name` without --force. If the push is rejected because the remote moved, "
+     "run `git fetch origin` and `git rebase origin/branch-name`, then push again."),
+    ("C-remote-delete", r"^data_loss_guard: (?:git push --delete|git push :|git push --prune|git push --mirror|"
+                        r"remote\.\*\.mirror)",
+     "Leave the remote branches in place and push only the branch you mean: `git push origin branch-name`. "
+     "To drop a merged branch from your own clone, use `git branch -d branch-name`."),
+    ("C-branch-delete", r"^data_loss_guard: git branch (?:-D|--delete --force)",
+     "Use `git branch -d branch-name`, which refuses to delete unmerged work. If it refuses, merge the "
+     "branch first, or keep it under a new name with `git branch -m old-name new-name`."),
+    ("C-stash-drop", r"^data_loss_guard: git stash (?:drop|clear)",
+     "Keep the stash. See it with `git stash list`, apply it with `git stash apply`, or turn it into a "
+     "branch with `git stash branch new-branch`."),
+    ("C-reflog", r"^data_loss_guard: git reflog",
+     "Leave the reflog alone; it is how lost commits come back. To shrink the repo, run `git gc`."),
+    ("C-worktree-force", r"^data_loss_guard: git worktree remove --force",
+     "Commit or stash inside the worktree first, then remove it without --force: "
+     "`git worktree remove path/to/worktree`."),
+    ("C-git-rm-whole", r"^data_loss_guard: git rm over the whole tree",
+     "Remove files by name: `git rm path/to/file`. Run `git status --short` first to see what is tracked."),
+    ("C-symbolic-ref-delete", r"^data_loss_guard: git symbolic-ref --delete",
+     "Leave HEAD in place. To move to another branch, run `git switch branch-name`."),
+    ("C-delete-dotgit", r"^data_loss_guard: deletes the repository's own history",
+     "Leave .git in place. If the repo looks broken, check it with `git fsck`. To start over on fresh "
+     "files, make a new branch with `git switch -c new-branch`."),
+    ("C-unparseable", r"^data_loss_guard: a work-destroying git form inside an unparseable",
+     "Fix the quoting so every quote closes, then run one plain git command at a time. Check the state "
+     "first with `git status --short`."),
+    # fail-closed shapes (v3 asked; v4 denies with a way forward)
+    ("F-hook-write", r"^fail_closed: .*(?:git hook|hook files)",
+     "Leave the hook files in place. Read the hook with `cat .git/hooks/pre-commit` to see what it checks, "
+     "fix the code it complains about, and run the command again."),
+    ("F-gitdir-delete", r"^fail_closed: a delete inside \.git",
+     "Use git's own command to clear an operation in progress: `git rebase --abort`, `git merge --abort` "
+     "or `git cherry-pick --abort`."),
+    ("F-worktree-delete", r"^fail_closed: a recursive delete of the whole worktree",
+     "Delete named paths only: `rm -r path/to/dir`. Check what is there first with `git status --short`."),
+    ("F-symbolic-ref", r"^fail_closed: git symbolic-ref",
+     "Move HEAD with `git switch branch-name`, or start an empty branch with "
+     "`git switch --orphan new-branch`."),
+    ("F-read-tree", r"^fail_closed: git read-tree",
+     "Bring named files from another commit with `git restore --source=commit-id -- path/to/file`, or "
+     "merge the branch with `git merge branch-name`."),
+    ("F-history-rewrite", r"^fail_closed: git \S+ rewrites history",
+     "Do not rewrite history in place. Make the change as a new commit: edit the files, stage them with "
+     "`git add path/to/file`, then `git commit -m \"message\"`."),
+    ("F-git-alias", r"^fail_closed: `git \S+` is not a git command",
+     "Spell out the git command the alias stands for. List the aliases with "
+     "`git config --get-regexp alias` and run the full command."),
+    ("F-git-sub-unknown", r"^fail_closed: (?:the git subcommand is unknown|the git stash action is unknown|"
+                          r"git has a word before its subcommand)",
+     "Write the git subcommand and its flags literally, for example `git stash list` or "
+     "`git status --short`. Print a variable first with `echo \"$VAR\"` and paste its value."),
+    ("F-git-global-option", r"^fail_closed: a git global option value",
+     "Write the path literally: `git -C path/to/repo status`. Print a variable first with "
+     "`echo \"$VAR\"` and paste its value."),
+    ("F-config-key", r"^fail_closed: git config with a key",
+     "Write the config key and value literally, for example `git config user.name \"Name\"`."),
+    ("F-command-setting", r"^fail_closed: (?:git config \S+ set to a value|an environment variable git runs|"
+                          r"a config file swapped in|-c include)",
+     "Write the program literally, for example `git config core.editor vim` or "
+     "`GIT_SSH_COMMAND=\"ssh -i path/to/key\" git fetch origin`. Do not load git config from another file."),
+    ("F-eval", r"^fail_closed: eval of text",
+     "Do not eval generated text. Print it with `echo \"$VAR\"`, then run the printed commands as plain "
+     "text, one call each."),
+    ("F-shell-c", r"^fail_closed: (?:a shell runs -c text|the command word itself is unknown)",
+     "Run the command directly, not through sh -c or a variable. Print it with `echo \"$VAR\"` and type "
+     "the printed command as a plain Bash command."),
+    ("F-pipe-to-shell", r"^fail_closed: a shell runs (?:a pipe|a script)",
+     "Do not pipe generated or downloaded text into a shell. Save it to a file and read it first, for "
+     "example `cat script.sh`, then run its steps as plain commands."),
+    ("F-interpreter", r"^fail_closed: interpreter code builds",
+     "Run git directly in Bash with literal arguments, for example `git status --short`, instead of "
+     "building the command inside python, perl, ruby or node."),
+    ("F-nested-code", r"^fail_closed: code nested deeper",
+     "Decode the payload to the screen first, for example `echo \"$VAR\" | base64 -d`, and run what it "
+     "says as plain commands."),
+    ("F-quoting", r"^fail_closed: quoting the guard cannot parse",
+     "Fix the quoting so every quote closes, then run one plain command at a time. Check the state with "
+     "`git status --short`."),
+    ("F-var", r"^fail_closed: git (\S+) has (?:an unquoted word|an argument|a pathspec|an option value)", None),
+    ("F-guard-error", r"^fail_closed: guard error",
+     "Split the command into shorter plain steps, one command per call, starting with "
+     "`git status --short`."),
+]
+_REDIRECTS_RE = [(sid, re.compile(rx), text) for sid, rx, text in REDIRECTS]
+UNMATCHED = "UNMATCHED"
+_PLAIN_PREFIX = "Run git directly as plain text, not through decoded or generated code. "
+_BACKTICK = re.compile(r"`([^`]+)`")
+
+
+def _core_reason(why):
+    for tail in _V3_TAILS:
+        why = why.replace(tail, "")
+    return why
+
+
+def redirect_for(core):
+    """-> (shape id, redirect text). UNMATCHED means no specific redirect: bench.py fails on it."""
+    for sid, rx, text in _REDIRECTS_RE:
+        m = rx.search(core)
+        if not m:
+            continue
+        if sid == "F-var":
+            sub = m.group(1)
+            sid = "F-var-" + (sub if sub in _VAR_ALT else "other")
+            alt = _VAR_ALT.get(sub, "git status --short")
+            text = ("Write the value into the command literally so it can be checked. Print it first with "
+                    "`echo \"$VAR\"`, then run the command with the printed value, for example `%s`." % alt)
+        if "(found in code" in core or "(found in text" in core:
+            text = _PLAIN_PREFIX + text
+        return sid, text
+    return UNMATCHED, ("Split the command into plain literal steps and run each one by itself. Check the "
+                       "state first with `git status --short`.")
+
+
+def alternatives(redirect):
+    """Every command in backticks inside a redirect. Each one must be a command the guard allows."""
+    return _BACKTICK.findall(redirect or "")
+
+
+def decide_full(command):
+    """-> dict(verdict "deny"|"allow", origin "block"|"fail_closed"|None, v3 verdict, shape, redirect,
+    alternatives, reason). reason is what the hook prints: the v3 reason without its ask tails, then
+    DO THIS INSTEAD and the redirect."""
+    v3, why = _decide3(command)
+    if v3 == "allow":
+        return {"verdict": "allow", "origin": None, "v3": v3, "shape": None, "redirect": "",
+                "alternatives": [], "reason": ""}
+    core = _core_reason(why)
+    shape, text = redirect_for(core)
+    return {"verdict": "deny", "origin": "block" if v3 == "block" else "fail_closed", "v3": v3,
+            "shape": shape, "redirect": text, "alternatives": alternatives(text),
+            "reason": core.rstrip() + REDIRECT_MARK + text}
+
+
+def decide(command):
+    """Return ("block" | "allow", reason). Version 4 never returns "ask": every v3 stop is a block
+    whose reason ends with a redirect the agent can follow."""
+    d = decide_full(command)
+    return ("block", d["reason"]) if d["verdict"] == "deny" else ("allow", "")
+
+
+def _undo_hook(command, payload):
+    """On an allow: let undo.py snapshot the repo at the hook's cwd if the command could change it.
+    Off when AGENT_GUARD_UNDO=0. Only the payload's cwd or AGENT_GUARD_UNDO_REPO picks the repo,
+    never a fallback, so a run with neither snapshots nothing. Returns a message on failure."""
+    if os.environ.get("AGENT_GUARD_UNDO", "1") == "0":
+        return None
+    cwd = (payload.get("cwd") if isinstance(payload, dict) else None) or os.environ.get("AGENT_GUARD_UNDO_REPO")
+    if not cwd:
+        return None
+    try:
+        here = os.path.dirname(os.path.abspath(__file__))
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import undo
+        undo.pre_tool_use(command, cwd)
+        return None
+    except Exception as exc:
+        return ("UNDO SNAPSHOT FAILED (%s: %s). This command runs WITHOUT an undo point."
+                % (type(exc).__name__, str(exc)[:160]))
+
+
 def main(stdin=None):
     try:
         payload = json.load(stdin or sys.stdin)
@@ -3097,12 +3363,16 @@ def main(stdin=None):
         print(json.dumps({"systemMessage": "GUARD FAIL-OPEN: %s: %s. The guard did NOT evaluate "
                           "this call." % (type(exc).__name__, str(exc)[:160])}))
         return 0
-    verdict, reason = decide(command)
-    if verdict in ("block", "ask"):
+    d = decide_full(command)
+    if d["verdict"] == "deny":
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
-            "permissionDecision": "deny" if verdict == "block" else "ask",
-            "permissionDecisionReason": reason}}))
+            "permissionDecision": "deny",
+            "permissionDecisionReason": d["reason"]}}))
+        return 0
+    note = _undo_hook(command, payload)
+    if note:
+        print(json.dumps({"systemMessage": note}))
     return 0
 
 

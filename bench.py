@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1 and guard_v2 (frozen copies in variants/),
-guard_v3 (guard.py, the real one), broken_guard (negative control for guard.py).
+Variants: no_guard (baseline), naive_regex, guard_v1, guard_v2 and guard_v3 (frozen copies in
+variants/), guard_v4 (guard.py, the real one), broken_guard (negative control for guard.py).
 Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"); residual; and the
 holdouts when their files exist. Which holdout was blind or a development set for which version is
 in HOLDOUT_STATUS and printed with every table.
 
-Verdicts. guard.py returns block, ask or allow. Block and ask both STOP the command: block refuses
-it, ask hands it to a human. v1 and v2 only block or allow.
+Verdicts. guard_v3 returns block, ask or allow. Block and ask both STOP the command: block refuses
+it, ask hands it to a human. v1, v2 and v4 only block or allow. v4 (guard.py) never asks: every v3
+stop is a v4 deny whose reason ends with a redirect.
 Scoring. "Positive" means "this command should be stopped".
   own cases and holdouts: positive = expect is block, ask or stop.
   residual: every case is a violation the guard knowingly does not stop. Positive = True.
@@ -16,15 +17,25 @@ Scoring. "Positive" means "this command should be stopped".
   FN = allowed-bad. The ask rate on safe commands, FP-ask / all safe, is the price of failing closed.
 Exit 0 only if all of these hold:
   1. guard.py stops every own bad case and allows every own good case.
-  2. guard.py gives the exact verdict (block or ask) every own stop case names.
+  2. guard.py denies every own stop case with the origin the case names: a v3 block for "block", a
+     v3 fail-closed ask for "ask".
   3. broken_guard.py has at least one wrong answer on own cases (the negative control can fail).
-  4. guard.py run as a hook (stdin JSON, stdout) agrees with guard.decide() on every case.
+  4. guard.py run as a hook (stdin JSON, stdout) agrees with guard.decide() on every case, never
+     prints ask, carries the redirect in every deny, and creates no snapshot ref in this repo.
   5. broken_guard.py differs from guard.py by exactly one line.
   6. Every command guard_v1 or guard_v2 blocks, guard.py also blocks (no v1/v2 block turned soft).
+  7. Every command guard_v3 stops (block or ask), guard.py denies, and guard.py stops nothing that
+     guard_v3 allows (0 v3 stops softened; the stop sets are identical).
+  8. guard.py never returns ask, on any case.
+  9. Every guard.py deny carries a non-empty redirect of a specific shape that names at least one
+     safe alternative, and every alternative is a command guard.py itself allows. Planted bad
+     redirects (empty, unmatched, an alternative the guard stops, no alternative) must be caught.
+ 10. undo_bench.py prints OVERALL: PASS and exits 0.
 Holdout results never change the exit code.
 
-Surface: command strings only. Nothing is ever executed. The Blind to line at the end of the
-output says what the guard cannot see.
+Surface: command strings only, for the guard. bench.py executes nothing itself except
+undo_bench.py, which runs commands only inside its own temp root. The Blind to line at the end of
+the output says what the guard cannot see.
 """
 import difflib
 import importlib.util
@@ -45,10 +56,11 @@ VARIANTS = [
     ("naive_regex", os.path.join(HERE, "variants", "naive_regex.py")),
     ("guard_v1", os.path.join(HERE, "variants", "guard_v1.py")),
     ("guard_v2", os.path.join(HERE, "variants", "guard_v2.py")),
-    ("guard_v3", os.path.join(HERE, "guard.py")),
+    ("guard_v3", os.path.join(HERE, "variants", "guard_v3.py")),
+    ("guard_v4", os.path.join(HERE, "guard.py")),
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
-GUARDS = ("guard_v1", "guard_v2", "guard_v3")
+GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4")
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -60,10 +72,10 @@ CASE_FILES = [
 ]
 HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4")
 HOLDOUT_STATUS = {
-    "holdout": "blind for v1; seen before v2 and v3 were built",
-    "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3",
-    "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3",
-    "holdout4": "blind for v1, v2 and v3",
+    "holdout": "blind for v1; seen before v2, v3 and v4 were built",
+    "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3 and v4",
+    "holdout3": "blind for v1 and v2; DEVELOPMENT set for v3; seen before v4",
+    "holdout4": "blind for v1, v2 and v3; seen before v4 (v4 adds no detection)",
 }
 CLASS_SETS = ("holdout2", "holdout3", "holdout4")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
@@ -168,19 +180,46 @@ def timing_us(decide, commands, runs=5):
 
 
 def cli_verdict(guard_path, command):
-    """Run guard.py as the hook runs it. Returns (verdict, rc)."""
+    """Run guard.py as the hook runs it. Returns (verdict, rc, reason). The payload carries no cwd
+    and AGENT_GUARD_UNDO=0, so the undo layer cannot snapshot anything here."""
     payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})
     p = subprocess.run([sys.executable, guard_path], input=payload, capture_output=True,
-                       text=True, env=dict(os.environ))
+                       text=True, env=dict(os.environ, AGENT_GUARD_UNDO="0"))
     out = p.stdout.strip()
     if not out:
-        return "allow", p.returncode
+        return "allow", p.returncode, ""
     try:
         d = json.loads(out)
-        dec = d.get("hookSpecificOutput", {}).get("permissionDecision")
-        return {"deny": "block", "ask": "ask"}.get(dec, "allow"), p.returncode
+        h = d.get("hookSpecificOutput", {})
+        dec = h.get("permissionDecision")
+        return {"deny": "block", "ask": "ask"}.get(dec, "allow"), p.returncode, h.get("permissionDecisionReason", "")
     except ValueError:
-        return "error", p.returncode
+        return "error", p.returncode, ""
+
+
+def redirect_problems(command, info, allows):
+    """Why a deny's redirect is not good enough. Empty list means it names a safe alternative."""
+    probs = []
+    if not (info.get("redirect") or "").strip():
+        probs.append("empty redirect")
+    if info.get("shape") in (None, "", "UNMATCHED"):
+        probs.append("no specific shape")
+    if not info.get("alternatives"):
+        probs.append("names no alternative")
+    for a in info.get("alternatives") or []:
+        if not allows(a):
+            probs.append("alternative is itself stopped: " + a)
+        if a.strip() == command.strip():
+            probs.append("alternative is the denied command")
+    if " DO THIS INSTEAD: " not in (info.get("reason") or "") or not info["reason"].endswith(info.get("redirect") or "\0"):
+        probs.append("reason does not carry the redirect")
+    return probs
+
+
+def git_snapshot_refs(path):
+    p = subprocess.run(["git", "-C", path, "for-each-ref", "--format=%(refname)", "refs/agent-guard/"],
+                       capture_output=True, text=True)
+    return [l for l in p.stdout.splitlines() if l] if p.returncode == 0 else []
 
 
 SET_LABELS = {"v1_era": "own cases, v1 era (%d)", "v2_dev": "own cases written while building v2 (%d)",
@@ -200,7 +239,8 @@ def main():
         assert mods[name]._root() == PINNED_ROOT, "root pin failed for " + name
     names = [v for v, _ in VARIANTS]
     path_of = dict(VARIANTS)
-    g3 = mods["guard_v3"]
+    g4 = mods["guard_v4"]
+    refs_before = git_snapshot_refs(HERE)
     print("Python %s on %s. Root pinned: %s (measured, not the live cwd %s)"
           % (platform.python_version(), platform.system(), PINNED_ROOT, os.getcwd()))
 
@@ -228,15 +268,18 @@ def main():
         for r in sets[s]:
             all_rows[r["id"] + "@" + s] = r
     verdicts = {v: {} for v in names}
-    reasons = {}
+    reasons, reasons3, full = {}, {}, {}
     for v in names:
         for s in order:
             for r in sets[s]:
                 if r["id"] not in verdicts[v]:
                     out = mods[v].decide(r["command"])
                     verdicts[v][r["id"]] = out[0]
-                    if v == "guard_v3":
+                    if v == "guard_v4":
                         reasons[r["id"]] = out[1]
+                        full[r["id"]] = g4.decide_full(r["command"])
+                    if v == "guard_v3":
+                        reasons3[r["id"]] = out[1]
 
     results = {v: {s: score(verdicts[v], s, sets[s]) for s in order} for v in names}
 
@@ -260,13 +303,46 @@ def main():
     timing_cmds = [r["command"] for s in order if s != "own_all" for r in sets[s]]
     timing = {v: timing_us(mods[v].decide, timing_cmds) for v in names}
 
-    # exactness on own cases: a case that names block or ask gets exactly that verdict
+    # exactness on own cases: a case that names block or ask gets a deny of exactly that origin
+    want_origin = {"block": "block", "ask": "fail_closed"}
     inexact = [r["id"] for r in own if r["expect"] in ("block", "ask")
-               and verdicts["guard_v3"][r["id"]] != r["expect"]]
+               and (verdicts["guard_v4"][r["id"]] != "block" or full[r["id"]]["origin"] != want_origin[r["expect"]])]
+    all_ids = sorted({r["id"] for s in order for r in sets[s]})
     # no v1 or v2 block turned soft
-    softened = sorted({r["id"] for s in order for r in sets[s]
-                       if (verdicts["guard_v1"][r["id"]] == "block" or verdicts["guard_v2"][r["id"]] == "block")
-                       and verdicts["guard_v3"][r["id"]] != "block"})
+    softened = sorted({i for i in all_ids
+                       if (verdicts["guard_v1"][i] == "block" or verdicts["guard_v2"][i] == "block")
+                       and verdicts["guard_v4"][i] != "block"})
+    # no v3 stop turned soft, and nothing new stopped: v4 changes the answer, not the detection
+    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v4"][i] != "block"]
+    v4_hardened = [i for i in all_ids if verdicts["guard_v3"][i] == "allow" and verdicts["guard_v4"][i] != "allow"]
+    v4_asks = [i for i in all_ids if verdicts["guard_v4"][i] == "ask"]
+    v3_asks = [i for i in all_ids if verdicts["guard_v3"][i] == "ask"]
+    # every deny carries a specific redirect that names a safe alternative
+    allow_cache = {}
+
+    def allows(c):
+        if c not in allow_cache:
+            allow_cache[c] = g4.decide(c)[0] == "allow"
+        return allow_cache[c]
+    cmd_of = {r["id"]: r["command"] for s in order for r in sets[s]}
+    denies = [i for i in all_ids if verdicts["guard_v4"][i] == "block"]
+    redirect_bad = {i: redirect_problems(cmd_of[i], full[i], allows) for i in denies}
+    redirect_bad = {i: p for i, p in redirect_bad.items() if p}
+    shape_count = {}
+    for i in denies:
+        shape_count[full[i]["shape"]] = shape_count.get(full[i]["shape"], 0) + 1
+    alts_all = sorted({a for i in denies for a in full[i]["alternatives"]})
+    planted = [
+        ("an empty redirect", "git add -A", {"shape": "A-add-whole", "redirect": "", "alternatives": [],
+                                             "reason": "r DO THIS INSTEAD: "}),
+        ("an unmatched shape", "git add -A", dict(g4.decide_full("git add -A"), shape="UNMATCHED")),
+        ("an alternative the guard stops", "git push -f", dict(g4.decide_full("git push -f"),
+                                                               alternatives=["git push --force origin main"])),
+        ("no alternative named", "git reset --hard", dict(g4.decide_full("git reset --hard"), alternatives=[])),
+        ("a reason without the redirect", "git clean -fd", dict(g4.decide_full("git clean -fd"), reason="data_loss_guard: x")),
+    ]
+    planted_caught = [w for w, c, info in planted if redirect_problems(c, info, allows)]
+    clean_control = redirect_problems("git push --force origin main", g4.decide_full("git push --force origin main"), allows)
 
     # reason names the policy's guard on blocked violations; asks say fail_closed
     named_ok = named_total = 0
@@ -276,27 +352,41 @@ def main():
             continue
         for row in sets[s]:
             if should_stop(s, row) and row.get("policy") in GUARD_BY_POLICY \
-                    and verdicts["guard_v3"][row["id"]] == "block":
+                    and verdicts["guard_v4"][row["id"]] == "block" and full[row["id"]]["origin"] == "block":
                 named_total += 1
                 if reasons[row["id"]].startswith(GUARD_BY_POLICY[row["policy"]]):
                     named_ok += 1
                 else:
                     named_bad.append(row["id"])
-    asks_named = all(reasons[i].startswith("fail_closed") for i, v in verdicts["guard_v3"].items() if v == "ask")
+    asks_named = all(reasons3[i].startswith("fail_closed") for i, v in verdicts["guard_v3"].items() if v == "ask")
+    fc_named = all(reasons[i].startswith("fail_closed") for i in denies if full[i]["origin"] == "fail_closed")
 
     # the hook form, run for real, must agree with the library form on every case
-    cli_diffs, cli_total, seen = [], 0, set()
+    cli_diffs, cli_total, seen, cli_asks, cli_noredirect = [], 0, set(), [], []
     for s in order:
         for row in sets[s]:
             if row["id"] in seen:
                 continue
             seen.add(row["id"])
             cli_total += 1
-            cli, rc = cli_verdict(path_of["guard_v3"], row["command"])
-            if cli != verdicts["guard_v3"][row["id"]] or rc != 0:
+            cli, rc, why = cli_verdict(path_of["guard_v4"], row["command"])
+            if cli != verdicts["guard_v4"][row["id"]] or rc != 0:
                 cli_diffs.append(row["id"])
+            if cli == "ask":
+                cli_asks.append(row["id"])
+            if cli == "block" and (why != reasons[row["id"]] or " DO THIS INSTEAD: " not in why):
+                cli_noredirect.append(row["id"])
+    refs_after = git_snapshot_refs(HERE)
+    new_refs = sorted(set(refs_after) - set(refs_before))
 
-    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v3"][r["id"]] != "allow"]
+    # the undo layer: its own bench, run for real, read from its printed verdict
+    ub = subprocess.run([sys.executable, os.path.join(HERE, "undo_bench.py")], capture_output=True, text=True)
+    ub_lines = ub.stdout.splitlines()
+    ub_overall = next((l for l in reversed(ub_lines) if l.startswith("OVERALL: ")), "OVERALL: (missing)")
+    ub_restored = next((l for l in ub_lines if l.startswith("Fully restored: ")), "Fully restored: (missing)")
+    ub_controls = next((l for l in ub_lines if l.startswith("Controls that show the loss: ")), "(missing)")
+
+    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v4"][r["id"]] != "allow"]
 
     # verdict changes v2 -> v3, judged as stopped / allowed
     changes, regressions = {}, []
@@ -314,23 +404,35 @@ def main():
         changes[s] = {"fixed": fixed, "worse": worse}
         regressions += [s + ":" + i for i in worse]
 
-    a = open(path_of["guard_v3"], encoding="utf-8").read().splitlines()
+    a = open(path_of["guard_v4"], encoding="utf-8").read().splitlines()
     b = open(path_of["broken_guard"], encoding="utf-8").read().splitlines()
     changed = [l for l in difflib.unified_diff(a, b, lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
     one_line = len(changed) == 2
 
-    own3, ownb = results["guard_v3"]["own_all"], results["broken_guard"]["own_all"]
+    own3, ownb = results["guard_v4"]["own_all"], results["broken_guard"]["own_all"]
     g_err, b_err = own3["FP"] + own3["FN"], ownb["FP"] + ownb["FN"]
     conds = [
         ("guard.py stops every own bad case and allows every own good case", g_err == 0, "%d errors" % g_err),
-        ("guard.py gives the exact verdict (block or ask) each own stop case names", not inexact,
+        ("guard.py denies each own stop case with the origin it names (v3 block or v3 fail-closed ask)", not inexact,
          "%d differ%s" % (len(inexact), (": " + ", ".join(inexact)) if inexact else "")),
         ("broken_guard.py has at least one error on own cases (negative control)", b_err >= 1, "%d errors" % b_err),
-        ("guard.py hook form agrees with decide() on every case", not cli_diffs,
-         "%d of %d differ%s" % (len(cli_diffs), cli_total, (": " + ", ".join(cli_diffs)) if cli_diffs else "")),
+        ("guard.py hook form agrees with decide() on every case, never asks, carries every redirect, "
+         "and made no snapshot ref here", not cli_diffs and not cli_asks and not cli_noredirect and not new_refs,
+         "%d of %d differ, %d asks, %d denies without the redirect, %d new snapshot refs"
+         % (len(cli_diffs), cli_total, len(cli_asks), len(cli_noredirect), len(new_refs))),
         ("broken_guard.py differs from guard.py by exactly one line", one_line, "%d changed lines" % (len(changed) // 2)),
         ("every command v1 or v2 blocks, guard.py still blocks", not softened,
          "%d softened%s" % (len(softened), (": " + ", ".join(softened)) if softened else "")),
+        ("every command v3 stops, guard.py denies; it stops nothing v3 allows", not v3_softened and not v4_hardened,
+         "%d of %d v3 stops softened, %d newly stopped" % (len(v3_softened), len([i for i in all_ids if verdicts["guard_v3"][i] != "allow"]), len(v4_hardened))),
+        ("guard.py never returns ask", not v4_asks, "%d asks (v3 asked on %d)" % (len(v4_asks), len(v3_asks))),
+        ("every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught",
+         not redirect_bad and len(planted_caught) == len(planted) and not clean_control,
+         "%d of %d denies bad, %d shapes, %d distinct alternatives; planted caught %d of %d; clean control %s"
+         % (len(redirect_bad), len(denies), len(shape_count), len(alts_all), len(planted_caught), len(planted),
+            "passes" if not clean_control else "FAILS: " + "; ".join(clean_control))),
+        ("undo_bench.py passes", ub.returncode == 0 and ub_overall == "OVERALL: PASS",
+         "%s, exit %d; %s %s" % (ub_overall, ub.returncode, ub_restored, ub_controls)),
     ]
     ok = all(c[1] for c in conds)
 
@@ -338,15 +440,16 @@ def main():
     L.append("# Results")
     L.append("")
     L.append("Python %s on %s. Root pinned to `%s`." % (platform.python_version(), platform.system(), PINNED_ROOT))
-    L.append("`guard_v1` and `guard_v2` are frozen copies in `variants/`. `guard_v3` is `guard.py`. "
-             "Stopped means block or ask. TP stopped-bad, FP stopped-safe (block / ask), TN allowed-safe, "
-             "FN allowed-bad. In `residual` every case is a violation, so an allow is a miss.")
+    L.append("`guard_v1`, `guard_v2` and `guard_v3` are frozen copies in `variants/`. `guard_v4` is `guard.py`. "
+             "Stopped means block or ask (v4 never asks: its block is a deny with a redirect). TP stopped-bad, "
+             "FP stopped-safe (block / ask), TN allowed-safe, FN allowed-bad. In `residual` every case is a "
+             "violation, so an allow is a miss.")
     for h in HOLDOUTS:
         if not present[h]:
             L.append("")
             L.append("**The %s set was not present for this run.**" % h)
     L.append("")
-    L.append("## Every holdout, v1 / v2 / v3")
+    L.append("## Every holdout, v1 / v2 / v3 / v4")
     L.append("")
     L.append("| set | status | n | variant | TP | FP block | FP ask | TN | FN | recall | ask rate on safe |")
     L.append("|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|")
@@ -368,16 +471,16 @@ def main():
                 s, v, r["TP"], r["FP_block"], r["FP_ask"], r["TN"], r["FN"], fmt(r["recall"]),
                 pct(r["ask_rate_safe"])))
     L.append("")
-    L.append("## The price of failing closed: guard_v3 ask rate on safe commands")
+    L.append("## The price of failing closed: stops on safe commands, v3 (ask or block) and v4 (deny)")
     L.append("")
-    L.append("| set | safe commands | asked | blocked | ask rate | any-stop rate |")
+    L.append("| set | safe commands | v3 asked | v3 blocked | v4 denied | v4 deny rate |")
     L.append("|---|---:|---:|---:|---:|---:|")
     for s in order:
-        r = results["guard_v3"][s]
+        r, r4 = results["guard_v3"][s], results["guard_v4"][s]
         safe = r["FP"] + r["TN"]
         if safe:
-            L.append("| %s | %d | %d | %d | %s | %s |" % (s, safe, r["FP_ask"], r["FP_block"],
-                                                         pct(r["ask_rate_safe"]), pct(r["fp_rate_safe"])))
+            L.append("| %s | %d | %d | %d | %d | %s |" % (s, safe, r["FP_ask"], r["FP_block"], r4["FP_block"],
+                                                         pct(r4["fp_rate_safe"])))
     for s in order:
         L.append("")
         L.append("## " + label(s, len(sets[s])))
@@ -440,12 +543,25 @@ def main():
     for v in names:
         L.append("| %s | %.1f | %.1f | %.0f |" % ((v,) + timing[v]))
     L.append("")
-    L.append("## guard_v3 wrong verdicts with their commands")
+    L.append("## Redirect shapes: every guard.py deny, by the redirect it carries")
+    L.append("")
+    L.append("%d denies over every set, %d shapes, %d distinct alternative commands, each one allowed by guard.py."
+             % (len(denies), len(shape_count), len(alts_all)))
+    L.append("")
+    L.append("| shape | denies | first alternative |")
+    L.append("|---|---:|---|")
+    first_alt = {}
+    for i in denies:
+        first_alt.setdefault(full[i]["shape"], full[i]["alternatives"][0] if full[i]["alternatives"] else "")
+    for sh, n in sorted(shape_count.items(), key=lambda x: (-x[1], x[0])):
+        L.append("| %s | %d | `%s` |" % (sh, n, first_alt[sh].replace("|", "\\|")))
+    L.append("")
+    L.append("## guard_v4 wrong verdicts with their commands")
     for s in order:
         if s == "own_all":
             continue
         byid = {r["id"]: r for r in sets[s]}
-        r3 = results["guard_v3"][s]
+        r3 = results["guard_v4"][s]
         if not r3["wrong"]:
             continue
         L.append("")
@@ -463,7 +579,11 @@ def main():
     L.append("")
     L.append("- guard.py reason names the policy's guard on %d of %d blocked violations%s."
              % (named_ok, named_total, (" (off: " + ", ".join(named_bad) + ")") if named_bad else ""))
-    L.append("- Every ask reason starts with `fail_closed`: %s." % ("yes" if asks_named else "NO"))
+    L.append("- Every guard_v3 ask reason starts with `fail_closed`: %s." % ("yes" if asks_named else "NO"))
+    L.append("- Every guard.py deny that was a v3 ask still starts with `fail_closed`: %s." % ("yes" if fc_named else "NO"))
+    L.append("- Planted bad redirects caught: %s." % ", ".join(planted_caught))
+    if redirect_bad:
+        L.append("- Denies with a bad redirect: %s." % "; ".join("%s (%s)" % (i, ", ".join(p)) for i, p in sorted(redirect_bad.items())[:20]))
     L.append("- Residual cases guard.py still allows as documented: %d of %d%s."
              % (len(sets["residual"]) - len(flips), len(sets["residual"]),
                 (" (now stopped: " + ", ".join(flips) + ")") if flips else ""))
@@ -477,8 +597,9 @@ def main():
              "earlier tool call when the command uses it in a place the guard judges harmless (a git log "
              "argument), programs other than git that rewrite history or delete work without naming .git "
              "or a hooks path, an archive or patch applied over the hooks, a container image's "
-             "entrypoint, tools other than Bash, and anything outside the command text. Nothing is executed. Unresolved parts that could matter are asked about, "
-             "not allowed.")
+             "entrypoint, tools other than Bash, and anything outside the command text. The guard executes nothing. Unresolved parts that could matter are denied "
+             "with a redirect (v3 asked), not allowed. The undo layer covers part of this blind spot after the fact, inside "
+             "the repo only; its own Blind to line is in undo_bench.py's output.")
     L.append("")
     L.append("## Exit conditions")
     L.append("")
@@ -501,7 +622,13 @@ def main():
            "checks": {"reason_names_guard": {"ok": named_ok, "total": named_total, "off": named_bad},
                       "asks_named_fail_closed": asks_named, "cli_parity_diffs": cli_diffs,
                       "residual_now_stopped": flips, "one_line_diff": one_line, "inexact": inexact,
-                      "softened_v1_v2_blocks": softened},
+                      "softened_v1_v2_blocks": softened, "softened_v3_stops": v3_softened,
+                      "newly_stopped_vs_v3": v4_hardened, "v4_asks": v4_asks, "cli_asks": cli_asks,
+                      "cli_denies_without_redirect": cli_noredirect, "new_snapshot_refs": new_refs,
+                      "redirect_bad": redirect_bad, "redirect_shapes": shape_count,
+                      "redirect_alternatives": alts_all, "planted_redirects_caught": planted_caught,
+                      "undo_bench": {"overall": ub_overall, "exit": ub.returncode, "restored": ub_restored,
+                                     "controls": ub_controls}},
            "conditions": [{"name": c[0], "pass": c[1], "detail": c[2]} for c in conds],
            "overall": "PASS" if ok else "FAIL"}
     with open(os.path.join(HERE, "results", "results.json"), "w", encoding="utf-8") as fh:
