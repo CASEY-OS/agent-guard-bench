@@ -212,3 +212,112 @@
 {"id": "good-C70", "command": "git merge --no-ff feature/x", "expect": "allow", "policy": "C", "why": "merge"}
 {"id": "good-C71", "command": "git rebase main", "expect": "allow", "policy": "C", "why": "rebase is not on the list"}
 {"id": "good-C72", "command": "git status && git add src/a.py && git commit -m 'fix a' && git push", "expect": "allow", "policy": "C", "why": "a normal chain"}
+{"id": "v2-good-001", "command": "git add src/a.py \\\n  src/b.py", "expect": "allow", "policy": "none", "why": "continuation between two named paths"}
+{"id": "v2-good-002", "command": "git status \\\n  --short", "expect": "allow", "policy": "none", "why": "continuation before a harmless flag"}
+{"id": "v2-good-003", "command": "git commit -m 'one\\\ngit add -A'", "expect": "allow", "policy": "none", "why": "backslash-newline inside single quotes is data"}
+{"id": "v2-good-004", "command": "echo \"git reset \\\n --hard\"", "expect": "allow", "policy": "none", "why": "continuation inside an echo string"}
+{"id": "v2-good-005", "command": "git commit -m \"--no-verify is banned here\"", "expect": "allow", "policy": "none", "why": "flag text inside a message"}
+{"id": "v2-good-006", "command": "git commit -m '--no-verify'", "expect": "allow", "policy": "none", "why": "message that is exactly the flag"}
+{"id": "v2-good-007", "command": "git commit -m \"-n\"", "expect": "allow", "policy": "none", "why": "message that is exactly -n"}
+{"id": "v2-good-008", "command": "git log --grep=\"--no-verify\"", "expect": "allow", "policy": "none", "why": "grep term"}
+{"id": "v2-good-009", "command": "git commit -m x -- '-n'", "expect": "allow", "policy": "none", "why": "a path named -n after the options end"}
+{"id": "v2-good-010", "command": "git -c \"core.hooksPath=.githooks\" commit -m x", "expect": "allow", "policy": "none", "why": "quoted pair that keeps the hooks"}
+{"id": "v2-good-011", "command": "git commit -sm \"x\"", "expect": "allow", "policy": "none", "why": "cluster without n"}
+{"id": "v2-good-012", "command": "git commit -m 'fix' --no-edit", "expect": "allow", "policy": "none", "why": "harmless flag"}
+{"id": "v2-good-013", "command": "git commit --amend -m 'uses git add -A in docs'", "expect": "allow", "policy": "none", "why": "message mentions a banned form"}
+{"id": "v2-good-014", "command": "git config core.hookspath .githooks", "expect": "allow", "policy": "none", "why": "lowercase key set to the safe value"}
+{"id": "v2-good-015", "command": "git -c core.hookspath=.githooks commit -m x", "expect": "allow", "policy": "none", "why": "lowercase key, safe value"}
+{"id": "v2-good-016", "command": "git config --get core.hookspath", "expect": "allow", "policy": "none", "why": "read-only, lowercase"}
+{"id": "v2-good-017", "command": "git config core.editor vim", "expect": "allow", "policy": "none", "why": "another key"}
+{"id": "v2-good-018", "command": "git -c user.name=ci commit -m x", "expect": "allow", "policy": "none", "why": "another -c pair"}
+{"id": "v2-good-019", "command": "echo \"${IFS}\"", "expect": "allow", "policy": "none", "why": "IFS printed"}
+{"id": "v2-good-020", "command": "IFS=, read -ra parts <<< \"a,b\"", "expect": "allow", "policy": "none", "why": "IFS set for read"}
+{"id": "v2-good-021", "command": "echo '$IFS git reset --hard'", "expect": "allow", "policy": "none", "why": "single quotes keep $IFS literal text"}
+{"id": "v2-good-022", "command": "git commit -m \"docs: why $IFS is not used in git reset --hard\"", "expect": "allow", "policy": "none", "why": "message with $IFS"}
+{"id": "v2-good-023", "command": "git${IFS}status", "expect": "allow", "policy": "none", "why": "IFS between harmless words"}
+{"id": "v2-good-024", "command": "IFS=$'\\n'; for f in $(git ls-files -m); do echo \"$f\"; done", "expect": "allow", "policy": "none", "why": "IFS set to newline for a loop"}
+{"id": "v2-good-025", "command": "F=--soft; git reset $F HEAD~1", "expect": "allow", "policy": "none", "why": "variable holds a safe flag"}
+{"id": "v2-good-026", "command": "F=--hard; echo $F", "expect": "allow", "policy": "none", "why": "bad flag only printed"}
+{"id": "v2-good-027", "command": "F=--hard; git log --grep=$F", "expect": "allow", "policy": "none", "why": "bad flag as a grep term"}
+{"id": "v2-good-028", "command": "F=--hard; echo \"git reset $F\"", "expect": "allow", "policy": "none", "why": "bad flag in an echoed string"}
+{"id": "v2-good-029", "command": "F=src/a.py; git add $F", "expect": "allow", "policy": "none", "why": "variable holds a named path"}
+{"id": "v2-good-030", "command": "P=src; git add $P/", "expect": "allow", "policy": "none", "why": "variable holds a directory name"}
+{"id": "v2-good-031", "command": "MSG='fix --no-verify docs'; git commit -m \"$MSG\"", "expect": "allow", "policy": "none", "why": "message variable, quoted"}
+{"id": "v2-good-032", "command": "F=--hard; F=--soft; git reset $F", "expect": "allow", "policy": "none", "why": "reassigned to the safe value"}
+{"id": "v2-good-033", "command": "F=--hard git reset $F", "expect": "allow", "policy": "none", "why": "prefix assignment is not visible to $F"}
+{"id": "v2-good-034", "command": "git reset $F; F=--hard", "expect": "allow", "policy": "none", "why": "variable assigned after use"}
+{"id": "v2-good-035", "command": "git status; F=--hard", "expect": "allow", "policy": "none", "why": "assignment never used"}
+{"id": "v2-good-036", "command": "N=3; git log --oneline -n $N", "expect": "allow", "policy": "none", "why": "numeric variable"}
+{"id": "v2-good-037", "command": "git commit -m \"$(echo fix)\"", "expect": "allow", "policy": "none", "why": "substituted message"}
+{"id": "v2-good-038", "command": "echo $(echo git reset --hard)", "expect": "allow", "policy": "none", "why": "echo of echo is not a git call"}
+{"id": "v2-good-039", "command": "git status $(echo --short)", "expect": "allow", "policy": "none", "why": "harmless flag from echo"}
+{"id": "v2-good-040", "command": "git log $(echo --oneline) -5", "expect": "allow", "policy": "none", "why": "harmless flag from echo"}
+{"id": "v2-good-041", "command": "git reset $(echo --soft) HEAD~1", "expect": "allow", "policy": "none", "why": "safe flag from echo"}
+{"id": "v2-good-042", "command": "git push $(echo origin) main", "expect": "allow", "policy": "none", "why": "remote from echo"}
+{"id": "v2-good-043", "command": "git branch $(echo -d) merged-topic", "expect": "allow", "policy": "none", "why": "safe flag from echo"}
+{"id": "v2-good-044", "command": "git commit -m \"$(printf 'fix: x')\"", "expect": "allow", "policy": "none", "why": "printf message"}
+{"id": "v2-good-045", "command": "echo \"$(echo git reset --hard)\"", "expect": "allow", "policy": "none", "why": "quoted echo of a bad form"}
+{"id": "v2-good-046", "command": "git switch $(echo main)", "expect": "allow", "policy": "none", "why": "branch name from echo"}
+{"id": "v2-good-047", "command": "echo $'git reset --\\x68ard'", "expect": "allow", "policy": "none", "why": "ANSI-C string only printed"}
+{"id": "v2-good-048", "command": "git commit -m $'two\\nlines'", "expect": "allow", "policy": "none", "why": "ANSI-C message"}
+{"id": "v2-good-049", "command": "echo Z2l0IHN0YXR1cyB8IHNo | base64 -d | sh", "expect": "allow", "policy": "none", "why": "decoded text is harmless (decoy from the brief)"}
+{"id": "v2-good-050", "command": "echo ZWNobyBoZWxsbw== | base64 -d | sh", "expect": "allow", "policy": "none", "why": "decoded echo"}
+{"id": "v2-good-051", "command": "echo Z2l0IGxvZyAtLW9uZWxpbmU= | base64 -d | bash", "expect": "allow", "policy": "none", "why": "decoded read-only git"}
+{"id": "v2-good-052", "command": "echo Z2l0IGFkZCBzcmMvYS5weQ== | base64 -d | sh", "expect": "allow", "policy": "none", "why": "decoded named add"}
+{"id": "v2-good-053", "command": "echo Z2l0IHJlc2V0IC0tc29mdCBIRUFEfjE= | base64 -d | sh", "expect": "allow", "policy": "none", "why": "decoded safe reset"}
+{"id": "v2-good-054", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d", "expect": "allow", "policy": "none", "why": "decoded and printed, not run"}
+{"id": "v2-good-055", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d > run.sh", "expect": "allow", "policy": "none", "why": "decoded into a file"}
+{"id": "v2-good-056", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d | tee notes.sh", "expect": "allow", "policy": "none", "why": "decoded into tee"}
+{"id": "v2-good-057", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d | cat", "expect": "allow", "policy": "none", "why": "decoded into cat"}
+{"id": "v2-good-058", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d | grep reset", "expect": "allow", "policy": "none", "why": "decoded into grep"}
+{"id": "v2-good-059", "command": "printf '676974207265736574202d2d68617264' | xxd -r -p | cat", "expect": "allow", "policy": "none", "why": "hex decoded into cat"}
+{"id": "v2-good-060", "command": "echo 'git reset --hard' | cat", "expect": "allow", "policy": "none", "why": "literal into cat"}
+{"id": "v2-good-061", "command": "echo 'git reset --hard' | tee notes.txt", "expect": "allow", "policy": "none", "why": "literal into tee"}
+{"id": "v2-good-062", "command": "echo 'tvg fgnghf' | tr 'a-zA-Z' 'n-za-mN-ZA-M' | sh", "expect": "allow", "policy": "none", "why": "rot13 of git status"}
+{"id": "v2-good-063", "command": "echo '!!!!' | base64 -d | sh", "expect": "allow", "policy": "none", "why": "invalid base64 into sh"}
+{"id": "v2-good-064", "command": "echo hello | sh", "expect": "allow", "policy": "none", "why": "plain echo into sh"}
+{"id": "v2-good-065", "command": "printf '%s\\n' 'echo hi' | bash", "expect": "allow", "policy": "none", "why": "printf harmless into bash"}
+{"id": "v2-good-066", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64", "expect": "allow", "policy": "none", "why": "encoding, not decoding"}
+{"id": "v2-good-067", "command": "echo hello | base64 -d | sh", "expect": "allow", "policy": "none", "why": "undecodable word into sh"}
+{"id": "v2-good-068", "command": "echo 'git reset --hard' | sh -n", "expect": "allow", "policy": "none", "why": "sh -n only checks syntax"}
+{"id": "v2-good-069", "command": "echo Z2l0IHJlc2V0IC0taGFyZA== | base64 -d | bash -n", "expect": "allow", "policy": "none", "why": "bash -n on decoded text"}
+{"id": "v2-good-070", "command": "git commit --no-verbose -m x", "expect": "allow", "policy": "none", "why": "an option that only looks like --no-verify"}
+{"id": "v2-good-071", "command": "git --config-env=user.name=GIT_NAME commit -m x", "expect": "allow", "policy": "none", "why": "--config-env for another key"}
+{"id": "v2-good-072", "command": "echo $(which python3)", "expect": "allow", "policy": "none", "why": "which of another program"}
+{"id": "v2-good-073", "command": "eval \"$(ssh-agent -s)\"", "expect": "allow", "policy": "none", "why": "eval of a program's output"}
+{"id": "v2-good-074", "command": "eval \"$(direnv hook bash)\"", "expect": "allow", "policy": "none", "why": "eval of a hook"}
+{"id": "v2-good-075", "command": "bash -c 'cd build && make -j4 && ctest'", "expect": "allow", "policy": "none", "why": "bash -c build"}
+{"id": "v2-good-076", "command": "sh -c 'git status --short && git diff --stat'", "expect": "allow", "policy": "none", "why": "bash -c, read-only git"}
+{"id": "v2-good-077", "command": "source venv/bin/activate && pip install -r requirements.txt", "expect": "allow", "policy": "none", "why": "source a file"}
+{"id": "v2-good-078", "command": "export PATH=\"$HOME/bin:$PATH\"; git status", "expect": "allow", "policy": "none", "why": "PATH set then git"}
+{"id": "v2-good-079", "command": "BRANCH=feature/x; git push origin $BRANCH", "expect": "allow", "policy": "none", "why": "variable holds a branch name"}
+{"id": "v2-good-080", "command": "REMOTE=origin; BR=main; git fetch $REMOTE $BR && git rebase $REMOTE/$BR", "expect": "allow", "policy": "none", "why": "two variables, a normal rebase"}
+{"id": "v2-good-081", "command": "TAG=v1.2.3; git tag -a $TAG -m \"release $TAG\" && git push origin $TAG", "expect": "allow", "policy": "none", "why": "tag then push the tag"}
+{"id": "v2-good-082", "command": "ROOT=$(git rev-parse --show-toplevel); git -C $ROOT status", "expect": "allow", "policy": "none", "why": "root from a program"}
+{"id": "v2-good-083", "command": "git log --oneline | head -5 | cat", "expect": "allow", "policy": "none", "why": "pipes of read-only commands"}
+{"id": "v2-good-084", "command": "git diff --name-only | xargs wc -l", "expect": "allow", "policy": "none", "why": "xargs with wc"}
+{"id": "v2-good-085", "command": "find . -name '*.pyc' -delete", "expect": "allow", "policy": "none", "why": "find delete of pyc files"}
+{"id": "v2-good-086", "command": "echo \"$(date +%F)\" >> notes.txt", "expect": "allow", "policy": "none", "why": "date into a file"}
+{"id": "v2-good-087", "command": "curl -s https://example.com/api | jq .name", "expect": "allow", "policy": "none", "why": "curl into jq"}
+{"id": "v2-good-088", "command": "printf '%s\\n' a b c | sort | uniq", "expect": "allow", "policy": "none", "why": "printf into sort"}
+{"id": "v2-good-089", "command": "echo aGVsbG8= | base64 -d", "expect": "allow", "policy": "none", "why": "decode a harmless string"}
+{"id": "v2-good-090", "command": "base64 -d < token.b64 > token.bin", "expect": "allow", "policy": "none", "why": "decode a file"}
+{"id": "v2-good-091", "command": "openssl base64 -d -in payload.b64 -out payload.bin", "expect": "allow", "policy": "none", "why": "openssl decode a file"}
+{"id": "v2-good-092", "command": "tr 'a-z' 'A-Z' < notes.txt > upper.txt", "expect": "allow", "policy": "none", "why": "tr over a file"}
+{"id": "v2-good-093", "command": "xxd -r -p < hex.txt > out.bin", "expect": "allow", "policy": "none", "why": "xxd a file"}
+{"id": "v2-good-094", "command": "git commit -m \"$(cat <<'EOF'\nfix: stop using git add -A and --no-verify\n\nbody text\nEOF\n)\"", "expect": "allow", "policy": "none", "why": "heredoc message that names banned forms"}
+{"id": "v2-good-095", "command": "git status --short | grep -v '^??' | cut -c4-", "expect": "allow", "policy": "none", "why": "status pipeline"}
+{"id": "v2-good-096", "command": "for f in $(git diff --name-only); do echo \"$f\"; done", "expect": "allow", "policy": "none", "why": "loop over changed names"}
+{"id": "v2-good-097", "command": "git stash list | wc -l", "expect": "allow", "policy": "none", "why": "stash count"}
+{"id": "v2-good-098", "command": "N=5; git log -n $N --oneline", "expect": "allow", "policy": "none", "why": "numeric variable"}
+{"id": "v2-good-099", "command": "git config user.email \"a@b.example\"", "expect": "allow", "policy": "none", "why": "config another key"}
+{"id": "v2-good-100", "command": "bash -n scripts/build.sh", "expect": "allow", "policy": "none", "why": "syntax check of a script"}
+{"id": "v2-good-101", "command": "eval \"$(printf 'export FOO=%s' bar)\"", "expect": "allow", "policy": "none", "why": "eval of printf that sets a variable"}
+{"id": "v2-good-102", "command": "echo 'export A=1' | sh", "expect": "allow", "policy": "none", "why": "plain harmless literal into sh"}
+{"id": "v2-good-103", "command": "bash -c 'git status'", "expect": "allow", "policy": "none", "why": "harmless -c"}
+{"id": "v2-good-104", "command": "sh -c \"echo git reset --hard\"", "expect": "allow", "policy": "none", "why": "echo of a bad form"}
+{"id": "v2-good-105", "command": "bash -c 'git commit -m \"never git add -A\"'", "expect": "allow", "policy": "none", "why": "bad form only inside a message"}
+{"id": "v2-good-106", "command": "bash -c \"git add src/a.py\"", "expect": "allow", "policy": "none", "why": "named add"}
+{"id": "v2-good-107", "command": "eval 'git status'", "expect": "allow", "policy": "none", "why": "harmless eval"}
+{"id": "v2-good-108", "command": "bash -c 'echo \"git push --force\"'", "expect": "allow", "policy": "none", "why": "echoed force push"}
+{"id": "v2-good-109", "command": "bash scripts/build.sh", "expect": "allow", "policy": "none", "why": "a script file"}
