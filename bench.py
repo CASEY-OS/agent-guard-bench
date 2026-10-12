@@ -77,8 +77,9 @@ CASE_FILES = [
     ("holdout7", os.path.join(HERE, "cases", "holdout7", "holdout7.jsonl")),
     ("holdout8", os.path.join(HERE, "cases", "holdout8", "holdout8.jsonl")),
     ("holdout9", os.path.join(HERE, "cases", "holdout9", "holdout9.jsonl")),
+    ("holdout10", os.path.join(HERE, "cases", "holdout10", "holdout10.jsonl")),
 ]
-HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7", "holdout8", "holdout9")
+HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7", "holdout8", "holdout9", "holdout10")
 HOLDOUT_STATUS = {
     "holdout": "blind for v1; seen before v2, v3, v4 and v5 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3, v4 and v5",
@@ -89,6 +90,7 @@ HOLDOUT_STATUS = {
     "holdout7": "blind for v1 to v6 (Claude Sonnet, sheet only); DEVELOPMENT set for v7 (its misses were read)",
     "holdout8": "blind for v1 to v6; written by ChatGPT (OpenAI), the first set from outside the Claude family; DEVELOPMENT set for v7",
     "holdout9": "blind for v1 to v6; written by Gemini (Google); JSON quoting repaired on five lines, nothing else; DEVELOPMENT set for v7",
+    "holdout10": "blind for v1 to v7 (Claude Haiku, sheet only); sealed until v7 was frozen",
 }
 CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
