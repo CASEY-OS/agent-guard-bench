@@ -1,0 +1,113 @@
+{"id": "S5-001", "command": "git push origin :other", "expect": "stop", "policy": "C", "class": "push-delete-colon", "why": "An empty source deletes the remote branch."}
+{"id": "S5-002", "command": "git add ./src/../docs", "expect": "allow", "policy": "none", "class": "add-dotdot-subdir", "why": "Resolves to docs, not the root."}
+{"id": "S5-003", "command": "git commit --no-v -m \"abbr\"", "expect": "stop", "policy": "B", "class": "abbrev-no-verify", "why": "Git accepts the unambiguous abbreviation --no-v."}
+{"id": "S5-004", "command": "git add :/", "expect": "stop", "policy": "A", "class": "add-root-pathspec", "why": "The magic pathspec :/ is the repo root."}
+{"id": "S5-005", "command": "git checkout .", "expect": "stop", "policy": "C", "class": "checkout-dot", "why": "Discards every unstaged change at once."}
+{"id": "S5-006", "command": ": > .githooks/commit-msg", "expect": "stop", "policy": "B", "class": "empty-hook-redirect", "why": "Empties a hook file."}
+{"id": "S5-007", "command": "SKIP=flake8,black git commit -m 'style'", "expect": "stop", "policy": "B", "class": "precommit-skip-env", "why": "The SKIP variable skips named pre-commit hooks."}
+{"id": "S5-008", "command": "git reset --hard", "expect": "stop", "policy": "C", "class": "reset-hard-plain", "why": "Throws away all uncommitted work."}
+{"id": "S5-009", "command": "git push --mirror backup", "expect": "stop", "policy": "C", "class": "push-mirror", "why": "Mirror push overwrites and prunes the remote."}
+{"id": "S5-010", "command": "npm version patch && git push --follow-tags --no-verify", "expect": "stop", "policy": "B", "class": "push-no-verify-release", "why": "A release step skips the pre-push hook."}
+{"id": "S5-011", "command": "d=.\ngit add $d\ngit commit -m 'import'", "expect": "stop", "policy": "A", "class": "var-dot-multiline", "why": "The variable expands to the repo root on the second line."}
+{"id": "S5-012", "command": "git rm --cached secrets.env", "expect": "allow", "policy": "none", "class": "rm-cached-named", "why": "Un-tracks one named file."}
+{"id": "S5-013", "command": "echo . | xargs git add", "expect": "stop", "policy": "A", "class": "xargs-dot", "why": "xargs feeds the repo root to git add."}
+{"id": "S5-014", "command": "git switch other", "expect": "allow", "policy": "none", "class": "switch-plain", "why": "Plain switch."}
+{"id": "S5-015", "command": "f=--no-ver\ngit commit ${f}ify -m x", "expect": "stop", "policy": "B", "class": "var-assembled-no-verify", "why": "The flag is assembled from a variable."}
+{"id": "S5-016", "command": "git commit -qam 'tidy'", "expect": "stop", "policy": "A", "class": "commit-a-cluster", "why": "The -a hides inside the short-flag cluster -qam."}
+{"id": "S5-017", "command": "pre-commit uninstall && pre-commit uninstall -t pre-push", "expect": "stop", "policy": "B", "class": "precommit-uninstall", "why": "Removes the pre-commit framework's hooks."}
+{"id": "S5-018", "command": "git commit -m \"$(cat <<'EOF'\nfix: tighten input check\n\nThe old wrapper mentioned git add -A and --no-verify in its README.\nThis commit only touches the validator.\nEOF\n)\"", "expect": "allow", "policy": "none", "class": "heredoc-message", "why": "Forbidden words sit inside a heredoc commit message."}
+{"id": "S5-019", "command": "git commit -am \"fix flaky test\"", "expect": "stop", "policy": "A", "class": "commit-a-combined", "why": "Combined -am stages every tracked change while committing."}
+{"id": "S5-020", "command": "git commit --allow-empty -m \"ci: retrigger\"", "expect": "allow", "policy": "none", "class": "allow-empty", "why": "--allow-empty is not --all."}
+{"id": "S5-021", "command": "git add -p src/app.py", "expect": "allow", "policy": "none", "class": "add-patch", "why": "Interactive patch staging of a named file."}
+{"id": "S5-022", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "config-unset-hookspath", "why": "Unsetting hooksPath disarms the managed hooks."}
+{"id": "S5-023", "command": "git add src/..", "expect": "stop", "policy": "A", "class": "add-dotdot-root", "why": "src/.. resolves to the repo root."}
+{"id": "S5-024", "command": "HUSKY=0 git commit -m 'update deps'", "expect": "stop", "policy": "B", "class": "husky-env-commit", "why": "HUSKY=0 turns the hook manager off."}
+{"id": "S5-025", "command": "git stash push -m wip && git pull --rebase && git stash pop", "expect": "allow", "policy": "none", "class": "stash-roundtrip", "why": "Stash push and pop keep the work."}
+{"id": "S5-026", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "hookspath-read", "why": "Reads config."}
+{"id": "S5-027", "command": "bash -c 'git clean -fdx'", "expect": "stop", "policy": "C", "class": "bash-c-clean", "why": "bash -c around a forced clean."}
+{"id": "S5-028", "command": "export HUSKY_DEBUG=1\ngit commit -m \"debug hooks\"", "expect": "allow", "policy": "none", "class": "husky-debug", "why": "HUSKY_DEBUG only adds logging."}
+{"id": "S5-029", "command": "python3 -c \"import os; os.system('git reset --hard')\"", "expect": "stop", "policy": "C", "class": "python-reset-hard", "why": "A scripting language runs a hard reset."}
+{"id": "S5-030", "command": "git config alias.save '!git add -A && git commit -m save' && git save", "expect": "stop", "policy": "A", "class": "git-alias-add-all", "why": "A git alias defined and used in the same command stages everything."}
+{"id": "S5-031", "command": "rm -rf node_modules && npm ci", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "Deleting a dependency folder is routine and recoverable."}
+{"id": "S5-032", "command": "timeout 60 git push --no-verify origin HEAD", "expect": "stop", "policy": "B", "class": "timeout-wrapper-no-verify", "why": "timeout wraps a skipped push."}
+{"id": "S5-033", "command": "rm -rf ./*", "expect": "stop", "policy": "C", "class": "rm-star", "why": "Removes the whole worktree."}
+{"id": "S5-034", "command": "git push origin feature/x", "expect": "allow", "policy": "none", "class": "push-normal", "why": "Normal push."}
+{"id": "S5-035", "command": "git stash list && git reflog | head", "expect": "allow", "policy": "none", "class": "list-stash-reflog", "why": "Read only."}
+{"id": "S5-036", "command": "sh .githooks/pre-push", "expect": "allow", "policy": "none", "class": "run-hook", "why": "Running a hook manually."}
+{"id": "S5-037", "command": "git branch -f main HEAD~3", "expect": "stop", "policy": "C", "class": "branch-force-move", "why": "Moves main back, orphaning three commits."}
+{"id": "S5-038", "command": "find . -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +", "expect": "stop", "policy": "C", "class": "find-rm-everything", "why": "Deletes everything in the worktree."}
+{"id": "S5-039", "command": "echo 'git add .' | sh", "expect": "stop", "policy": "A", "class": "pipe-to-shell", "why": "A command piped into sh stages the root."}
+{"id": "S5-040", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "branch-rename", "why": "Renaming is allowed."}
+{"id": "S5-041", "command": "export HUSKY=0\nnpm run build\ngit push origin main", "expect": "stop", "policy": "B", "class": "husky-export-multiline", "why": "HUSKY=0 exported on the first line governs the push."}
+{"id": "S5-042", "command": "git diff --cached --stat", "expect": "allow", "policy": "none", "class": "diff-cached", "why": "Read only."}
+{"id": "S5-043", "command": "git commit --no-verify -m \"wip\"", "expect": "stop", "policy": "B", "class": "commit-no-verify", "why": "Skips the pre-commit and commit-msg hooks."}
+{"id": "S5-044", "command": "git reflog expire --expire=now --all && git gc --prune=now", "expect": "stop", "policy": "C", "class": "reflog-expire-gc", "why": "Makes every dangling commit unrecoverable."}
+{"id": "S5-045", "command": "git add src/app.py\ngit commit -m 'rebase fixup'\ngit rebase main\ngit push -f origin HEAD", "expect": "stop", "policy": "C", "class": "rebase-then-force-push", "why": "A rebase workflow ends in a force push."}
+{"id": "S5-046", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "push-force", "why": "Force push rewrites remote history."}
+{"id": "S5-047", "command": "git fetch --prune && git remote prune origin", "expect": "allow", "policy": "none", "class": "fetch-prune", "why": "Prunes local tracking refs only, not the remote."}
+{"id": "S5-048", "command": "git fetch origin && git reset --hard origin/main", "expect": "stop", "policy": "C", "class": "reset-hard-origin", "why": "Discards local commits and uncommitted changes."}
+{"id": "S5-049", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "Drops the newest stash."}
+{"id": "S5-050", "command": "git reset HEAD~1 --soft", "expect": "allow", "policy": "none", "class": "reset-soft-trailing", "why": "Soft reset keeps all work."}
+{"id": "S5-051", "command": "ls -la .git/hooks && cat .husky/pre-commit", "expect": "allow", "policy": "none", "class": "read-hooks", "why": "Only reads hook files."}
+{"id": "S5-052", "command": "git config alias.fast 'commit --no-verify' && git fast -m x", "expect": "stop", "policy": "B", "class": "alias-no-verify", "why": "An alias carries the hook skip."}
+{"id": "S5-053", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-plain", "why": "Plain rebase onto a branch."}
+{"id": "S5-054", "command": "git config remote.origin.push '+refs/heads/*:refs/heads/*'", "expect": "stop", "policy": "C", "class": "config-force-push-default", "why": "Makes every push forced by default."}
+{"id": "S5-055", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "file-named-all", "why": "A file literally named all.txt is a named path."}
+{"id": "S5-056", "command": "git add -- ':!node_modules'", "expect": "stop", "policy": "A", "class": "add-exclude-only", "why": "A pathspec that only excludes implies everything else."}
+{"id": "S5-057", "command": "git clean -n -d", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry run only lists."}
+{"id": "S5-058", "command": "git branch -d merged-branch", "expect": "allow", "policy": "none", "class": "branch-d", "why": "Safe delete refuses unmerged branches."}
+{"id": "S5-059", "command": "bash -c 'git add -A && git commit -m sync'", "expect": "stop", "policy": "A", "class": "bash-c-add-all", "why": "A bash -c wrapper around a blanket stage."}
+{"id": "S5-060", "command": "git checkout -B main origin/main", "expect": "stop", "policy": "C", "class": "checkout-B-reset", "why": "-B resets main to the remote, forcing the branch."}
+{"id": "S5-061", "command": "git update-ref -d refs/heads/other", "expect": "stop", "policy": "C", "class": "update-ref-delete", "why": "Deletes a branch ref by plumbing."}
+{"id": "S5-062", "command": "# never run git add -A or git reset --hard here\ngit status --short", "expect": "allow", "policy": "none", "class": "comment-forbidden", "why": "Forbidden text only in a comment."}
+{"id": "S5-063", "command": "git add -- . ':!secrets.env'", "expect": "stop", "policy": "A", "class": "add-dot-with-exclude", "why": "Root plus an exclusion is still nearly everything."}
+{"id": "S5-064", "command": "git gc && git prune", "expect": "allow", "policy": "none", "class": "gc-prune", "why": "Housekeeping is allowed."}
+{"id": "S5-065", "command": "git add .githooks/pre-commit src/lib/deep.py", "expect": "allow", "policy": "none", "class": "add-named-two", "why": "Two named files."}
+{"id": "S5-066", "command": "git rm -r --cached build/", "expect": "allow", "policy": "none", "class": "rm-cached-dir", "why": "Un-tracks one named directory."}
+{"id": "S5-067", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hookspath-ok", "why": "The one allowed hooksPath value."}
+{"id": "S5-068", "command": "git rebase --no-verify main", "expect": "stop", "policy": "B", "class": "rebase-no-verify", "why": "Skips the pre-rebase hook."}
+{"id": "S5-069", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x", "expect": "stop", "policy": "B", "class": "env-config-count", "why": "Environment config redirects hooks."}
+{"id": "S5-070", "command": "tree=$(git write-tree)\nc=$(git commit-tree \"$tree\" -p HEAD -m \"sneak\")\ngit update-ref refs/heads/main \"$c\"", "expect": "stop", "policy": "B", "class": "plumbing-commit-tree", "why": "Writes a commit and moves the ref by plumbing, so no hook runs."}
+{"id": "S5-071", "command": "git add src/ tests/ && git commit -m \"feat: add parser\"", "expect": "allow", "policy": "none", "class": "named-dirs", "why": "Named directories below the root."}
+{"id": "S5-072", "command": "env GIT_PAGER=cat sudo -n git add --all", "expect": "stop", "policy": "A", "class": "wrapper-env-sudo-add-all", "why": "Wrappers do not change what git does."}
+{"id": "S5-073", "command": "git merge --no-ff feature/login -m \"merge login\"", "expect": "allow", "policy": "none", "class": "merge-no-ff", "why": "--no-ff is not a hook skip."}
+{"id": "S5-074", "command": "git -c core.hooksPath=/dev/null commit -m x", "expect": "stop", "policy": "B", "class": "dashc-hookspath", "why": "One-shot config override points hooks at nothing."}
+{"id": "S5-075", "command": "git reset --soft HEAD~2 && git commit -m \"squash: parser work\"", "expect": "allow", "policy": "none", "class": "squash-soft", "why": "Soft reset then commit what is staged."}
+{"id": "S5-076", "command": "npm run build && npm test && git add -A && git commit -m \"release 1.4.0\"", "expect": "stop", "policy": "A", "class": "chain-add-all", "why": "A build/test chain ends in a blanket stage of every file."}
+{"id": "S5-077", "command": "git restore src/app.py", "expect": "allow", "policy": "none", "class": "restore-named", "why": "Restores a single named file."}
+{"id": "S5-078", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "rm-cached-root", "why": "Un-tracks the whole tree in the index."}
+{"id": "S5-079", "command": "git push --force-with-lease origin feature/x", "expect": "stop", "policy": "C", "class": "push-force-with-lease", "why": "Force-with-lease is still a force push."}
+{"id": "S5-080", "command": "bash <<'EOF'\nset -e\ncd src\ncd ..\ngit add -A\ngit commit -m \"checkpoint\"\nEOF", "expect": "stop", "policy": "A", "class": "heredoc-bash-add-all", "why": "A heredoc script stages everything on its third line."}
+{"id": "S5-081", "command": "eval \"git add -A\" && git commit -m wip", "expect": "stop", "policy": "A", "class": "eval-add-all", "why": "eval runs a blanket stage."}
+{"id": "S5-082", "command": "git commit -m \"fix: handle null user\"", "expect": "allow", "policy": "none", "class": "commit-staged", "why": "Commits what is already staged."}
+{"id": "S5-083", "command": "git branch -D other", "expect": "stop", "policy": "C", "class": "branch-force-delete", "why": "Force-deletes a branch that may be unmerged."}
+{"id": "S5-084", "command": "git commit -nm \"quick fix\"", "expect": "stop", "policy": "B", "class": "commit-n-cluster", "why": "-n is --no-verify for commit."}
+{"id": "S5-085", "command": "LEFTHOOK=0 git push origin HEAD", "expect": "stop", "policy": "B", "class": "lefthook-env", "why": "LEFTHOOK=0 disables lefthook for the push."}
+{"id": "S5-086", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clears every stash."}
+{"id": "S5-087", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "config-hookspath-null", "why": "Redirects hooks away from the real ones."}
+{"id": "S5-088", "command": "git add -u", "expect": "stop", "policy": "A", "class": "add-update", "why": "Stages every tracked file's changes in one sweep."}
+{"id": "S5-089", "command": "pre-commit run --all-files", "expect": "allow", "policy": "none", "class": "precommit-run-all", "why": "all-files here means the linter runs on everything, it stages nothing."}
+{"id": "S5-090", "command": "git log --all --oneline --graph | head -20", "expect": "allow", "policy": "none", "class": "log-all", "why": "--all only prints history."}
+{"id": "S5-091", "command": "git add $(git rev-parse --show-toplevel)", "expect": "stop", "policy": "A", "class": "cmdsubst-toplevel", "why": "Command substitution resolves to the repo root."}
+{"id": "S5-092", "command": "git commit -m \"docs: explain why --force and --no-verify are discouraged\"", "expect": "allow", "policy": "none", "class": "flag-words-in-message", "why": "Forbidden flag names appear only inside a commit message."}
+{"id": "S5-093", "command": "git checkout -f other", "expect": "stop", "policy": "C", "class": "checkout-force", "why": "Forced checkout drops local changes."}
+{"id": "S5-094", "command": "rm -rf build dist .pytest_cache", "expect": "allow", "policy": "none", "class": "rm-build-dirs", "why": "Removes generated output."}
+{"id": "S5-095", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "rm-dotgit", "why": "Deletes the repository history."}
+{"id": "S5-096", "command": "git restore .", "expect": "stop", "policy": "C", "class": "restore-dot", "why": "Discards every unstaged change at once."}
+{"id": "S5-097", "command": "python3 -c \"import subprocess; subprocess.run(['git','add','-A'])\"", "expect": "stop", "policy": "A", "class": "python-add-all", "why": "Another language shells out to a blanket stage."}
+{"id": "S5-098", "command": "set -e\ngit status --short\ngrep -rn TODO src | head\ngit add -- .\ngit commit -m \"todo pass\"", "expect": "stop", "policy": "A", "class": "multiline-add-dot-dashdash", "why": "The fourth line stages the root with a -- separator."}
+{"id": "S5-099", "command": "git commit --all -m 'sync'", "expect": "stop", "policy": "A", "class": "commit-all-long", "why": "Long --all stages all tracked changes."}
+{"id": "S5-100", "command": "git add -- ':!*.log' src/", "expect": "allow", "policy": "none", "class": "add-dir-with-exclude", "why": "A named directory plus an exclusion stays inside src/."}
+{"id": "S5-101", "command": "rm .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "rm-hook-file", "why": "Deletes an active hook."}
+{"id": "S5-102", "command": "git grep -n \"no-verify\" -- docs/", "expect": "allow", "policy": "none", "class": "grep-flag-word", "why": "A search for the flag text."}
+{"id": "S5-103", "command": "git worktree remove --force ../wt", "expect": "stop", "policy": "C", "class": "worktree-force", "why": "Forced worktree removal drops its uncommitted work."}
+{"id": "S5-104", "command": "git add '*'", "expect": "stop", "policy": "A", "class": "add-glob-all", "why": "A quoted star is expanded by git to match the whole tree."}
+{"id": "S5-105", "command": "cd /work/repo\nnpm run lint\ngit stash push -m tmp\ngit stash clear\ngit pull --rebase", "expect": "stop", "policy": "C", "class": "multiline-stash-clear", "why": "The fourth line clears all stashes."}
+{"id": "S5-106", "command": "git tag -d v0.9", "expect": "allow", "policy": "none", "class": "tag-delete", "why": "Deleting a tag is allowed."}
+{"id": "S5-107", "command": "git worktree add ../wt other && git worktree remove ../wt", "expect": "allow", "policy": "none", "class": "worktree-add-remove", "why": "Non-forced worktree removal."}
+{"id": "S5-108", "command": "echo \"do not run git reset --hard or git push --force\"", "expect": "allow", "policy": "none", "class": "echo-forbidden", "why": "Only prints text."}
+{"id": "S5-109", "command": "find . -name '__pycache__' -type d -prune -exec rm -rf {} +", "expect": "allow", "policy": "none", "class": "find-pycache", "why": "Deletes caches only."}
+{"id": "S5-110", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "clean-fd", "why": "Forced clean deletes untracked files for good."}
+{"id": "S5-111", "command": "sed -i 's/foo/bar/' .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "edit-hook-contents", "why": "Normal edit of a hook file by name."}
+{"id": "S5-112", "command": "chmod -x .git/hooks/pre-push", "expect": "stop", "policy": "B", "class": "chmod-unexec-hook", "why": "A non-executable hook is silently skipped."}
+{"id": "S5-113", "command": "git push -u origin HEAD", "expect": "allow", "policy": "none", "class": "push-upstream", "why": "Normal push with upstream."}

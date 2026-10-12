@@ -1,0 +1,25 @@
+{"id": "S5-U01", "command": "git stash drop", "expect": "restore", "class": "stash-drop", "why": "Removes refs/stash entry."}
+{"id": "S5-U02", "command": "rm -rf src docs", "expect": "restore", "class": "rm-tree", "why": "Deletes tracked and untracked files."}
+{"id": "S5-U03", "command": "git checkout -f other", "expect": "restore", "class": "forced-checkout", "why": "Switches branch and drops local changes."}
+{"id": "S5-U04", "command": "git commit -am 'sweep tracked'", "expect": "restore", "class": "commit-a", "why": "Moves main and rewrites the index."}
+{"id": "S5-U05", "command": "git init -q sub && echo hi > sub/f.txt && git -C sub add f.txt", "expect": "residual", "class": "nested-repo", "why": "Changes only a nested repository."}
+{"id": "S5-U06", "command": "git reset --hard HEAD~1", "expect": "restore", "class": "reset-hard", "why": "Moves HEAD and wipes index and worktree."}
+{"id": "S5-U07", "command": "mkdir -p tmp/a/b/c", "expect": "residual", "class": "empty-dirs", "why": "Only empty directories are created."}
+{"id": "S5-U08", "command": "touch -t 200001010000 README.md src/lib/deep.py", "expect": "residual", "class": "mtime-only", "why": "Only modification times change; bytes stay the same."}
+{"id": "S5-U09", "command": "rm -rf build debug.log", "expect": "residual", "class": "ignored-files", "why": "Only ignored files are touched."}
+{"id": "S5-U10", "command": "git branch -D other", "expect": "restore", "class": "branch-delete", "why": "Deletes a branch ref."}
+{"id": "S5-U11", "command": "git checkout --orphan fresh && git rm -rf --quiet . ; true", "expect": "restore", "class": "orphan-branch", "why": "HEAD now points to an unborn branch with an emptied index."}
+{"id": "S5-U12", "command": "git clean -fdx", "expect": "restore", "class": "clean-all", "why": "Deletes untracked files; ignored ones are out of scope."}
+{"id": "S5-U13", "command": "git rm -rf --cached . >/dev/null", "expect": "restore", "class": "index-emptied", "why": "Empties the index but leaves files."}
+{"id": "S5-U14", "command": "git merge other || true", "expect": "restore", "class": "merge-conflict-state", "why": "May leave merge state and conflict stages."}
+{"id": "S5-U15", "command": "git reflog expire --expire=now --all", "expect": "restore", "class": "reflog-expire", "why": "Reflog expiry also removes the stash entries."}
+{"id": "S5-U16", "command": "git add src/util.py src/new_staged.py README.md\ngit commit -m 'named commit'", "expect": "restore", "class": "commit-named", "why": "Commit moves HEAD and the index."}
+{"id": "S5-U17", "command": "echo changed > ../outside.txt", "expect": "residual", "class": "outside-repo", "why": "A file outside the repo."}
+{"id": "S5-U18", "command": "git stash clear", "expect": "restore", "class": "stash-clear", "why": "Removes the whole stash list."}
+{"id": "S5-U19", "command": "ln -sf notes.txt link", "expect": "restore", "class": "symlink-retarget", "why": "A symlink now points elsewhere."}
+{"id": "S5-U20", "command": "mv src/untracked_dir src/moved_dir", "expect": "restore", "class": "move-untracked-dir", "why": "Moves an untracked directory with content."}
+{"id": "S5-U21", "command": ": > README.md\n: > src/app.py\nprintf 'junk' >> data/blob.bin", "expect": "restore", "class": "truncate-files", "why": "Truncates and corrupts tracked files."}
+{"id": "S5-U22", "command": "chmod -x bin/run.sh\nchmod 644 notes.txt", "expect": "restore", "class": "mode-bits", "why": "Mode bits are in scope."}
+{"id": "S5-U23", "command": "git tag -d v1 light", "expect": "restore", "class": "tag-delete", "why": "Deletes an annotated and a lightweight tag."}
+{"id": "S5-U24", "command": "git checkout .", "expect": "restore", "class": "checkout-dot", "why": "Overwrites unstaged edits from the index."}
+{"id": "S5-U25", "command": "git branch -f main light", "expect": "restore", "class": "branch-force-move", "why": "Moves a ref backwards."}
