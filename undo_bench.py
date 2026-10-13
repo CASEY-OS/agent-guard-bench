@@ -273,11 +273,15 @@ def diff(a, b, keys=("files", "index", "refs", "HEAD", "stash", "state")):
     return out
 
 
-def hook(repo, command, undo_on=True, env=None):
-    """repo is the hook's cwd (for a files-only scenario, a dir outside any repo)."""
+def hook(repo, command, undo_on=True, env=None, no_cwd=False):
+    """repo is the hook's cwd (for a files-only scenario, a dir outside any repo). Version 12: no_cwd sends a
+    hook input that names no cwd, as some hosts do; AGENT_GUARD_UNDO_REPO then names the repo for the undo point."""
     payload = {"session_id": "bench", "hook_event_name": "PreToolUse", "tool_name": "Bash",
-               "tool_input": {"command": command}, "cwd": repo}
-    env = dict(env or ENV, AGENT_GUARD_ROOT=repo, AGENT_GUARD_UNDO="1" if undo_on else "0")
+               "tool_input": {"command": command}}
+    if not no_cwd:
+        payload["cwd"] = repo
+    env = dict(env or ENV, AGENT_GUARD_ROOT=repo, AGENT_GUARD_UNDO="1" if undo_on else "0",
+               **({"AGENT_GUARD_UNDO_REPO": repo} if no_cwd else {}))
     p = subprocess.run([sys.executable, GUARD], input=json.dumps(payload).encode(), env=env,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = p.stdout.decode().strip()
@@ -481,7 +485,7 @@ def files_ids(store):
     return sorted(n for n in os.listdir(d) if not n.startswith(".")) if os.path.isdir(d) else []
 
 
-def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
+def play(name, cmd, setup, undo_on=True, undo_cli=UNDO, no_cwd=False):
     base, repo, remote = build(name)
     store = os.path.join(ROOT, "store", os.path.basename(base))     # one store per scenario, beside it, under the root
     env = dict(ENV, AGENT_GUARD_STORE=store)
@@ -491,13 +495,13 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     pre = capture(repo, remote, base)
     raw_pre = raw_user_state(repo)
     n0, f0 = len(snap_refs(repo)), files_ids(store)
-    direct, hook_out = hook(cwd, cmd, undo_on, env)
+    direct, hook_out = hook(cwd, cmd, undo_on, env, no_cwd)
     route, agent_cmd = "direct", cmd
     if direct == "deny":
         script = os.path.join(base, "steps", name + ".sh")
         write(script, "set -e\n" + cmd + "\n")
         agent_cmd = "bash " + script
-        dec, _ = hook(cwd, agent_cmd, undo_on, env)
+        dec, _ = hook(cwd, agent_cmd, undo_on, env, no_cwd)
         assert dec != "deny", "the guard denied the script route for " + name
         route = "script"
     taken = len(snap_refs(repo)) - n0
@@ -1104,7 +1108,8 @@ def recoverable(path_in, path_out):
     res = []
     for row in rows:
         try:
-            r = play("r-" + str(row["id"]), row["command"], files_setup(row.get("files")))
+            r = play("r-" + str(row["id"]), row["command"], files_setup(row.get("files")),
+                     no_cwd=bool(row.get("no_cwd")))
             changed = r["damage"] or r["ignored_lost"] or r["outside_changed"]
             if not changed:
                 verdict = "no-op"
@@ -1125,7 +1130,8 @@ def recoverable(path_in, path_out):
     first = next((r for r in res if r["verdict"] == "restored"), None)
     if first:                                   # red is reachable: the same command with the undo layer off
         row = next(x for x in rows if x["id"] == first["id"])
-        c = play("rc-" + str(row["id"]), row["command"], files_setup(row.get("files")), undo_on=False)
+        c = play("rc-" + str(row["id"]), row["command"], files_setup(row.get("files")), undo_on=False,
+                 no_cwd=bool(row.get("no_cwd")))
         control = {"id": row["id"], "guard_direct": c["guard_direct"], "snapshots_taken": c["snapshots_taken"],
                    "damage": c["damage"], "still_lost": bool(c["left"] or c["left_files"])}
         print("UNDO RECOVERABLE control %s with AGENT_GUARD_UNDO=0: hook %s, snapshots %d, damage %d, still lost %s"

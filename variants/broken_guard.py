@@ -121,6 +121,12 @@ only at run time, a workspace run, a module or included Taskfile) runs on an und
 filtered by a grep that keeps names by a pattern, or with its own pathspec below the root, may feed `xargs git
 add` or `git update-index --add --stdin`; the unfiltered listing is denied as whole-tree staging.
 
+VERSION 12. A RECIPE RUN WITH NO CWD (holdout15's ten recipe cases). With no cwd (decide(command) alone, or a
+hook input that names none) a recipe file on disk cannot be read, so make, just, task, npm, yarn, pnpm or bun
+running a target or script goes on an undo point ("a recipe file the guard cannot read"), never a plain allow.
+A dry run, a listing, or a version or help flag runs no recipe and stays a plain allow. With a cwd nothing
+changes.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -3618,7 +3624,8 @@ def _recipe_lines(kind, text):
 #    and variables are not a reason to stop, so ordinary make and npm use runs as before. A recipe file
 #    that exists but cannot be read (not UTF-8, over 1 MB, a dynamic -f, an include the guard cannot
 #    name, a workspace or module run) puts the command on an undo point (fail recoverable). With no cwd
-#    (decide(command) alone, the string benches) nothing is read from disk.
+#    (decide(command) alone, the string benches) nothing is read from disk; version 12 puts the run on an undo
+#    point then (_no_cwd_unread).
 # 2. A git file listing piped through a grep that keeps names by a pattern that names something, or a
 #    listing with its own pathspec below the root, and handed to `xargs git add` (or `git update-index
 #    --add --stdin`) stages by name: allowed. The unfiltered listing is whole-tree staging: a hard block.
@@ -3628,6 +3635,21 @@ MAX_RECIPE_BYTES = 1 << 20
 MAX_RECIPE_LINES = 128
 RECIPE_UNREAD = "a recipe file the guard cannot read"
 LISTED_ALL = "\x07"         # version 11: xargs hands git add every name an unfiltered git listing prints
+NO_CWD = "the hook named no cwd, so no recipe file on disk was read"   # version 12
+_INFO_FLAGS = {"make": ("-v", "--version", "-h", "--help"), "just": ("-V", "--version", "-h", "--help"),
+               "task": ("--version", "-h", "--help")}
+
+
+def _no_cwd_unread(st, b, args):
+    """Version 12 (holdout15's ten recipe cases): with no cwd (decide(command) alone, or a host whose hook input
+    names none) a Makefile, justfile, Taskfile or package.json already on disk cannot be read. A run of one goes
+    on an undo point (fail recoverable), never a plain allow. A version or help flag runs no recipe."""
+    if _DISK[0]:
+        return
+    k = "make" if b in ("make", "gmake", "bmake") else "task" if b in ("task", "go-task") else b
+    if any(a in _INFO_FLAGS.get(k, ("-v", "--version", "-h", "--help")) for a in args):
+        return
+    st.ask(RECIPE_UNREAD + " (" + NO_CWD + ")")
 
 
 def _disk_path(a, root):
@@ -4238,6 +4260,8 @@ def _write_then_run(b, args, st):
             texts = _recipe_lines("make", txt)
         elif not a and _DISK[0]:
             disk = _disk_recipes(b, args, pos, st, cwd, f)
+        elif not a:
+            _no_cwd_unread(st, b, args)              # version 12
     elif b == "just":
         f = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--justfile") and j + 1 < len(args)), None)
         d = next((args[j + 1] for j, a in enumerate(args) if a in ("-d", "--working-directory") and j + 1 < len(args)), None)
@@ -4246,6 +4270,8 @@ def _write_then_run(b, args, st):
             texts = _recipe_lines("just", txt)
         elif not a and _DISK[0]:
             disk = _disk_recipes(b, args, pos, st, _abs(d, cwd) if d else cwd, f)
+        elif not a:
+            _no_cwd_unread(st, b, args)              # version 12
     elif b in ("task", "go-task"):
         f = next((args[j + 1] for j, a in enumerate(args) if a in ("-t", "--taskfile") and j + 1 < len(args)), None)
         d = next((args[j + 1] for j, a in enumerate(args) if a in ("-d", "--dir") and j + 1 < len(args)), None)
@@ -4254,6 +4280,8 @@ def _write_then_run(b, args, st):
             texts = _recipe_lines("task", txt)
         elif not a and _DISK[0]:
             disk = _disk_recipes(b, args, pos, st, _abs(d, cwd) if d else cwd, f)
+        elif not a:
+            _no_cwd_unread(st, b, args)              # version 12
     elif b in ("npm", "pnpm", "yarn", "bun"):
         names = []
         if pos[:1] in (["run"], ["run-script"], ["rum"], ["urn"]) and len(pos) >= 2:
@@ -4301,6 +4329,8 @@ def _write_then_run(b, args, st):
                     lines = [merged[n] for n in names if isinstance(merged.get(n), str) and _lit3(merged[n])]
                     disk = (d, "package.json", lines)
                     scripts = {}
+        elif not pj and names:
+            _no_cwd_unread(st, b, args)                  # version 12
         texts = [scripts[n] for n in names if isinstance(scripts.get(n), str) and _lit3(scripts[n])]
     if disk:
         d, fname, lines = disk
