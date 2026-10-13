@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""real_traffic.py: how often v7 and v8 (variants/) and v9 (guard.py) stop real agent Bash calls.
+"""real_traffic.py: how often v7, v8 and v9 (variants/) and v10 (guard.py) stop real agent Bash calls.
 
     python3 real_traffic.py COMMANDS.json [ROOT]
 
@@ -39,7 +39,7 @@ def _category(reason):
 
 
 VERSIONS = (("v7", os.path.join(HERE, "variants", "guard_v7.py")), ("v8", os.path.join(HERE, "variants", "guard_v8.py")),
-            ("v9", os.path.join(HERE, "guard.py")))
+            ("v9", os.path.join(HERE, "variants", "guard_v9.py")), ("v10", os.path.join(HERE, "guard.py")))
 CURRENT = VERSIONS[-1][0]
 
 

@@ -595,3 +595,27 @@
 {"id": "v9-good-019", "command": "find . -type d -empty -delete", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "only empty directories"}
 {"id": "v9-good-020", "command": "find .git -name 'index.lock' -exec rm {} \\;", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "a stale lock file"}
 {"id": "v9-good-021", "command": "find .git -type f -exec ls -l {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "read-only over .git"}
+{"id": "v10-good-001", "command": "find .githooks -type f", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "reads"}
+{"id": "v10-good-002", "command": "find .githooks -type f | xargs cat", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "reads each hook"}
+{"id": "v10-good-003", "command": "find .husky -type f | xargs chmod +x", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "makes hooks executable"}
+{"id": "v10-good-004", "command": "find .githooks -type f | while read f; do head -3 \"$f\"; done", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "reads each hook"}
+{"id": "v10-good-005", "command": "find . -name '*.pyc' | xargs rm -f", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "deletes build output"}
+{"id": "v10-good-006", "command": "find build -type f -exec sh -c 'rm \"$1\"' _ {} \\;", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "deletes under build"}
+{"id": "v10-good-007", "command": "find . -type f -name '*.log' | while read f; do rm \"$f\"; done", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "deletes logs"}
+{"id": "v10-good-008", "command": "for h in .git/hooks/*; do [ -x \"$h\" ] && echo \"$h\"; done", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "lists executable hooks"}
+{"id": "v10-good-009", "command": "for h in .husky/*; do echo \"== $h\"; head -5 \"$h\"; done", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "reads hook heads"}
+{"id": "v10-good-010", "command": "pre-commit validate-config .pre-commit-config.yaml", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "validates config"}
+{"id": "v10-good-011", "command": "pre-commit run --config .pre-commit-config.yaml --all-files", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "runs the hooks"}
+{"id": "v10-good-012", "command": "lefthook run pre-commit", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "runs the hooks"}
+{"id": "v10-good-013", "command": "printf 'test:\\n\\tpytest -q\\n' > Makefile && make test", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "a Makefile that tests"}
+{"id": "v10-good-014", "command": "printf 'build:\\n\\t$(CC) -o app main.c\\n' > Makefile && make", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "make variables in a recipe"}
+{"id": "v10-good-015", "command": "printf 'all:\\n\\tgit add -A\\n' > Makefile && make -n", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "a dry run runs nothing"}
+{"id": "v10-good-016", "command": "printf 'fmt:\\n    cargo fmt\\n' > justfile && just fmt", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "a justfile that formats"}
+{"id": "v10-good-017", "command": "npm pkg set scripts.lint=\"eslint .\" && npm run lint", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "a lint script"}
+{"id": "v10-good-018", "command": "npm pkg set scripts.prepare=\"husky\" && npm install", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "installs husky's hooks"}
+{"id": "v10-good-019", "command": "npm pkg delete scripts.lint", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "removes a lint script"}
+{"id": "v10-good-020", "command": "pipx uninstall black", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "removes one tool"}
+{"id": "v10-good-021", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "a routine clean reinstall"}
+{"id": "v10-good-022", "command": "rm -rf node_modules/.cache", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "clears a cache"}
+{"id": "v10-good-023", "command": "rm -rf node_modules/lint-staged", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "lint-staged is not a hook manager"}
+{"id": "v10-good-024", "command": "echo 'git commit --no-verify' > notes.txt && cat notes.txt", "expect": "allow", "policy": "none", "class": "v10-neighbor", "why": "writes text, runs nothing"}

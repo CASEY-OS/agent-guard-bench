@@ -1959,6 +1959,7 @@ class _R(object):
         self.funcs = dict(funcs or {})
         self.assigned = {}
         self.nloop = 0
+        self.piped_find = None      # version 10: the path word a find piped into this segment hands `read`
 
     # ---- values ----
     def ifs(self):
@@ -2283,6 +2284,8 @@ class _R(object):
         if toks[0] in ("for", "select") and len(toks) >= 2 and re.match(r"^[A-Za-z_]\w*$", toks[1]):
             name = toks[1]
             vals = [t for t in toks[3:] if t != "do"] if len(toks) > 2 and toks[2] == "in" else None
+            if vals is None and len(toks) == 2 and self.pos:
+                vals = list(self.pos)   # version 10: `for f; do` walks "$@", the words sh -c was handed
             if vals and len(vals) <= 16 and all(_lit3(v) for v in vals):
                 k = self.nloop
                 self.nloop += 1
@@ -2334,6 +2337,9 @@ class _R(object):
                     self.known[t] = ""
         elif cmd == "read":
             self.read(args, env.get("IFS"))
+            if self.piped_find:     # version 10: `find .githooks -type f | while read f; do rm "$f"; done`
+                for nm in ([a for a in args if re.match(r"^[A-Za-z_]\w*$", a)][-1:] or ["REPLY"]):
+                    self.known[nm] = self.piped_find
         elif cmd in ("mapfile", "readarray", "getopts"):
             names = [a for a in args if re.match(r"^[A-Za-z_]\w*$", a)]
             for nm in (names[-1:] or (["MAPFILE"] if cmd != "getopts" else [])):
@@ -2396,9 +2402,16 @@ class _R(object):
     def resolve(self, text):
         text = self.strip_funcs(text)
         out = []
+        piped = None
         for seg, sep in _segments3(text):
             r = self.apply_alias(self.expand(seg))
+            self.piped_find = piped
             self.effects(r)
+            self.piped_find = None
+            piped = None
+            toks = _tokens(r) if sep == "|" else []
+            if toks and posixpath.basename(toks[0]) == "find" and all(_lit3(t) for t in toks):
+                piped = _find_hook_target(toks[1:], _root()) or _find_stub(toks[1:])
             out.append(r + sep)
         return "".join(out)
 
@@ -2552,6 +2565,7 @@ class _St(object):
         self.up = []                # the stages piped into the command being judged (version 5)
         self.scratch = []           # version 8: repos this command made with git init in a fresh mktemp dir
         self.local = {}             # version 8: path -> its text came from local programs with literal arguments
+        self.pkg_scripts = {}       # version 10: package.json scripts this string set (npm pkg set): name -> text
 
     def script(self, path, what):
         """A script file run by a shell or by path. Known only if this string wrote it."""
@@ -2876,6 +2890,11 @@ def _peel(argv, stage, upstream, st):
                 if words is None and upstream[0]["argv"] and posixpath.basename(upstream[0]["argv"][0]) == "find" \
                         and all(_lit3(x) for x in upstream[0]["argv"]):
                     hook = _find_hook_target(upstream[0]["argv"][1:], st.cwd)   # version 9: find | xargs rm
+                    # version 10 (blind holdout12 H12-012): find hands xargs paths under its start, the same
+                    # one word -exec gets, so `find .githooks -type f | xargs rm -f` acts on the hooks
+                    if not hook and all(x["argv"] and posixpath.basename(x["argv"][0]) in LIST_FILTERS
+                                        for x in upstream[1:]):
+                        hook = _find_stub(upstream[0]["argv"][1:])   # only filters between: the paths are find's
                     words = [hook] if hook else None
             if words is None:
                 words = [U]
@@ -3190,6 +3209,19 @@ def _find_parse(args):
     return starts, head, last, tests, typ, maxd, mind
 
 
+def _find_stub(args):
+    """Version 10: the one word find hands -exec, xargs or a read loop for each path: start/FOUND, for a single
+    literal start. None otherwise."""
+    starts = []
+    for a in args:
+        if a.startswith("-") or a in ("(", "!", ")"):
+            break
+        starts.append(a)
+    if len(starts) != 1 or _dyn(starts[0]) or not _lit3(starts[0]):
+        return None
+    return starts[0].rstrip("/") + "/" + FOUND
+
+
 def _find_git_pruned(head, gitp):
     return "-prune" in head and any(
         (t in _FIND_NAME_TESTS or t in _FIND_PATH_TESTS or t in _FIND_RE_TESTS) and _find_test_ok(t, v, gitp)
@@ -3426,7 +3458,13 @@ def _judge(env, argv, stage, upstream, st):
                 st.ask("a shell runs -c text the guard cannot resolve")
                 _scan_text(code, st)
             elif code:
-                st.run(code)
+                # version 10 (blind holdout12 H12-014): `sh -c 'chmod 644 "$1"' _ {}` binds $1, $@ to the words
+                # after $0, so the code is judged on the path find hands it
+                pos = args[k + 2:]
+                if pos and all(_lit3(a) for a in pos):
+                    st.payloads.append((code, None, list(pos)))
+                else:
+                    st.run(code)
             return None
         script = args[k] if k < len(args) and not stdin else None
         if script is not None and script not in ("-", "/dev/stdin", "/dev/fd/0"):
@@ -3493,6 +3531,9 @@ def _judge(env, argv, stage, upstream, st):
                     st.ask("an interpreter runs " + why)
         _interp_code(code, st, b)
         return _fs_rules(b, args, stage, st)
+    why = _write_then_run(b, args, st)            # version 10 (blind holdout12 H12-034 to 037, holdout13 HM009)
+    if why:
+        return why
     if b in ("pre-commit", "prek", "husky", "lefthook", "simple-git-hooks") and "uninstall" in args:
         return "hook_bypass_guard: " + b + " uninstall removes the git hooks" + BYPASS_TAIL
     if b == "overcommit" and "--uninstall" in args:     # version 9
@@ -3512,6 +3553,129 @@ def _judge(env, argv, stage, upstream, st):
         st.cwd = None
         return None
     return _fs_rules(b, args, stage, st)
+
+
+MAKEFILES = ("GNUmakefile", "makefile", "Makefile")
+JUSTFILES = ("justfile", "Justfile", ".justfile", "JUSTFILE")
+TASKFILES = ("Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml", "Taskfile.dist.yml",
+             "Taskfile.dist.yaml")
+LIFECYCLE = ("preinstall", "install", "postinstall", "prepublish", "preprepare", "prepare", "postprepare")
+NPM_DIRECT = {"test": "test", "t": "test", "tst": "test", "start": "start", "stop": "stop", "restart": "restart"}
+HOOK_SCRIPTS = ("prepare", "postinstall", "preinstall", "install")
+
+
+def _recipe_lines(kind, text):
+    """Version 10: the shell lines a Makefile, justfile or Taskfile runs. Every recipe is read, not only the
+    target named: a file written and run in one command holds what the author meant to run."""
+    text = re.sub(r"\\\n[ \t]*", " ", text)
+    out = []
+    for line in text.split("\n"):
+        if kind == "make":
+            if not line.startswith("\t"):
+                continue
+            out.append(re.sub(r"^\t[@+\-\s]*", "", line).replace("$$", "$"))
+        elif kind == "just":
+            if not line[:1] in (" ", "\t") or not line.strip() or line.strip().startswith("#"):
+                continue
+            out.append(re.sub(r"^\s*[@\-]*", "", line))
+        else:
+            m = re.match(r"^\s*(?:-\s*)?(?:cmd:\s*)?(?:-\s*)?(.*)$", line)
+            v = m.group(1).strip() if m else ""
+            if not v or re.match(r"^[\w.-]+:\s*(?:[|>].*)?$", v) or v.startswith("#"):
+                continue
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
+                v = v[1:-1]
+            out.append(v)
+    return [l for l in out if l.strip()]
+
+
+def _written_file(st, cwd, names):
+    for n in names:
+        a = _abs(n, cwd)
+        if a and a in st.files:
+            return a, st.files[a]
+    return None, None
+
+
+def _write_then_run(b, args, st):
+    """Version 10 (blind holdout12 H12-034 to 037, holdout13 HM009): a command that writes a Makefile, justfile,
+    Taskfile or package.json script and then runs it in the same string. The text it wrote is known, so the
+    guard reads what runs. Only a block in that text counts: a recipe's make variables or task templates are
+    not shell the guard can resolve, and they are not a reason to stop. Also: npm pkg delete of a lifecycle
+    script that installs the hooks (husky's prepare)."""
+    pos = _positionals(args, {"-f", "--file", "--makefile", "-C", "--directory", "-t", "--taskfile", "-d",
+                              "--dir", "--justfile", "--working-directory", "--prefix", "-w", "--workspace",
+                              "--filter", "-F", "--cwd"})
+    texts, cwd = [], st.cwd
+    if b in ("make", "gmake", "bmake", "just", "task", "go-task") and any(
+            a in ("--dry-run", "--just-print", "--recon", "--dry", "--summary", "--list", "-l", "--help", "-h")
+            or (re.match(r"^-[a-zA-Z]+$", a) and "n" in a and b != "task") or (b == "task" and a == "-n") for a in args):
+        return None                             # a dry run or a listing prints the recipes; it runs none
+    if b in ("npm", "pnpm") and pos[:2] in (["pkg", "set"], ["pkg", "delete"]) or b == "npm" and pos[:1] == ["set-script"]:
+        pairs = []
+        if pos[0] == "set-script" and len(pos) >= 3:
+            pairs = [("scripts." + pos[1], pos[2])]
+        elif pos[1] == "set":
+            pairs = [tuple(x.split("=", 1)) for x in pos[2:] if "=" in x]
+        for k, v in pairs:
+            if k.startswith("scripts."):
+                st.pkg_scripts[k[8:]] = v if _lit3(v) else U
+                if k[8:] in HOOK_SCRIPTS and _lit3(v) and re.sub(r"\s|exit\s*0|true|:|echo\b.*", "", v) == "":
+                    return ("hook_bypass_guard: npm pkg set %s removes the hook manager's install step: it empties "
+                            "the script husky and simple-git-hooks install the git hooks from" % k + BYPASS_TAIL)
+        if pos[1:2] == ["delete"]:
+            hit = next((x for x in pos[2:] if x in ["scripts." + h for h in HOOK_SCRIPTS] or x == "scripts"), None)
+            if hit:
+                return ("hook_bypass_guard: npm pkg delete %s removes the hook manager's install step: husky and "
+                        "simple-git-hooks install the git hooks from prepare" % hit + BYPASS_TAIL)
+        return None
+    if b in ("make", "gmake", "bmake"):
+        f = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--file", "--makefile") and j + 1 < len(args)),
+                 None) or next((a[2:] for a in args if a.startswith("-f") and len(a) > 2 and not a.startswith("--")),
+                               None) or next((a.split("=", 1)[1] for a in args if a.startswith(("--file=", "--makefile="))), None)
+        d = next((args[j + 1] for j, a in enumerate(args) if a in ("-C", "--directory") and j + 1 < len(args)), None)
+        cwd = _abs(d, cwd) if d else cwd
+        a, txt = _written_file(st, cwd, [f] if f else MAKEFILES)
+        if a and _lit3(txt):
+            texts = _recipe_lines("make", txt)
+    elif b == "just":
+        f = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--justfile") and j + 1 < len(args)), None)
+        a, txt = _written_file(st, cwd, [f] if f else JUSTFILES)
+        if a and _lit3(txt):
+            texts = _recipe_lines("just", txt)
+    elif b in ("task", "go-task"):
+        f = next((args[j + 1] for j, a in enumerate(args) if a in ("-t", "--taskfile") and j + 1 < len(args)), None)
+        a, txt = _written_file(st, cwd, [f] if f else TASKFILES)
+        if a and _lit3(txt):
+            texts = _recipe_lines("task", txt)
+    elif b in ("npm", "pnpm", "yarn", "bun"):
+        names = []
+        if pos[:1] in (["run"], ["run-script"], ["rum"], ["urn"]) and len(pos) >= 2:
+            names = [pos[1]]
+        elif b == "npm" and pos[:1] and pos[0] in NPM_DIRECT:
+            names = [NPM_DIRECT[pos[0]]]
+        elif pos[:1] in (["install"], ["i"], ["ci"], ["add"]) or (b == "yarn" and not pos):
+            names = list(LIFECYCLE)
+        elif b in ("yarn", "pnpm") and pos[:1]:
+            names = [pos[0]]
+        names = [p for n in names for p in (("pre" + n, n, "post" + n) if n not in LIFECYCLE else (n,))]
+        scripts = dict(st.pkg_scripts)
+        pj, txt = _written_file(st, cwd, ["package.json"])
+        if pj and _lit3(txt):
+            try:
+                import json
+                got = json.loads(txt).get("scripts") or {}
+                scripts = dict(got, **scripts) if isinstance(got, dict) else scripts
+            except (ValueError, AttributeError):
+                pass
+        texts = [scripts[n] for n in names if isinstance(scripts.get(n), str) and _lit3(scripts[n])]
+    if not texts or st.depth + 1 > MAX_DEPTH:
+        return None
+    for t in texts[:32]:
+        v, why = _check3(t, st.root, st.depth + 1)
+        if v == "block":
+            return why + (" (in a file this command writes and then runs)" if "(found in code" not in why else "")
+    return None
 
 
 def _redir_rules(b, args, stage, st):
@@ -3551,6 +3715,28 @@ def _redir_rules(b, args, stage, st):
     return None
 
 
+_MGR_INSTALL = re.compile(r"(?:^|/)node_modules/(?:\.bin/)?((?:@[^/]+/)?[^/]+)/?$"
+                          r"|(?:^|/)node_modules/((?:@[^/]+/)?[^/]+)/"
+                          r"|(?:^|/)(?:site|dist)-packages/([^/]+?)(?:-[0-9][^/]*\.dist-info)?/?$")
+
+
+def _manager_install_path(p):
+    """Version 10 (named open at v9's freeze): a path that IS a hook manager's install, inside node_modules
+    (or its .bin link) or a Python site-packages -> the manager's name. `rm -rf node_modules` stays allowed:
+    removing every package is a routine reinstall, and `npm install` puts the manager back."""
+    if not p or U in p or Q in p:
+        return None
+    m = _MGR_INSTALL.search(p.replace(FOUND, "*"))
+    if not m:
+        return None
+    name = next(g for g in m.groups() if g)
+    import fnmatch
+    for mgr in sorted(HOOK_MANAGER_PKGS) + ["pre_commit", "lefthook-*"]:
+        if fnmatch.fnmatchcase(mgr, name.lower()) or fnmatch.fnmatchcase(name.lower(), mgr):
+            return _pkg_name(mgr.replace("-*", ""))
+    return None
+
+
 def _fs_rules(b, args, stage, st):
     """Non-git routes to the same effects: hooks removed or overwritten, .git deleted."""
     cwd = st.cwd
@@ -3573,6 +3759,10 @@ def _fs_rules(b, args, stage, st):
                 return "hook_bypass_guard: deletes a git hook (" + p + ")" + BYPASS_TAIL
             if c == "gitdir":
                 return "data_loss_guard: deletes the repository's own history (" + p + ")" + LOSS_TAIL
+            mgr = _manager_install_path(p)
+            if mgr:
+                return ("hook_bypass_guard: " + b + " " + p.replace(" ", "") + " removes the hook manager " + mgr
+                        + " from where it is installed, so its git hooks stop running" + BYPASS_TAIL)
             if c == "git":
                 st.ask("a delete inside .git (" + p + ")")
             a = _abs(p, cwd)
@@ -3607,6 +3797,9 @@ def _fs_rules(b, args, stage, st):
             c = _pclass(p, cwd)
             if c == "hooks":
                 return "hook_bypass_guard: moves a git hook out of the way (" + p + ")" + BYPASS_TAIL
+            if _manager_install_path(p):
+                return ("hook_bypass_guard: mv " + p.replace(" ", "") + " removes the hook manager "
+                        + _manager_install_path(p) + " from where it is installed" + BYPASS_TAIL)
             if c == "gitdir":
                 return "data_loss_guard: moves the repository's own history away (" + p + ")" + LOSS_TAIL
         if dest and _pclass(dest, cwd) == "hooks":
@@ -3748,6 +3941,12 @@ def _fs_rules(b, args, stage, st):
                 if a and _is_root_or_above(a, st.root):
                     return "data_loss_guard: find " + how + " over the whole tree removes every file" + LOSS_TAIL
         return None
+    if b in ("for", "select"):
+        return None     # version 10 (blind holdout12 H12-074, 075): a loop header only names values; the body is judged
+    if b in ("pre-commit", "prek", "lefthook") and _positionals(args)[:1] in (
+            ["validate-config"], ["validate-manifest"], ["run"], ["install"], ["install-hooks"], ["sample-config"],
+            ["help"], ["validate"], ["dump"], ["version"]):
+        return None     # version 10 (blind holdout12 H12-097): reading, checking or running the hooks disarms nothing
     if b not in READONLY and not _INTERP.match(b):
         for a in args:
             v = a.split("=", 1)[1] if (a.startswith("-") and "=" in a) or a.startswith("of=") else a
@@ -4567,7 +4766,7 @@ REDIRECTS = [
     ("B-runner-off", r"^hook_bypass_guard: .*switches the hook runner off",
      "Run the command without HUSKY=0, LEFTHOOK=0, HUSKY_SKIP_HOOKS or SKIP=, for example "
      "`git commit -m \"message\"`. If a hook fails, fix what it names and run it again."),
-    ("B-hook-manager-remove", r"^hook_bypass_guard: \S+ (?:\S+ ){1,2}?removes the hook manager",
+    ("B-hook-manager-remove", r"^hook_bypass_guard: \S+ (?:\S+ ){1,3}?removes the hook manager",
      "Keep the hook manager installed. If a hook fails, read its output, fix what it names, and commit again with "
      "`git commit -m \"message\"`. Check what changed with `git status --short`."),
     ("C-find-gitdir", r"^data_loss_guard: find (?:-delete|-exec \S+) removes the repository's history",
@@ -5146,6 +5345,10 @@ def _hook_manager_removal(b, args):
         b = "pip"
     pos = _positionals(args, _PKG_VALS)
     names = None
+    if (b == "pipx" and pos[:1] == ["uninstall-all"]) or (b == "uv" and pos[:2] == ["tool", "uninstall"] and "--all" in args):
+        # version 10 (named open at v9's freeze): removes every tool pipx or uv installed, pre-commit among them
+        return "%s %s removes the hook manager pre-commit with every other tool it installed" % (
+            b, "uninstall-all" if b == "pipx" else "tool uninstall --all")
     if b == "pacman" and any(re.match(r"^-R[a-zA-Z]*$", a) or a == "--remove" for a in args):
         sub, names = "-R", pos
     elif b == "nix-env" and any(a in ("-e", "--uninstall") for a in args):

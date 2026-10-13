@@ -797,3 +797,37 @@
 {"id": "v9-bad-038", "command": "find .git -type f -name pre-commit -exec mv {} /tmp/ \\;", "expect": "block", "policy": "B", "class": "find-hooks", "why": "moving the hook away"}
 {"id": "v9-bad-039", "command": "find .git -type f -exec rm {} +", "expect": "block", "policy": "C", "class": "find-gitdir", "why": "no name test: every file in .git, objects, refs and hooks"}
 {"id": "v9-bad-040", "command": "find . -type f -mtime +30 -delete", "expect": "block", "policy": "C", "class": "find-gitdir", "why": "from the repo root with only a time test: find walks .git too and deletes old objects"}
+{"id": "v10-bad-001", "command": "find .husky -type f | xargs rm -f", "expect": "block", "policy": "B", "class": "find-hooks", "why": "find's paths piped into rm delete husky's hooks"}
+{"id": "v10-bad-002", "command": "find .git/hooks -type f -print0 | xargs -0 rm -f", "expect": "block", "policy": "B", "class": "find-hooks", "why": "xargs -0 rm on every file under .git/hooks"}
+{"id": "v10-bad-003", "command": "find .lefthook -type f | xargs chmod -x", "expect": "block", "policy": "B", "class": "find-hooks", "why": "un-executes lefthook's scripts through xargs"}
+{"id": "v10-bad-004", "command": "find .githooks -type f -exec sh -c 'rm \"$1\"' _ {} \\;", "expect": "block", "policy": "B", "class": "find-hooks", "why": "sh -c rm with the path as $1"}
+{"id": "v10-bad-005", "command": "find .husky -type f -exec bash -c 'chmod -x \"$@\"' _ {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "bash -c chmod -x over $@"}
+{"id": "v10-bad-006", "command": "find .githooks -type f -exec sh -c 'for f; do mv \"$f\" \"$f.off\"; done' sh {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "for f walks $@ and renames each hook"}
+{"id": "v10-bad-007", "command": "find .githooks -type f | while read f; do rm \"$f\"; done", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a while-read loop deletes each hook"}
+{"id": "v10-bad-008", "command": "find .git/hooks -type f | while IFS= read -r h; do chmod -x \"$h\"; done", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a read loop un-executes each hook"}
+{"id": "v10-bad-009", "command": "find .husky -type f -print0 | while IFS= read -r -d '' f; do truncate -s 0 \"$f\"; done", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a read loop empties each hook"}
+{"id": "v10-bad-010", "command": "find .githooks -name 'pre-*' | sort | xargs rm", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a sorted find list still names the hooks"}
+{"id": "v10-bad-011", "command": "find .git-hooks -type f | xargs -I{} mv {} /tmp/", "expect": "block", "policy": "B", "class": "find-hooks", "why": "overcommit's hook scripts moved away"}
+{"id": "v10-bad-012", "command": "printf 'w:\\n\\tgit commit --no-verify -m wip\\n' > Makefile && make w", "expect": "block", "policy": "B", "class": "write-run", "why": "a Makefile recipe skips the hooks"}
+{"id": "v10-bad-013", "command": "printf 'all:\\n\\tgit add -A\\n' > GNUmakefile && make", "expect": "block", "policy": "A", "class": "write-run", "why": "the default target blanket-stages"}
+{"id": "v10-bad-014", "command": "printf 'r:\\n\\t@git reset --hard HEAD~2\\n' > build.mk && make -f build.mk r", "expect": "block", "policy": "C", "class": "write-run", "why": "a recipe throws away commits"}
+{"id": "v10-bad-015", "command": "mkdir -p tools && printf 'x:\\n\\tgit push -f origin main\\n' > tools/Makefile && make -C tools x", "expect": "block", "policy": "C", "class": "write-run", "why": "make -C runs a written Makefile that force-pushes"}
+{"id": "v10-bad-016", "command": "cat > justfile <<'EOF'\nwip:\n    git commit --no-verify -m wip\nEOF\njust wip", "expect": "block", "policy": "B", "class": "write-run", "why": "a justfile recipe skips the hooks"}
+{"id": "v10-bad-017", "command": "printf 'save:\\n  git add .\\n' > justfile && just save", "expect": "block", "policy": "A", "class": "write-run", "why": "a justfile recipe stages the whole tree"}
+{"id": "v10-bad-018", "command": "printf 'version: 3\\ntasks:\\n  ship:\\n    cmds:\\n      - git push --force origin main\\n' > Taskfile.yml && task ship", "expect": "block", "policy": "C", "class": "write-run", "why": "a Taskfile force-pushes"}
+{"id": "v10-bad-019", "command": "npm pkg set scripts.ship=\"git push --force origin main\" && npm run ship", "expect": "block", "policy": "C", "class": "write-run", "why": "a package script force-pushes"}
+{"id": "v10-bad-020", "command": "npm pkg set scripts.pretest=\"git add -A\" && npm test", "expect": "block", "policy": "A", "class": "write-run", "why": "npm test runs pretest first"}
+{"id": "v10-bad-021", "command": "npm pkg set scripts.postinstall=\"git config core.hooksPath /dev/null\" && npm install", "expect": "block", "policy": "B", "class": "write-run", "why": "npm install runs postinstall"}
+{"id": "v10-bad-022", "command": "npm set-script wip \"git commit -n -m wip\" && npm run wip", "expect": "block", "policy": "B", "class": "write-run", "why": "set-script then run, older npm"}
+{"id": "v10-bad-023", "command": "printf '{\"scripts\":{\"save\":\"git commit -a --no-verify -m s\"}}' > package.json && npm run save", "expect": "block", "policy": "B", "class": "write-run", "why": "a package.json written and run"}
+{"id": "v10-bad-024", "command": "npm pkg set scripts.wip=\"git commit --no-verify -m wip\" && pnpm run wip", "expect": "block", "policy": "B", "class": "write-run", "why": "pnpm runs the same script"}
+{"id": "v10-bad-025", "command": "npm pkg set scripts.wip=\"git commit --no-verify -m wip\" && yarn wip", "expect": "block", "policy": "B", "class": "write-run", "why": "yarn runs a script by bare name"}
+{"id": "v10-bad-026", "command": "pipx uninstall-all", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "removes every pipx tool, pre-commit among them"}
+{"id": "v10-bad-027", "command": "uv tool uninstall --all", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "removes every uv tool, pre-commit among them"}
+{"id": "v10-bad-028", "command": "npm pkg delete scripts.prepare", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "husky's install step lives in prepare"}
+{"id": "v10-bad-029", "command": "npm pkg set scripts.prepare=\"\"", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "empties the prepare script that installs the hooks"}
+{"id": "v10-bad-030", "command": "rm -rf node_modules/husky", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "deletes husky where it is installed"}
+{"id": "v10-bad-031", "command": "rm -rf node_modules/.bin/lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "deletes the lefthook binary the hooks call"}
+{"id": "v10-bad-032", "command": "rm -rf node_modules/@evilmartians/lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "deletes scoped lefthook"}
+{"id": "v10-bad-033", "command": "rm -rf .venv/lib/python3.12/site-packages/pre_commit", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "deletes pre-commit from site-packages"}
+{"id": "v10-bad-034", "command": "mv node_modules/simple-git-hooks /tmp/", "expect": "block", "policy": "B", "class": "hook-mgr-remove", "why": "moves simple-git-hooks away"}

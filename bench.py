@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v8 (frozen copies in variants/), guard_v9
+Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v9 (frozen copies in variants/), guard_v10
 (guard.py, the real one), broken_guard (negative control for guard.py).
 Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"),
-v8_dev ("v8-"), v9_dev ("v9-"); residual;
+v8_dev ("v8-"), v9_dev ("v9-"), v10_dev ("v10-"); residual;
 and the holdouts when their files exist. Which holdout was blind or a development set for which version is
 in HOLDOUT_STATUS and printed with every table.
 
@@ -43,6 +43,9 @@ aggregate and cannot recompute it.
 Version 9 (hook managers by class) adds condition 14: every v8 deny is a v9 deny and every v8 allow on an undo
 point is still a deny or an allow on an undo point, on own cases, unless an own known_good case says allow. The
 holdout table gains v8 columns beside v9's.
+Version 10 (find over hook folders, files written and run in one command) moves condition 14 forward a version:
+every v9 deny is a v10 deny and every v9 allow on an undo point is still a deny or an allow on an undo point, on
+own cases, unless an own known_good case says allow. The holdout table's previous-version columns are v9's.
 Holdout results never change the exit code.
 
 Surface: command strings only, for the guard. bench.py executes nothing itself except
@@ -75,10 +78,12 @@ VARIANTS = [
     ("guard_v6", os.path.join(HERE, "variants", "guard_v6.py")),
     ("guard_v7", os.path.join(HERE, "variants", "guard_v7.py")),
     ("guard_v8", os.path.join(HERE, "variants", "guard_v8.py")),
-    ("guard_v9", os.path.join(HERE, "guard.py")),
+    ("guard_v9", os.path.join(HERE, "variants", "guard_v9.py")),
+    ("guard_v10", os.path.join(HERE, "guard.py")),
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
-GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8", "guard_v9")
+GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8", "guard_v9",
+          "guard_v10")
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -112,7 +117,8 @@ HOLDOUT_STATUS = {
     "holdout10": "blind for v1 to v7 (Claude Haiku, sheet only); sealed until v7 was frozen; seen before v8",
     "holdout11": "blind for v1 to v8 (ChatGPT, Gemini, Mistral, Grok, DeepSeek; sheet only); sealed until v8 was "
                  "frozen; DEVELOPMENT set for v9 (its misses were read)",
-    "holdout12": "blind for v1 to v9 (Claude Sonnet, sheet only); sealed until v9 was frozen (5cd748b)",
+    "holdout12": "blind for v1 to v9 (Claude Sonnet, sheet only); sealed until v9 was frozen (5cd748b); "
+                 "DEVELOPMENT set for v10 (its misses and false positives were read)",
     "holdout13": "blind for v1 to v9 (ChatGPT, Mistral, Grok, DeepSeek; Gemini refused; sheet only); sealed until v9 was "
                  "frozen (5cd748b)",
 }
@@ -288,7 +294,8 @@ SET_LABELS = {"v1_era": "own cases, v1 era (%d)", "v2_dev": "own cases written w
               "v5_dev": "own cases written while building v5 (%d)",
               "v6_dev": "own cases written while building v6 (%d)",
               "v8_dev": "own cases written while building v8 (%d)",
-              "v9_dev": "own cases written while building v9 (%d)", "own_all": "all own cases (%d)",
+              "v9_dev": "own cases written while building v9 (%d)",
+              "v10_dev": "own cases written while building v10 (%d)", "own_all": "all own cases (%d)",
               "residual": "residual: violations the guard knowingly misses (%d)"}
 
 
@@ -304,7 +311,7 @@ def main():
         assert mods[name]._root() == PINNED_ROOT, "root pin failed for " + name
     names = [v for v, _ in VARIANTS]
     path_of = dict(VARIANTS)
-    g5 = mods["guard_v9"]
+    g5 = mods["guard_v10"]
     refs_before = git_snapshot_refs(HERE)
     print("Python %s on %s. Root pinned: %s (measured, not the live cwd %s)"
           % (platform.python_version(), platform.system(), PINNED_ROOT, os.getcwd()))
@@ -320,20 +327,21 @@ def main():
     present = {h: h in loaded for h in HOLDOUTS}
     own = loaded["known_bad"] + loaded["known_good"]
     sets = {
-        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-", "v6-", "v8-", "v9-"))],
+        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-", "v6-", "v8-", "v9-", "v10-"))],
         "v2_dev": [r for r in own if r["id"].startswith("v2-")],
         "v3_dev": [r for r in own if r["id"].startswith("v3-")],
         "v5_dev": [r for r in own if r["id"].startswith("v5-")],
         "v6_dev": [r for r in own if r["id"].startswith("v6-")],
         "v8_dev": [r for r in own if r["id"].startswith("v8-")],
         "v9_dev": [r for r in own if r["id"].startswith("v9-")],
+        "v10_dev": [r for r in own if r["id"].startswith("v10-")],
         "own_all": own,
         "residual": loaded["residual"],
     }
     for h in HOLDOUTS:
         if present[h]:
             sets[h] = loaded[h]
-    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "v6_dev", "v8_dev", "v9_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
+    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "v6_dev", "v8_dev", "v9_dev", "v10_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
 
     # one verdict per (variant, case)
     all_rows = {}
@@ -348,13 +356,13 @@ def main():
                 if r["id"] not in verdicts[v]:
                     out = mods[v].decide(r["command"])
                     verdicts[v][r["id"]] = out[0]
-                    if v == "guard_v9":
+                    if v == "guard_v10":
                         reasons[r["id"]] = out[1]
                         full[r["id"]] = g5.decide_full(r["command"])
                     if v == "guard_v7":
                         full7[r["id"]] = mods["guard_v7"].decide_full(r["command"])
-                    if v == "guard_v8":
-                        full8[r["id"]] = mods["guard_v8"].decide_full(r["command"])
+                    if v == "guard_v9":
+                        full8[r["id"]] = mods["guard_v9"].decide_full(r["command"])
                     if v == "guard_v3":
                         reasons3[r["id"]] = out[1]
 
@@ -412,7 +420,7 @@ def main():
     # no v1 or v2 block turned soft, unless it is such a listed good case
     soft12 = sorted({i for i in all_ids
                      if (verdicts["guard_v1"][i] == "block" or verdicts["guard_v2"][i] == "block")
-                     and verdicts["guard_v9"][i] != "block"})
+                     and verdicts["guard_v10"][i] != "block"})
     softened = [i for i in own_only(soft12) if cmd_of[i] not in excuse]
     soft12_listed = listed(soft12)
     # version 8: every v7 HARD block is a v8 hard block, except such listed good cases (on holdouts: reported as
@@ -430,9 +438,9 @@ def main():
     v8_softened = [i for i in own_only(soft8) if cmd_of[i] not in excuse]
     hold8_fixed, hold8_regressed = hold_split([i for i in soft8 if cmd_of[i] not in excuse])
     v9_hardened = [i for i in all_ids if full8[i]["verdict"] == "allow" and full[i]["verdict"] == "deny"]
-    v5_hardened = [i for i in all_ids if verdicts["guard_v7"][i] == "allow" and verdicts["guard_v9"][i] != "allow"]
-    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v9"][i] != "block"]
-    v5_asks = [i for i in all_ids if verdicts["guard_v9"][i] == "ask"]
+    v5_hardened = [i for i in all_ids if verdicts["guard_v7"][i] == "allow" and verdicts["guard_v10"][i] != "allow"]
+    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v10"][i] != "block"]
+    v5_asks = [i for i in all_ids if verdicts["guard_v10"][i] == "ask"]
     v3_asks = [i for i in all_ids if verdicts["guard_v3"][i] == "ask"]
     # every deny carries a specific redirect that names a safe alternative
     allow_cache = {}
@@ -441,7 +449,7 @@ def main():
         if c not in allow_cache:
             allow_cache[c] = g5.decide(c)[0] == "allow"
         return allow_cache[c]
-    denies = [i for i in all_ids if verdicts["guard_v9"][i] == "block"]
+    denies = [i for i in all_ids if verdicts["guard_v10"][i] == "block"]
     redirect_bad = {i: redirect_problems(cmd_of[i], full[i], allows) for i in denies}
     # version 8: a recoverable allow carries v7's deny for when no undo point can be taken; it must be as good
     recov = [i for i in all_ids if full[i]["origin"] == "recoverable"]
@@ -472,7 +480,7 @@ def main():
             continue
         for row in sets[s]:
             if should_stop(s, row) and row.get("policy") in GUARD_BY_POLICY \
-                    and verdicts["guard_v9"][row["id"]] == "block" and full[row["id"]]["origin"] == "block" \
+                    and verdicts["guard_v10"][row["id"]] == "block" and full[row["id"]]["origin"] == "block" \
                     and full[row["id"]]["v3"] == "block":
                 named_total += 1
                 if reasons[row["id"]].startswith(GUARD_BY_POLICY[row["policy"]]):
@@ -490,9 +498,9 @@ def main():
                 continue
             seen.add(row["id"])
             cli_total += 1
-            cli, rc, why = cli_verdict(path_of["guard_v9"], row["command"])
+            cli, rc, why = cli_verdict(path_of["guard_v10"], row["command"])
             rec = full[row["id"]]["origin"] == "recoverable"
-            want = "block" if rec else verdicts["guard_v9"][row["id"]]
+            want = "block" if rec else verdicts["guard_v10"][row["id"]]
             if cli != want or rc != 0:
                 cli_diffs.append(row["id"])
             if cli == "ask":
@@ -546,8 +554,8 @@ def main():
     for h, row in rec_hold:
         hold_rec.setdefault(h, []).append(rec_rows.get((h, row["id"]), {"id": row["id"], "verdict": "missing"}))
 
-    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v9"][r["id"]] != "allow"]
-    patho = pathological_timing(mods["guard_v9"])
+    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v10"][r["id"]] != "allow"]
+    patho = pathological_timing(mods["guard_v10"])
 
     # verdict changes v2 -> v3, judged as stopped / allowed
     changes, regressions = {}, []
@@ -572,17 +580,17 @@ def main():
         fixed, worse = [], []
         for row in sets[s]:
             a4 = verdicts["guard_v7"][row["id"]] in ("block", "ask")
-            a5 = verdicts["guard_v9"][row["id"]] in ("block", "ask")
+            a5 = verdicts["guard_v10"][row["id"]] in ("block", "ask")
             if a4 != a5:
                 (fixed if a5 == should_stop(s, row) else worse).append(row["id"])
         changes45[s] = {"fixed": fixed, "worse": worse}
 
-    a = open(path_of["guard_v9"], encoding="utf-8").read().splitlines()
+    a = open(path_of["guard_v10"], encoding="utf-8").read().splitlines()
     b = open(path_of["broken_guard"], encoding="utf-8").read().splitlines()
     changed = [l for l in difflib.unified_diff(a, b, lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
     one_line = len(changed) == 2
 
-    own3, ownb = results["guard_v9"]["own_all"], results["broken_guard"]["own_all"]
+    own3, ownb = results["guard_v10"]["own_all"], results["broken_guard"]["own_all"]
     g_errs = [r["id"] for r in own if (should_stop("own_all", r) and full[r["id"]]["verdict"] == "allow"
                                        and full[r["id"]]["origin"] != "recoverable")
               or (not should_stop("own_all", r) and full[r["id"]]["verdict"] == "deny")]
@@ -660,7 +668,7 @@ def main():
             (": " + ", ".join(v4_softened)) if v4_softened else "", len(fc_lost_own), len(v5_hardened), len(soft4_listed),
             ", ".join(soft4_listed) or "none", len(hold_fixed), ", ".join(hold_fixed) or "none",
             len(hold_regressed), ", ".join(hold_regressed) or "none")),
-        ("every v8 deny is a v9 deny and every v8 allow on an undo point is not a plain v9 allow, on own cases, unless "
+        ("every v9 deny is a v10 deny and every v9 allow on an undo point is not a plain v10 allow, on own cases, unless "
          "an own known_good case with that command says allow (listed); holdout changes reported, never failed",
          not v8_softened,
          "%d softened outside the list%s; %d newly denied; listed (%d): %s; holdout fixes (%d): %s; holdout "
@@ -708,15 +716,15 @@ def main():
             L.append("")
             L.append("**The %s set was not present for this run.**" % h)
     L.append("")
-    L.append("## Versions 8 and 9: fail recoverable")
+    L.append("## Versions 8 to 10: fail recoverable")
     L.append("")
     L.append("A bad case counts as handled (TP) when the guard denies it, or allows it on an undo point and that point "
              "fully restored it when the command was run for real in the write jail. A recoverable case that changed "
-             "nothing in the jail is its own column (v9) or left out of both v8 counts: it proves nothing either way. "
-             "v7 columns are plain denies. v9 is guard.py; v8 is variants/guard_v8.py.")
+             "nothing in the jail is its own column (v10) or left out of both v9 counts: it proves nothing either way. "
+             "v7 columns are plain denies. v10 is guard.py; v9 is variants/guard_v9.py.")
     L.append("")
-    L.append("| set | bad | v7 TP / FN | v8 TP / FN | v9 denied | v9 restored | v9 no-op | v9 TP / FN | safe | v7 FP "
-             "| v8 FP | v9 FP |")
+    L.append("| set | bad | v7 TP / FN | v9 TP / FN | v10 denied | v10 restored | v10 no-op | v10 TP / FN | safe "
+             "| v7 FP | v9 FP | v10 FP |")
     L.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     tot = {}
     keys = ("v7_TP", "v7_FN", "v8_TP", "v8_FN", "TP_denied", "TP_restored", "recoverable_noop", "TP", "FN", "v7_FP",
@@ -736,18 +744,18 @@ def main():
     unplayed = ["%s:%s" % (h, i) for h, c in hv.items() for i in c["v8_unplayed"]]
     if unplayed:
         L.append("")
-        L.append("v8 undo-point cases v9 now denies, so not played in the jail this run (left out of v8's counts): %s."
+        L.append("v9 undo-point cases v10 now denies, so not played in the jail this run (left out of v9's counts): %s."
                  % ", ".join(unplayed))
     L.append("")
-    L.append("Holdout bad cases v9 allows on an undo point, each run for real in the jail:")
+    L.append("Holdout bad cases v10 allows on an undo point, each run for real in the jail:")
     L.append("")
     for h, rows_ in hold_rec.items():
         L.append("- %s: %s" % (h, ", ".join("%s %s" % (r["id"], r["verdict"]) for r in rows_)))
     L.append("")
     L.append("Recoverable holdout bad cases NOT restored: %s." % (", ".join(hold_not_restored) or "none"))
-    L.append("Holdout bad cases v9 lets through with no undo point (plain allows): %s."
+    L.append("Holdout bad cases v10 lets through with no undo point (plain allows): %s."
              % ("; ".join("%s: %s" % (h, ", ".join(i for i in c["FN_ids"])) for h, c in hv.items() if c["FN_ids"]) or "none"))
-    L.append("Holdout safe cases v9 denies: %s."
+    L.append("Holdout safe cases v10 denies: %s."
              % ("; ".join("%s: %s" % (h, ", ".join(c["FP_ids"])) for h, c in hv.items() if c["FP_ids"]) or "none"))
     L.append("")
     L.append("Own bad cases allowed on an undo point: %d, fully restored %d, changed nothing %d, not restored %d. "
@@ -764,19 +772,19 @@ def main():
         L.append("| guard | denied | denied % | allowed on an undo point | % |")
         L.append("|---|---:|---:|---:|---:|")
         L.append("| v7 | %d | %.2f%% | | |" % (real["v7"]["denied"], real["v7"]["denied_pct"]))
-        for vn in ("v8", "v9"):
+        for vn in ("v8", "v9", "v10"):
             if vn in real:
                 L.append("| %s | %d | %.2f%% | %d | %.2f%% |" % (vn, real[vn]["denied"], real[vn]["denied_pct"],
                                                                real[vn]["recoverable_allowed"], real[vn]["recoverable_pct"]))
-        cur = "v9" if "v9" in real else "v8"
+        cur = next(vn for vn in ("v10", "v9", "v8") if vn in real)
         L.append("")
         for k in sorted(k for k in real if k.startswith("transitions_")):
             L.append(k.split("_", 1)[1].replace("_", " ") + ", by origin: " +
                      ", ".join("%s %d" % kv for kv in real[k].items()) + ".")
             L.append("")
-        if "changed_v8_to_v9" in real:
-            ch = real["changed_v8_to_v9"]
-            L.append("v8 to v9: %d calls newly denied, %d newly allowed%s." % (
+        for ck in sorted(k for k in real if k.startswith("changed_")):
+            ch = real[ck]
+            L.append(ck[8:].replace("_", " ") + ": %d calls newly denied, %d newly allowed%s." % (
                 ch["newly_denied"], ch["newly_allowed"], (" (" + ", ".join("%s %d" % kv for kv in
                                                                            ch["newly_denied_by_shape"].items()) + ")")
                 if ch["newly_denied_by_shape"] else ""))
