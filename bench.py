@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1, guard_v2, guard_v3 and guard_v4 (frozen copies in
-variants/), guard_v5 (guard.py, the real one), broken_guard (negative control for guard.py).
-Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"); residual;
+Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v7 (frozen copies in variants/), guard_v8
+(guard.py, the real one), broken_guard (negative control for guard.py).
+Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"),
+v8_dev ("v8-"); residual;
 and the holdouts when their files exist. Which holdout was blind or a development set for which version is
 in HOLDOUT_STATUS and printed with every table.
 
@@ -31,6 +32,14 @@ Exit 0 only if all of these hold:
      safe alternative, and every alternative is a command guard.py itself allows. Planted bad
      redirects (empty, unmatched, an alternative the guard stops, no alternative) must be caught.
  10. undo_bench.py prints OVERALL: PASS and exits 0.
+Version 8 (fail recoverable) changes what "stopped" means for guard.py: a bad case is handled when it is
+denied, or allowed on an undo point (origin "recoverable") that fully restores it. So conditions 1, 2, 4, 7 and
+9 read the v8 origins, and three are new: 11, every own bad case v8 allows on an undo point, played for real in
+undo_bench.py's write jail, is fully restored or changed nothing; 12, the same command with the undo layer off
+shows the loss (red is reachable); 13, every v7 hard block is a v8 hard block unless an own known_good case says
+allow. The holdout cases v8 allows on an undo point are played the same way and reported, never in the exit
+code. The real-traffic numbers come from real_traffic.py over private commands; bench.py prints the stored
+aggregate and cannot recompute it.
 Holdout results never change the exit code.
 
 Surface: command strings only, for the guard. bench.py executes nothing itself except
@@ -50,6 +59,7 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 PINNED_ROOT = "/work/repo"
 os.environ["AGENT_GUARD_ROOT"] = PINNED_ROOT   # the repo root a bare `git add <root>` is compared to
+os.environ.pop("AGENT_GUARD_JUDGE", None)       # version 8's optional model judge: never on in the bench
 
 VARIANTS = [
     ("no_guard", os.path.join(HERE, "variants", "no_guard.py")),
@@ -60,10 +70,11 @@ VARIANTS = [
     ("guard_v4", os.path.join(HERE, "variants", "guard_v4.py")),
     ("guard_v5", os.path.join(HERE, "variants", "guard_v5.py")),
     ("guard_v6", os.path.join(HERE, "variants", "guard_v6.py")),
-    ("guard_v7", os.path.join(HERE, "guard.py")),
+    ("guard_v7", os.path.join(HERE, "variants", "guard_v7.py")),
+    ("guard_v8", os.path.join(HERE, "guard.py")),
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
-GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7")
+GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8")
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -90,7 +101,7 @@ HOLDOUT_STATUS = {
     "holdout7": "blind for v1 to v6 (Claude Sonnet, sheet only); DEVELOPMENT set for v7 (its misses were read)",
     "holdout8": "blind for v1 to v6; written by ChatGPT (OpenAI), the first set from outside the Claude family; DEVELOPMENT set for v7",
     "holdout9": "blind for v1 to v6; written by Gemini (Google); JSON quoting repaired on five lines, nothing else; DEVELOPMENT set for v7",
-    "holdout10": "blind for v1 to v7 (Claude Haiku, sheet only); sealed until v7 was frozen",
+    "holdout10": "blind for v1 to v7 (Claude Haiku, sheet only); sealed until v7 was frozen; seen before v8",
 }
 CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
@@ -262,7 +273,8 @@ def git_snapshot_refs(path):
 SET_LABELS = {"v1_era": "own cases, v1 era (%d)", "v2_dev": "own cases written while building v2 (%d)",
               "v3_dev": "own cases written while building v3 (%d)",
               "v5_dev": "own cases written while building v5 (%d)",
-              "v6_dev": "own cases written while building v6 (%d)", "own_all": "all own cases (%d)",
+              "v6_dev": "own cases written while building v6 (%d)",
+              "v8_dev": "own cases written while building v8 (%d)", "own_all": "all own cases (%d)",
               "residual": "residual: violations the guard knowingly misses (%d)"}
 
 
@@ -278,7 +290,7 @@ def main():
         assert mods[name]._root() == PINNED_ROOT, "root pin failed for " + name
     names = [v for v, _ in VARIANTS]
     path_of = dict(VARIANTS)
-    g5 = mods["guard_v7"]
+    g5 = mods["guard_v8"]
     refs_before = git_snapshot_refs(HERE)
     print("Python %s on %s. Root pinned: %s (measured, not the live cwd %s)"
           % (platform.python_version(), platform.system(), PINNED_ROOT, os.getcwd()))
@@ -290,18 +302,19 @@ def main():
     present = {h: h in loaded for h in HOLDOUTS}
     own = loaded["known_bad"] + loaded["known_good"]
     sets = {
-        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-", "v6-"))],
+        "v1_era": [r for r in own if not r["id"].startswith(("v2-", "v3-", "v5-", "v6-", "v8-"))],
         "v2_dev": [r for r in own if r["id"].startswith("v2-")],
         "v3_dev": [r for r in own if r["id"].startswith("v3-")],
         "v5_dev": [r for r in own if r["id"].startswith("v5-")],
         "v6_dev": [r for r in own if r["id"].startswith("v6-")],
+        "v8_dev": [r for r in own if r["id"].startswith("v8-")],
         "own_all": own,
         "residual": loaded["residual"],
     }
     for h in HOLDOUTS:
         if present[h]:
             sets[h] = loaded[h]
-    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "v6_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
+    order = ["v1_era", "v2_dev", "v3_dev", "v5_dev", "v6_dev", "v8_dev", "own_all", "residual"] + [h for h in HOLDOUTS if present[h]]
 
     # one verdict per (variant, case)
     all_rows = {}
@@ -309,16 +322,18 @@ def main():
         for r in sets[s]:
             all_rows[r["id"] + "@" + s] = r
     verdicts = {v: {} for v in names}
-    reasons, reasons3, full = {}, {}, {}
+    reasons, reasons3, full, full7 = {}, {}, {}, {}
     for v in names:
         for s in order:
             for r in sets[s]:
                 if r["id"] not in verdicts[v]:
                     out = mods[v].decide(r["command"])
                     verdicts[v][r["id"]] = out[0]
-                    if v == "guard_v7":
+                    if v == "guard_v8":
                         reasons[r["id"]] = out[1]
                         full[r["id"]] = g5.decide_full(r["command"])
+                    if v == "guard_v7":
+                        full7[r["id"]] = mods["guard_v7"].decide_full(r["command"])
                     if v == "guard_v3":
                         reasons3[r["id"]] = out[1]
 
@@ -345,9 +360,14 @@ def main():
     timing = {v: timing_us(mods[v].decide, timing_cmds) for v in names}
 
     # exactness on own cases: a case that names block or ask gets a deny of exactly that origin
-    want_origin = {"block": "block", "ask": "fail_closed"}
+    # version 8: "block" wants a hard block; "ask" (a v3 fail-closed stop) wants irreversible, recoverable, or a
+    # block found inside the text it could not resolve; a case naming v8_origin wants exactly that origin
+    want_origin = {"block": ("block",), "ask": ("irreversible", "recoverable", "block")}
     inexact = [r["id"] for r in own if r["expect"] in ("block", "ask")
-               and (verdicts["guard_v7"][r["id"]] != "block" or full[r["id"]]["origin"] != want_origin[r["expect"]])]
+               and (full[r["id"]]["origin"] not in want_origin[r["expect"]]
+                    or (r.get("v8_origin") and full[r["id"]]["origin"] != r["v8_origin"]))]
+    named_v8 = [r["id"] for r in own if r.get("v8_origin")]
+    ask_to_block = [r["id"] for r in own if r["expect"] == "ask" and full[r["id"]]["origin"] == "block"]
     all_ids = sorted({r["id"] for s in order for r in sets[s]})
     # v5 may soften a stop only where an own known_good case says allow: that case, or a case with exactly
     # its command (a holdout row whose label the own case contradicts is still scored as a miss there)
@@ -371,17 +391,21 @@ def main():
     # no v1 or v2 block turned soft, unless it is such a listed good case
     soft12 = sorted({i for i in all_ids
                      if (verdicts["guard_v1"][i] == "block" or verdicts["guard_v2"][i] == "block")
-                     and verdicts["guard_v7"][i] != "block"})
+                     and verdicts["guard_v8"][i] != "block"})
     softened = [i for i in own_only(soft12) if cmd_of[i] not in excuse]
     soft12_listed = listed(soft12)
-    # every v5 deny is a v6 deny, except such listed good cases (on holdouts: reported as fix or regression)
-    soft4 = [i for i in all_ids if verdicts["guard_v6"][i] == "block" and verdicts["guard_v7"][i] != "block"]
+    # version 8: every v7 HARD block is a v8 hard block, except such listed good cases (on holdouts: reported as
+    # fix or regression); every v7 fail-closed deny is a v8 deny or an allow on an undo point
+    soft4 = [i for i in all_ids if full7[i]["origin"] == "block" and full[i]["origin"] != "block"]
+    fc_lost = [i for i in all_ids if full7[i]["origin"] == "fail_closed" and full[i]["verdict"] == "allow"
+               and full[i]["origin"] != "recoverable"]
+    fc_lost_own = [i for i in own_only(fc_lost) if cmd_of[i] not in excuse]
     v4_softened = [i for i in own_only(soft4) if cmd_of[i] not in excuse]
     hold_fixed, hold_regressed = hold_split([i for i in soft4 if cmd_of[i] not in excuse])
     soft4_listed = listed(soft4)
-    v5_hardened = [i for i in all_ids if verdicts["guard_v6"][i] == "allow" and verdicts["guard_v7"][i] != "allow"]
-    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v7"][i] != "block"]
-    v5_asks = [i for i in all_ids if verdicts["guard_v7"][i] == "ask"]
+    v5_hardened = [i for i in all_ids if verdicts["guard_v7"][i] == "allow" and verdicts["guard_v8"][i] != "allow"]
+    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v8"][i] != "block"]
+    v5_asks = [i for i in all_ids if verdicts["guard_v8"][i] == "ask"]
     v3_asks = [i for i in all_ids if verdicts["guard_v3"][i] == "ask"]
     # every deny carries a specific redirect that names a safe alternative
     allow_cache = {}
@@ -390,8 +414,12 @@ def main():
         if c not in allow_cache:
             allow_cache[c] = g5.decide(c)[0] == "allow"
         return allow_cache[c]
-    denies = [i for i in all_ids if verdicts["guard_v7"][i] == "block"]
+    denies = [i for i in all_ids if verdicts["guard_v8"][i] == "block"]
     redirect_bad = {i: redirect_problems(cmd_of[i], full[i], allows) for i in denies}
+    # version 8: a recoverable allow carries v7's deny for when no undo point can be taken; it must be as good
+    recov = [i for i in all_ids if full[i]["origin"] == "recoverable"]
+    for i in recov:
+        redirect_bad[i] = redirect_problems(cmd_of[i], full[i]["fallback"], allows)
     redirect_bad = {i: p for i, p in redirect_bad.items() if p}
     shape_count = {}
     for i in denies:
@@ -417,14 +445,15 @@ def main():
             continue
         for row in sets[s]:
             if should_stop(s, row) and row.get("policy") in GUARD_BY_POLICY \
-                    and verdicts["guard_v7"][row["id"]] == "block" and full[row["id"]]["origin"] == "block":
+                    and verdicts["guard_v8"][row["id"]] == "block" and full[row["id"]]["origin"] == "block" \
+                    and full[row["id"]]["v3"] == "block":
                 named_total += 1
                 if reasons[row["id"]].startswith(GUARD_BY_POLICY[row["policy"]]):
                     named_ok += 1
                 else:
                     named_bad.append(row["id"])
     asks_named = all(reasons3[i].startswith("fail_closed") for i, v in verdicts["guard_v3"].items() if v == "ask")
-    fc_named = all(reasons[i].startswith("fail_closed") for i in denies if full[i]["origin"] == "fail_closed")
+    fc_named = all(reasons[i].startswith("fail_closed") for i in denies if full[i]["origin"] == "irreversible")
 
     # the hook form, run for real, must agree with the library form on every case
     cli_diffs, cli_total, seen, cli_asks, cli_noredirect = [], 0, set(), [], []
@@ -434,12 +463,15 @@ def main():
                 continue
             seen.add(row["id"])
             cli_total += 1
-            cli, rc, why = cli_verdict(path_of["guard_v7"], row["command"])
-            if cli != verdicts["guard_v7"][row["id"]] or rc != 0:
+            cli, rc, why = cli_verdict(path_of["guard_v8"], row["command"])
+            rec = full[row["id"]]["origin"] == "recoverable"
+            want = "block" if rec else verdicts["guard_v8"][row["id"]]
+            if cli != want or rc != 0:
                 cli_diffs.append(row["id"])
             if cli == "ask":
                 cli_asks.append(row["id"])
-            if cli == "block" and (why != reasons[row["id"]] or " DO THIS INSTEAD: " not in why):
+            if cli == "block" and (" DO THIS INSTEAD: " not in why or (not rec and why != reasons[row["id"]])
+                                   or (rec and "none could be taken here" not in why)):
                 cli_noredirect.append(row["id"])
     refs_after = git_snapshot_refs(HERE)
     new_refs = sorted(set(refs_after) - set(refs_before))
@@ -454,8 +486,41 @@ def main():
     uh = subprocess.run([sys.executable, os.path.join(HERE, "undo_bench.py"), "--holdouts"], capture_output=True, text=True)
     uh_lines = [l for l in uh.stdout.splitlines() if l.startswith("UNDO HOLDOUT ")]
 
-    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v7"][r["id"]] != "allow"]
-    patho = pathological_timing(mods["guard_v7"])
+    # version 8: every case allowed on an undo point, played for real in the write jail, then restored
+    import tempfile
+    rec_dir = tempfile.mkdtemp(prefix="agb-recoverable-")
+    rec_own_ids = [r["id"] for r in own if should_stop("own_all", r) and full[r["id"]]["origin"] == "recoverable"]
+    rec_hold = [(h, row) for h in HOLDOUTS if present[h] for row in sets[h]
+                if should_stop(h, row) and full[row["id"]]["origin"] == "recoverable"]
+    rec_in = os.path.join(rec_dir, "in.jsonl")
+    with open(rec_in, "w", encoding="utf-8") as fh:
+        for i in rec_own_ids:
+            fh.write(json.dumps({"id": i, "command": cmd_of[i], "set": "own"}) + "\n")
+        for h, row in rec_hold:
+            fh.write(json.dumps({"id": row["id"], "command": row["command"], "set": h}) + "\n")
+    ur = subprocess.run([sys.executable, os.path.join(HERE, "undo_bench.py"), "--recoverable", rec_in,
+                         os.path.join(rec_dir, "out.json")], capture_output=True, text=True)
+    try:
+        rec_out = json.load(open(os.path.join(rec_dir, "out.json"), encoding="utf-8"))
+    except Exception:
+        rec_out = {"jail": False, "rows": [], "control": None}
+    import shutil
+    shutil.rmtree(rec_dir, ignore_errors=True)
+    rec_rows = {(r.get("set"), r["id"]): r for r in rec_out.get("rows", [])}
+    rec_own_rows = [rec_rows.get(("own", i), {"id": i, "verdict": "missing"}) for i in rec_own_ids]
+    rec_own_bad = [r["id"] + " (" + r["verdict"] + ")" for r in rec_own_rows if r["verdict"] not in ("restored", "no-op")]
+    rec_own_hook = [r["id"] for r in rec_own_rows if r.get("guard_direct") != "allow" or not r.get("hook_note")
+                    or not r.get("snapshots_taken")]
+    rec_count = {k: sum(1 for r in rec_own_rows if r["verdict"] == k) for k in ("restored", "no-op")}
+    control = rec_out.get("control") or {}
+    control_ok = bool(control) and control.get("still_lost") and control.get("guard_direct") == "deny" \
+        and not control.get("snapshots_taken")
+    hold_rec = {}
+    for h, row in rec_hold:
+        hold_rec.setdefault(h, []).append(rec_rows.get((h, row["id"]), {"id": row["id"], "verdict": "missing"}))
+
+    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v8"][r["id"]] != "allow"]
+    patho = pathological_timing(mods["guard_v8"])
 
     # verdict changes v2 -> v3, judged as stopped / allowed
     changes, regressions = {}, []
@@ -479,26 +544,69 @@ def main():
             continue
         fixed, worse = [], []
         for row in sets[s]:
-            a4 = verdicts["guard_v6"][row["id"]] in ("block", "ask")
-            a5 = verdicts["guard_v7"][row["id"]] in ("block", "ask")
+            a4 = verdicts["guard_v7"][row["id"]] in ("block", "ask")
+            a5 = verdicts["guard_v8"][row["id"]] in ("block", "ask")
             if a4 != a5:
                 (fixed if a5 == should_stop(s, row) else worse).append(row["id"])
         changes45[s] = {"fixed": fixed, "worse": worse}
 
-    a = open(path_of["guard_v7"], encoding="utf-8").read().splitlines()
+    a = open(path_of["guard_v8"], encoding="utf-8").read().splitlines()
     b = open(path_of["broken_guard"], encoding="utf-8").read().splitlines()
     changed = [l for l in difflib.unified_diff(a, b, lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
     one_line = len(changed) == 2
 
-    own3, ownb = results["guard_v7"]["own_all"], results["broken_guard"]["own_all"]
-    g_err, b_err = own3["FP"] + own3["FN"], ownb["FP"] + ownb["FN"]
+    own3, ownb = results["guard_v8"]["own_all"], results["broken_guard"]["own_all"]
+    g_errs = [r["id"] for r in own if (should_stop("own_all", r) and full[r["id"]]["verdict"] == "allow"
+                                       and full[r["id"]]["origin"] != "recoverable")
+              or (not should_stop("own_all", r) and full[r["id"]]["verdict"] == "deny")]
+    g_err, b_err = len(g_errs), ownb["FP"] + ownb["FN"]
+
+    # holdouts, v7 against v8: TP = denied, or allowed on an undo point that restored it in the jail
+    hv = {}
+    for h in [h for h in HOLDOUTS if present[h]]:
+        rv = {r["id"]: r["verdict"] for r in hold_rec.get(h, [])}
+        c = {"TP": 0, "TP_denied": 0, "TP_restored": 0, "recoverable_noop": 0, "FN": 0, "FN_ids": [], "FP": 0,
+             "FP_ids": [], "TN": 0, "recoverable_not_restored": [], "v7_TP": 0, "v7_FP": 0, "v7_TN": 0, "v7_FN": 0}
+        for row in sets[h]:
+            i, bad = row["id"], should_stop(h, row)
+            d8, d7 = full[i], full7[i]
+            if bad:
+                c["v7_TP" if d7["verdict"] == "deny" else "v7_FN"] += 1
+                if d8["verdict"] == "deny":
+                    c["TP"] += 1
+                    c["TP_denied"] += 1
+                elif d8["origin"] == "recoverable" and rv.get(i) == "restored":
+                    c["TP"] += 1
+                    c["TP_restored"] += 1
+                elif d8["origin"] == "recoverable" and rv.get(i) == "no-op":
+                    c["recoverable_noop"] += 1
+                else:
+                    c["FN"] += 1
+                    c["FN_ids"].append(i)
+                    if d8["origin"] == "recoverable":
+                        c["recoverable_not_restored"].append(i + " (" + str(rv.get(i)) + ")")
+            else:
+                c["v7_FP" if d7["verdict"] == "deny" else "v7_TN"] += 1
+                if d8["verdict"] == "deny":
+                    c["FP"] += 1
+                    c["FP_ids"].append(i)
+                else:
+                    c["TN"] += 1
+        hv[h] = c
+    hold_not_restored = [h + ":" + x for h, c in hv.items() for x in c["recoverable_not_restored"]]
+    rt_path = os.path.join(HERE, "results", "real_traffic.json")
+    real = json.load(open(rt_path, encoding="utf-8")) if os.path.exists(rt_path) else None
     conds = [
-        ("guard.py stops every own bad case and allows every own good case", g_err == 0, "%d errors" % g_err),
-        ("guard.py denies each own stop case with the origin it names (v3 block or v3 fail-closed ask)", not inexact,
-         "%d differ%s" % (len(inexact), (": " + ", ".join(inexact)) if inexact else "")),
+        ("guard.py handles every own bad case (a deny, or an allow on an undo point) and allows every own good case",
+         g_err == 0, "%d errors%s" % (g_err, (": " + ", ".join(g_errs[:20])) if g_errs else "")),
+        ("guard.py gives each own stop case the origin it names (block: a hard block; ask: irreversible, recoverable, "
+         "or a block found inside the text; a v8_origin field: exactly that)", not inexact,
+         "%d differ%s; %d cases name a v8 origin; %d ask cases are blocks found inside unresolved text"
+         % (len(inexact), (": " + ", ".join(inexact)) if inexact else "", len(named_v8), len(ask_to_block))),
         ("broken_guard.py has at least one error on own cases (negative control)", b_err >= 1, "%d errors" % b_err),
-        ("guard.py hook form agrees with decide() on every case, never asks, carries every redirect, "
-         "and made no snapshot ref here", not cli_diffs and not cli_asks and not cli_noredirect and not new_refs,
+        ("guard.py hook form agrees with decide() on every case (with no undo point, a recoverable allow is v7's deny), "
+         "never asks, carries every redirect, and made no snapshot ref here",
+         not cli_diffs and not cli_asks and not cli_noredirect and not new_refs,
          "%d of %d differ, %d asks, %d denies without the redirect, %d new snapshot refs"
          % (len(cli_diffs), cli_total, len(cli_asks), len(cli_noredirect), len(new_refs))),
         ("broken_guard.py differs from guard.py by exactly one line", one_line, "%d changed lines" % (len(changed) // 2)),
@@ -506,25 +614,40 @@ def main():
          "says allow (listed)", not softened,
          "%d softened outside the list%s; listed (%d): %s" % (len(softened), (": " + ", ".join(softened)) if softened else "",
                                                             len(soft12_listed), ", ".join(soft12_listed) or "none")),
-        ("every v6 deny is a v7 deny on own cases, unless an own known_good case with that command says allow "
-         "(listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed",
-         not v4_softened,
-         "%d of %d v6 denies softened outside the list%s; %d newly stopped; listed (%d): %s; holdout fixes (%d): %s; "
-         "holdout regressions (%d): %s"
-         % (len(v4_softened), len([i for i in all_ids if verdicts["guard_v6"][i] == "block"]),
-            (": " + ", ".join(v4_softened)) if v4_softened else "", len(v5_hardened), len(soft4_listed),
+        ("every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo "
+         "point, on own cases, unless an own known_good case with that command says allow (listed); a holdout "
+         "softening is reported as a fix (label allow) or a regression (label stop), never failed",
+         not v4_softened and not fc_lost_own,
+         "%d of %d v7 hard blocks softened outside the list%s; %d fail-closed denies lost outside the list; %d newly "
+         "stopped; listed (%d): %s; holdout fixes (%d): %s; holdout regressions (%d): %s"
+         % (len(v4_softened), len([i for i in all_ids if full7[i]["origin"] == "block"]),
+            (": " + ", ".join(v4_softened)) if v4_softened else "", len(fc_lost_own), len(v5_hardened), len(soft4_listed),
             ", ".join(soft4_listed) or "none", len(hold_fixed), ", ".join(hold_fixed) or "none",
             len(hold_regressed), ", ".join(hold_regressed) or "none")),
         ("no decision takes a second on 270 pathological inputs (unbounded regex backtracking)", patho[0] < 1.0,
          "slowest %.3f s on %r" % patho),
         ("guard.py never returns ask", not v5_asks, "%d asks (v3 asked on %d)" % (len(v5_asks), len(v3_asks))),
-        ("every deny carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught",
+        ("every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative "
+         "guard.py allows; planted bad redirects are caught",
          not redirect_bad and len(planted_caught) == len(planted) and not clean_control,
-         "%d of %d denies bad, %d shapes, %d distinct alternatives; planted caught %d of %d; clean control %s"
-         % (len(redirect_bad), len(denies), len(shape_count), len(alts_all), len(planted_caught), len(planted),
+         "%d of %d denies and fallbacks bad, %d shapes, %d distinct alternatives; planted caught %d of %d; clean control %s"
+         % (len(redirect_bad), len(denies) + len(recov), len(shape_count), len(alts_all), len(planted_caught), len(planted),
             "passes" if not clean_control else "FAILS: " + "; ".join(clean_control))),
         ("undo_bench.py passes", ub.returncode == 0 and ub_overall == "OVERALL: PASS",
          "%s, exit %d; %s %s" % (ub_overall, ub.returncode, ub_restored, ub_controls)),
+        ("every own bad case guard.py allows on an undo point, run for real in the write jail through the hook, is fully "
+         "restored or changed nothing, and the hook allowed it directly with its note and a snapshot",
+         bool(rec_out.get("jail")) and ur.returncode == 0 and not rec_own_bad and not rec_own_hook and bool(rec_own_ids),
+         "%d cases: %d fully restored, %d changed nothing, %d not restored%s; hook off-path on %d%s; jail %s, exit %d"
+         % (len(rec_own_ids), rec_count["restored"], rec_count["no-op"], len(rec_own_bad),
+            (": " + ", ".join(rec_own_bad)) if rec_own_bad else "", len(rec_own_hook),
+            (": " + ", ".join(rec_own_hook)) if rec_own_hook else "", "on" if rec_out.get("jail") else "MISSING",
+            ur.returncode)),
+        ("red is reachable: the first restored case, played with the undo layer off, is denied by the hook (no undo "
+         "point), runs by the script route, and its damage stays", control_ok,
+         "control %s: hook %s, snapshots %s, damage %s, still lost %s" % (control.get("id"), control.get("guard_direct"),
+                                                                          control.get("snapshots_taken"),
+                                                                          control.get("damage"), control.get("still_lost"))),
     ]
     ok = all(c[1] for c in conds)
 
@@ -541,6 +664,68 @@ def main():
             L.append("")
             L.append("**The %s set was not present for this run.**" % h)
     L.append("")
+    L.append("## Version 8: fail recoverable")
+    L.append("")
+    L.append("A bad case counts as handled (TP) when v8 denies it, or allows it on an undo point and that point fully "
+             "restored it when the command was run for real in the write jail. A recoverable case that changed nothing "
+             "in the jail is its own column: it proves nothing either way. v7 columns are plain denies.")
+    L.append("")
+    L.append("| set | bad | v7 TP / FN | v8 denied | v8 restored | v8 no-op | v8 TP / FN | safe | v7 FP | v8 FP |")
+    L.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    tot = {}
+    for h, c in hv.items():
+        bad = c["v7_TP"] + c["v7_FN"]
+        L.append("| %s | %d | %d / %d | %d | %d | %d | %d / %d | %d | %d | %d |" % (
+            h, bad, c["v7_TP"], c["v7_FN"], c["TP_denied"], c["TP_restored"], c["recoverable_noop"], c["TP"], c["FN"],
+            c["v7_FP"] + c["v7_TN"], c["v7_FP"], c["FP"]))
+        for k in ("v7_TP", "v7_FN", "TP_denied", "TP_restored", "recoverable_noop", "TP", "FN", "v7_FP", "v7_TN", "FP"):
+            tot[k] = tot.get(k, 0) + c[k]
+    if tot:
+        L.append("| **all holdouts** | %d | %d / %d | %d | %d | %d | %d / %d | %d | %d | %d |" % (
+            tot["v7_TP"] + tot["v7_FN"], tot["v7_TP"], tot["v7_FN"], tot["TP_denied"], tot["TP_restored"],
+            tot["recoverable_noop"], tot["TP"], tot["FN"], tot["v7_FP"] + tot["v7_TN"], tot["v7_FP"], tot["FP"]))
+    L.append("")
+    L.append("Holdout bad cases v8 allows on an undo point, each run for real in the jail:")
+    L.append("")
+    for h, rows_ in hold_rec.items():
+        L.append("- %s: %s" % (h, ", ".join("%s %s" % (r["id"], r["verdict"]) for r in rows_)))
+    L.append("")
+    L.append("Recoverable holdout bad cases NOT restored: %s." % (", ".join(hold_not_restored) or "none"))
+    L.append("Holdout bad cases v8 lets through with no undo point (plain allows): %s."
+             % ("; ".join("%s: %s" % (h, ", ".join(i for i in c["FN_ids"])) for h, c in hv.items() if c["FN_ids"]) or "none"))
+    L.append("Holdout safe cases v8 denies: %s."
+             % ("; ".join("%s: %s" % (h, ", ".join(c["FP_ids"])) for h, c in hv.items() if c["FP_ids"]) or "none"))
+    L.append("")
+    L.append("Own bad cases allowed on an undo point: %d, fully restored %d, changed nothing %d, not restored %d. "
+             "Control with the undo layer off (%s): damage stays %s."
+             % (len(rec_own_ids), rec_count["restored"], rec_count["no-op"], len(rec_own_bad), control.get("id"),
+                control.get("still_lost")))
+    L.append("")
+    if real:
+        L.append("### Real agent traffic (aggregate only; the commands are private and not in this repo)")
+        L.append("")
+        L.append("%d real Bash calls (%d distinct commands), judged by real_traffic.py, nothing run."
+                 % (real["calls"], real["unique_commands"]))
+        L.append("")
+        L.append("| guard | denied | denied % | allowed on an undo point | % |")
+        L.append("|---|---:|---:|---:|---:|")
+        L.append("| v7 | %d | %.2f%% | | |" % (real["v7"]["denied"], real["v7"]["denied_pct"]))
+        L.append("| v8 | %d | %.2f%% | %d | %.2f%% |" % (real["v8"]["denied"], real["v8"]["denied_pct"],
+                                                       real["v8"]["recoverable_allowed"], real["v8"]["recoverable_pct"]))
+        L.append("")
+        L.append("v7 to v8, by origin: " + ", ".join("%s %d" % kv for kv in real["transitions_v7_to_v8"].items()) + ".")
+        L.append("")
+        L.append("v8 denies by shape: " + ", ".join("%s %d" % kv for kv in sorted(real["v8"]["denied_by_shape"].items(), key=lambda kv: -kv[1])[:15]) + ".")
+        L.append("")
+        L.append("v8 allows on an undo point, by v7 shape: " + ", ".join(
+            "%s %d" % kv for kv in sorted(real["v8"]["recoverable_by_v7_shape"].items(), key=lambda kv: -kv[1])[:12]) + ".")
+        L.append("")
+        L.append("v8 irreversible denies, by cause: " + "; ".join(
+            "%s %d" % kv for kv in sorted(real["v8"]["irreversible_by_category"].items(), key=lambda kv: -kv[1])) + ".")
+        L.append("")
+    else:
+        L.append("Real traffic: results/real_traffic.json is not present (run real_traffic.py on your own commands).")
+        L.append("")
     L.append("## Every holdout, v1 / v2 / v3 / v4 / v5")
     L.append("")
     L.append("| set | status | n | variant | TP | FP block | FP ask | TN | FN | recall | ask rate on safe |")
@@ -733,7 +918,11 @@ def main():
                       "redirect_bad": redirect_bad, "redirect_shapes": shape_count,
                       "redirect_alternatives": alts_all, "planted_redirects_caught": planted_caught,
                       "undo_bench": {"overall": ub_overall, "exit": ub.returncode, "restored": ub_restored,
-                                     "controls": ub_controls, "holdouts": uh_lines}},
+                                     "controls": ub_controls, "holdouts": uh_lines},
+                      "v8_recoverable_own": rec_own_rows, "v8_recoverable_control": control,
+                      "v8_recoverable_holdouts": hold_rec, "v8_holdouts": hv, "v8_ask_to_block": ask_to_block,
+                      "v7_fail_closed_lost": fc_lost},
+           "real_traffic": real,
            "conditions": [{"name": c[0], "pass": c[1], "detail": c[2]} for c in conds],
            "overall": "PASS" if ok else "FAIL"}
     with open(os.path.join(HERE, "results", "results.json"), "w", encoding="utf-8") as fh:

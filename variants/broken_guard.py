@@ -91,6 +91,18 @@ policy violation, becomes "ask" with a reason that starts with fail_closed. Wher
 part provably cannot matter (git log -n $N, a quoted -m value, a reset pathspec after --, a dry run)
 it allows.
 
+VERSION 8. FAIL RECOVERABLE. Real agent traffic showed the price of failing closed: v7 denied 3.39% of
+68,636 real Bash calls, nearly all fail-closed stops on code it cannot read (inline python, sh -c, a pipe
+into a shell). Now a v7 hard block stays a deny, but a fail-closed stop is ALLOWED on an undo point
+(undo.py snapshots the repo first) unless the command could do something an undo point cannot take
+back: a push or other remote write, a write outside the repo that undo's plan cannot name, a write
+under $HOME outside the repo, .git or the hook files, a program it cannot name, or an unknown of a
+kind undo does not cover. Those stay denies with v7's redirect (origin "irreversible"). The hook prints
+a note on every recoverable allow, with the snapshot id to restore. Two v7 misreadings are fixed by
+cause: a spawn word or backtick inside a Python string is text, and a repo this command made with git
+init in a fresh mktemp dir is scratch, not the project (policies A and C do not apply inside it).
+Optional: AGENT_GUARD_JUDGE=haiku|sonnet asks a Claude model about an irreversible one (off by default).
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -189,7 +201,7 @@ def _cd_target(toks):
 def _cd_apply(target, cwd):
     """The directory after `cd target` from cwd: a path, None (unknown: judged as the root would be), or
     DEFER (this view has not resolved the target; the resolved views judge it)."""
-    if "$" in target or "`" in target:
+    if ("$" in target or "`" in target) and not target.startswith("/" + FRESH):
         return DEFER
     if target in ("-", "") or target.startswith("~") or re.search("[" + U + Q + PSUB + FOUND + "*?]", target):
         return None
@@ -202,14 +214,88 @@ def _v2_segs(toks_all, root):
     """[(segment tokens, cwd it runs in)]: split on the operator tokens exactly as version 2 did, and
     follow cd from one command to the next (version 5). A cd counts after ; && and newline, not in a
     pipeline, not in the background, not past ||; a subshell ( ) gets its cwd back afterwards."""
+    return [(toks, cwd) for toks, cwd, _ in _v2_segs3(toks_all, root)]
+
+
+def _split_ops(toks):
+    """Version 8: the tokenizer glues adjacent operators into one word (`);` `)&&` `);;`). Each is split into
+    the operators it is made of, so `(cd src && git add .); git add .` ends the subshell where bash does."""
+    out = []
+    for t in toks:
+        if t and t not in OPS and all(ch in ";&|()" for ch in t):
+            k = 0
+            while k < len(t):
+                two = t[k:k + 2]
+                if two in ("&&", "||"):
+                    out.append(two)
+                    k += 2
+                else:
+                    out.append(t[k])
+                    k += 1
+        else:
+            out.append(t)
+    return out
+
+
+_FRESH_VAR = re.compile(r"^\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?(/.*)?$")
+
+
+def _fresh_word(w, fresh):
+    """Version 8, the v2 views: a word that names a directory mktemp made in this command (`$T`, `${T}/r`,
+    after `T=$(mktemp -d)`) as a path with the FRESH marker, so cd, -C and git init can follow it. Any
+    other word is returned as it is."""
+    m = _FRESH_VAR.match(w or "")
+    if m and m.group(1) in fresh:
+        return fresh[m.group(1)] + (m.group(2) or "")
+    m = re.match(r"^\$\(\s*mktemp\b[^)]*\)(/.*)?$", w or "")
+    if m:
+        return "/" + FRESH + "mktemp" + (m.group(1) or "")
+    return w
+
+
+def _v2_segs3(toks_all, root, text=""):
+    """_v2_segs, plus the scratch repos made so far: [(segment tokens, cwd, scratch roots)]. Version 8: a word
+    that names a mktemp directory of this command is given as a FRESH path (see _fresh_word)."""
     out, cur, cwd, stack, chain, prev, cdt, redir = [], [], root, [], root, None, None, False
-    for t in list(toks_all) + [None]:
+    toks_all = _split_ops(toks_all)
+    fresh, roots = {}, []
+    quoted = {m.group(1) for span in re.findall(r"'[^']*'", text or "") for m in re.finditer(r"\$\{?([A-Za-z_]\w*)", span)}
+    quoted |= {m.group(1) for m in re.finditer(r"\\\$\{?([A-Za-z_]\w*)", text or "")}   # '$D' or \$D: not an expansion
+    k = -1
+    for t in toks_all + [None]:
+        k += 1
         if t is not None and t not in OPS:
             cur.append(t)
             continue
+        opens_mktemp = t == "(" and k + 1 < len(toks_all) and toks_all[k + 1] == "mktemp"
+        j = 0
+        while j < len(cur) and cur[j] in ("export", "local", "declare", "typeset", "readonly"):
+            j += 1
+        while j < len(cur):                     # assignments: a mktemp result, a path under one, or anything else
+            m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", cur[j], re.S)
+            if not m:
+                break
+            name, val = m.group(1), m.group(2)
+            if name in quoted:
+                fresh.pop(name, None)
+            elif (val == "$" and opens_mktemp and j == len(cur) - 1) or re.match(r"^\$\(\s*mktemp\b[^)]*\)$", val):
+                fresh[name] = "/" + FRESH + "%s%d" % (name, k)
+            elif _fresh_word(val, fresh) != val:
+                fresh[name] = _fresh_word(val, fresh)
+            elif val.startswith("/") and FRESH in val and "$" not in val and _lit3(val):
+                fresh[name] = posixpath.normpath(val)     # a resolved view: the mktemp path itself
+            else:
+                fresh.pop(name, None)
+            j += 1
+        cur = [_fresh_word(x, fresh) for x in cur]
         if not redir:
             cdt = _cd_target(cur)
-        out.append((cur, cwd))
+            if cdt == "$" and opens_mktemp:
+                cdt = "/" + FRESH + "mktemp%d" % k
+        init = _scratch_init(cur, cwd)
+        if init and init not in roots:
+            roots.append(init)
+        out.append((cur, cwd, tuple(roots)))
         cur = []
         if t in ("<", ">", ">>"):
             redir = True
@@ -255,7 +341,7 @@ def blanket_stage_guard(cmd_nohd, root):
                      r"(?:[^;&|)\n]*\s)?(?:-\w*[Au]\w*|--a\w*|--u\w*|\.|\./|:/)(?:\s|$)", norm):
             return SAY + "a blanket `git add` inside an unparseable command line."
         toks_all = []
-    for toks, cwd in _v2_segs(toks_all, root):
+    for toks, cwd, roots in _v2_segs3(toks_all, root, norm):
         i = 0
         while i < len(toks) and (toks[i] in WRAP
                                  or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
@@ -271,6 +357,8 @@ def blanket_stage_guard(cmd_nohd, root):
             i += 2 if toks[i] in GIT_GLOBAL_VAL else 1
         if i >= len(toks):
             continue
+        if _in_scratch(cwd, roots):
+            continue                    # version 8: staging inside a repo this command made in a fresh mktemp dir
         sub, args, endopts = toks[i], _canon_args(toks[i], toks[i + 1:]), False
         if sub in ("add", "commit") and _is_dry(sub, args):
             continue                    # a dry run stages and commits nothing (version 5)
@@ -452,7 +540,7 @@ def _git_calls_full(cmd_nohd):
     if toks_all is None:
         return None
     calls = []
-    for toks, cwd in _v2_segs(toks_all, _root()):
+    for toks, cwd, roots in _v2_segs3(toks_all, _root(), cmd_nohd):
         i, env = 0, []
         while i < len(toks) and (toks[i] in WRAP
                                  or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
@@ -476,7 +564,7 @@ def _git_calls_full(cmd_nohd):
                 i += 1
         if i < len(toks):
             calls.append({"env": env, "gopts": gopts, "sub": toks[i], "args": _canon_args(toks[i], toks[i + 1:]),
-                          "cwd": cwd})
+                          "cwd": cwd, "scratch": _in_scratch(cwd, roots)})
     return calls
 
 
@@ -580,7 +668,9 @@ def _loss_reason(sub, args, root, cwd=None):
 
 def data_loss_guard(cmd_nohd, root):
     """Return a deny reason, or None."""
-    calls = _git_calls(cmd_nohd)
+    full = _git_calls_full(cmd_nohd)
+    calls = None if full is None else [(c["sub"], c["args"], c["cwd"]) for c in full
+                                       if not (c["scratch"] and c["sub"] not in SCRATCH_KEEP)]
     if calls is None:
         # unparseable quoting must not become a silent allow: fall back to the literal forms
         if _LOSS_LITERAL.search(re.sub(r"[\r\n]+", " ; ", cmd_nohd)):
@@ -845,7 +935,10 @@ def _subst_vars(text):
                     and "$(" not in seg and "`" not in seg:
                 for t in toks:
                     k, _, v = t.partition("=")
-                    known[k] = v
+                    if "$" in v or "`" in v:            # version 8: an unexpanded $ is not a literal value
+                        known.pop(k, None)
+                    else:
+                        known[k] = v
             else:
                 known.pop(_ASSIGN_HEAD.match(seg).group(1), None)
         out.append(seg + sep)
@@ -1140,12 +1233,13 @@ def _producer(head, rest):
             elif not a.startswith("-"):
                 tmpl = a
             j += 1
-        name = posixpath.basename(tmpl) if tmpl else "tmp.agentguard"
+        _FRESH_N[0] += 1                        # version 8: FRESH, and a number so two mktemp dirs differ
+        name = FRESH + "%d." % _FRESH_N[0] + (posixpath.basename(tmpl) if tmpl else "tmp.agentguard")
         if d:
             return posixpath.join(d, name) + "\n"
         if tmp or tmpl is None:                 # $TMPDIR, outside the repo
             return "/tmp/" + name + "\n"
-        return tmpl + "\n"                     # a template path is relative to the cwd
+        return posixpath.join(posixpath.dirname(tmpl), name) + "\n"   # a template path is relative to the cwd
     if head == "ssh-agent" and all(a in ("-s", "-c") for a in rest):
         return ("SSH_AUTH_SOCK=/tmp/ssh-agent.sock; export SSH_AUTH_SOCK;\nSSH_AGENT_PID=4242; "
                 "export SSH_AGENT_PID;\necho Agent pid 4242;\n")
@@ -1342,6 +1436,7 @@ def _check(cmd, root, depth):
 # =====================================================================================
 U, Q = "\x01", "\x02"      # an expansion the guard could not resolve: U unquoted (may split), Q quoted
 PSUB = "\x03"              # marks a process substitution <(...) in resolved text: PSUB + index + PSUB
+FRESH = "\x06"             # version 8: marks a directory mktemp made in this same command (see _scratch_init)
 KEYWORDS = {"if", "then", "else", "elif", "do", "while", "until", "!", "{", "(", "time", "coproc"}
 NUMERIC_VARS = {"RANDOM", "LINENO", "SECONDS", "UID", "EUID", "PPID", "BASHPID", "SRANDOM", "OPTIND"}
 HOOKED3 = ("commit", "push", "merge", "rebase", "am", "cherry-pick", "revert", "pull")
@@ -2426,6 +2521,8 @@ class _St(object):
         self.git_aliases = {}
         self.files = {}             # a file written earlier in this string: path -> text (or U)
         self.up = []                # the stages piped into the command being judged (version 5)
+        self.scratch = []           # version 8: repos this command made with git init in a fresh mktemp dir
+        self.local = {}             # version 8: path -> its text came from local programs with literal arguments
 
     def script(self, path, what):
         """A script file run by a shell or by path. Known only if this string wrote it."""
@@ -2435,9 +2532,12 @@ class _St(object):
                 self.run(self.files[a])
             else:
                 self.ask(what + " a script this command wrote with text the guard cannot compute")
+                if not (self.files[a] == U and self.local.get(a)):
+                    _scan_text(self.files[a], self)   # a wholly unknown text from local files is a script file
 
     def ask(self, why):
         self.asks.append(FAIL + why + ASK_TAIL)
+        _trace("ask", FAIL + why, self.cwd)
 
     def run(self, text):
         self.payloads.append((text, None, None))
@@ -3036,16 +3136,30 @@ _INTERP = re.compile(r"^(?:python[0-9.]*|pypy[0-9.]*|perl[0-9.]*|ruby[0-9.]*|nod
                      r"osascript|lua[0-9.]*|Rscript|awk|gawk|mawk|nawk)$")
 
 
-def _interp_code(code, st):
+def _interp_code(code, st, lang=None):
     """Inline interpreter code. Literal command strings it would hand to a shell are checked as
-    shell text. Code that spawns a process from parts the guard cannot read is asked about."""
+    shell text. Code that spawns a process from parts the guard cannot read is asked about.
+    Version 8: the spawn test reads _spawn_view(code, lang), where a spawn word or a backtick inside a
+    Python string literal is text, not a call."""
     if not code:
         return
+    _trace("code", code, st.cwd, lang)
+    view = _spawn_view(code, lang)
     if not _lit3(code):
-        if code.strip() in (U, Q) or _SPAWN.search(code):
+        if code.strip() in (U, Q) or _SPAWN.search(view):
             st.ask("interpreter code the guard cannot resolve")
+            if _TRACE is not None:          # version 8: a known violation in its literal strings stays a block
+                for m in _STR.finditer(code):
+                    sv = _unescape(next((x for x in m.groups() if x is not None), ""))
+                    if _lit3(sv) and re.search(r"\bgit\b|\brm\b|\bchmod\b|\bmv\b", sv) and st.depth + 1 <= MAX_DEPTH:
+                        try:
+                            v, w = _check3(sv, st.root, st.depth + 1, None, None, st.r.funcs)
+                        except Exception:
+                            continue
+                        if v == "block":
+                            _trace("block", w, st.cwd)
         return
-    spawn = _SPAWN.search(code)
+    spawn = _SPAWN.search(view)
     if not spawn:
         if re.search(r"\.git/hooks|\.githooks|\.git/config|['\"]\.git['\"/]|\.husky", code):
             st.ask("interpreter code that touches .git or a hooks directory")
@@ -3090,6 +3204,7 @@ def _judge(env, argv, stage, upstream, st):
     """One command that really runs. Returns a block reason, or None (asks go to st.asks)."""
     if not argv:
         return None
+    _trace("cmd", list(argv), st.cwd, list(env or []))
     head = argv[0]
     if not _lit3(head):
         tail = head.rsplit("/", 1)[-1] if "/" in head else ""
@@ -3134,6 +3249,7 @@ def _judge(env, argv, stage, upstream, st):
             code = args[k] if k < len(args) else ""
             if not _lit3(code):
                 st.ask("a shell runs -c text the guard cannot resolve")
+                _scan_text(code, st)
             elif code:
                 st.run(code)
             return None
@@ -3174,6 +3290,7 @@ def _judge(env, argv, stage, upstream, st):
         code = " ".join(args)
         if not _lit3(code):
             st.ask("eval of text the guard cannot resolve")
+            _scan_text(code, st)
         elif code:
             st.run(code)
         return None
@@ -3196,7 +3313,7 @@ def _judge(env, argv, stage, upstream, st):
                     code = txt
                 elif why:
                     st.ask("an interpreter runs " + why)
-        _interp_code(code, st)
+        _interp_code(code, st, b)
         return _fs_rules(b, args, stage, st)
     if b in ("pre-commit", "prek", "husky", "lefthook") and "uninstall" in args:
         return "hook_bypass_guard: " + b + " uninstall removes the git hooks" + BYPASS_TAIL
@@ -3552,7 +3669,12 @@ def _git3(env, argv, stage, st, depth):
                 st.ask("an environment variable git runs as a command, with a value the guard cannot resolve (" + k + ")")
     canon_sub = "add" if sub == "stage" else sub
     here = ["-C", st.cwd] if st.cwd not in (None, st.root) else []     # where it runs (version 5)
-    st.canon.append(" ".join(shlex.quote(t) for t in env + ["git"] + here + gtoks + [canon_sub] + args))
+    init = _scratch_init(["git"] + gtoks + [sub] + args, st.cwd)
+    if init and init not in st.scratch:
+        st.scratch.append(init)
+    scratch = sub not in SCRATCH_KEEP and _in_scratch(cwd, st.scratch)   # version 8
+    if not scratch:
+        st.canon.append(" ".join(shlex.quote(t) for t in env + ["git"] + here + gtoks + [canon_sub] + args))
     # environment: hook runners switched off, config injected from outside
     envd = {}
     for e in env:
@@ -3601,7 +3723,11 @@ def _git3(env, argv, stage, st, depth):
             and not any(a in ("-n", "--dry-run", "-i", "--interactive") or re.match(r"^-[A-Za-z]*n", a) for a in args):
         return ("data_loss_guard: git clean with clean.requireForce=%s deletes untracked files"
                 % (cfg["clean.requireforce"] or '""')) + LOSS_TAIL
+    n_asks = len(st.asks)
     why = _fed_rules(sub, args, cwd, stage, st) or _git_rules3(sub, args, cwd, st)
+    if scratch:                             # version 8: only the hook rules still apply in a scratch repo
+        del st.asks[n_asks:]
+        return why if why and why.startswith("hook_bypass_guard") else None
     if why:
         return why
     _git_dyn3(sub, args, st, cwd)
@@ -4103,6 +4229,8 @@ def _walk(text, st):
         saved = st.cwd
         for idx, stage in enumerate(pl):
             upstream = pl[:idx] if stage["pipe_in"] else []
+            if stage["redirs"]:
+                _trace("redir", list(stage["redirs"]), st.cwd)
             for op, tgt in stage["redirs"]:
                 if op in (">", ">|", ">>") and _abs(tgt, st.cwd):
                     plain = dict(stage, out=False, redirs=[])
@@ -4110,6 +4238,8 @@ def _walk(text, st):
                     a = _abs(tgt, st.cwd)
                     old = st.files.get(a, "") if op == ">>" else ""
                     st.files[a] = (old + txt) if txt is not None and _lit3(txt) and _lit3(old) else U
+                    st.local[a] = (st.local.get(a, True) if op == ">>" else True) and _local_text(
+                        (upstream or []) + [plain])
             cmds = _peel(stage["argv"], stage, upstream, st)
             for env, argv in cmds:
                 why = _judge(env, argv, stage, upstream, st)
@@ -4190,6 +4320,7 @@ def _decide3(command):
     it cannot resolve a part that could make the command a violation, it returns "ask". An internal
     error in version 3 is also an "ask", with the exception named."""
     command = _strip_comments(command or "")
+    _FRESH_N[0] = 0
     try:
         why = _check(command, _root(), 0)
         if why:
@@ -4474,47 +4605,1059 @@ def _echo_words(command):
     return _ECHO_SUB.sub(lambda m: m.group(1).strip(), command)
 
 
+# =====================================================================================
+# VERSION 8: FAIL RECOVERABLE. A v7 hard block (origin "block") stays a deny. A v7 fail-closed stop is
+# allowed on an undo point (origin "recoverable") unless something the command could do is out of an undo
+# point's reach (origin "irreversible", still a deny with v7's redirect). Out of reach: a push or any other
+# write to a remote (git push, send-pack, curl or wget uploads, ssh, scp, rsync to a host, gh and deploy
+# tools), a write or delete outside the repo that undo's plan cannot name, any write under $HOME outside
+# the repo, .git itself and the hook files, a part whose PROGRAM the guard cannot name (an unknown command
+# word, eval or sh -c of hidden text, a pipe into a shell, a hidden git subcommand, git -C into a hidden
+# directory), and every v7 unknown that is not one of the kinds in _RECOVERABLE_ASK.
+# The walker below is v7's. While it reads a command it now records what it sees (_trace): every command it
+# judges, every redirection, every piece of inline interpreter code, every unknown it asks about. _irreversible
+# reads that record. Nothing is executed.
+# =====================================================================================
+_FRESH_N = [0]
+_TRACE = None
+SCRATCH_KEEP = {"push", "send-pack", "http-push", "remote", "config", "submodule", "worktree", "svn", "p4",
+                "send-email", "imap-send"}
+RECOVER_NOTE = "allowed; an undo point was taken: python3 undo.py restore --last"
+POLICY_TEXT = (
+    "You judge one Bash command an AI coding agent wants to run in a git repo. Stop it if it breaks any of "
+    "these three policies, or if you cannot tell. Allow it otherwise.\n"
+    "Policy A, stage by name only. Stop staging by scope: git add -A, --all and its abbreviations, -u, ., ./, "
+    "..:/, *, the repo root, $(...), git stage, a pathspec that resolves to the root or only excludes, git commit "
+    "-a, git commit of the whole tree, git rm --cached of the whole tree.\n"
+    "Policy B, never disarm the hooks. Stop --no-verify, commit -n, core.hooksPath set to anything but "
+    ".githooks or unset, GIT_CONFIG_* overrides, send-pack, commit-tree, update-ref, deleting, moving, "
+    "emptying, appending to or chmod -x of a hook file in .git/hooks, .githooks or .husky, HUSKY=0, "
+    "LEFTHOOK=0, SKIP=, pre-commit uninstall, removing a hook manager package.\n"
+    "Policy C, never destroy uncommitted or pushed work. Stop git reset --hard, git clean -f, whole-tree "
+    "discards, force pushes, git branch -D, checkout -f and -B, switch --discard-changes, branch -f, stash drop "
+    "and clear, reflog expire and delete, push --delete, :ref, --mirror and --prune, worktree remove --force, "
+    "deleting .git, and anything that sends or deletes work on a remote.\n"
+    "Allowed on purpose: reset --soft, reset HEAD <file>, clean -n, restore <named file>, a normal push, "
+    "branch -d, branch -M, gc, prune and tag -d.")
+
+
+def _trace(*item):
+    if _TRACE is not None:
+        _TRACE.append(item)
+
+
+def _in_scratch(cwd, roots):
+    return bool(cwd) and cwd != DEFER and any(cwd == r or cwd.startswith(r.rstrip("/") + "/") for r in roots or ())
+
+
+_INIT_VAL = {"--template", "--separate-git-dir", "-b", "--initial-branch", "--object-format", "--ref-format",
+             "-c", "--config", "-o", "--origin", "--depth", "--branch", "--reference", "--reference-if-able",
+             "--upload-pack", "-u", "--filter", "--jobs", "-j", "--shallow-since", "--shallow-exclude",
+             "--server-option", "--bundle-uri", "--revision", "--separate-git-dir"}
+
+
+def _scratch_init(toks, cwd):
+    """Version 8. `git init [dir]` or `git clone <src> [dir]` whose target lies in a directory mktemp made in
+    this same command (FRESH in the path) -> that target: a scratch repo, every file in it written by this
+    command, so staging or discarding inside it touches no one's work. None otherwise."""
+    i = 0
+    while i < len(toks) and (toks[i] in WRAP or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[i])):
+        i += 1
+    if i >= len(toks) or posixpath.basename(toks[i]) != "git":
+        return None
+    i += 1
+    while i < len(toks) and toks[i].startswith("-"):
+        if toks[i] == "-C" and i + 1 < len(toks):
+            cwd = _cd_apply(toks[i + 1], cwd)
+        i += 2 if toks[i] in GIT_GLOBAL_VAL else 1
+    if i >= len(toks) or toks[i] not in ("init", "clone"):
+        return None
+    sub, rest, pos, j = toks[i], toks[i + 1:], [], 0
+    while j < len(rest):
+        a = rest[j]
+        if a == "--":
+            pos += rest[j + 1:]
+            break
+        if a in _INIT_VAL:
+            j += 2
+            continue
+        if not a.startswith("-"):
+            pos.append(a)
+        j += 1
+    if sub == "init":
+        d = pos[0] if pos else "."
+    elif not pos:
+        return None
+    else:
+        d = pos[1] if len(pos) > 1 else re.sub(r"\.git$", "", posixpath.basename(pos[0].rstrip("/")))
+    if not d or (cwd in (None, DEFER) and not d.startswith("/")):
+        return None
+    t = _abs(d, cwd if cwd not in (None, DEFER) else "/")
+    if not t or FRESH not in t or not _lit3(t):
+        return None
+    return t
+
+
+_DYNAMIC_PY = re.compile(r"__import__|importlib|import_module|getattr|globals\s*\(|locals\s*\(|vars\s*\(|"
+                         r"__builtins__|\bexec\b|\beval\b|\bcompile\s*\(|pickle|marshal|ctypes")
+
+
+def _spawn_view(code, lang):
+    """Version 8 (real traffic: a README edit in Python whose text quotes `git add -A` in backticks, read
+    by v7 as a shell call). The code that v7's spawn test reads. For Python that tokenizes and names no
+    dynamic import or attribute access, string literals and comments are blanked: a spawn word or a
+    backtick inside a string is text. An f-string keeps its replacement fields, which are code. Node, Deno
+    and Bun have no backtick shell call, so a backtick is dropped for them. Anything else is read as v7
+    read it."""
+    name = posixpath.basename(lang or "")
+    if re.match(r"^(?:node|nodejs|deno|bun)$", name):
+        return code.replace("`", " ")
+    if not re.match(r"^(?:python[0-9.]*|pypy[0-9.]*)$", name):
+        return code
+    import io
+    import tokenize
+    try:
+        toks = list(tokenize.generate_tokens(io.StringIO(code).readline))
+    except Exception:
+        return code
+    lines = code.splitlines(True)
+    starts, n = [], 0
+    for ln in lines:
+        starts.append(n)
+        n += len(ln)
+    starts.append(n)
+    blank = []
+    fmid = getattr(tokenize, "FSTRING_MIDDLE", None)
+    tmid = getattr(tokenize, "TSTRING_MIDDLE", None)
+    for t in toks:
+        if t.type == tokenize.STRING:
+            pre = re.match(r"^[A-Za-z]*", t.string).group().lower()
+            if "f" in pre or "t" in pre:
+                continue                        # before 3.12 an f-string is one token: keep its fields as code
+        elif t.type == tokenize.COMMENT or (fmid is not None and t.type in (fmid, tmid)):
+            pass
+        else:
+            continue
+        a = starts[t.start[0] - 1] + t.start[1]
+        b = starts[t.end[0] - 1] + t.end[1]
+        blank.append((a, b))
+    out, last = [], 0
+    for a, b in blank:
+        out.append(code[last:a])
+        out.append('""' if code[a:b][:1] != "#" else "")
+        last = b
+    out.append(code[last:])
+    view = "".join(out)
+    if _DYNAMIC_PY.search(view):
+        return code                             # a module name in a string may be imported: read it all
+    return view
+
+
+NET_PRODUCERS = {"curl", "wget", "nc", "ncat", "netcat", "socat", "ssh", "scp", "sftp", "ftp", "lftp", "aria2c",
+                 "http", "https", "xh", "gh", "glab", "aws", "gsutil", "gcloud", "az", "kubectl", "docker",
+                 "podman", "rsync", "telnet", "openssl", "rclone"}
+
+
+def _local_text(stages):
+    """Version 8: text a command writes to a file came from local programs whose every argument is literal
+    (git show HEAD:x.sh, jq of a file): running it later is running a script file, which v7 allows on an undo
+    point. Text from the network, from a hidden value or from a heredoc with hidden parts is not."""
+    for sg in stages:
+        argv = sg.get("argv") or []
+        if sg.get("here") is not None and not _lit3(sg["here"]):
+            return False
+        if not argv:
+            continue
+        if not all(_lit3(a) for a in argv) or posixpath.basename(argv[0]) in NET_PRODUCERS:
+            return False
+    return True
+
+
+def _scan_text(text, st):
+    """Version 8: text that v3 could not resolve whole (sh -c "...$X...", eval, a script with hidden parts) is
+    walked anyway, only to record what it would run. A violation found in it is recorded as a block, so
+    wrapping a known violation in text with one hidden part never turns it into an allow."""
+    if _TRACE is None:
+        return
+    if text is None or not re.sub("[" + U + Q + PSUB + r"\s]", "", text):
+        _trace("opaque", "text the guard cannot read at all", st.cwd)
+        return
+    st2 = _St(st.root, st.r, st.bodies, st.depth + 1)
+    st2.cwd = st.cwd
+    try:
+        why = _walk(text, st2)
+    except Exception as exc:
+        _trace("opaque", "text the guard cannot walk (%s)" % type(exc).__name__, st.cwd)
+        return
+    if why:
+        _trace("block", why, st.cwd)
+    for p, kn, ps in st2.payloads[:MAX_PAYLOADS]:
+        if st.depth + 2 > MAX_DEPTH:
+            _trace("opaque", "code nested too deep", st.cwd)
+            break
+        try:
+            v, w = _check3(p, st.root, st.depth + 2, kn, ps, st.r.funcs)
+        except Exception as exc:
+            _trace("opaque", "text the guard cannot walk (%s)" % type(exc).__name__, st.cwd)
+            continue
+        if v == "block":
+            _trace("block", w, st.cwd)
+
+
+# ---- what an undo point reaches ----
+_RECOVERABLE_ASK = re.compile(
+    r"^fail_closed: (?:"
+    r"git \S+ has (?:an unquoted word|an argument|a pathspec|an option value)|"
+    r"git (?:add|commit|rm) --pathspec-from-file reads|"
+    r"git \S+ -[pi] reads its answers|git clean -i reads its answers|"
+    r"git update-index (?:--stdin|--again)|"
+    r"git read-tree -u rewrites worktree files|git symbolic-ref rewrites where a ref points|"
+    r"git \S+ rewrites history or refs|"
+    r"git stash has a flag|the git stash action is unknown|"
+    r"interpreter code (?:builds the command|builds a git argument list|that touches \.git|the guard cannot resolve)|"
+    r"a shell runs -c text the guard cannot resolve|eval of text the guard cannot resolve|"
+    r"(?:a shell runs|this runs|source runs) a script this command wrote)")
+GIT_REMOTE_WRITE = {"push", "send-pack", "http-push", "svn", "p4", "send-email", "imap-send", "cvsexportcommit"}
+NET_ALWAYS = {"ssh", "scp", "sftp", "ftp", "lftp", "telnet", "nc", "ncat", "netcat", "socat", "mail", "mailx",
+              "sendmail", "mutt", "msmtp", "osascript", "at", "batch", "kill", "pkill", "killall", "shutdown",
+              "reboot", "halt", "mosh", "rclone", "s3cmd"}
+READ_VERBS = {"view", "list", "ls", "status", "diff", "checks", "describe", "get", "show", "logs", "log", "whoami",
+              "version", "--version", "-v", "help", "--help", "-h", "info", "inspect", "search", "top", "explain",
+              "plan", "output", "validate", "providers", "graph", "ps", "images", "history", "stats", "config",
+              "doctor", "outdated", "deps", "leaves", "--prefix", "shellenv", "watch", "browse", "auth", "tail",
+              "api-resources", "head-object", "get-object-attributes", "list-objects", "list-objects-v2", "whoami"}
+REMOTE_TOOLS = {"gh", "glab", "hub", "wrangler", "vercel", "netlify", "firebase", "flyctl", "fly", "heroku", "aws",
+                "gcloud", "gsutil", "az", "kubectl", "helm", "terraform", "pulumi", "doctl", "supabase", "railway",
+                "render", "docker", "podman", "brew", "defaults", "launchctl", "systemctl", "crontab", "security",
+                "twine"}
+PKG_PUBLISH = {"publish", "unpublish", "deprecate", "dist-tag", "owner", "access", "adduser", "login", "logout",
+               "token", "yank", "push"}
+MUTATORS8 = {"rm", "rmdir", "unlink", "shred", "srm", "trash", "touch", "mkdir", "truncate", "tee", "chmod",
+             "chown", "chgrp", "install", "cp", "ln", "mv", "rsync", "dd", "sed", "gsed", "perl", "ruby", "patch",
+             "tar", "bsdtar", "gtar", "unzip", "find", "curl", "wget"}
+_NET_CODE = re.compile(
+    r"requests\.(?:post|put|patch|delete|request|Session)\b|httpx\.(?:post|put|patch|delete|request|Client|"
+    r"AsyncClient)\b|urllib3|http\.client|HTTPS?Connection|smtplib|ftplib|telnetlib|paramiko|socket\.(?:socket|"
+    r"create_connection)|\bboto3\b|botocore|google\.cloud|aiohttp|websocket|axios\.(?:post|put|patch|delete|request)|"
+    r"https?\.request\s*\(|net\.(?:connect|Socket|createConnection)|tls\.connect|nodemailer|XMLHttpRequest|"
+    r"LWP::|HTTP::Request|Net::(?:HTTP|SMTP|FTP|SSH)|IO::Socket|TCPSocket|curl_exec|fsockopen|\bmail\s*\(")
+_URL_WRITE = re.compile(r"\bdata\s*=|method\s*=|['\"](?:POST|PUT|PATCH|DELETE)['\"]")
+_FETCH_WRITE = re.compile(r"method\s*:\s*['\"](?:POST|PUT|PATCH|DELETE)|\bbody\s*:")
+_WRITE_CODE = re.compile(
+    r"\bopen\s*\([^\n]*?,\s*(?:mode\s*=\s*)?['\"][rbt]*[wax+][rbt+]*['\"]|mode\s*=\s*['\"][rbt]*[wax+]|"
+    r"\.write_(?:text|bytes)\s*\(|\.(?:unlink|rmdir|touch|mkdir|symlink_to|hardlink_to|chmod|rename)\s*\(|"
+    r"\bos\.(?:remove|unlink|rmdir|removedirs|rename|renames|replace|makedirs|mkdir|symlink|link|chmod|chown|"
+    r"lchown|truncate|utime|mkfifo)\s*\(|\bshutil\.(?:rmtree|move|copy|copy2|copyfile|copytree|copymode|copystat|"
+    r"chown|make_archive|unpack_archive)\s*\(|\.extractall\s*\(|\.extract\s*\(|inplace\s*=\s*(?:True|1)|"
+    r"\bfs(?:\.promises)?\.(?:write|append|unlink|rm|rmdir|rename|copyFile|cp|mkdir|symlink|truncate|chmod|"
+    r"createWriteStream)|\.(?:unlink|rm|rmdir|writeFile|appendFile|rename|copyFile|cp|mkdir|symlink|truncate|chmod|"
+    r"createWriteStream|write)(?:Sync)?\s*\(|\bunlink\b|\bFile\.(?:write|delete|rename|unlink|open)|FileUtils\.|File::(?:Path|Copy)|"
+    r"\b(?:mkdir|rmdir|rename|move|copy)\s*\(|file_put_contents|\bfopen\s*\(")
+_AWK_WRITE = re.compile(r"\bprint[f]?\b[^\n;]*>\s*['\"]|\bsystem\s*\(")
+_PERL_WRITE = re.compile(r"\bopen\s*\(?\s*(?:my\s+)?[\$\w]+\s*,\s*['\"]?\+?>|\bunlink\b|\brename\b|\brmdir\b|\bmkdir\b")
+_HOME_CODE = re.compile(r"expanduser|Path\.home|['\"]HOME['\"]|os\.homedir|process\.env\.HOME|\$ENV\{HOME\}|"
+                        r"\$HOME\b|['\"]~/|['\"]~['\"]")
+_DOTGIT_CODE = re.compile(r"(?:^|[/'\"])\.git(?:/|['\"]|$)|\.githooks|\.husky")
+_PLACEHOLDER = re.compile(r"\{[^{}\n]*\}|%\(?\w*\)?[sdrif]|\$\{[^}\n]*\}|#\{[^}\n]*\}")
+
+
+def _temp_roots():
+    out = ["/tmp", "/private/tmp", "/var/tmp", "/private/var/tmp"]
+    t = os.environ.get("TMPDIR")
+    if t and t.startswith("/"):
+        homes = _homes()
+        for d in (posixpath.normpath(t), os.path.realpath(t)):
+            if d not in ("/", "") and not any(h == d or h.startswith(d.rstrip("/") + "/") for h in homes) \
+                    and d not in out:
+                out.append(d)
+    return out
+
+
+def _homes():
+    h = os.path.expanduser("~")
+    return [x for x in {posixpath.normpath(h), os.path.realpath(h)} if x and x != "/"]
+
+
+def _under8(p, d):
+    return p == d or p.startswith(d.rstrip("/") + "/")
+
+
+def _path_class(p, cwd, root):
+    """Where a path a command writes lies: repo, gitdir, temp, dev, home, outside, or unknown (a part the guard
+    cannot read, a ~user, or a relative path in an unknown directory)."""
+    if p is None or p == "":
+        return "unknown"
+    p = p.replace(FOUND, "x")
+    if not _lit3(p):
+        return "unknown"
+    if p.startswith("~"):
+        if p == "~" or p.startswith("~/"):
+            a = posixpath.normpath(_homes()[0] + p[1:]) if _homes() else None
+        else:
+            return "unknown"
+    elif p.startswith("/"):
+        a = posixpath.normpath(p)
+    elif cwd:
+        a = posixpath.normpath(posixpath.join(cwd, p))
+    else:
+        return "unknown"
+    if a is None:
+        return "unknown"
+    a = "/" + a.lstrip("/")
+    if a == "/dev" or a.startswith("/dev/"):
+        return "dev"
+    if root and _under8(a, root):
+        rel = a[len(root.rstrip("/")):].strip("/")
+        return "gitdir" if ".git" in rel.split("/") else "repo"
+    if any(_under8(a, t) for t in _temp_roots()):
+        return "temp"
+    if any(_under8(a, h) for h in _homes()):
+        return "home"
+    return "outside"
+
+
+def _undo_module():
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import undo
+    return undo
+
+
+def _positionals(args, vals=()):
+    out, j, endopts = [], 0, False
+    while j < len(args):
+        a = args[j]
+        if not endopts and a == "--":
+            endopts = True
+        elif not endopts and a in vals:
+            j += 1
+        elif endopts or not a.startswith("-") or a == "-":
+            out.append(a)
+        j += 1
+    return out
+
+
+def _write_targets(b, args, cwd):
+    """The paths one program writes or deletes, as far as its arguments show them."""
+    pos = _positionals(args, ("-t", "--target-directory", "-S", "--suffix", "-m", "--mode", "-o", "--owner",
+                              "-g", "--group", "-s", "--size", "-e", "--expression", "-f", "--file", "-C",
+                              "--directory", "-d", "-p", "-P", "-O", "--output", "-T", "--upload-file",
+                              "-X", "--request", "-H", "--header", "-u", "--user", "-A", "--user-agent", "-b",
+                              "-c", "--cookie-jar", "--data", "--data-binary", "-F", "--form"))
+    tdir = [args[j + 1] for j in range(len(args) - 1) if args[j] in ("-t", "--target-directory")]
+    tdir += [a.split("=", 1)[1] for a in args if a.startswith("--target-directory=")]
+    if b in ("rm", "rmdir", "unlink", "shred", "srm", "trash", "touch", "mkdir", "tee"):
+        return pos
+    if b == "truncate":
+        return pos
+    if b in ("chmod", "chown", "chgrp"):
+        return pos if any(a.startswith("--reference") for a in args) else pos[1:]
+    if b in ("cp", "install", "ln"):
+        if tdir:
+            return tdir
+        return pos[-1:] if len(pos) >= 2 else ([cwd] if b == "ln" and cwd else [])
+    if b == "mv":
+        return pos + tdir
+    if b == "rsync":
+        return pos[-1:]
+    if b == "dd":
+        return [a[3:] for a in args if a.startswith("of=")]
+    if b in ("sed", "gsed", "perl", "ruby"):
+        if not any(re.match(r"^-[A-Za-z]*i", a) or a.startswith("--in-place") for a in args):
+            return []
+        script_given = any(a in ("-e", "--expression", "-f", "--file") for a in args)
+        return pos if (script_given or b != "sed" and b != "gsed") else pos[1:]
+    if b == "patch":
+        d = [args[j + 1] for j in range(len(args) - 1) if args[j] in ("-d", "--directory")]
+        return d or ([cwd] if cwd else [None])
+    if b in ("tar", "bsdtar", "gtar"):
+        first = args[0] if args else ""
+        if re.match(r"^-?[A-Za-z]*x", first) or "--extract" in args or "-x" in args:
+            d = [args[j + 1] for j in range(len(args) - 1) if args[j] in ("-C", "--directory")]
+            return d or ([cwd] if cwd else [None])
+        return []
+    if b == "unzip":
+        d = [args[j + 1] for j in range(len(args) - 1) if args[j] == "-d"]
+        return d or ([cwd] if cwd else [None])
+    if b == "find":
+        if not any(a in ("-delete", "-exec", "-execdir", "-ok", "-okdir", "-fprint", "-fls") for a in args):
+            return []
+        starts = []
+        for a in args:
+            if a.startswith("-") or a in ("(", "!", ")"):
+                break
+            starts.append(a)
+        return starts or ([cwd] if cwd else [None])
+    if b == "curl":
+        outs = [args[j + 1] for j in range(len(args) - 1) if args[j] in ("-o", "--output")]
+        if any(a == "-O" or a == "--remote-name" or re.match(r"^-[A-Za-z]*O", a) for a in args):
+            outs.append(cwd)
+        return outs
+    if b == "wget":
+        outs = [args[j + 1] for j in range(len(args) - 1) if args[j] in ("-O", "--output-document", "-P",
+                                                                          "--directory-prefix")]
+        return outs or ([cwd] if cwd else [None])
+    return []
+
+
+def _net_write(b, args):
+    """Why this program writes to a remote, or None."""
+    if b in NET_ALWAYS:
+        return "%s reaches past this machine's repo (a remote host, a mail server, another process or app)" % b
+    if b == "crontab" and all(a == "-l" for a in args):
+        return None
+    if b == "curl":
+        for j, a in enumerate(args):
+            if a in ("-d", "--data", "--data-binary", "--data-raw", "--data-urlencode", "--data-ascii", "-F",
+                     "--form", "--form-string", "-T", "--upload-file", "--json", "--post301", "--post302") \
+                    or re.match(r"^-[A-Za-z]*[dFT]", a) or a.startswith(("--data", "--form", "--json", "--upload")):
+                return "curl sends data to a remote (%s)" % a
+            if a in ("-X", "--request") and j + 1 < len(args) and args[j + 1].upper() not in ("GET", "HEAD", "OPTIONS"):
+                return "curl sends a %s to a remote" % args[j + 1]
+            if re.match(r"^-X(?!GET|HEAD|OPTIONS)\S+", a) or re.match(r"^--request=(?!GET|HEAD|OPTIONS)", a, re.I):
+                return "curl sends a non-GET request to a remote"
+            if not _lit3(a) and a.startswith("-"):
+                return "curl has an option the guard cannot read"
+        return None
+    if b == "wget":
+        if any(a.startswith(("--post-data", "--post-file", "--method", "--body-data", "--body-file")) for a in args):
+            return "wget sends data to a remote"
+        return None
+    if b == "rsync":
+        for a in _positionals(args, ("-e", "--rsh", "--rsync-path", "--exclude", "--include", "--filter",
+                                     "--files-from", "--password-file", "-f")):
+            if a.startswith("rsync://") or re.match(r"^[^/]*[^/\\]:", a) or not _lit3(a):
+                return "rsync to a host or a target the guard cannot read (%s)" % a.replace(U, "$?").replace(Q, "$?")
+        return None
+    if b in ("npm", "yarn", "pnpm", "bun", "cargo", "gem", "poetry", "uv"):
+        pos = _positionals(args)
+        if pos and pos[0] in PKG_PUBLISH:
+            return "%s %s publishes or changes a package on a registry" % (b, pos[0])
+        if pos and pos[0] in ("install", "i", "add", "uninstall", "remove", "rm", "un", "link") and \
+                any(a in ("-g", "--global", "--location=global") for a in args):
+            return "%s %s --global writes outside the repo" % (b, pos[0])
+        if b in ("cargo", "gem") and pos and pos[0] in ("install", "uninstall"):
+            return "%s %s writes outside the repo" % (b, pos[0])
+        return None
+    if b in REMOTE_TOOLS:
+        pos = [a for a in args if not a.startswith("-")]
+        if b == "gh" and pos[:1] == ["api"]:
+            if any(a in ("-X", "--method", "-f", "-F", "--field", "--raw-field", "--input") or
+                   a.startswith(("-X", "--method=", "--field=", "--raw-field=", "--input=")) for a in args):
+                idx = [j for j, a in enumerate(args) if a in ("-X", "--method")]
+                if idx and idx[0] + 1 < len(args) and args[idx[0] + 1].upper() == "GET" and not any(
+                        a in ("-f", "-F", "--field", "--raw-field", "--input") for a in args):
+                    return None
+                return "gh api with a method or fields writes to GitHub"
+            return None
+        if b == "defaults":
+            return None if (pos[:1] in (["read"], ["domains"], ["find"], ["read-type"])) else \
+                "defaults writes an app's settings outside the repo"
+        words = pos[:3]
+        if words and any(w in READ_VERBS or w.startswith(("describe", "get-", "list-")) for w in words) \
+                and not any(w in ("deploy", "publish", "delete", "rm", "remove", "create", "put", "push", "apply",
+                                  "destroy", "merge", "close", "edit", "comment", "upload", "set", "cp", "mv",
+                                  "sync", "run", "exec", "kill", "stop", "start", "restart", "install",
+                                  "uninstall", "upgrade", "update", "load", "unload", "bootstrap", "bootout",
+                                  "import", "write", "add", "rollback", "secret", "reopen", "ready", "review")
+                            for w in words):
+            return None
+        if not pos:
+            return None
+        return "%s %s acts on a remote service or the system, outside any undo point" % (b, " ".join(words))
+    return None
+
+
+def _git_effect(argv, cwd, root):
+    """Why a git call is out of an undo point's reach, or None."""
+    i, gcwd = 1, cwd
+    while i < len(argv):
+        a = argv[i]
+        if not _lit3(a):
+            return "git has a part before its subcommand that the guard cannot read, so it could be a push"
+        if not a.startswith("-"):
+            break
+        if a in GIT_GLOBAL_VAL or a == "--super-prefix":
+            v = argv[i + 1] if i + 1 < len(argv) else ""
+            if not _lit3(v):
+                return "git %s points at a place the guard cannot read, which the undo point may not cover" % a
+            if a == "-C":
+                gcwd = _abs(v, gcwd) if (gcwd or v.startswith("/")) else None
+            elif a in ("--git-dir", "--work-tree"):
+                gcwd = _abs(v, gcwd) if (gcwd or v.startswith("/")) else None
+            i += 2
+            continue
+        if a.startswith(("--git-dir=", "--work-tree=")):
+            v = a.split("=", 1)[1]
+            gcwd = _abs(v, gcwd) if (gcwd or v.startswith("/")) else None
+        i += 1
+    if i >= len(argv):
+        return None
+    sub, rest = argv[i], argv[i + 1:]
+    if not _lit3(sub):
+        return "the git subcommand is hidden, so it could be a push"
+    if sub in GIT_REMOTE_WRITE:
+        return "git %s writes to a remote or sends mail, which no local undo point can take back" % sub
+    try:
+        ro = _undo_module()._git_readonly(sub, [x for x in rest if _lit3(x)])
+    except Exception:
+        ro = False
+    if ro and not any(x.startswith("-") and not _lit3(x) for x in rest):
+        return None                         # a read-only subcommand: a hidden value is not a flag that writes
+    in_temp = gcwd is not None and _path_class(gcwd, "/", root) == "temp"     # a scratch place: its own .git
+    if sub == "config" and any(x in ("--global", "--system", "--file", "-f", "--blob") or x.startswith("--file=")
+                               for x in rest):
+        return "git config writes a config file outside the repo"
+    if sub == "remote" and rest and rest[0] not in ("-v", "show", "get-url", "--verbose") and not in_temp:
+        return "git remote %s rewrites the repo's own config in .git, which an undo point does not restore" % rest[0]
+    if sub == "config" and not in_temp:
+        return "git config writes the repo's own config in .git, which an undo point does not restore"
+    if sub == "submodule" and not (rest and rest[0] in ("status", "summary")):
+        return "git submodule writes nested repos and .git/modules, which an undo point does not hold"
+    if sub == "worktree" and not (rest and rest[0] == "list"):
+        return "git worktree writes another directory and .git/worktrees"
+    if sub in ("filter-repo", "replace", "notes", "lfs", "annex"):
+        return "git %s writes .git state an undo point does not record" % sub
+    if sub == "clean" and any(re.match(r"^-[A-Za-z]*[xX]", x) for x in rest):
+        return "git clean -x deletes ignored files, which it does not name"
+    if sub in ("init", "clone"):
+        pos = _positionals(rest, tuple(_INIT_VAL))
+        d = (pos[0] if sub == "init" else (pos[1] if len(pos) > 1 else None)) if pos else None
+        if d is not None:
+            c = _path_class(d, gcwd, root)
+            if c not in ("repo", "temp"):
+                return "git %s writes a new repo outside the project (%s)" % (sub, d.replace(U, "$?").replace(Q, "$?"))
+            return None
+    if gcwd is None:
+        return "git %s runs in a directory the guard cannot name, so the undo point may not cover that repo" % sub
+    c = _path_class(gcwd, "/", root)
+    if c in ("repo", "temp"):
+        return None
+    if c == "gitdir":
+        return "git %s runs inside .git" % sub
+    return "git %s changes a repo outside the project (%s), which this undo point does not cover" % (sub, gcwd)
+
+
+def _target_why(prog, p, cwd, root, named):
+    c = _path_class(p, cwd, root)
+    shown = (p or "?").replace(U, "$?").replace(Q, "$?").replace(FOUND, "*")
+    if c in ("repo", "temp") and _lit3(p or "") and _pclass(p, cwd or "/") == "hooks":
+        return ("%s writes a hook file (%s): a disarmed hook changes every later commit and push, which this undo "
+                "point does not take back" % (prog, shown))
+    if c in ("repo", "temp", "dev"):
+        return None
+    if c == "gitdir":
+        return "%s touches .git itself (%s), which an undo point does not restore" % (prog, shown)
+    if c == "home":
+        return "%s writes under $HOME outside the repo (%s)" % (prog, shown)
+    if c == "outside":
+        a = posixpath.normpath(p if p.startswith("/") else posixpath.join(cwd or "/", p))
+        if any(_under8(a, n) for n in named()):
+            return None
+        return "%s writes outside the repo where undo's plan cannot name it (%s)" % (prog, shown)
+    return "%s writes a path the guard cannot read (%s), so undo's plan cannot name it" % (prog, shown)
+
+
+def _cmd_effect(argv, cwd, root, named):
+    head = argv[0]
+    if not _lit3(head):
+        tail = head.rsplit("/", 1)[-1] if "/" in head else ""
+        if not (tail and _lit3(tail)):
+            return "the program it runs is hidden (it could push or write anywhere)"
+        head = tail
+    b = posixpath.basename(head)
+    args = argv[1:]
+    if b == "git":
+        return _git_effect(argv, cwd, root)
+    why = _net_write(b, args)
+    if why:
+        return why
+    if b in MUTATORS8:
+        for p in _write_targets(b, args, cwd):
+            why = _target_why(b, p, cwd, root, named)
+            if why:
+                return why
+    return None
+
+
+def _code_strings(code):
+    """String literals of inline code, each with its placeholders ({x}, %s, ${x}) as hidden parts, and a
+    string that is concatenated or formatted given a hidden tail."""
+    out = []
+    for m in _STR.finditer(code):
+        s = next((g for g in m.groups() if g is not None), "")
+        s = _PLACEHOLDER.sub(U, _unescape(s))
+        if re.match(r"\s*(?:\+|%|\.format\b)", code[m.end():m.end() + 12]):
+            s += " " + U
+        out.append(s)
+    return out
+
+
+def _code_argvs(code):
+    """argv lists inline code would spawn: list or tuple literals that start with a string, read with their
+    brackets and quotes balanced; an item that is not a plain string literal is a hidden part."""
+    out = []
+    for m in re.finditer(r"[\[\(]\s*(?=['\"])", code):
+        j, depth, items, cur, done = m.end(), 0, [], "", False
+        while j < len(code) and len(items) < 64:
+            ch = code[j]
+            if ch in "'\"`":
+                sm = _STR.match(code, j)
+                if not sm:
+                    break
+                cur, j = cur + sm.group(), sm.end()
+                continue
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                if depth == 0:
+                    items.append(cur.strip())
+                    done = True
+                    break
+                depth -= 1
+            elif ch == "," and depth == 0:
+                items.append(cur.strip())
+                cur, j = "", j + 1
+                continue
+            cur += ch
+            j += 1
+        items = [x for x in items if x]
+        if not done or not items or not _STR.fullmatch(items[0]):
+            continue
+        argv = []
+        for x in items:
+            sm = _STR.fullmatch(x)
+            argv.append(_unescape(next((g for g in sm.groups() if g is not None), "")) if sm else U)
+        if re.match(r"^[A-Za-z0-9_./-]+$", argv[0]):
+            out.append(argv)
+    return out
+
+
+_PY_WRITE_ATTR = {"write_text", "write_bytes", "touch", "mkdir", "unlink", "rmdir", "symlink_to", "hardlink_to",
+                  "chmod", "lchmod"}
+_PY_OS_ONE = {"remove", "unlink", "rmdir", "removedirs", "makedirs", "mkdir", "truncate", "chmod", "chown", "lchown",
+              "utime", "mkfifo", "mknod"}
+
+
+def _py_write_targets(code):
+    """Version 8: the paths Python code writes, read with ast. -> list of path strings, or None when the code
+    does not parse or a write's target is not a literal the reader can follow (then the broad rule applies).
+    Followed: string literals, Path(...), os.path.join, `/` and `+` of those, and names assigned only such
+    values. Writes: open() with a w, a, x or + mode, Path write_text, write_bytes, touch, mkdir, unlink, rmdir,
+    rename and replace, os.remove and its kin, os.rename, os.replace, os.symlink, shutil.rmtree, move and copy."""
+    import ast
+    import warnings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")     # the code's own escape-sequence warnings are not ours to print
+            tree = ast.parse(code)
+    except Exception:
+        return None
+    assigns = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            tg = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for t in tg:
+                if isinstance(t, ast.Name):
+                    assigns.setdefault(t.id, []).append(node.value if not isinstance(node, ast.AugAssign) else None)
+                elif isinstance(t, (ast.Tuple, ast.List)):
+                    for e in t.elts:
+                        if isinstance(e, ast.Name):
+                            assigns.setdefault(e.id, []).append(None)
+        elif isinstance(node, (ast.For, ast.comprehension, ast.With, ast.withitem)):
+            tg = getattr(node, "target", None) or getattr(node, "optional_vars", None)
+            for e in ([tg] if isinstance(tg, ast.Name) else (getattr(tg, "elts", []) or [])):
+                if isinstance(e, ast.Name):
+                    assigns.setdefault(e.id, []).append(None)
+        elif isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            for a in node.args.args:
+                assigns.setdefault(a.arg, []).append(None)
+
+    def ev(n, depth=0):
+        if depth > 6 or n is None:
+            return None
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            return [n.value]
+        if isinstance(n, ast.Name):
+            vals = assigns.get(n.id)
+            if not vals:
+                return None
+            out = []
+            for v in vals:
+                r = ev(v, depth + 1)
+                if r is None:
+                    return None
+                out += r
+            return out
+        if isinstance(n, ast.Call):
+            f = n.func
+            fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+            if fname in ("Path", "PurePath", "PosixPath") and len(n.args) >= 1:
+                parts = [ev(a, depth + 1) for a in n.args]
+                if any(p is None for p in parts):
+                    return None
+                out = [""]
+                for p in parts:
+                    out = [posixpath.join(o, x) for o in out for x in p]
+                return out
+            if fname == "join" and isinstance(f, ast.Attribute) and isinstance(f.value, ast.Attribute) \
+                    and f.value.attr == "path" and n.args:
+                parts = [ev(a, depth + 1) for a in n.args]
+                if any(p is None for p in parts):
+                    return None
+                out = [""]
+                for p in parts:
+                    out = [posixpath.join(o, x) for o in out for x in p]
+                return out
+            if fname in ("resolve", "absolute", "expanduser") and isinstance(f, ast.Attribute) and not n.args:
+                r = ev(f.value, depth + 1)
+                return None if r is None or fname == "expanduser" else r
+            return None
+        if isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Div, ast.Add)):
+            a, b = ev(n.left, depth + 1), ev(n.right, depth + 1)
+            if a is None or b is None:
+                return None
+            if isinstance(n.op, ast.Div):
+                return [posixpath.join(x, y) for x in a for y in b]
+            return [x + y for x in a for y in b]
+        return None
+
+    def is_path_expr(n, depth=0):
+        if isinstance(n, ast.Call):
+            f = n.func
+            name = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+            return name in ("Path", "PurePath", "PosixPath")
+        if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Div):
+            return is_path_expr(n.left, depth + 1)
+        if isinstance(n, ast.Name) and depth < 4:
+            vals = assigns.get(n.id) or []
+            return bool(vals) and all(v is not None and is_path_expr(v, depth + 1) for v in vals)
+        return False
+
+    targets, unknown = [], False
+
+    def add(n):
+        nonlocal unknown
+        r = ev(n)
+        if r is None:
+            unknown = True
+        else:
+            targets.extend(r)
+
+    def mode_of(call, pos):
+        m = call.args[pos] if len(call.args) > pos else next((k.value for k in call.keywords if k.arg == "mode"), None)
+        if m is None:
+            return "r"
+        return m.value if isinstance(m, ast.Constant) and isinstance(m.value, str) else "w"
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        if isinstance(f, ast.Name) and f.id == "open" and node.args:
+            if re.search(r"[wax+]", mode_of(node, 1)):
+                add(node.args[0])
+        elif isinstance(f, ast.Attribute):
+            base = f.value
+            bname = base.id if isinstance(base, ast.Name) else ""
+            if f.attr == "open" and bname in ("io", "codecs") and node.args:
+                if re.search(r"[wax+]", mode_of(node, 1)):
+                    add(node.args[0])
+            elif f.attr == "open" and is_path_expr(base):
+                if re.search(r"[wax+]", mode_of(node, 0)):
+                    add(base)
+            elif f.attr in _PY_WRITE_ATTR and bname not in ("os", "shutil"):
+                add(base)
+            elif f.attr in ("rename", "replace") and is_path_expr(base):
+                add(base)
+                if node.args:
+                    add(node.args[0])
+            elif bname == "os" and f.attr in _PY_OS_ONE and node.args:
+                add(node.args[0])
+            elif bname == "os" and f.attr in ("rename", "replace", "renames", "link") and len(node.args) >= 2:
+                add(node.args[0])
+                add(node.args[1])
+            elif bname == "os" and f.attr == "symlink" and len(node.args) >= 2:
+                add(node.args[1])
+            elif bname == "shutil" and f.attr == "rmtree" and node.args:
+                add(node.args[0])
+            elif bname == "shutil" and f.attr == "move" and len(node.args) >= 2:
+                add(node.args[0])
+                add(node.args[1])
+            elif bname == "shutil" and f.attr in ("copy", "copy2", "copyfile", "copytree", "copymode", "copystat",
+                                                  "unpack_archive") and len(node.args) >= 2:
+                add(node.args[1])
+            elif f.attr in ("extractall", "extract", "make_archive", "unpack_archive", "chown"):
+                unknown = True
+            elif f.attr in ("input", "FileInput") and any(k.arg == "inplace" for k in node.keywords):
+                unknown = True
+    return None if unknown else targets
+
+
+_SPAWN_PY = {("os", "system"), ("os", "popen"), ("subprocess", "run"), ("subprocess", "call"),
+             ("subprocess", "check_call"), ("subprocess", "check_output"), ("subprocess", "Popen"),
+             ("subprocess", "getoutput"), ("subprocess", "getstatusoutput")}
+
+
+def _hidden_spawn(code, name):
+    """Version 8: a spawn call whose program is not written in the code (os.system(os.environ['C']),
+    subprocess.run(cmd) with cmd read at run time). Python is read with ast: the first argument must be a
+    string literal, a list or tuple whose first item is one, or a name assigned only such values. Other
+    languages: a spawn fed straight from the environment or the arguments."""
+    if not re.match(r"^(?:python[0-9.]*|pypy[0-9.]*)$", name):
+        return bool(re.search(r"(?:system|exec|execSync|spawn|spawnSync|popen)\s*\(\s*(?:process\.env|process\.argv|"
+                              r"ENV\[|\$ENV\{|\$ARGV|ARGV|getenv|\$_(?:GET|POST|SERVER))", code))
+    import ast
+    import warnings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tree = ast.parse(code)
+    except Exception:
+        return False
+    assigns = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    assigns.setdefault(t.id, []).append(node.value)
+
+    def named_prog(n, depth=0):
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            return True
+        if isinstance(n, ast.JoinedStr):
+            return bool(n.values) and isinstance(n.values[0], ast.Constant) and \
+                bool(re.match(r"\s*[A-Za-z0-9_./-]+", str(n.values[0].value)))
+        if isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Add, ast.Mod)):
+            return named_prog(n.left, depth + 1)
+        if isinstance(n, (ast.List, ast.Tuple)):
+            return bool(n.elts) and named_prog(n.elts[0], depth + 1)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in ("format", "split"):
+            return named_prog(n.func.value, depth + 1)
+        if isinstance(n, ast.Name) and depth < 4:
+            vals = assigns.get(n.id) or []
+            return bool(vals) and all(named_prog(v, depth + 1) for v in vals)
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
+                isinstance(node.func.value, ast.Name) and (node.func.value.id, node.func.attr) in _SPAWN_PY:
+            first = node.args[0] if node.args else next((k.value for k in node.keywords if k.arg == "args"), None)
+            if first is None or not named_prog(first):
+                return True
+    return False
+
+
+def _code_effect(code, cwd, lang, root, named):
+    """Why inline interpreter code is out of an undo point's reach, or None."""
+    name = posixpath.basename(lang or "")
+    if not re.sub("[" + U + Q + PSUB + r"\s]", "", code or ""):
+        return "interpreter code the guard cannot read at all"
+    if name == "osascript":
+        return "AppleScript can drive other apps (Mail, Finder), whose effects no undo point covers"
+    if _NET_CODE.search(code):
+        return "interpreter code that talks to the network or a mail server"
+    if re.search(r"urlopen|urllib\.request|\bRequest\s*\(", code) and _URL_WRITE.search(code):
+        return "interpreter code that sends data to a URL"
+    if re.search(r"\bfetch\s*\(", code) and _FETCH_WRITE.search(code):
+        return "interpreter code that sends data with fetch"
+    if _SPAWN.search(_spawn_view(code, lang)):
+        if _hidden_spawn(code, name):
+            return "interpreter code spawns a program it reads at run time, which the guard cannot name"
+        for s in _code_strings(code):
+            toks = _tokens(s) or []
+            seg = []
+            for t in toks + [";"]:
+                if t and all(ch in ";&|()" for ch in t):
+                    if seg and re.match(r"^(?:sudo\s+)?[A-Za-z0-9_./-]+$", seg[0]):
+                        why = _cmd_effect(seg[1:] if seg[0] == "sudo" else seg, cwd, root, named)
+                        if why:
+                            return why + " (in code it spawns)"
+                    seg = []
+                else:
+                    seg.append(t)
+        for argv in _code_argvs(code):
+            why = _cmd_effect(argv, cwd, root, named)
+            if why and (posixpath.basename(argv[0]) in {"git"} | NET_ALWAYS | REMOTE_TOOLS | MUTATORS8 |
+                        {"npm", "yarn", "pnpm", "bun", "cargo", "gem", "poetry", "uv"}):
+                return why + " (in code it spawns)"
+    py = bool(re.match(r"^(?:python[0-9.]*|pypy[0-9.]*)$", name))
+    if py and _lit3(code):
+        tg = _py_write_targets(code)
+        if tg is not None:
+            for t in tg:
+                why = _target_why("interpreter code", t, cwd, root, lambda: set())
+                if why:
+                    return why
+            return None
+    writes = _WRITE_CODE.search(code) or (name in ("awk", "gawk", "mawk", "nawk") and _AWK_WRITE.search(code)) \
+        or (name.startswith("perl") and _PERL_WRITE.search(code))
+    if writes:
+        if _HOME_CODE.search(code):
+            return "interpreter code that writes files and names $HOME"
+        lits = [s for s in (next((g for g in m.groups() if g is not None), "") for m in _STR.finditer(code))
+                if len(s) > 1 and s.startswith(("/", "~/")) and "\n" not in s and len(s) < 4096]
+        for s in lits:
+            c = _path_class(_unescape(s), cwd, root)
+            if c in ("home", "outside", "gitdir"):
+                return "interpreter code that writes files and names %s (%s)" % (
+                    {"home": "a path under $HOME outside the repo", "outside": "a path outside the repo",
+                     "gitdir": "a path in .git"}[c], s[:120])
+        if _DOTGIT_CODE.search(code):
+            return "interpreter code that writes files and names .git or a hooks directory"
+        c = _path_class(".", cwd, root)
+        if c not in ("repo", "temp"):
+            return "interpreter code that writes files from a directory outside the project"
+    return None
+
+
+def _irreversible(command, trace, root):
+    """-> ("block", reason) when the walk found a known violation inside text v3 left unresolved;
+    ("irreversible", why) when the command could do something an undo point cannot take back; None when
+    every effect it shows is inside what the undo point restores."""
+    for item in trace:
+        if item[0] == "block":
+            return "block", item[1]
+    cache = []
+
+    def named():
+        if not cache:
+            try:
+                pl = _undo_module().plan(command, root)
+                cache.append({v for k, v in pl["effects"] if k == "path" and v})
+            except Exception:
+                cache.append(set())
+        return cache[0]
+    for item in trace:
+        kind = item[0]
+        if kind == "ask":
+            if not _RECOVERABLE_ASK.match(item[1]):
+                return "irreversible", ("the part it could not read is not a kind an undo point covers (" +
+                                        item[1][len(FAIL):].split(". ")[0][:160] + ")")
+        elif kind == "opaque":
+            return "irreversible", item[1]
+        elif kind == "cmd":
+            why = _cmd_effect(item[1], item[2], root, named)
+            if why:
+                return "irreversible", why
+        elif kind == "redir":
+            for op, tgt in item[1]:
+                if op in (">", ">>", ">|", "&>", "&>>", "<>") and not re.match(r"^&?\d*-?$", tgt or "x"):
+                    why = _target_why("a redirection", tgt, item[2], root, named)
+                    if why:
+                        return "irreversible", why
+        elif kind == "code":
+            why = _code_effect(item[1], item[2], item[3], root, named)
+            if why:
+                return "irreversible", why
+    return None
+
+
+def _model_judge(command, model):
+    """Optional (AGENT_GUARD_JUDGE=haiku|sonnet): ask a Claude model about one command that v8 would deny as
+    irreversible. -> "stop", "allow", or None on any error, timeout (30 s) or unclear answer."""
+    import subprocess
+    prompt = (POLICY_TEXT + "\n\nThe command, between the markers:\n<<<COMMAND\n" + command + "\nCOMMAND>>>\n\n"
+              "Answer with exactly one word: stop or allow.")
+    try:
+        p = subprocess.run(["claude", "-p", "--model", model, "--setting-sources", "project", "--tools", "",
+                            "--permission-prompts", "none", "--output-format", "json", prompt],
+                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+        if p.returncode != 0:
+            return None
+        out = json.loads(p.stdout)
+        if out.get("is_error"):
+            return None
+        words = re.findall(r"\b(stop|allow)\b", str(out.get("result", "")).lower())
+        return words[0] if len(set(words)) == 1 else None
+    except Exception:
+        return None
+
+
 def decide_full(command):
-    """-> dict(verdict "deny"|"allow", origin "block"|"fail_closed"|None, v3 verdict, shape, redirect,
-    alternatives, reason). reason is what the hook prints: the v3 reason without its ask tails, then
-    DO THIS INSTEAD and the redirect."""
-    v3, why = _decide3(_echo_words(command))
+    """-> dict(verdict "deny"|"allow", origin, v3 verdict, shape, redirect, alternatives, reason, note).
+    origin: "block" (a v3 block, or a known violation inside text v3 left unresolved), "irreversible" (a v3
+    fail-closed stop that undo cannot take back), "recoverable" (a v3 fail-closed stop allowed on an undo
+    point; "fallback" carries v7's deny for when no undo point can be taken), "judged" (an irreversible one
+    the optional model judge allowed), or None (a plain allow). reason is what the hook prints on a deny:
+    the reason, then DO THIS INSTEAD and the redirect."""
+    global _TRACE
+    _TRACE = []
+    try:
+        v3, why = _decide3(_echo_words(command))
+        trace = _TRACE
+    finally:
+        _TRACE = None
     if v3 == "allow":
         return {"verdict": "allow", "origin": None, "v3": v3, "shape": None, "redirect": "",
-                "alternatives": [], "reason": ""}
-    core = _core_reason(why)
+                "alternatives": [], "reason": "", "note": ""}
+    core = _core_reason(why).replace(FRESH, "")
+    if v3 == "block":
+        shape, text = redirect_for(core)
+        return {"verdict": "deny", "origin": "block", "v3": v3, "shape": shape, "redirect": text,
+                "alternatives": alternatives(text), "reason": core.rstrip() + REDIRECT_MARK + text, "note": ""}
+    try:
+        irr = _irreversible(command, trace, _root())
+    except Exception as exc:
+        irr = ("irreversible", "the version 8 check failed (%s)" % type(exc).__name__)
+    if irr and irr[0] == "block":
+        bcore = _core_reason(irr[1]).replace(FRESH, "")
+        shape, text = redirect_for(bcore)
+        return {"verdict": "deny", "origin": "block", "v3": v3, "shape": shape, "redirect": text,
+                "alternatives": alternatives(text), "reason": bcore.rstrip() + REDIRECT_MARK + text, "note": ""}
     shape, text = redirect_for(core)
-    return {"verdict": "deny", "origin": "block" if v3 == "block" else "fail_closed", "v3": v3,
-            "shape": shape, "redirect": text, "alternatives": alternatives(text),
-            "reason": core.rstrip() + REDIRECT_MARK + text}
+    fallback = {"shape": shape, "redirect": text, "alternatives": alternatives(text),
+                "reason": core.rstrip() + " Version 8 lets this run only on an undo point, and none could be "
+                          "taken here." + REDIRECT_MARK + text}
+    if irr is None:
+        return {"verdict": "allow", "origin": "recoverable", "v3": v3, "shape": None, "redirect": "",
+                "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": core, "fallback": fallback}
+    extra = ""
+    judge = os.environ.get("AGENT_GUARD_JUDGE", "")
+    if judge in ("haiku", "sonnet"):
+        verdict = _model_judge(command, judge)
+        if verdict == "allow":
+            return {"verdict": "allow", "origin": "judged", "v3": v3, "shape": None, "redirect": "",
+                    "alternatives": [], "reason": "", "note": RECOVER_NOTE + " (the %s judge allowed it)" % judge,
+                    "unknown": core, "irreversible": irr[1], "fallback": fallback}
+        extra = (" The %s judge said stop." % judge if verdict == "stop" else
+                 " The %s judge gave no usable answer (an error, a timeout or an unclear reply)." % judge)
+    reason = (core.rstrip() + " Version 8 does not let it run on an undo point: " + irr[1].replace(FRESH, "") +
+              "." + extra + REDIRECT_MARK + text)
+    return {"verdict": "deny", "origin": "irreversible", "v3": v3, "shape": shape, "redirect": text,
+            "alternatives": alternatives(text), "reason": reason, "note": "", "irreversible": irr[1]}
 
 
 def decide(command):
-    """Return ("block" | "allow", reason). Versions 4 and 5 never return "ask": every stop is a block
-    whose reason ends with a redirect the agent can follow."""
+    """Return ("block" | "allow", reason). Versions 4 to 8 never return "ask": every stop is a block
+    whose reason ends with a redirect the agent can follow. A version 8 recoverable allow is an allow."""
     d = decide_full(command)
     return ("block", d["reason"]) if d["verdict"] == "deny" else ("allow", "")
 
 
-def _undo_hook(command, payload):
+def _undo_hook(command, payload, need=False):
     """On an allow: let undo.py snapshot the repo at the hook's cwd if the command could change it.
     Off when AGENT_GUARD_UNDO=0. Only the payload's cwd or AGENT_GUARD_UNDO_REPO picks the repo,
-    never a fallback, so a run with neither snapshots nothing. Returns a message on failure."""
+    never a fallback, so a run with neither snapshots nothing. -> (repo snapshot ids, a message on failure).
+    need=True (a version 8 recoverable allow): a repo snapshot is taken even when the plan reads the
+    command as read-only, and its absence is reported."""
     if os.environ.get("AGENT_GUARD_UNDO", "1") == "0":
-        return None
+        return [], "AGENT_GUARD_UNDO=0 turns the undo layer off"
     cwd = (payload.get("cwd") if isinstance(payload, dict) else None) or os.environ.get("AGENT_GUARD_UNDO_REPO")
     if not cwd:
-        return None
+        return [], "the hook input names no cwd"
     try:
-        here = os.path.dirname(os.path.abspath(__file__))
-        if here not in sys.path:
-            sys.path.insert(0, here)
-        import undo
-        undo.pre_tool_use(command, cwd)
-        return None
+        undo = _undo_module()
+        ids, _ = undo.pre_tool_use(command, cwd)
+        repo_ids = [i for i in ids if i and not str(i).startswith("files:")]
+        if need and not repo_ids:
+            top = undo._toplevel(cwd)
+            if not top:
+                return [], "the hook's cwd is not inside a git repo"
+            repo_ids = [undo.snapshot(top, label=command)]
+        return repo_ids, None
     except Exception as exc:
-        return ("UNDO SNAPSHOT FAILED (%s: %s). This command runs WITHOUT an undo point."
-                % (type(exc).__name__, str(exc)[:160]))
+        return [], ("UNDO SNAPSHOT FAILED (%s: %s). This command runs WITHOUT an undo point."
+                    % (type(exc).__name__, str(exc)[:160]))
 
 
 def main(stdin=None):
@@ -4534,9 +5677,26 @@ def main(stdin=None):
             "permissionDecision": "deny",
             "permissionDecisionReason": d["reason"]}}))
         return 0
-    note = _undo_hook(command, payload)
-    if note:
-        print(json.dumps({"systemMessage": note}))
+    if d["origin"] in ("recoverable", "judged"):
+        ids, err = _undo_hook(command, payload, need=True)
+        if not ids:
+            fb = d["fallback"]
+            reason = fb["reason"].replace(" none could be taken here.", " none could be taken here (%s)." % err)
+            print(json.dumps({"hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason}}))
+            return 0
+        undo_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "undo.py")
+        note = ("agent-guard: allowed; an undo point was taken: python3 %s restore %s (the guard could not read "
+                "every part of this command, and nothing it shows reaches past what that point restores)"
+                % (undo_py, ids[0]))
+        print(json.dumps({"systemMessage": note,
+                          "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": note}}))
+        return 0
+    _, err = _undo_hook(command, payload)
+    if err and not err.startswith(("AGENT_GUARD_UNDO=0", "the hook input")):
+        print(json.dumps({"systemMessage": err}))
     return 0
 
 

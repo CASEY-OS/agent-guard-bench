@@ -92,7 +92,11 @@ def run_destructive(repo, cmd):
     argv = ["/bin/bash", "-c", cmd]
     if JAIL:
         argv = JAIL + argv
-    return subprocess.run(argv, cwd=rp, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+    try:                                    # stdin closed and a time limit: a blind command may read or hang
+        return subprocess.run(argv, cwd=rp, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, timeout=120).returncode
+    except subprocess.TimeoutExpired:
+        return -9
 
 
 def run_outside(cwd, cmd):
@@ -102,8 +106,11 @@ def run_outside(cwd, cmd):
                        stderr=subprocess.PIPE)
     assert p.returncode != 0, "REFUSED: %s is inside a git repo" % rp
     RUNS.append(rp)
-    return subprocess.run(["/bin/bash", "-c", cmd], cwd=rp, env=ENV, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE).returncode
+    try:
+        return subprocess.run(["/bin/bash", "-c", cmd], cwd=rp, env=ENV, stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120).returncode
+    except subprocess.TimeoutExpired:
+        return -9
 
 
 def write(path, data, mode=None):
@@ -466,7 +473,7 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     pre = capture(repo, remote, base)
     raw_pre = raw_user_state(repo)
     n0, f0 = len(snap_refs(repo)), files_ids(store)
-    direct, _ = hook(cwd, cmd, undo_on, env)
+    direct, hook_out = hook(cwd, cmd, undo_on, env)
     route, agent_cmd = "direct", cmd
     if direct == "deny":
         script = os.path.join(base, "steps", name + ".sh")
@@ -509,7 +516,9 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO):
     # v7: the files beside the repo, and the ignored files (except where a git command deletes them unnamed)
     left_files = diff(pre, after, keys=("outside",) if name in IGNORED_NOT_NAMED else ("ignored", "outside"))
     ignored_lost = diff(pre, after, keys=("ignored",))
-    return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "rc": rc, "cwd_outside_repo": away,
+    note = (hook_out.get("hookSpecificOutput", {}) or {}).get("additionalContext") or hook_out.get("systemMessage") or ""
+    return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "hook_note": note, "rc": rc,
+            "cwd_outside_repo": away,
             "snapshots_taken": taken, "files_snapshots_taken": len(fnew), "files_linked": linked,
             "snapshot_left_state_untouched": untouched, "damage": len(damage),
             "damage_sample": damage[:4], "restore_rc": restore_rc, "remote_repair": hints,
@@ -1048,9 +1057,63 @@ def holdouts():
     return 0
 
 
+def recoverable(path_in, path_out):
+    """Version 8. Every command in path_in (JSONL rows with id and command) is one guard.py allows on an undo
+    point. Each is played for real in its own throwaway repo, writes jailed to ROOT and no network (the
+    --holdouts jail), through the real hook, then `undo.py restore` runs and the state is read back by this
+    bench's own route. Verdict per row: restored (every file, ignored file, file beside the repo, index entry,
+    ref, HEAD, stash entry, state file and the bare remote equal again), no-op (it changed nothing), or
+    NOT-restored. Also: did the hook allow it directly, print its note, and take a snapshot."""
+    j = jail()
+    rows = [json.loads(l) for l in open(path_in, encoding="utf-8") if l.strip()]
+    if not j:
+        print("UNDO RECOVERABLE none run: no write jail (sandbox-exec or bwrap) on this machine")
+        json.dump({"jail": False, "rows": []}, open(path_out, "w"))
+        return 0
+    JAIL[:] = j
+    res = []
+    for row in rows:
+        try:
+            r = play("r-" + str(row["id"]), row["command"], None)
+            changed = r["damage"] or r["ignored_lost"] or r["outside_changed"]
+            if not changed:
+                verdict = "no-op"
+            elif not r["left"] and not r["left_files"] and r["restore_rc"] == 0:
+                verdict = "restored"
+            else:
+                verdict = "NOT-restored"
+            r = {k: v for k, v in r.items() if k not in ("base", "repo", "extra", "store")}
+        except Exception as e:
+            r, verdict = {"error": "%s: %s" % (type(e).__name__, e)}, "error"
+        r.update({"id": row["id"], "set": row.get("set"), "verdict": verdict})
+        res.append(r)
+        print("UNDO RECOVERABLE %s %s: %s (hook %s, note %s, snapshots %s)%s" % (
+            row.get("set"), row["id"], verdict, r.get("guard_direct"), "yes" if r.get("hook_note") else "no",
+            r.get("snapshots_taken"), (" left: " + "; ".join((r.get("left") or []) + (r.get("left_files") or []))[:200])
+            if verdict == "NOT-restored" else (" " + r.get("error", "") if verdict == "error" else "")))
+    control = None
+    first = next((r for r in res if r["verdict"] == "restored"), None)
+    if first:                                   # red is reachable: the same command with the undo layer off
+        row = next(x for x in rows if x["id"] == first["id"])
+        c = play("rc-" + str(row["id"]), row["command"], None, undo_on=False)
+        control = {"id": row["id"], "guard_direct": c["guard_direct"], "snapshots_taken": c["snapshots_taken"],
+                   "damage": c["damage"], "still_lost": bool(c["left"] or c["left_files"])}
+        print("UNDO RECOVERABLE control %s with AGENT_GUARD_UNDO=0: hook %s, snapshots %d, damage %d, still lost %s"
+              % (row["id"], c["guard_direct"], c["snapshots_taken"], c["damage"], control["still_lost"]))
+    out = json.loads(json.dumps({"jail": True, "rows": res, "control": control}).replace(ROOT, "<bench root>"))
+    with open(path_out, "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    return 0
+
+
 if __name__ == "__main__":
     try:
-        code = holdouts() if "--holdouts" in sys.argv[1:] else main()
+        if "--recoverable" in sys.argv[1:]:
+            k = sys.argv.index("--recoverable")
+            code = recoverable(sys.argv[k + 1], sys.argv[k + 2])
+        else:
+            code = holdouts() if "--holdouts" in sys.argv[1:] else main()
     finally:
         for dp, dns, fns in os.walk(ROOT):          # a scenario may leave read-only dirs (chmod -R a-w)
             for d in dns:
