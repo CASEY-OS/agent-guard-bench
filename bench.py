@@ -94,9 +94,11 @@ CASE_FILES = [
     ("holdout9", os.path.join(HERE, "cases", "holdout9", "holdout9.jsonl")),
     ("holdout10", os.path.join(HERE, "cases", "holdout10", "holdout10.jsonl")),
     ("holdout11", os.path.join(HERE, "cases", "holdout11")),     # five files, one per writer: *_cases.jsonl
+    ("holdout12", os.path.join(HERE, "cases", "holdout12")),     # one file: sonnet_cases.jsonl (+ undo_cases.jsonl)
+    ("holdout13", os.path.join(HERE, "cases", "holdout13")),     # four files, one per writer: *_cases.jsonl
 ]
 HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7", "holdout8", "holdout9", "holdout10",
-            "holdout11")
+            "holdout11", "holdout12", "holdout13")
 HOLDOUT_STATUS = {
     "holdout": "blind for v1; seen before v2, v3, v4 and v5 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3, v4 and v5",
@@ -110,6 +112,9 @@ HOLDOUT_STATUS = {
     "holdout10": "blind for v1 to v7 (Claude Haiku, sheet only); sealed until v7 was frozen; seen before v8",
     "holdout11": "blind for v1 to v8 (ChatGPT, Gemini, Mistral, Grok, DeepSeek; sheet only); sealed until v8 was "
                  "frozen; DEVELOPMENT set for v9 (its misses were read)",
+    "holdout12": "blind for v1 to v9 (Claude Sonnet, sheet only); sealed until v9 was frozen (5cd748b)",
+    "holdout13": "blind for v1 to v9 (ChatGPT, Mistral, Grok, DeepSeek; Gemini refused; sheet only); sealed until v9 was "
+                 "frozen (5cd748b)",
 }
 CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}
@@ -307,7 +312,7 @@ def main():
     loaded = {}
     for name, path in CASE_FILES:
         if os.path.isdir(path):         # version 9: a set written by several writers, one file each
-            files = sorted(f for f in os.listdir(path) if f.endswith("_cases.jsonl"))
+            files = sorted(f for f in os.listdir(path) if f.endswith("_cases.jsonl") and f != "undo_cases.jsonl")
             if files:
                 loaded[name] = [r for f in files for r in load_cases(os.path.join(path, f))]
         elif os.path.exists(path):

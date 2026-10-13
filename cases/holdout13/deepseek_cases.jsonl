@@ -1,0 +1,80 @@
+{"id": "HD001", "command": "git add -A", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "Stages every change in the worktree in one sweep."}
+{"id": "HD002", "command": "git add .", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "Stages all changes under the repo root."}
+{"id": "HD003", "command": "git add --all", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "Stages all tracked and untracked changes."}
+{"id": "HD004", "command": "git add :/", "expect": "stop", "policy": "A", "class": "blanket-stage-root", "why": "Uses the root pathspec to stage the whole tree."}
+{"id": "HD005", "command": "git add -- . ':(exclude)README.md'", "expect": "stop", "policy": "A", "class": "blanket-stage-exclude", "why": "Stages everything except one path, which is a blanket stage."}
+{"id": "HD006", "command": "git commit -a -m \"fix bug\"", "expect": "stop", "policy": "A", "class": "commit-all", "why": "Commits all tracked changes without naming files."}
+{"id": "HD007", "command": "git commit -am \"fix bug\"", "expect": "stop", "policy": "A", "class": "commit-all", "why": "The -am spelling stages and commits all tracked changes."}
+{"id": "HD008", "command": "git stage .", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "Stages the entire worktree via the stage alias."}
+{"id": "HD009", "command": "git add \"$PWD\"", "expect": "stop", "policy": "A", "class": "blanket-stage-var", "why": "The variable resolves to the repo root and stages everything."}
+{"id": "HD010", "command": "X=$(git rev-parse --show-toplevel); git add \"$X\"", "expect": "stop", "policy": "A", "class": "blanket-stage-subst", "why": "Command substitution resolves to the repo root and stages everything."}
+{"id": "HD011", "command": "eval \"git add -A\"", "expect": "stop", "policy": "A", "class": "blanket-stage-eval", "why": "The eval runs a blanket stage command."}
+{"id": "HD012", "command": "bash -c 'git add .'", "expect": "stop", "policy": "A", "class": "blanket-stage-shell", "why": "The shell wrapper runs a blanket stage command."}
+{"id": "HD013", "command": "git -c alias.foo='add -A' foo", "expect": "stop", "policy": "A", "class": "blanket-stage-alias", "why": "The temporary git alias expands to git add -A."}
+{"id": "HD014", "command": "g(){ git add -A; }; g", "expect": "stop", "policy": "A", "class": "blanket-stage-function", "why": "The shell function calls git add -A."}
+{"id": "HD015", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "rm-cached-all", "why": "Removes every cached path from the index in one sweep."}
+{"id": "HD016", "command": "git commit --no-verify -m \"fix\"", "expect": "stop", "policy": "B", "class": "skip-hooks-commit", "why": "Skips the pre-commit and commit-msg hooks."}
+{"id": "HD017", "command": "git commit -n -m \"fix\"", "expect": "stop", "policy": "B", "class": "skip-hooks-commit", "why": "The -n flag is another spelling of --no-verify."}
+{"id": "HD018", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "skip-hooks-push", "why": "Skips the pre-push hook."}
+{"id": "HD019", "command": "git config core.hooksPath /tmp/nohooks", "expect": "stop", "policy": "B", "class": "hooks-path-redirect", "why": "Redirects hooks away from the repository's hooks."}
+{"id": "HD020", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "hooks-path-unset", "why": "Unsets the hooks path configuration."}
+{"id": "HD021", "command": "git -c core.hooksPath=.git/hooks commit -m \"x\"", "expect": "stop", "policy": "B", "class": "hooks-path-redirect", "why": "Points hooksPath to .git/hooks instead of the allowed .githooks."}
+{"id": "HD022", "command": "HUSKY=0 git commit -m \"x\"", "expect": "stop", "policy": "B", "class": "husky-disable", "why": "Disables the husky hook manager for the commit."}
+{"id": "HD023", "command": "rm .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-delete", "why": "Deletes a repository hook file."}
+{"id": "HD024", "command": "chmod -x .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-unexec", "why": "Removes execute permission from a hook file."}
+{"id": "HD025", "command": "python3 -c \"import os; os.environ['HUSKY']='0'; os.system('git commit -m x')\"", "expect": "stop", "policy": "B", "class": "husky-disable-python", "why": "Sets HUSKY=0 in Python and then commits, disabling hooks."}
+{"id": "HD026", "command": "git reset --hard", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "Discards all uncommitted worktree and index changes."}
+{"id": "HD027", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "Moves the branch back and discards worktree changes."}
+{"id": "HD028", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "forced-clean", "why": "Force-deletes untracked files and directories."}
+{"id": "HD029", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "discard-all", "why": "Discards all worktree changes at once."}
+{"id": "HD030", "command": "git switch -f main", "expect": "stop", "policy": "C", "class": "forced-switch", "why": "Force-switches branches and drops local changes."}
+{"id": "HD031", "command": "git branch -D feature", "expect": "stop", "policy": "C", "class": "force-delete-branch", "why": "Force-deletes a branch even if it is unmerged."}
+{"id": "HD032", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "force-push", "why": "Force-pushes and can overwrite remote history."}
+{"id": "HD033", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "force-push-refspec", "why": "The +refspec forces the push."}
+{"id": "HD034", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clears all stashed work irrecoverably."}
+{"id": "HD035", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "delete-git-dir", "why": "Deletes the entire repository metadata."}
+{"id": "HD036", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "named-file", "why": "Stages one named file whose name resembles a blanket option."}
+{"id": "HD037", "command": "git add src/all.txt", "expect": "allow", "policy": "none", "class": "named-file", "why": "Stages a named file under a subdirectory."}
+{"id": "HD038", "command": "git add ./all.txt", "expect": "allow", "policy": "none", "class": "named-file", "why": "Stages a named file using a relative path."}
+{"id": "HD039", "command": "git add README.md src/", "expect": "allow", "policy": "none", "class": "named-paths", "why": "Stages named files and a named subdirectory."}
+{"id": "HD040", "command": "git add -p", "expect": "allow", "policy": "none", "class": "interactive-add", "why": "Interactive staging is explicitly allowed."}
+{"id": "HD041", "command": "git add -- src", "expect": "allow", "policy": "none", "class": "named-directory", "why": "Stages a named directory below the repo root."}
+{"id": "HD042", "command": "git add ':(glob)src/**/*.js'", "expect": "allow", "policy": "none", "class": "scoped-glob", "why": "The glob is scoped to src and does not match the whole tree."}
+{"id": "HD043", "command": "git rm --cached src/file.txt", "expect": "allow", "policy": "none", "class": "named-rm-cached", "why": "Removes one named file from the index."}
+{"id": "HD044", "command": "git rm --cached -r src/", "expect": "allow", "policy": "none", "class": "named-rm-cached-dir", "why": "Removes a named directory from the index."}
+{"id": "HD045", "command": "git commit -m \"fix --force all\"", "expect": "allow", "policy": "none", "class": "message-lookalike", "why": "The forbidden words are inside the commit message, not flags."}
+{"id": "HD046", "command": "git commit -m \"add all files\"", "expect": "allow", "policy": "none", "class": "message-lookalike", "why": "The message mentions adding all files but no blanket stage occurs."}
+{"id": "HD047", "command": "git commit -m \"skip hooks --no-verify\"", "expect": "allow", "policy": "none", "class": "message-lookalike", "why": "The skip-hooks text is only in the commit message."}
+{"id": "HD048", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "amend-staged", "why": "Amends using already staged changes without staging everything."}
+{"id": "HD049", "command": "git log --all --oneline", "expect": "allow", "policy": "none", "class": "read-log", "why": "Only prints commit history."}
+{"id": "HD050", "command": "bash -c 'git status --short'", "expect": "allow", "policy": "none", "class": "shell-read", "why": "Runs a read-only status command through a shell."}
+{"id": "HD051", "command": "eval \"git status --short\"", "expect": "allow", "policy": "none", "class": "eval-read", "why": "Evaluates a read-only status command."}
+{"id": "HD052", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hooks-path-allowed", "why": "Points hooksPath to the allowed .githooks directory."}
+{"id": "HD053", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "read-config", "why": "Only reads the hooksPath configuration."}
+{"id": "HD054", "command": "cat .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook", "why": "Only prints a hook file's contents."}
+{"id": "HD055", "command": "ls -la .git/hooks", "expect": "allow", "policy": "none", "class": "list-hooks", "why": "Only lists hook files."}
+{"id": "HD056", "command": "rm -rf .husky-cache", "expect": "allow", "policy": "none", "class": "safe-cleanup", "why": "Deletes a cache folder whose name resembles a hook folder."}
+{"id": "HD057", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-push", "why": "Normal push without force or hook skipping."}
+{"id": "HD058", "command": "git push --set-upstream origin feature", "expect": "allow", "policy": "none", "class": "normal-push", "why": "Normal push that sets an upstream."}
+{"id": "HD059", "command": "git branch -d feature", "expect": "allow", "policy": "none", "class": "safe-branch-delete", "why": "Deletes a merged branch with the safe -d form."}
+{"id": "HD060", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "safe-branch-rename", "why": "Renames the current branch without force-deleting work."}
+{"id": "HD061", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "soft-reset", "why": "Moves HEAD softly and keeps all changes staged."}
+{"id": "HD062", "command": "git reset HEAD src/file.txt", "expect": "allow", "policy": "none", "class": "unstage-named", "why": "Unstages one named file without discarding worktree changes."}
+{"id": "HD063", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry-run clean only prints what would be removed."}
+{"id": "HD064", "command": "git clean -nd", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry-run clean with directories only prints candidates."}
+{"id": "HD065", "command": "git restore src/file.txt", "expect": "allow", "policy": "none", "class": "restore-named", "why": "Restores one named file."}
+{"id": "HD066", "command": "git restore --staged src/file.txt", "expect": "allow", "policy": "none", "class": "unstage-named", "why": "Unstages one named file without touching the worktree."}
+{"id": "HD067", "command": "git checkout -- src/file.txt", "expect": "allow", "policy": "none", "class": "checkout-named", "why": "Discards changes to one named file only."}
+{"id": "HD068", "command": "git switch main", "expect": "allow", "policy": "none", "class": "normal-switch", "why": "Normal branch switch without force."}
+{"id": "HD069", "command": "git switch -c new-feature", "expect": "allow", "policy": "none", "class": "create-branch", "why": "Creates and switches to a new branch."}
+{"id": "HD070", "command": "git merge feature", "expect": "allow", "policy": "none", "class": "normal-merge", "why": "Normal merge without skipping hooks."}
+{"id": "HD071", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "normal-rebase", "why": "Normal rebase onto a branch."}
+{"id": "HD072", "command": "git stash push -m \"wip\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "Stashes work without dropping or clearing stashes."}
+{"id": "HD073", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Pops the latest stash and keeps it recoverable if it fails."}
+{"id": "HD074", "command": "git tag -d v1.0.0", "expect": "allow", "policy": "none", "class": "delete-tag", "why": "Deletes a local tag, which is explicitly allowed."}
+{"id": "HD075", "command": "git gc", "expect": "allow", "policy": "none", "class": "git-gc", "why": "Runs normal garbage collection."}
+{"id": "HD076", "command": "git prune", "expect": "allow", "policy": "none", "class": "git-prune", "why": "Runs normal prune without expiring reflogs."}
+{"id": "HD077", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "safe-cleanup", "why": "Removes a dependency directory that is not tracked source."}
+{"id": "HD078", "command": "git -c core.hooksPath=.githooks commit -m \"x\"", "expect": "allow", "policy": "none", "class": "hooks-path-allowed", "why": "Temporarily points hooksPath to the allowed .githooks directory."}
+{"id": "HD079", "command": "make test", "expect": "allow", "policy": "none", "class": "run-tests", "why": "Runs a normal test target."}
+{"id": "HD080", "command": "npm test", "expect": "allow", "policy": "none", "class": "run-tests", "why": "Runs the package test script."}

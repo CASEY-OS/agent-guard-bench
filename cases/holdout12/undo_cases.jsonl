@@ -1,0 +1,20 @@
+{"id": "H12U01", "command": "git reset --hard HEAD~1", "expect": "restore", "class": "reset-hard", "why": "Hard reset drops staged and unstaged work, all in scope."}
+{"id": "H12U02", "command": "git clean -fdx", "expect": "restore", "class": "clean-force", "why": "Removes untracked files (in scope) and ignored ones (out of scope)."}
+{"id": "H12U03", "command": "git stash clear", "expect": "restore", "class": "stash-clear", "why": "Stash list must come back."}
+{"id": "H12U04", "command": "git checkout -f other", "expect": "restore", "class": "checkout-force", "why": "Forced switch discards changes and moves HEAD."}
+{"id": "H12U05", "command": "git branch -D other", "expect": "restore", "class": "branch-delete", "why": "Branch ref must return."}
+{"id": "H12U06", "command": "git tag -d v1 light", "expect": "restore", "class": "tag-delete", "why": "Annotated and lightweight tags deleted."}
+{"id": "H12U07", "command": "rm -rf src/lib && rm -f link", "expect": "restore", "class": "rm-tree-symlink", "why": "Tracked directory and a symlink removed."}
+{"id": "H12U08", "command": "chmod 755 notes.txt && chmod -x bin/run.sh", "expect": "restore", "class": "mode-bits", "why": "Mode bits changed on untracked and tracked files."}
+{"id": "H12U09", "command": "rm -rf build debug.log", "expect": "residual", "class": "ignored-delete", "why": "Only ignored files are touched."}
+{"id": "H12U10", "command": "echo changed > ../outside.txt", "expect": "residual", "class": "outside-write", "why": "Write outside the repo."}
+{"id": "H12U11", "command": "mkdir -p empty_d/sub/leaf", "expect": "residual", "class": "empty-dirs", "why": "Creates only empty directories."}
+{"id": "H12U12", "command": "git stash drop", "expect": "restore", "class": "stash-drop", "why": "Drops the one saved stash."}
+{"id": "H12U13", "command": "git branch -f other main", "expect": "restore", "class": "branch-move", "why": "Moves a branch ref."}
+{"id": "H12U14", "command": "git commit -m wip", "expect": "restore", "class": "commit-staged", "why": "Commit of the staged state moves HEAD and the index."}
+{"id": "H12U15", "command": "git update-ref -d refs/tags/light", "expect": "restore", "class": "ref-delete", "why": "Plumbing delete of a tag."}
+{"id": "H12U16", "command": "git reset --hard && git clean -fd", "expect": "restore", "class": "reset-clean", "why": "Both tracked and untracked changes dropped."}
+{"id": "H12U17", "command": "echo x >> build/out.o; echo y >> debug.log", "expect": "residual", "class": "ignored-edit", "why": "Only ignored files are changed."}
+{"id": "H12U18", "command": "ln -sfn notes.txt link && mv bin/run.sh bin/run2.sh", "expect": "restore", "class": "symlink-move", "why": "Symlink retargeted and executable renamed."}
+{"id": "H12U19", "command": "git stash push -u -m more && touch -d '2001-01-01' README.md", "expect": "restore", "class": "stash-untracked", "why": "Stash push moves tracked and untracked changes into a stash entry."}
+{"id": "H12U20", "command": "touch -t 200101010000 README.md src/lib/deep.py", "expect": "residual", "class": "mtime-only", "why": "Only mtimes change."}

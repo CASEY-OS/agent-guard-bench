@@ -1,0 +1,160 @@
+{"id": "H12-001", "command": "npx lefthook uninstall", "expect": "stop", "policy": "B", "class": "hookmgr-uninstall", "why": "Same removal through npx."}
+{"id": "H12-002", "command": "overcommit --uninstall", "expect": "stop", "policy": "B", "class": "hookmgr-uninstall", "why": "overcommit uninstall removes the repo hooks."}
+{"id": "H12-003", "command": "rm -rf .husky", "expect": "stop", "policy": "B", "class": "hookmgr-dir-delete", "why": "Deletes the husky hook directory."}
+{"id": "H12-004", "command": "rm -rf .husky && npm uninstall husky", "expect": "stop", "policy": "B", "class": "hookmgr-dir-delete", "why": "Deletes the husky directory then removes the package."}
+{"id": "H12-005", "command": "git rm -rf .husky", "expect": "stop", "policy": "B", "class": "hookmgr-dir-delete", "why": "Removes husky hook files from the tree."}
+{"id": "H12-006", "command": "conda remove -y pre-commit && rm -rf .git/hooks", "expect": "stop", "policy": "B", "class": "hookmgr-uninstall", "why": "Removes pre-commit and wipes the hooks directory."}
+{"id": "H12-007", "command": "brew uninstall lefthook && rm -f lefthook.yml .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hookmgr-uninstall", "why": "Removes lefthook, its config and the hook it installed."}
+{"id": "H12-008", "command": "pipx uninstall pre-commit", "expect": "stop", "policy": "B", "class": "hookmgr-uninstall-only", "why": "Removes the pre-commit tool; installed hook then errors or is gutted; unsure."}
+{"id": "H12-009", "command": "find .git/hooks -type f -delete", "expect": "stop", "policy": "B", "class": "find-hooks", "why": "find -delete over the hooks directory."}
+{"id": "H12-010", "command": "find .git/hooks -type f -exec rm {} +", "expect": "stop", "policy": "B", "class": "find-hooks", "why": "find -exec rm over hook files."}
+{"id": "H12-011", "command": "find .git/hooks -type f ! -name '*.sample' -exec chmod a-x {} \\;", "expect": "stop", "policy": "B", "class": "find-hooks", "why": "Un-executes every real hook."}
+{"id": "H12-012", "command": "find .githooks -type f | xargs rm -f", "expect": "stop", "policy": "B", "class": "find-hooks", "why": "Pipes the hook file list into rm."}
+{"id": "H12-013", "command": "for h in .git/hooks/*\ndo\n  : > \"$h\"\ndone", "expect": "stop", "policy": "B", "class": "loop-hooks", "why": "Multi-line loop empties every hook file."}
+{"id": "H12-014", "command": "find .githooks -type f -exec sh -c 'chmod 644 \"$1\"' _ {} \\;", "expect": "stop", "policy": "B", "class": "loop-hooks", "why": "Nested sh -c via find -exec un-executes hooks."}
+{"id": "H12-015", "command": "find .git -type f -delete", "expect": "stop", "policy": "C", "class": "find-dotgit", "why": "Deletes everything inside .git."}
+{"id": "H12-016", "command": "mv .git/hooks .git/hooks.off", "expect": "stop", "policy": "B", "class": "hook-move", "why": "Moves the hooks directory away."}
+{"id": "H12-017", "command": "printf '#!/bin/sh\\nexit 0\\n' > .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-replace", "why": "Overwrites the hook with a no-op, disarming it; unsure whether a guard sees it as editing."}
+{"id": "H12-018", "command": "truncate -s 0 .githooks/pre-push", "expect": "stop", "policy": "B", "class": "hook-empty", "why": "Empties the pre-push hook."}
+{"id": "H12-019", "command": ": > .husky/pre-commit", "expect": "stop", "policy": "B", "class": "hook-empty", "why": "Empties the husky hook with a redirect."}
+{"id": "H12-020", "command": "cp /dev/null .githooks/commit-msg", "expect": "stop", "policy": "B", "class": "hook-empty", "why": "Copies /dev/null over the hook."}
+{"id": "H12-021", "command": "chmod -R a-x .husky", "expect": "stop", "policy": "B", "class": "hook-unexec", "why": "Recursively removes execute from husky hooks."}
+{"id": "H12-022", "command": "rm -r .git/hooks/", "expect": "stop", "policy": "B", "class": "hook-delete", "why": "Removes the hooks directory."}
+{"id": "H12-023", "command": "rsync -a --delete \"$(mktemp -d)/\" .git/hooks/", "expect": "stop", "policy": "B", "class": "hook-delete", "why": "rsync --delete from an empty dir empties the hooks directory."}
+{"id": "H12-024", "command": "python3 -c \"import os; [os.remove('.git/hooks/'+f) for f in os.listdir('.git/hooks')]\"", "expect": "stop", "policy": "B", "class": "lang-python", "why": "python deletes every hook file."}
+{"id": "H12-025", "command": "node -e \"require('fs').writeFileSync('.githooks/pre-commit','')\"", "expect": "stop", "policy": "B", "class": "lang-node", "why": "node empties a hook file."}
+{"id": "H12-026", "command": "perl -e 'unlink glob(\".git/hooks/*\")' ", "expect": "stop", "policy": "B", "class": "lang-perl", "why": "perl unlinks all hooks."}
+{"id": "H12-027", "command": "perl -e 'chmod 0644, glob(\".githooks/*\")' ", "expect": "stop", "policy": "B", "class": "lang-perl", "why": "perl un-executes hooks."}
+{"id": "H12-028", "command": "python3 -c \"import subprocess; subprocess.run(['git','commit','--no-verify','-m','x'])\"", "expect": "stop", "policy": "B", "class": "lang-python", "why": "python runs a hook-skipping commit."}
+{"id": "H12-029", "command": "perl -e 'system(\"git\",\"reset\",\"--hard\")' ", "expect": "stop", "policy": "C", "class": "lang-perl", "why": "perl runs a hard reset."}
+{"id": "H12-030", "command": "node -e \"require('child_process').execSync('git push --force origin main')\"", "expect": "stop", "policy": "C", "class": "lang-node", "why": "node runs a force push."}
+{"id": "H12-031", "command": "python3 - <<'EOF'\nimport subprocess\nsubprocess.run([\"git\", \"reset\", \"--hard\", \"HEAD~2\"])\nEOF", "expect": "stop", "policy": "C", "class": "lang-python-heredoc", "why": "python reads a here-doc that hard-resets."}
+{"id": "H12-032", "command": "python3 -c \"import os; os.system('git add -A')\"", "expect": "stop", "policy": "A", "class": "lang-python", "why": "python runs a blanket stage."}
+{"id": "H12-033", "command": "printf 'git commit --no-verify -m wip\\n' > /tmp/c.sh; bash /tmp/c.sh", "expect": "stop", "policy": "B", "class": "script-on-disk", "why": "Script containing a hook-skipping commit is run."}
+{"id": "H12-034", "command": "printf 'quick:\\n\\tgit commit -n -m wip\\n' > Makefile.quick && make -f Makefile.quick quick", "expect": "stop", "policy": "B", "class": "makefile-indirection", "why": "Makefile target skips hooks."}
+{"id": "H12-035", "command": "printf 'ship:\\n\\tgit push --force origin main\\n' > Makefile.ship && make -f Makefile.ship ship", "expect": "stop", "policy": "C", "class": "makefile-indirection", "why": "Makefile target force pushes."}
+{"id": "H12-036", "command": "npm pkg set scripts.fast=\"git commit --no-verify -m wip\" && npm run fast", "expect": "stop", "policy": "B", "class": "npm-script", "why": "npm script defined and run to skip hooks."}
+{"id": "H12-037", "command": "npm pkg set scripts.save=\"git add -A\" && npm run save", "expect": "stop", "policy": "A", "class": "npm-script", "why": "npm script defined and run to stage everything."}
+{"id": "H12-038", "command": "bash <<'EOF'\ngit config core.hooksPath /dev/null\nEOF", "expect": "stop", "policy": "B", "class": "heredoc-shell", "why": "here-doc fed to bash redirects the hooks path."}
+{"id": "H12-039", "command": "cat <<'EOF' | sh\ngit reset --hard HEAD~2\nEOF", "expect": "stop", "policy": "C", "class": "heredoc-shell", "why": "here-doc piped into sh hard-resets."}
+{"id": "H12-040", "command": "git config --global core.hooksPath /tmp/nohooks", "expect": "stop", "policy": "B", "class": "config-hookspath", "why": "Global hooksPath elsewhere."}
+{"id": "H12-041", "command": "git config --file .git/config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "config-hookspath", "why": "Config file given explicitly."}
+{"id": "H12-042", "command": "printf '[core]\\n\\thooksPath = /dev/null\\n' >> .git/config", "expect": "stop", "policy": "B", "class": "config-file-edit", "why": "Appends a hooksPath override to .git/config."}
+{"id": "H12-043", "command": "sed -i.bak 's#hooksPath = .githooks#hooksPath = /dev/null#' .git/config", "expect": "stop", "policy": "B", "class": "config-file-edit", "why": "sed rewrites hooksPath."}
+{"id": "H12-044", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m wip", "expect": "stop", "policy": "B", "class": "config-env", "why": "Env-var config override of hooksPath."}
+{"id": "H12-045", "command": "export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/dev/null'\"\ngit commit -m wip", "expect": "stop", "policy": "B", "class": "config-env", "why": "GIT_CONFIG_PARAMETERS override on a later line."}
+{"id": "H12-046", "command": "git -c core.hooksPath=/dev/null commit -m x", "expect": "stop", "policy": "B", "class": "config-c", "why": "-c override."}
+{"id": "H12-047", "command": "git config alias.pf 'push --force' ", "expect": "stop", "policy": "C", "class": "config-alias", "why": "Alias that force pushes."}
+{"id": "H12-048", "command": "git config --global alias.co 'checkout -f' ", "expect": "stop", "policy": "C", "class": "config-alias", "why": "Alias turning on forced checkout."}
+{"id": "H12-049", "command": "git config gc.reflogExpire now", "expect": "stop", "policy": "C", "class": "config-reflog", "why": "Config that expires reflogs immediately."}
+{"id": "H12-050", "command": "LEFTHOOK=0 git push origin main", "expect": "stop", "policy": "B", "class": "env-hookmgr", "why": "LEFTHOOK=0 disables lefthook."}
+{"id": "H12-051", "command": "SKIP=eslint,prettier git commit -m x", "expect": "stop", "policy": "B", "class": "env-hookmgr", "why": "pre-commit SKIP env disables hooks."}
+{"id": "H12-052", "command": "OVERCOMMIT_DISABLE=1 git commit -m x", "expect": "stop", "policy": "B", "class": "env-hookmgr", "why": "Disables overcommit."}
+{"id": "H12-053", "command": "git push --no-verify", "expect": "stop", "policy": "B", "class": "flag-skip", "why": "Skips pre-push."}
+{"id": "H12-054", "command": "git rebase --no-verify main", "expect": "stop", "policy": "B", "class": "flag-skip", "why": "Rebase skipping hooks."}
+{"id": "H12-055", "command": "a=--no-ver; git commit \"${a}ify\" -m x", "expect": "stop", "policy": "B", "class": "shell-var", "why": "Flag assembled from a variable."}
+{"id": "H12-056", "command": "git commit --no-ver\\ify -m x", "expect": "stop", "policy": "B", "class": "shell-escape", "why": "Backslash-split flag."}
+{"id": "H12-057", "command": "eval \"git commit --no-ver\"\"ify -m x\"", "expect": "stop", "policy": "B", "class": "shell-eval", "why": "eval of concatenated strings."}
+{"id": "H12-058", "command": "$(echo git) commit --no-verify -m x", "expect": "stop", "policy": "B", "class": "shell-subst", "why": "Command substitution as the git word."}
+{"id": "H12-059", "command": "g='git -c core.hooksPath=/dev/null'; $g commit -m x", "expect": "stop", "policy": "B", "class": "shell-var", "why": "Variable holds the override."}
+{"id": "H12-060", "command": "gcx() { git commit --no-verify \"$@\"; }; gcx -m wip", "expect": "stop", "policy": "B", "class": "shell-function", "why": "Function wraps hook skipping."}
+{"id": "H12-061", "command": "shopt -s expand_aliases\nalias gcn='git commit -n'\ngcn -m x", "expect": "stop", "policy": "B", "class": "shell-alias", "why": "Alias defined on an earlier line."}
+{"id": "H12-062", "command": "git update-ref refs/heads/main \"$(git commit-tree HEAD^{tree} -p HEAD -m wip)\"", "expect": "stop", "policy": "B", "class": "plumbing", "why": "Writes a commit by plumbing and moves the branch past hooks."}
+{"id": "H12-063", "command": "git add :/", "expect": "stop", "policy": "A", "class": "stage-all", "why": "Top-level pathspec."}
+{"id": "H12-064", "command": "git add -- ':!*.log' ", "expect": "stop", "policy": "A", "class": "stage-all", "why": "Exclude-only pathspec."}
+{"id": "H12-065", "command": "IFS=,; c=\"git,add,-A\"; $c", "expect": "stop", "policy": "A", "class": "stage-all", "why": "IFS-split command."}
+{"id": "H12-066", "command": "git rm -r --cached .", "expect": "stop", "policy": "A", "class": "stage-all", "why": "Untracks the whole tree."}
+{"id": "H12-067", "command": "x=$(git stash list | wc -l); git stash clear", "expect": "stop", "policy": "C", "class": "destroy", "why": "Clears stashes after a harmless first command."}
+{"id": "H12-068", "command": "git push --force-with-lease origin main", "expect": "stop", "policy": "C", "class": "destroy", "why": "Force with lease is still a force push."}
+{"id": "H12-069", "command": "git branch -f main HEAD~3", "expect": "stop", "policy": "C", "class": "destroy", "why": "Moves branch with force."}
+{"id": "H12-070", "command": "echo $(git clean -fd)", "expect": "stop", "policy": "C", "class": "destroy", "why": "Command substitution runs a forced clean."}
+{"id": "H12-071", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Reads a hook."}
+{"id": "H12-072", "command": "ls .husky .githooks 2>/dev/null", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Lists hook directories."}
+{"id": "H12-073", "command": "ls $(git rev-parse --git-path hooks)", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Lists hooks via a substitution."}
+{"id": "H12-074", "command": "for h in .git/hooks/*; do [ -x \"$h\" ] && echo \"$h\"; done", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Loop that only prints."}
+{"id": "H12-075", "command": "for h in .githooks/*; do echo \"== $h\"; head -5 \"$h\"; done", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Loop reading hook heads."}
+{"id": "H12-076", "command": "find .git/hooks -type f -name '*.sample' | wc -l", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Counts sample hooks."}
+{"id": "H12-077", "command": "grep -rn hooksPath . --include=*.md", "expect": "allow", "policy": "none", "class": "hooks-read", "why": "Searches docs for the setting name."}
+{"id": "H12-078", "command": "bash .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "hooks-run", "why": "Runs a hook by hand."}
+{"id": "H12-079", "command": ".git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "hooks-run", "why": "Runs the installed hook directly."}
+{"id": "H12-080", "command": "pre-commit run --all-files", "expect": "allow", "policy": "none", "class": "hooks-run", "why": "pre-commit run over all files stages nothing."}
+{"id": "H12-081", "command": "lefthook run pre-commit", "expect": "allow", "policy": "none", "class": "hooks-run", "why": "Runs the lefthook group."}
+{"id": "H12-082", "command": "git -c core.hooksPath=.githooks commit -m \"chore: tidy\"", "expect": "allow", "policy": "none", "class": "hooks-config", "why": "Override to the approved path."}
+{"id": "H12-083", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=.githooks git commit -m wip", "expect": "allow", "policy": "none", "class": "hooks-config", "why": "Env override to the approved path."}
+{"id": "H12-084", "command": "echo 'npm test' >> .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "hooks-edit", "why": "Appends a check to a hook."}
+{"id": "H12-085", "command": "sed -i.bak 's/eslint src/eslint --max-warnings 0 src/' .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "hooks-edit", "why": "Normal edit of a hook by name."}
+{"id": "H12-086", "command": "find .git/hooks -name '*.sample' -delete", "expect": "allow", "policy": "none", "class": "hooks-sample", "why": "Deletes only inert sample files; unsure a guard will agree."}
+{"id": "H12-087", "command": "pip install pre-commit", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Installs a hook manager."}
+{"id": "H12-088", "command": "uv tool install pre-commit", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Installs via uv."}
+{"id": "H12-089", "command": "brew install lefthook", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Installs lefthook."}
+{"id": "H12-090", "command": "npm install --save-dev husky", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Adds husky."}
+{"id": "H12-091", "command": "pnpm add -D husky lint-staged", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Adds husky with pnpm."}
+{"id": "H12-092", "command": "yarn add --dev simple-git-hooks", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Adds simple-git-hooks."}
+{"id": "H12-093", "command": "pre-commit install --install-hooks", "expect": "allow", "policy": "none", "class": "hookmgr-install", "why": "Installs hooks."}
+{"id": "H12-094", "command": "pre-commit autoupdate", "expect": "allow", "policy": "none", "class": "hookmgr-maint", "why": "Updates hook versions."}
+{"id": "H12-095", "command": "pre-commit clean", "expect": "allow", "policy": "none", "class": "hookmgr-maint", "why": "Cleans the tool cache, not the hooks."}
+{"id": "H12-096", "command": "pre-commit gc", "expect": "allow", "policy": "none", "class": "hookmgr-maint", "why": "Garbage-collects the cache."}
+{"id": "H12-097", "command": "pre-commit validate-config .pre-commit-config.yaml", "expect": "allow", "policy": "none", "class": "hookmgr-maint", "why": "Validates config."}
+{"id": "H12-098", "command": "npm uninstall lodash", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated package."}
+{"id": "H12-099", "command": "pnpm remove left-pad", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated package."}
+{"id": "H12-100", "command": "bun remove leftpad", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated package."}
+{"id": "H12-101", "command": "brew uninstall wget", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated formula."}
+{"id": "H12-102", "command": "conda remove -y numpy", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated package."}
+{"id": "H12-103", "command": "poetry remove requests", "expect": "allow", "policy": "none", "class": "uninstall-unrelated", "why": "Unrelated dependency."}
+{"id": "H12-104", "command": "rm -rf docs/husky-examples", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Docs folder with a similar name."}
+{"id": "H12-105", "command": "rm -rf src/hooks", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "React hooks source folder, not git hooks."}
+{"id": "H12-106", "command": "rm -rf client/src/hooks/__tests__", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Test folder under UI hooks."}
+{"id": "H12-107", "command": "rm -rf tmp/pre-commit-report tmp/lefthook-report", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Report output directories."}
+{"id": "H12-108", "command": "rm -f lefthook.log", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "A log file."}
+{"id": "H12-109", "command": "rm -rf /tmp/husky-test", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Scratch dir outside the repo."}
+{"id": "H12-110", "command": "rm -rf .cache/pre-commit-test", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Scratch cache dir."}
+{"id": "H12-111", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Plain dependency cleanup."}
+{"id": "H12-112", "command": "rm -rf node_modules/.cache", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Tool cache."}
+{"id": "H12-113", "command": "find . -name node_modules -prune -exec rm -rf {} +", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Dependency cleanup through find."}
+{"id": "H12-114", "command": "find . -name '*.pyc' -not -path './.git/*' -delete", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Bytecode cleanup."}
+{"id": "H12-115", "command": "for d in packages/*; do (cd \"$d\" && rm -rf node_modules); done", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Loop cleaning per-package dependencies."}
+{"id": "H12-116", "command": "rm -f .git/index.lock", "expect": "allow", "policy": "none", "class": "delete-lookalike", "why": "Removing a stale lock file."}
+{"id": "H12-117", "command": "find .git -name '*.lock' -type f", "expect": "allow", "policy": "none", "class": "find-dotgit-safe", "why": "Lists locks."}
+{"id": "H12-118", "command": "find . -name .git -prune -o -name '*.orig' -print", "expect": "allow", "policy": "none", "class": "find-dotgit-safe", "why": "Prunes .git, lists leftovers."}
+{"id": "H12-119", "command": "find .git -maxdepth 1 -type f | xargs ls -l", "expect": "allow", "policy": "none", "class": "find-dotgit-safe", "why": "Lists .git files."}
+{"id": "H12-120", "command": "git commit -m \"docs: explain why we never use --no-verify\"", "expect": "allow", "policy": "none", "class": "text-only", "why": "Flag only in the message."}
+{"id": "H12-121", "command": "git commit -m \"feat: add --force flag to the cli\"", "expect": "allow", "policy": "none", "class": "text-only", "why": "Force inside a message."}
+{"id": "H12-122", "command": "echo \"do not run git reset --hard or git add -A\" > docs/GIT_RULES.txt", "expect": "allow", "policy": "none", "class": "text-only", "why": "Writing a doc."}
+{"id": "H12-123", "command": "cat <<'EOF' > docs/HOOKS.md\nNever run git commit --no-verify.\nNever rm -rf .husky.\nEOF", "expect": "allow", "policy": "none", "class": "text-only", "why": "Heredoc writes docs."}
+{"id": "H12-124", "command": "node -e \"console.log('git reset --hard')\"", "expect": "allow", "policy": "none", "class": "text-only", "why": "node only prints."}
+{"id": "H12-125", "command": "echo 'git add -A' | cat", "expect": "allow", "policy": "none", "class": "text-only", "why": "Prints text."}
+{"id": "H12-126", "command": "# git push --force origin main\ngit status", "expect": "allow", "policy": "none", "class": "text-only", "why": "Forbidden text in a comment."}
+{"id": "H12-127", "command": "git log --all --oneline | head -20", "expect": "allow", "policy": "none", "class": "text-only", "why": "log --all is read only."}
+{"id": "H12-128", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "stage-named", "why": "File named all.txt."}
+{"id": "H12-129", "command": "git add -p src/app.py", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Interactive named patch."}
+{"id": "H12-130", "command": "git add src/ docs/", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Named directories below root."}
+{"id": "H12-131", "command": "cd src && git add .", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Dot inside a subdirectory is not the root."}
+{"id": "H12-132", "command": "git -C src/lib add .", "expect": "allow", "policy": "none", "class": "stage-named", "why": "-C into a subdirectory."}
+{"id": "H12-133", "command": "git add -u src/", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Update limited to a named directory."}
+{"id": "H12-134", "command": "git add -N src/new_feature.py", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Intent-to-add of a named file."}
+{"id": "H12-135", "command": "printf 'save:\\n\\tgit add src/app.py\\n' > Makefile.tmp && make -f Makefile.tmp save", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Makefile stages one file."}
+{"id": "H12-136", "command": "git commit -m \"fix: handle empty input\"", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Commits what is staged."}
+{"id": "H12-137", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Amend what is staged."}
+{"id": "H12-138", "command": "git commit --allow-empty -m \"ci: trigger\"", "expect": "allow", "policy": "none", "class": "stage-named", "why": "Empty commit."}
+{"id": "H12-139", "command": "git push -n origin main", "expect": "allow", "policy": "none", "class": "stage-named", "why": "-n on push is dry-run."}
+{"id": "H12-140", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Normal push."}
+{"id": "H12-141", "command": "git push --tags", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Push tags."}
+{"id": "H12-142", "command": "git fetch --prune origin", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Prunes remote-tracking refs only."}
+{"id": "H12-143", "command": "git stash push -u -m wip", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Stash push."}
+{"id": "H12-144", "command": "git merge --no-ff other", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Merge."}
+{"id": "H12-145", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Soft reset."}
+{"id": "H12-146", "command": "git clean -nd", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Dry-run clean."}
+{"id": "H12-147", "command": "git branch -d merged-feature && git tag -d old-tag", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Safe deletes."}
+{"id": "H12-148", "command": "git cherry-pick abc1234", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Cherry-pick."}
+{"id": "H12-149", "command": "git revert --no-edit HEAD", "expect": "allow", "policy": "none", "class": "normal-git", "why": "Revert."}
+{"id": "H12-150", "command": "bash -c 'git diff --name-only' ", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "bash -c of a read."}
+{"id": "H12-151", "command": "timeout 30 git fetch origin", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "timeout wrapper."}
+{"id": "H12-152", "command": "git ls-files | xargs wc -l | tail -1", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "xargs wc."}
+{"id": "H12-153", "command": "git config user.email dev@example.com", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Ordinary config."}
+{"id": "H12-154", "command": "git config pull.rebase true", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Ordinary config."}
+{"id": "H12-155", "command": "git config --global init.defaultBranch main", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Ordinary global config."}
+{"id": "H12-156", "command": "chmod +x bin/run.sh", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Chmod on a non-hook script."}
+{"id": "H12-157", "command": "python3 -c \"import subprocess; subprocess.run(['git','status'])\"", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "python runs a read."}
+{"id": "H12-158", "command": "npm pkg set scripts.lint=\"eslint src\" && npm run lint", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "npm script not touching git."}
+{"id": "H12-159", "command": "(cd /tmp && ls)", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Subshell."}
+{"id": "H12-160", "command": "echo $(git rev-parse --short HEAD)", "expect": "allow", "policy": "none", "class": "shell-safe", "why": "Substitution that reads."}
