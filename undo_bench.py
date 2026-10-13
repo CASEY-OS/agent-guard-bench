@@ -418,6 +418,24 @@ SCENARIOS = [
     ("outside-tilde", "rm -f ~/tilde-notes.txt", None),                 # $HOME is the bench's own, under the root
     ("files-only-rm", "rm -f outside.txt outdir/a.txt", None),          # cwd is the dir beside the repo: no repo
 ]
+def setup_v11_makefile(repo):
+    """Version 11: a Makefile the guard cannot read (one Latin-1 byte), which make runs all the same."""
+    write(os.path.join(repo, "Makefile"), b"# caf\xe9\nwipe:\n\tgit reset -q --hard\n\tgit clean -fdq\n")
+
+
+def setup_v11_workspace(repo):
+    """Version 11: an npm workspace; `npm run -w` reads the workspace's own package.json."""
+    write(os.path.join(repo, "package.json"), '{"name": "root", "private": true, "workspaces": ["pkg"]}\n')
+    write(os.path.join(repo, "pkg", "package.json"),
+          '{"name": "pkg", "version": "1.0.0", "scripts": {"wipe": "git reset -q --hard && git -C .. clean -fdq"}}\n')
+
+
+# version 11: a recipe file the guard cannot read runs on an undo point (fail recoverable)
+SCENARIOS += [
+    ("v11-make-unreadable-makefile", "make -s wipe", setup_v11_makefile),
+    ("v11-npm-workspace-script", "npm run -s wipe -w pkg", setup_v11_workspace),
+]
+
 OUTSIDE_CWD = {"files-only-rm"}           # run with cwd outside any repo; restored by `undo.py files restore --last`
 # must get one files snapshot, linked from the repo snapshot of the same hook call (files-only: no repo snapshot)
 NAMES_FILES = {n for n, _, _ in SCENARIOS if n.startswith(("outside-", "ignored-", "files-only-"))} | {
@@ -1057,6 +1075,18 @@ def holdouts():
     return 0
 
 
+def files_setup(files):
+    """Version 11: a case's "files" ({path: text, or {"hex": bytes}}) written into the scenario repo before the
+    hook sees the command, as the repo's own recipe files (untracked)."""
+    if not files:
+        return None
+
+    def setup(repo):
+        for rel, v in files.items():
+            write(os.path.join(inside(repo), rel), bytes.fromhex(v["hex"]) if isinstance(v, dict) else v)
+    return setup
+
+
 def recoverable(path_in, path_out):
     """Version 8. Every command in path_in (JSONL rows with id and command) is one guard.py allows on an undo
     point. Each is played for real in its own throwaway repo, writes jailed to ROOT and no network (the
@@ -1074,7 +1104,7 @@ def recoverable(path_in, path_out):
     res = []
     for row in rows:
         try:
-            r = play("r-" + str(row["id"]), row["command"], None)
+            r = play("r-" + str(row["id"]), row["command"], files_setup(row.get("files")))
             changed = r["damage"] or r["ignored_lost"] or r["outside_changed"]
             if not changed:
                 verdict = "no-op"
@@ -1095,7 +1125,7 @@ def recoverable(path_in, path_out):
     first = next((r for r in res if r["verdict"] == "restored"), None)
     if first:                                   # red is reachable: the same command with the undo layer off
         row = next(x for x in rows if x["id"] == first["id"])
-        c = play("rc-" + str(row["id"]), row["command"], None, undo_on=False)
+        c = play("rc-" + str(row["id"]), row["command"], files_setup(row.get("files")), undo_on=False)
         control = {"id": row["id"], "guard_direct": c["guard_direct"], "snapshots_taken": c["snapshots_taken"],
                    "damage": c["damage"], "still_lost": bool(c["left"] or c["left_files"])}
         print("UNDO RECOVERABLE control %s with AGENT_GUARD_UNDO=0: hook %s, snapshots %d, damage %d, still lost %s"

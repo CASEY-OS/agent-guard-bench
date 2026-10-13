@@ -95,8 +95,10 @@ Outside or ignored left counts what still differs beside the repo, and in its ig
 | 85 | ignored-overwrite-dotenv | `echo SECRET=changed > .env` | direct | 1 | 0 | 0 | linked | 0 | n/a |
 | 86 | outside-tilde | `rm -f ~/tilde-notes.txt` | direct | 1 | 0 | 0 | linked | 0 | n/a |
 | 87 | files-only-rm | `rm -f outside.txt outdir/a.txt` | direct | 2 | 0 | 0 | files-only | 0 | n/a |
+| 88 | v11-make-unreadable-makefile | `make -s wipe` | direct | 11 | 0 | 0 | - | 0 | n/a |
+| 89 | v11-npm-workspace-script | `npm run -s wipe -w pkg` | direct | 13 | 0 | 0 | - | 0 | n/a |
 
-Fully restored: 87 of 87.
+Fully restored: 89 of 89.
 
 ## Negative controls: snapshot skipped (AGENT_GUARD_UNDO=0)
 
@@ -158,25 +160,25 @@ Made 55 snapshots with the default bound: 50 kept, the newest ones (ok). Same st
 
 | measure | value |
 |---|---:|
-| first snapshot, clean tree (one run) | 305 ms, 56273 bytes added to .git/objects |
-| snapshot, nothing changed (dedupe) | 70 ms median |
-| snapshot, 10 files changed and 1 new | 141 ms median, 5561 bytes median |
+| first snapshot, clean tree (one run) | 256 ms, 56297 bytes added to .git/objects |
+| snapshot, nothing changed (dedupe) | 72 ms median |
+| snapshot, 10 files changed and 1 new | 150 ms median, 5559 bytes median |
 | plan() for a read-only command, in-process | 16 us |
-| whole hook, read-only command (Python start-up included) | 61 ms median |
-| whole hook, command that gets a snapshot | 223 ms median |
-| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 217 ms median |
-| whole hook, in a repo, command naming one ignored file (.env) | 220 ms median |
-| whole hook, outside any repo, files-only | 70 ms median |
+| whole hook, read-only command (Python start-up included) | 66 ms median |
+| whole hook, command that gets a snapshot | 236 ms median |
+| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 233 ms median |
+| whole hook, in a repo, command naming one ignored file (.env) | 235 ms median |
+| whole hook, outside any repo, files-only | 76 ms median |
 | files restore --last, CLI, one file | 36 ms |
-| restore --last, CLI | 426 ms |
+| restore --last, CLI | 446 ms |
 | .git/objects before any snapshot | 899860 bytes |
 
 Blind to: ignored files and files outside the repo that the command does not name (git clean -X, a script that deletes them), a target over the files bound, empty directories inside the repo, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps writing). Proven on this machine's OS and git only.
 
 ## Exit conditions
 
-- PASS: at least 30 in-scope scenarios (87)
-- PASS: every in-scope scenario fully restored (87 of 87)
+- PASS: at least 30 in-scope scenarios (89)
+- PASS: every in-scope scenario fully restored (89 of 89)
 - PASS: every scenario command really changed something (all did)
 - PASS: the hook took exactly one snapshot before each command (files-only outside a repo) (all)
 - PASS: every command naming an outside or ignored path got one files snapshot, linked from its repo snapshot (18 of 18)
@@ -189,8 +191,8 @@ Blind to: ignored files and files outside the repo that the command does not nam
 - PASS: the plan is right on every planted and clean command (0 wrong)
 - PASS: bound keeps the newest 50; dedupe stores a state once (kept 50)
 - PASS: the printed repair push put every pushed remote back (2 push scenarios)
-- PASS: every destructive command ran under the bench root (111 runs, 0 outside)
+- PASS: every destructive command ran under the bench root (113 runs, 0 outside)
 
-Runtime 124 s.
+Runtime 125 s.
 
 OVERALL: PASS

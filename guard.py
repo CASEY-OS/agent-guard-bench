@@ -112,6 +112,15 @@ hook makes its -exec, -delete or xargs act on that hook; a find with no such tes
 deletes is a data-loss deny. overcommit --uninstall, OVERCOMMIT_DISABLE, SKIP_SIMPLE_GIT_HOOKS and
 LEFTHOOK_EXCLUDE join the hook-runner switches.
 
+VERSION 11. RECIPE FILES ON DISK, FILTERED LISTINGS (holdout14's open items). Given the hook's cwd, a
+Makefile, justfile, Taskfile or package.json that already exists is read when make, just, task, npm, yarn,
+pnpm or bun runs it, and the recipe of the target that runs is judged (prerequisites and dependencies, pre and
+post scripts, make variables with literal values, includes, $(MAKE), $(shell) and != assignments). Only a hard
+block in that text stops it. A recipe file that exists but cannot be read (not UTF-8, over 1 MB, a name known
+only at run time, a workspace run, a module or included Taskfile) runs on an undo point. A git file listing
+filtered by a grep that keeps names by a pattern, or with its own pathspec below the root, may feed `xargs git
+add` or `git update-index --add --stdin`; the unfiltered listing is denied as whole-tree staging.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -2885,6 +2894,11 @@ def _peel(argv, stage, upstream, st):
                 elif _scoped_names(upstream, st.cwd) and len(inner) >= 2 and \
                         posixpath.basename(inner[0]) == "git" and inner[1] in ("add", "stage"):
                     words = [_scoped_names(upstream, st.cwd)]   # staging a named subfolder is allowed; discarding is not
+                elif _listing(upstream) and len(inner) >= 2 and posixpath.basename(inner[0]) == "git" and \
+                        inner[1] in ("add", "stage") and upstream[0]["argv"][1] not in ("branch", "tag"):
+                    # version 11 (holdout14 H14-106): names a grep picked by pattern are named files; the
+                    # unfiltered listing is every changed file, the whole tree
+                    words = ["listed-file"] if _listing_filtered(upstream, st.cwd, st.root) else [LISTED_ALL]
                 elif _listing(upstream):
                     words = ["n" + Q]   # names git listed: one name per word, never a flag (version 5)
                 if words is None and upstream[0]["argv"] and posixpath.basename(upstream[0]["argv"][0]) == "find" \
@@ -3510,6 +3524,10 @@ def _judge(env, argv, stage, upstream, st):
         elif code:
             st.run(code)
         return None
+    if b == "bun":                              # version 11: bun runs package.json scripts as well as code
+        why = _write_then_run(b, args, st)
+        if why:
+            return why
     if _INTERP.match(b):
         code = None
         if b in ("awk", "gawk", "mawk", "nawk"):
@@ -3562,6 +3580,8 @@ TASKFILES = ("Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml", "
 LIFECYCLE = ("preinstall", "install", "postinstall", "prepublish", "preprepare", "prepare", "postprepare")
 NPM_DIRECT = {"test": "test", "t": "test", "tst": "test", "start": "start", "stop": "stop", "restart": "restart"}
 HOOK_SCRIPTS = ("prepare", "postinstall", "preinstall", "install")
+BUN_OWN = {"install", "i", "add", "a", "remove", "rm", "update", "x", "exec", "test", "build", "create", "init", "upgrade",
+           "pm", "link", "unlink", "outdated", "publish", "patch", "why", "audit", "info", "repl", "run"}   # version 11
 
 
 def _recipe_lines(kind, text):
@@ -3587,6 +3607,583 @@ def _recipe_lines(kind, text):
                 v = v[1:-1]
             out.append(v)
     return [l for l in out if l.strip()]
+
+
+# =====================================================================================
+# VERSION 11 (holdout14 open items res-70, res-71; H14-106)
+# 1. A Makefile, justfile, Taskfile or package.json that is ALREADY on disk is read at hook time, from the
+#    hook's own cwd (the payload's "cwd"), and the recipe of the target that runs is judged: its
+#    prerequisites or dependencies, pre and post scripts, make variables with literal values, $(MAKE) and
+#    $(shell ...). Only a hard block in that text stops the command, as in version 10: recipe templates
+#    and variables are not a reason to stop, so ordinary make and npm use runs as before. A recipe file
+#    that exists but cannot be read (not UTF-8, over 1 MB, a dynamic -f, an include the guard cannot
+#    name, a workspace or module run) puts the command on an undo point (fail recoverable). With no cwd
+#    (decide(command) alone, the string benches) nothing is read from disk.
+# 2. A git file listing piped through a grep that keeps names by a pattern that names something, or a
+#    listing with its own pathspec below the root, and handed to `xargs git add` (or `git update-index
+#    --add --stdin`) stages by name: allowed. The unfiltered listing is whole-tree staging: a hard block.
+# =====================================================================================
+_DISK = [None]              # the hook's cwd while one decision runs; None: read nothing from disk
+MAX_RECIPE_BYTES = 1 << 20
+MAX_RECIPE_LINES = 128
+RECIPE_UNREAD = "a recipe file the guard cannot read"
+LISTED_ALL = "\x07"         # version 11: xargs hands git add every name an unfiltered git listing prints
+
+
+def _disk_path(a, root):
+    """The real path of a, a path the walk computed against the pinned root. The walk starts at the root and the
+    shell starts at the hook's cwd, so a path below the root moves to the same place below that cwd."""
+    base = _DISK[0]
+    if not base or not a:
+        return None
+    r = posixpath.normpath(root or "/")
+    if a == r or a.startswith(r.rstrip("/") + "/"):
+        return posixpath.normpath(posixpath.join(base, posixpath.relpath(a, r)))
+    return a
+
+
+def _walk_path(real, root):
+    """The inverse of _disk_path: a real path as the walk names it."""
+    base = posixpath.normpath(_DISK[0] or "/")
+    if real == base or real.startswith(base.rstrip("/") + "/"):
+        return posixpath.normpath(posixpath.join(root or "/", posixpath.relpath(real, base)))
+    return real
+
+
+def _disk_read(path):
+    """-> (text, None); (None, None) when there is no such file; (None, why) when it exists and cannot be read."""
+    name = posixpath.basename(path)
+    try:
+        s = os.stat(path)
+    except (FileNotFoundError, NotADirectoryError):
+        return None, None
+    except OSError as exc:
+        return None, "%s: %s" % (name, exc.strerror or type(exc).__name__)
+    if not os.path.isfile(path):
+        return None, "%s is not a regular file" % name
+    if s.st_size > MAX_RECIPE_BYTES:
+        return None, "%s is over %d bytes" % (name, MAX_RECIPE_BYTES)
+    try:
+        with open(path, "rb") as fh:
+            return fh.read().decode("utf-8"), None
+    except UnicodeDecodeError:
+        return None, "%s is not UTF-8 text" % name
+    except OSError as exc:
+        return None, "%s: %s" % (name, exc.strerror or type(exc).__name__)
+
+
+def _disk_find(st, cwd, names, upward):
+    """The first of names on disk in cwd (and, upward, in each parent, as just, task and npm look).
+    -> (the walk's dir, text, why); (None, None, None) when there is none."""
+    real = _disk_path(cwd, st.root)
+    n = 0
+    while real and n < 64:
+        n += 1
+        for nm in names:
+            txt, why = _disk_read(posixpath.join(real, nm))
+            if txt is not None or why:
+                return _walk_path(real, st.root), txt, why
+        if not upward or real == "/":
+            break
+        real = posixpath.dirname(real)
+    return None, None, None
+
+
+def _mk_expand(s, mvars, auto=None, depth=0):
+    """Make variables with known values; $(shell x) becomes $(x), which the shell reads as the same command."""
+    s = s.replace("$$", "\x00")
+    for _ in range(10):
+        new = re.sub(r"\$\(shell\s+", "$(", s)
+        if auto:
+            new = re.sub(r"\$([@<^*?+])", lambda m: auto.get(m.group(1), m.group(0)), new)
+        new = re.sub(r"\$[({]([A-Za-z_][\w.-]*)[)}]",
+                     lambda m: mvars[m.group(1)] if isinstance(mvars.get(m.group(1)), str) else m.group(0), new)
+        if new == s:
+            break
+        s = new
+    return s.replace("\x00", "$")
+
+
+_MK_ASSIGN = re.compile(r"^(?:(?:export|override|private)\s+)*([A-Za-z_.][\w.-]*)\s*(\?=|:::=|::=|:=|\+=|!=|=)\s*(.*)$")
+_MK_RULE = re.compile(r"^([^\s:=#][^:=#]*?)\s*(::?)(?!=)\s*(.*)$")
+_MK_INCLUDE = re.compile(r"^(-?include|sinclude)\s+(.*)$")
+_MK_DIRECTIVE = re.compile(r"^(?:ifeq|ifneq|ifdef|ifndef|else|endif|export|unexport|vpath|undefine)\b")
+
+
+def _make_read(st, mdir, text, mk, depth=0):
+    """Parse one makefile into mk: rules {target: [prereqs, recipe lines]}, vars, order, parse-time commands."""
+    text = re.sub(r"\\\n[ \t]*", " ", text)
+    cur, in_define = [], False
+    for line in text.split("\n"):
+        if in_define:
+            if re.match(r"^\s*endef\b", line):
+                in_define = False
+            continue
+        if line.startswith("\t") and cur:
+            body = re.sub(r"^\t[@+\-\s]*", "", line)
+            if body.strip():
+                for t in cur:
+                    mk["rules"][t][1].append(body)
+            continue
+        s = line.split("#", 1)[0].strip()
+        if not s:
+            continue
+        if re.match(r"^define\b", s):
+            in_define, cur = True, []
+            continue
+        m = _MK_INCLUDE.match(s)
+        if m:
+            for nm in _mk_expand(m.group(2), mk["vars"]).split():
+                if "$" in nm or depth >= 4:
+                    return "an include the guard cannot name (%s)" % nm
+                a = _abs(nm, mdir)
+                txt, why = _disk_read(_disk_path(a, st.root)) if a else (None, "an include path")
+                if why:
+                    return why
+                if txt is not None:
+                    why = _make_read(st, mdir, txt, mk, depth + 1)
+                    if why:
+                        return why
+            cur = []
+            continue
+        m = _MK_ASSIGN.match(s)
+        if m:
+            name, op, val = m.groups()
+            if op == "!=":
+                mk["parse"].append(val)             # make runs it on every read of this file
+                mk["vars"][name] = None
+            else:
+                if op in (":=", "::=", ":::=") and "$(shell" in val:
+                    mk["parse"].append(_mk_expand(val, mk["vars"]))
+                if op == "+=" and isinstance(mk["vars"].get(name), str):
+                    val = mk["vars"][name] + " " + val
+                if op != "?=" or name not in mk["vars"]:
+                    mk["vars"][name] = val
+            cur = []
+            continue
+        if s.startswith("$(shell") or s.startswith("$(eval"):
+            mk["parse"].append(_mk_expand(s, mk["vars"]))
+            continue
+        m = _MK_RULE.match(s)
+        if m:
+            rest = m.group(3)
+            if _MK_ASSIGN.match(rest):
+                cur = []                            # a target-specific variable
+                continue
+            pre, _, inline = rest.partition(";")
+            targets = _mk_expand(m.group(1), mk["vars"]).split()
+            for t in targets:
+                r = mk["rules"].setdefault(t, [[], []])
+                r[0].extend(p for p in pre.split() if p != "|")
+                if inline.strip():
+                    r[1].append(inline.strip())
+                if t not in mk["order"]:
+                    mk["order"].append(t)
+            cur = targets
+            continue
+        if _MK_DIRECTIVE.match(s):
+            continue
+        cur = []
+    return None
+
+
+def _make_goal_lines(mk, goals):
+    """The recipe lines make runs for these goals, prerequisites first-found, pattern rules matched."""
+    rules, mvars = mk["rules"], mk["vars"]
+    if not goals:
+        dg = mvars.get(".DEFAULT_GOAL")
+        goals = [dg.strip()] if isinstance(dg, str) and dg.strip() else \
+            [t for t in mk["order"] if not t.startswith(".") and "%" not in t][:1]
+    lines = [l for l in mk["parse"]]
+    todo, seen = list(goals), set()
+    while todo and len(seen) < 64:
+        t = todo.pop(0)
+        if t in seen:
+            continue
+        seen.add(t)
+        hits = []
+        if t in rules:
+            hits.append((rules[t], ""))
+        else:
+            for pat, r in rules.items():
+                if "%" in pat and r[1]:
+                    rx = "^" + re.escape(pat).replace("%", "(.+)", 1) + "$"
+                    m = re.match(rx, t)
+                    if m:
+                        hits.append((r, m.group(1)))
+                        break
+        for (pre, body), stem in hits:
+            pre = [p.replace("%", stem) for p in _mk_expand(" ".join(pre), mvars).split()]
+            todo.extend(pre)
+            auto = {"@": t, "<": pre[0] if pre else "", "^": " ".join(pre), "+": " ".join(pre), "?": " ".join(pre),
+                    "*": stem}
+            lines.extend(_mk_expand(b, mvars, auto) for b in body)
+    return lines
+
+
+def _just_read(st, jdir, text, jf, depth=0):
+    cur = None
+    for line in text.split("\n"):
+        if line[:1] in (" ", "\t"):
+            s = line.strip()
+            if cur and s and not s.startswith("#"):
+                jf["recipes"][cur][2].append(re.sub(r"^[@\-]+", "", s))
+            continue
+        s = line.strip()
+        cur = None if not s.startswith("[") else cur
+        if not s or s.startswith("#") or s.startswith("[") or s.startswith("set "):
+            continue
+        m = re.match(r"^alias\s+([\w-]+)\s*:=\s*([\w-]+)", s)
+        if m:
+            jf["aliases"][m.group(1)] = m.group(2)
+            continue
+        m = re.match(r"^import(\?)?\s+['\"]([^'\"]+)['\"]", s)
+        if m:
+            a = _abs(m.group(2), jdir)
+            txt, why = _disk_read(_disk_path(a, st.root)) if a and depth < 4 else (None, "an import too deep")
+            if why:
+                return why
+            if txt is not None:
+                why = _just_read(st, jdir, txt, jf, depth + 1)
+                if why:
+                    return why
+            continue
+        m = re.match(r"^mod(\?)?\s+([\w-]+)", s)
+        if m:
+            jf["mods"].add(m.group(2))
+            continue
+        m = re.match(r"^(?:export\s+)?([A-Za-z_][\w-]*)\s*:=\s*(.*)$", s)
+        if m:
+            v = m.group(2).strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"" and v[0] not in v[1:-1]:
+                jf["vars"][m.group(1)] = v[1:-1]
+            continue
+        m = re.match(r"^@?([A-Za-z_][\w-]*)((?:\s+[^:]*?)?)\s*:(?![=:])(.*)$", s)
+        if m:
+            deps = re.sub(r"\(\s*([\w-]+)[^)]*\)", r" \1 ", m.group(3).split("#", 1)[0])
+            jf["recipes"][m.group(1)] = (m.group(2).split(), [d for d in deps.split() if re.match(r"^[\w-]+$", d)], [])
+            jf["order"].append(m.group(1))
+            cur = m.group(1)
+    return None
+
+
+def _just_goal_lines(jf, pos):
+    rec, al = jf["recipes"], jf["aliases"]
+    goals, j = [], 0
+    while j < len(pos):
+        w = al.get(pos[j], pos[j])
+        if "::" in w or w in jf["mods"]:
+            return None
+        if w in rec:
+            goals.append(w)
+            params = rec[w][0]
+            j += 1 + (len(pos) if any(p.startswith(("+", "*")) for p in params) else len(params))
+        else:
+            j += 1
+    if not pos:
+        goals = jf["order"][:1]
+    lines, todo, seen = [], list(goals), set()
+    while todo and len(seen) < 64:
+        g = todo.pop(0)
+        if g in seen or g not in rec:
+            continue
+        seen.add(g)
+        todo.extend(rec[g][1])
+        for b in rec[g][2]:
+            lines.append(re.sub(r"\{\{\s*([A-Za-z_][\w-]*)\s*\}\}",
+                                lambda m: jf["vars"].get(m.group(1), m.group(0)), b))
+    return lines
+
+
+def _yaml_scalar(v):
+    v = v.split(" #", 1)[0].strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
+        v = v[1:-1]
+    return v
+
+
+def _task_read(text):
+    """A Taskfile's tasks: {name: (deps, cmd lines)}, and whether it includes other Taskfiles."""
+    tasks, includes = {}, False
+    lines = text.split("\n")
+    i, n = 0, len(lines)
+    while i < n:
+        if re.match(r"^includes:\s*(#.*)?$", lines[i]):
+            includes = True
+        if not re.match(r"^tasks:\s*(#.*)?$", lines[i]):
+            i += 1
+            continue
+        i += 1
+        tind, cur = None, None
+        while i < n:
+            ln = lines[i]
+            if ln.strip() and not ln.startswith((" ", "\t")):
+                break
+            if not ln.strip() or ln.strip().startswith("#"):
+                i += 1
+                continue
+            ind = len(ln) - len(ln.lstrip())
+            tind = ind if tind is None else tind
+            if ind == tind:
+                m = re.match(r"^\s*['\"]?([^'\":]+?)['\"]?\s*:\s*(.*)$", ln)
+                cur = m.group(1) if m else None
+                if cur is not None:
+                    tasks[cur] = ([], [])
+                    v = _yaml_scalar(m.group(2))
+                    if v and v not in ("|", ">", "|-", ">-"):
+                        tasks[cur][1].append(v)            # the short form: name: command
+            elif cur is not None and ind > tind:
+                tasks[cur][1].append(ln)                   # raw; read below
+            i += 1
+    out = {}
+    for name, (deps, raw) in tasks.items():
+        cmds, mode, block_ind, j = [], None, None, 0
+        if raw and not raw[0].startswith((" ", "\t")):
+            out[name] = ([], raw[:1])
+            continue
+        while j < len(raw):
+            ln = raw[j]
+            ind = len(ln) - len(ln.lstrip())
+            s = ln.strip()
+            if block_ind is not None:
+                if ind > block_ind:
+                    cmds.append(s)
+                    j += 1
+                    continue
+                block_ind = None
+            m = re.match(r"^(cmds|deps|cmd|preconditions|status|sources|generates|vars|env|desc|summary|dir|"
+                         r"silent|internal|method|run|prompt|requires|label|aliases|platforms|interactive|"
+                         r"ignore_error|set|shopt|dotenv|watch|prefix|for)\s*:\s*(.*)$", s)
+            if m and (ind <= (len(raw[0]) - len(raw[0].lstrip()))):
+                key, v = m.group(1), _yaml_scalar(m.group(2))
+                mode = key
+                if key == "cmd" and v:
+                    if v in ("|", ">", "|-", ">-"):
+                        block_ind = ind
+                    else:
+                        cmds.append(v)
+                if key in ("cmds", "deps") and v.startswith("["):
+                    for x in v.strip("[]").split(","):
+                        x = _yaml_scalar(x)
+                        if x:
+                            (deps if key == "deps" else cmds).append(x)
+                j += 1
+                continue
+            if mode in ("cmds", "deps"):
+                item = re.match(r"^-\s*(.*)$", s)
+                body = _yaml_scalar(item.group(1)) if item else s
+                km = re.match(r"^(task|cmd|defer)\s*:\s*(.*)$", body)
+                if km:
+                    v = _yaml_scalar(km.group(2))
+                    if km.group(1) == "task":
+                        deps.append(v)
+                    elif v in ("|", ">", "|-", ">-"):
+                        block_ind = ind
+                    elif v:
+                        cmds.append(v)
+                elif item and body in ("|", ">", "|-", ">-"):
+                    block_ind = ind
+                elif item and not re.match(r"^[\w.-]+\s*:", body):
+                    (deps if mode == "deps" else cmds).append(body)
+            j += 1
+        out[name] = (deps, cmds)
+    return out, includes
+
+
+def _task_goal_lines(tasks, includes, pos):
+    goals = []
+    for w in pos:
+        if w == "--":
+            break
+        if w.startswith("-") or "=" in w:
+            continue
+        if w not in tasks and ":" in w and includes:
+            return None
+        goals.append(w)
+    goals = goals or ["default"]
+    lines, todo, seen = [], list(goals), set()
+    while todo and len(seen) < 64:
+        g = todo.pop(0)
+        if g in seen or g not in tasks:
+            continue
+        seen.add(g)
+        todo.extend(tasks[g][0])
+        lines.extend(tasks[g][1])
+    return lines
+
+
+def _disk_recipes(b, args, pos, st, cwd, ffile):
+    """Version 11: what an already existing Makefile, justfile, Taskfile or package.json runs for this command.
+    -> (the walk's dir of the file, its name, recipe lines) or None; asks (fail recoverable) when it cannot read."""
+    def unread(why):
+        st.ask(RECIPE_UNREAD + " (" + why + ")")
+        return None
+    if cwd is None:
+        return unread("the directory it runs in is only known at run time")
+    if ffile is not None and not _lit3(ffile):
+        return unread("its name is only known at run time")
+    if b in ("make", "gmake", "bmake"):
+        d, txt, why = _disk_find(st, cwd, [ffile] if ffile else list(("GNUmakefile", "makefile", "Makefile")), False)
+        if why:
+            return unread(why)
+        if txt is None:
+            return None
+        mk = {"rules": {}, "vars": {"MAKE": "make", "MAKEFLAGS": "", "MFLAGS": "", "CURDIR": d, "SHELL": "/bin/sh"},
+              "order": [], "parse": []}
+        for a in args:
+            m = re.match(r"^([A-Za-z_][\w.-]*)\s*:?=(.*)$", a)
+            if m:
+                mk["vars"][m.group(1)] = m.group(2)
+        why = _make_read(st, d, txt, mk)
+        if why:
+            return unread(why)
+        for a in args:                            # command-line values override the file's
+            m = re.match(r"^([A-Za-z_][\w.-]*)\s*:?=(.*)$", a)
+            if m:
+                mk["vars"][m.group(1)] = m.group(2)
+        goals = [p for p in pos if "=" not in p]
+        return d, ffile or "Makefile", _make_goal_lines(mk, goals)
+    if b == "just":
+        d, txt, why = _disk_find(st, cwd, [ffile] if ffile else list(JUSTFILES), not ffile)
+        if why:
+            return unread(why)
+        if txt is None:
+            return None
+        jf = {"recipes": {}, "aliases": {}, "vars": {}, "order": [], "mods": set()}
+        why = _just_read(st, d, txt, jf)
+        if why:
+            return unread(why)
+        lines = _just_goal_lines(jf, [p for p in pos if "=" not in p or p in jf["recipes"]])
+        if lines is None:
+            return unread("a just module recipe")
+        return d, ffile or "justfile", lines
+    if b in ("task", "go-task"):
+        d, txt, why = _disk_find(st, cwd, [ffile] if ffile else list(TASKFILES), not ffile)
+        if why:
+            return unread(why)
+        if txt is None:
+            return None
+        tasks, includes = _task_read(txt)
+        lines = _task_goal_lines(tasks, includes, pos)
+        if lines is None:
+            return unread("a task from an included Taskfile")
+        return d, ffile or "Taskfile", lines
+    return None
+
+
+_WORKSPACE_FLAGS = re.compile(r"^(?:-w|--workspace(?:=.*)?|-ws|--workspaces(?:=.*)?|-r|--recursive|--filter(?:=.*)?|-F"
+                              r"|--include-workspace-root)$")
+
+
+def _grep_keeps_some(argv):
+    """Version 11 (holdout14 H14-106): does this grep keep only the lines that match a pattern that names
+    something? Not -v (that only excludes), not a pattern every sample path matches, not context lines."""
+    b = posixpath.basename(argv[0]) if argv else ""
+    if b not in ("grep", "egrep", "fgrep"):
+        return False
+    mode = {"grep": "G", "egrep": "E", "fgrep": "F"}[b]
+    pats, pos, flags = [], [], set()
+    args, j = argv[1:], 0
+    while j < len(args):
+        a = args[j]
+        if a == "--":
+            pos.extend(args[j + 1:])
+            break
+        if a.startswith("--"):
+            k, _, v = a.partition("=")
+            longs = {"--invert-match": "v", "--extended-regexp": "E", "--fixed-strings": "F", "--basic-regexp": "G",
+                     "--perl-regexp": "P", "--ignore-case": "i", "--line-regexp": "x", "--word-regexp": "w"}
+            if k == "--regexp":
+                if not v and j + 1 < len(args):
+                    v, j = args[j + 1], j + 1
+                pats.append(v)
+            elif k in longs:
+                flags.add(longs[k])
+            elif k not in ("--color", "--colour", "--no-messages", "--null-data", "--count", "--line-number",
+                           "--max-count", "--text", "--binary-files", "--no-filename", "--with-filename", "--null"):
+                return False
+            j += 1
+            continue
+        if a.startswith("-") and len(a) > 1:
+            c = 1
+            while c < len(a):
+                ch = a[c]
+                if ch in "ef":
+                    if ch == "f":
+                        return False
+                    v = a[c + 1:]
+                    if not v and j + 1 < len(args):
+                        v, j = args[j + 1], j + 1
+                    pats.append(v)
+                    break
+                if ch in "ABCm":
+                    if ch in "ABC":
+                        return False            # context lines pass the neighbours too
+                    if not a[c + 1:] and j + 1 < len(args):
+                        j += 1
+                    break
+                if ch in "vEFGPixw":
+                    flags.add(ch)
+                elif ch not in "snchHaIzUZqb":
+                    return False
+                c += 1
+            j += 1
+            continue
+        pos.append(a)
+        j += 1
+    if not pats:
+        pats, pos = pos[:1], pos[1:]
+    if pos or not pats or "v" in flags or not all(_lit3(p) for p in pats):
+        return False
+    mode = next((m for m in "PFEG" if m in flags), mode)
+    rxs = []
+    for p in pats:
+        if not re.search(r"[A-Za-z0-9_]{2,}", re.sub(r"\\.", "", p)):
+            return False                        # the pattern names nothing: ".", "/", "^", "$"
+        if mode == "F":
+            rx = re.escape(p)
+        elif mode == "G":
+            rx, k = "", 0
+            while k < len(p):
+                if p[k] == "\\" and k + 1 < len(p) and p[k + 1] in "+?|(){}":
+                    rx += p[k + 1]
+                    k += 2
+                    continue
+                if p[k] == "\\" and k + 1 < len(p):
+                    rx += p[k:k + 2]
+                    k += 2
+                    continue
+                rx += ("\\" + p[k]) if p[k] in "+?|(){}" else p[k]
+                k += 1
+        else:
+            rx = p
+        if "x" in flags:
+            rx = "^(?:" + rx + ")$"
+        elif "w" in flags:
+            rx = r"\b(?:" + rx + r")\b"
+        rxs.append(rx)
+    try:
+        r = re.compile("|".join("(?:%s)" % x for x in rxs), re.I if "i" in flags else 0)
+    except re.error:
+        return False
+    sample = _GLOB_SAMPLE + ("package.json", "lib/index.js", "tests/test_app.py", "Makefile", "app/models/user.rb")
+    return not all(r.search(s) for s in sample)
+
+
+def _listing_filtered(stages, cwd, root):
+    """Version 11: a git FILE listing whose names reach the next stage only through a grep that keeps some
+    names by pattern, or that names its own pathspecs below the root: the names are chosen, not the tree."""
+    a = stages[0]["argv"]
+    if len(a) < 2 or a[1] in ("branch", "tag"):
+        return False
+    if any(_grep_keeps_some(s["argv"]) for s in stages[1:]):
+        return True
+    if any(x in ("--diff-filter=U", "-u", "--unmerged") for x in a[2:]) and not any(
+            x.startswith("--diff-filter=") and x != "--diff-filter=U" for x in a[2:]):
+        return True                             # only the conflicted files: marking them resolved names them
+    specs = a[a.index("--") + 1:] if "--" in a else ([x for x in a[2:] if not x.startswith("-")] if a[1] == "ls-files" else [])
+    return bool(specs) and all(_lit3(p) and not p.startswith((":", "-")) and not _glob_all(p)
+                               and _pathspec_whole(p, cwd, root) != "whole" for p in specs)
 
 
 def _written_file(st, cwd, names):
@@ -3629,6 +4226,7 @@ def _write_then_run(b, args, st):
                 return ("hook_bypass_guard: npm pkg delete %s removes the hook manager's install step: husky and "
                         "simple-git-hooks install the git hooks from prepare" % hit + BYPASS_TAIL)
         return None
+    disk = None                                 # version 11: (the walk's dir, file name, recipe lines) read from disk
     if b in ("make", "gmake", "bmake"):
         f = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--file", "--makefile") and j + 1 < len(args)),
                  None) or next((a[2:] for a in args if a.startswith("-f") and len(a) > 2 and not a.startswith("--")),
@@ -3638,16 +4236,24 @@ def _write_then_run(b, args, st):
         a, txt = _written_file(st, cwd, [f] if f else MAKEFILES)
         if a and _lit3(txt):
             texts = _recipe_lines("make", txt)
+        elif not a and _DISK[0]:
+            disk = _disk_recipes(b, args, pos, st, cwd, f)
     elif b == "just":
         f = next((args[j + 1] for j, a in enumerate(args) if a in ("-f", "--justfile") and j + 1 < len(args)), None)
+        d = next((args[j + 1] for j, a in enumerate(args) if a in ("-d", "--working-directory") and j + 1 < len(args)), None)
         a, txt = _written_file(st, cwd, [f] if f else JUSTFILES)
         if a and _lit3(txt):
             texts = _recipe_lines("just", txt)
+        elif not a and _DISK[0]:
+            disk = _disk_recipes(b, args, pos, st, _abs(d, cwd) if d else cwd, f)
     elif b in ("task", "go-task"):
         f = next((args[j + 1] for j, a in enumerate(args) if a in ("-t", "--taskfile") and j + 1 < len(args)), None)
+        d = next((args[j + 1] for j, a in enumerate(args) if a in ("-d", "--dir") and j + 1 < len(args)), None)
         a, txt = _written_file(st, cwd, [f] if f else TASKFILES)
         if a and _lit3(txt):
             texts = _recipe_lines("task", txt)
+        elif not a and _DISK[0]:
+            disk = _disk_recipes(b, args, pos, st, _abs(d, cwd) if d else cwd, f)
     elif b in ("npm", "pnpm", "yarn", "bun"):
         names = []
         if pos[:1] in (["run"], ["run-script"], ["rum"], ["urn"]) and len(pos) >= 2:
@@ -3658,9 +4264,15 @@ def _write_then_run(b, args, st):
             names = list(LIFECYCLE)
         elif b in ("yarn", "pnpm") and pos[:1]:
             names = [pos[0]]
+        elif b == "bun" and pos[:1] and pos[0] not in BUN_OWN:
+            names = [pos[0]]                    # version 11: `bun <script>` runs the package.json script
         names = [p for n in names for p in (("pre" + n, n, "post" + n) if n not in LIFECYCLE else (n,))]
         scripts = dict(st.pkg_scripts)
-        pj, txt = _written_file(st, cwd, ["package.json"])
+        pdir = next((args[j + 1] for j, a in enumerate(args) if a in ("--prefix", "-C", "--dir", "--cwd")
+                     and j + 1 < len(args)), None) or next((a.split("=", 1)[1] for a in args
+                                                           if a.startswith(("--prefix=", "--dir=", "--cwd="))), None)
+        pcwd = _abs(pdir, cwd) if pdir else cwd
+        pj, txt = _written_file(st, pcwd, ["package.json"])
         if pj and _lit3(txt):
             try:
                 import json
@@ -3668,7 +4280,43 @@ def _write_then_run(b, args, st):
                 scripts = dict(got, **scripts) if isinstance(got, dict) else scripts
             except (ValueError, AttributeError):
                 pass
+        elif not pj and _DISK[0] and names:
+            if any(_WORKSPACE_FLAGS.match(a) for a in args) or (b == "yarn" and pos[:1] in (["workspace"], ["workspaces"])):
+                st.ask(RECIPE_UNREAD + " (a workspace run reads another package.json)")
+            elif pdir is not None and not _lit3(pdir) or pcwd is None:
+                st.ask(RECIPE_UNREAD + " (the directory it runs in is only known at run time)")
+            else:
+                d, ptxt, why = _disk_find(st, pcwd, ["package.json"], True)
+                got = None
+                if why:
+                    st.ask(RECIPE_UNREAD + " (" + why + ")")
+                elif ptxt is not None:
+                    try:
+                        import json
+                        got = json.loads(ptxt).get("scripts") or {}
+                    except (ValueError, AttributeError):
+                        st.ask(RECIPE_UNREAD + " (package.json is not valid JSON)")
+                if isinstance(got, dict):
+                    merged = dict(got, **scripts)
+                    lines = [merged[n] for n in names if isinstance(merged.get(n), str) and _lit3(merged[n])]
+                    disk = (d, "package.json", lines)
+                    scripts = {}
         texts = [scripts[n] for n in names if isinstance(scripts.get(n), str) and _lit3(scripts[n])]
+    if disk:
+        d, fname, lines = disk
+        if not lines:
+            return None
+        if st.depth + 1 > MAX_DEPTH or len(lines) > MAX_RECIPE_LINES:
+            st.ask(RECIPE_UNREAD + " (%s runs more than the guard reads: %s)" % (
+                fname, "nested too deep" if st.depth + 1 > MAX_DEPTH else "%d recipe lines" % len(lines)))
+            return None
+        pre = "" if d == st.root or d is None else "cd " + _esc_word(d) + " && "   # the recipe runs in its dir
+        for t in lines:
+            v, why = _check3(pre + t, st.root, st.depth + 1)
+            if v == "block":
+                return why + (" (in %s on disk, which this command runs)" % fname if "(found in code" not in why
+                              and "on disk, which this command runs" not in why else "")
+        return None
     if not texts or st.depth + 1 > MAX_DEPTH:
         return None
     for t in texts[:32]:
@@ -4208,6 +4856,8 @@ def _fed_rules(sub, args, cwd, stage, st):
         txt, why = answers()
         if txt is None:
             if up and _listing(up):
+                if _listing_filtered(up, cwd, root):
+                    return None                 # version 11: names a grep picked by pattern
                 return SAY + "git update-index --add --stdin of a whole file listing (stages every listed file)"
             st.ask("git update-index --stdin reads the paths to stage from " + why)
             return None
@@ -4252,6 +4902,9 @@ def _opts_and_pos(sub, args):
 def _git_rules3(sub, args, cwd, st):
     """Block reasons for the routes version 3 adds."""
     root = st.root
+    if sub in ("add", "stage") and any(LISTED_ALL in a for a in args):
+        return (SAY + "git " + sub + " of every file a git listing prints, handed over by xargs (no grep picks "
+                "names by pattern, so this is the whole changed tree)")
     tp = _opts_and_pos(sub, args)
     opts = [t for t, k in tp if k == "opt"]
     pos = [t for t, k in tp if k in ("pos", "path")]
@@ -4915,6 +5568,9 @@ REDIRECTS = [
                           r"a config file swapped in|-c include|a git -c setting the guard cannot resolve)",
      "Write the program literally, for example `git config core.editor vim` or "
      "`GIT_SSH_COMMAND=\"ssh -i path/to/key\" git fetch origin`. Do not load git config from another file."),
+    ("F-recipe-unread", r"^fail_closed: a recipe file the guard cannot read",     # version 11
+     "Read what the target runs first, with `make -n target-name` or `cat Makefile` (or `cat package.json`), "
+     "then run the git steps it shows as plain commands, one call each."),
     ("F-eval", r"^fail_closed: eval of text",
      "Do not eval generated text. Print it with `echo \"$VAR\"`, then run the printed commands as plain "
      "text, one call each."),
@@ -5197,7 +5853,8 @@ _RECOVERABLE_ASK = re.compile(
     r"git stash has a flag|the git stash action is unknown|"
     r"interpreter code (?:builds the command|builds a git argument list|that touches \.git|the guard cannot resolve)|"
     r"a shell runs -c text the guard cannot resolve|eval of text the guard cannot resolve|"
-    r"(?:a shell runs|this runs|source runs) a script this command wrote)")
+    r"(?:a shell runs|this runs|source runs) a script this command wrote|"
+    r"a recipe file the guard cannot read)")
 GIT_REMOTE_WRITE = {"push", "send-pack", "http-push", "svn", "p4", "send-email", "imap-send", "cvsexportcommit"}
 NET_ALWAYS = {"ssh", "scp", "sftp", "ftp", "lftp", "telnet", "nc", "ncat", "netcat", "socat", "mail", "mailx",
               "sendmail", "mutt", "msmtp", "osascript", "at", "batch", "kill", "pkill", "killall", "shutdown",
@@ -6013,7 +6670,18 @@ def _model_judge(command, model):
         return None
 
 
-def decide_full(command):
+def decide_full(command, cwd=None):
+    """Version 11: cwd is the hook's cwd (the payload's "cwd"). Given one, a Makefile, justfile, Taskfile or
+    package.json already on disk is read when the command runs it; without one, nothing is read from disk."""
+    old = _DISK[0]
+    _DISK[0] = posixpath.normpath(cwd) if isinstance(cwd, str) and cwd.startswith("/") else None
+    try:
+        return _decide_full(command)
+    finally:
+        _DISK[0] = old
+
+
+def _decide_full(command):
     """-> dict(verdict "deny"|"allow", origin, v3 verdict, shape, redirect, alternatives, reason, note).
     origin: "block" (a v3 block, or a known violation inside text v3 left unresolved), "irreversible" (a v3
     fail-closed stop that undo cannot take back), "recoverable" (a v3 fail-closed stop allowed on an undo
@@ -6067,10 +6735,10 @@ def decide_full(command):
             "alternatives": alternatives(text), "reason": reason, "note": "", "irreversible": irr[1]}
 
 
-def decide(command):
+def decide(command, cwd=None):
     """Return ("block" | "allow", reason). Versions 4 to 8 never return "ask": every stop is a block
     whose reason ends with a redirect the agent can follow. A version 8 recoverable allow is an allow."""
-    d = decide_full(command)
+    d = decide_full(command, cwd)
     return ("block", d["reason"]) if d["verdict"] == "deny" else ("allow", "")
 
 
@@ -6110,7 +6778,7 @@ def main(stdin=None):
         print(json.dumps({"systemMessage": "GUARD FAIL-OPEN: %s: %s. The guard did NOT evaluate "
                           "this call." % (type(exc).__name__, str(exc)[:160])}))
         return 0
-    d = decide_full(command)
+    d = decide_full(command, payload.get("cwd") if isinstance(payload, dict) else None)
     if d["verdict"] == "deny":
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",

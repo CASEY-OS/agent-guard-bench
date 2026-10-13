@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""real_traffic.py: how often v7, v8 and v9 (variants/) and v10 (guard.py) stop real agent Bash calls.
+"""real_traffic.py: how often v7 to v10 (variants/) and v11 (guard.py) stop real agent Bash calls.
 
     python3 real_traffic.py COMMANDS.json [ROOT]
 
 COMMANDS.json is a list of {"command": "..."} objects (one per real call, repeats kept), ROOT the repo root the
-guard compares paths to (default: the current directory). Nothing is run: each command is only judged.
+guard compares paths to (default: the current directory). v11 also gets ROOT as the hook's cwd, so it reads
+the Makefiles, justfiles, Taskfiles and package.json files under ROOT as they are on disk today. Nothing is run:
+each command is only judged.
 Writes results/real_traffic.json with AGGREGATE numbers only. No command text, path or reason detail is
 written, because real commands are private; shape ids and reason categories are generic. bench.py prints the
 stored file; it cannot recompute it without the commands.
@@ -39,7 +41,8 @@ def _category(reason):
 
 
 VERSIONS = (("v7", os.path.join(HERE, "variants", "guard_v7.py")), ("v8", os.path.join(HERE, "variants", "guard_v8.py")),
-            ("v9", os.path.join(HERE, "variants", "guard_v9.py")), ("v10", os.path.join(HERE, "guard.py")))
+            ("v9", os.path.join(HERE, "variants", "guard_v9.py")), ("v10", os.path.join(HERE, "variants", "guard_v10.py")),
+            ("v11", os.path.join(HERE, "guard.py")))
 CURRENT = VERSIONS[-1][0]
 
 
@@ -48,7 +51,8 @@ def work(cmd):
     for name, path in VERSIONS:
         g = _load(name, path)
         t = time.perf_counter()
-        d = g.decide_full(cmd)
+        # version 11 reads recipe files from the hook's cwd: here, ROOT as it is on disk today
+        d = g.decide_full(cmd, os.environ["AGENT_GUARD_ROOT"]) if name == CURRENT else g.decide_full(cmd)
         out["t_" + name] = time.perf_counter() - t
         out[name] = d["verdict"]
         out[name + "_origin"] = d["origin"]
