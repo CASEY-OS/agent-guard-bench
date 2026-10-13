@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""real_traffic.py: how often v7 to v11 (variants/) and v12 (guard.py) stop real agent Bash calls.
+"""real_traffic.py: how often v7 to v12 (variants/) and v13 (guard.py) stop real agent Bash calls.
 
     python3 real_traffic.py COMMANDS.json [ROOT]
 
 COMMANDS.json is a list of {"command": "..."} objects (one per real call, repeats kept), ROOT the repo root the
-guard compares paths to (default: the current directory). v11 and v12 also get ROOT as the hook's cwd, so it reads
+guard compares paths to (default: the current directory). v11 to v13 also get ROOT as the hook's cwd, so it reads
 the Makefiles, justfiles, Taskfiles and package.json files under ROOT as they are on disk today. Nothing is run:
 each command is only judged.
 Writes results/real_traffic.json with AGGREGATE numbers only. No command text, path or reason detail is
@@ -42,7 +42,8 @@ def _category(reason):
 
 VERSIONS = (("v7", os.path.join(HERE, "variants", "guard_v7.py")), ("v8", os.path.join(HERE, "variants", "guard_v8.py")),
             ("v9", os.path.join(HERE, "variants", "guard_v9.py")), ("v10", os.path.join(HERE, "variants", "guard_v10.py")),
-            ("v11", os.path.join(HERE, "variants", "guard_v11.py")), ("v12", os.path.join(HERE, "guard.py")))
+            ("v11", os.path.join(HERE, "variants", "guard_v11.py")), ("v12", os.path.join(HERE, "variants", "guard_v12.py")),
+            ("v13", os.path.join(HERE, "guard.py")))
 CURRENT = VERSIONS[-1][0]
 
 
@@ -51,8 +52,8 @@ def work(cmd):
     for name, path in VERSIONS:
         g = _load(name, path)
         t = time.perf_counter()
-        # versions 11 and 12 read recipe files from the hook's cwd: here, ROOT as it is on disk today
-        d = g.decide_full(cmd, os.environ["AGENT_GUARD_ROOT"]) if name in ("v11", "v12") else g.decide_full(cmd)
+        # versions 11 to 13 read recipe files (v13 also shell scripts) from the hook's cwd: ROOT as it is on disk today
+        d = g.decide_full(cmd, os.environ["AGENT_GUARD_ROOT"]) if name in ("v11", "v12", "v13") else g.decide_full(cmd)
         out["t_" + name] = time.perf_counter() - t
         out[name] = d["verdict"]
         out[name + "_origin"] = d["origin"]
@@ -86,7 +87,7 @@ def main(argv):
              "denied_by_shape": dict(collections.Counter(r[name + "_shape"] for r in calls if r[name] == "deny").most_common())}
         if name != "v7":
             v.update({"recoverable_allowed": rec, "recoverable_pct": pct(rec),
-                      "recoverable_by_v7_shape": dict(collections.Counter(r["v7_shape"] for r in calls
+                      "recoverable_by_v7_shape": dict(collections.Counter(r["v7_shape"] or "(v7 allowed)" for r in calls
                                                                           if r[name + "_origin"] == "recoverable").most_common()),
                       "irreversible_by_category": dict(collections.Counter(r[name + "_why"] for r in calls
                                                                            if r[name + "_origin"] == "irreversible").most_common())})

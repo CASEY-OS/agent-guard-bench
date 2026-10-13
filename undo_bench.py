@@ -498,9 +498,12 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO, no_cwd=False):
     direct, hook_out = hook(cwd, cmd, undo_on, env, no_cwd)
     route, agent_cmd = "direct", cmd
     if direct == "deny":
-        script = os.path.join(base, "steps", name + ".sh")
-        write(script, "set -e\n" + cmd + "\n")
-        agent_cmd = "bash " + script
+        # version 13: the guard now reads a shell script run by name from disk, so the script route hides the
+        # command in a Python file instead, which the guard still does not read (the README's open item); the
+        # route only gets the command past the guard so that the undo layer is what is measured
+        script = os.path.join(base, "steps", "step.py")
+        write(script, "import subprocess, sys\nsys.exit(subprocess.call(['bash', '-e', '-c', %r]))\n" % cmd)
+        agent_cmd = "python3 " + script
         dec, _ = hook(cwd, agent_cmd, undo_on, env, no_cwd)
         assert dec != "deny", "the guard denied the script route for " + name
         route = "script"

@@ -127,6 +127,15 @@ running a target or script goes on an undo point ("a recipe file the guard canno
 A dry run, a listing, or a version or help flag runs no recipe and stays a plain allow. With a cwd nothing
 changes.
 
+VERSION 13. FIND OVER .GIT, SCRIPTS RUN BY NAME, REMOTE-REACHING NAMES (holdout16's two plain allows, v12's
+open items). A find whose name or path test can match the repo's own .git (or a pack, ref, HEAD, index or
+config inside it) hands that path to -exec, xargs or -delete. A shell script run by name (bash x.sh, sh x.sh,
+./x.sh, source x.sh) that this command did not write is read from the hook's cwd: a hard block in the lines that
+run every time stops it; one only inside a function or branch puts it on an undo point. With no cwd, or a script
+that cannot be read, it runs on an undo point. An unread recipe or script whose own name says it reaches a
+remote (deploy, release, publish, push, ship, sync ...) stays a deny: an undo point cannot take back a remote.
+yarn and pnpm subcommands of their own (remove, why, list ...) are no longer read as script names.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -2426,7 +2435,8 @@ class _R(object):
             piped = None
             toks = _tokens(r) if sep == "|" else []
             if toks and posixpath.basename(toks[0]) == "find" and all(_lit3(t) for t in toks):
-                piped = _find_hook_target(toks[1:], _root()) or _find_stub(toks[1:])
+                piped = _find_hook_target(toks[1:], _root()) or _find_gitdir_target(toks[1:], _root()) or \
+                    _find_stub(toks[1:])
             out.append(r + sep)
         return "".join(out)
 
@@ -2909,7 +2919,8 @@ def _peel(argv, stage, upstream, st):
                     words = ["n" + Q]   # names git listed: one name per word, never a flag (version 5)
                 if words is None and upstream[0]["argv"] and posixpath.basename(upstream[0]["argv"][0]) == "find" \
                         and all(_lit3(x) for x in upstream[0]["argv"]):
-                    hook = _find_hook_target(upstream[0]["argv"][1:], st.cwd)   # version 9: find | xargs rm
+                    hook = _find_hook_target(upstream[0]["argv"][1:], st.cwd) or \
+                        _find_gitdir_target(upstream[0]["argv"][1:], st.cwd)   # version 9: find | xargs rm; v13: .git
                     # version 10 (blind holdout12 H12-012): find hands xargs paths under its start, the same
                     # one word -exec gets, so `find .githooks -type f | xargs rm -f` acts on the hooks
                     if not hook and all(x["argv"] and posixpath.basename(x["argv"][0]) in LIST_FILTERS
@@ -2938,7 +2949,7 @@ def _peel(argv, stage, upstream, st):
             stub = (starts[0].rstrip("/") + "/" + FOUND) if (b == "find" and len(starts) == 1
                                                             and not _dyn(starts[0])) else U
             if b == "find":             # version 9: a name or path test that reaches a hook makes -exec act on it
-                stub = _find_hook_target(rest, st.cwd) or stub
+                stub = _find_hook_target(rest, st.cwd) or _find_gitdir_target(rest, st.cwd) or stub
             j = 0
             while j < len(rest):
                 a = rest[j]
@@ -3288,6 +3299,50 @@ def _find_hook_target(args, cwd):
     return None
 
 
+# version 13 (holdout16 H16-060): the repo's own .git, as find prints it, and paths inside it a name or path
+# test can pick out (a pack, an object, a ref, HEAD, the index, the config)
+_GITDIR_RELS = ((".git", True), (".git/HEAD", False), (".git/index", False), (".git/config", False),
+                (".git/packed-refs", False), (".git/objects", True), (".git/objects/pack", True),
+                (".git/objects/pack/pack-0123456789abcdef0123456789abcdef01234567.pack", False),
+                (".git/objects/pack/pack-0123456789abcdef0123456789abcdef01234567.idx", False),
+                (".git/objects/ab", True), (".git/objects/ab/cdef0123456789abcdef0123456789abcdef01", False),
+                (".git/refs", True), (".git/refs/heads", True), (".git/refs/heads/main", False),
+                (".git/logs", True), (".git/logs/HEAD", False))
+
+
+def _find_gitdir_target(args, cwd, dirs=True):
+    """Version 13 (blind holdout16 H16-060): `find . -maxdepth 1 -name .git -exec rm -rf {} +` hands rm the
+    repo's own .git. v12 read only hook paths out of a find's name and path tests, so -exec acted on the stub.
+    -> the .git path (or a path inside it) the tests can match, spelled the way find prints it, or None. Only a
+    start at the repo root or above reaches the repo's .git; a -prune of .git before the last -o keeps it out;
+    -maxdepth, -mindepth and -type d or f are honoured. dirs=False leaves directories out: -delete cannot remove
+    a directory that holds files, so `find . -name .git -delete` fails and removes nothing."""
+    parsed = _find_parse(args)
+    if not parsed:
+        return None
+    starts, head, last, tests, typ, maxd, mind = parsed
+    if not tests:
+        return None
+    root = _root()
+    for s in starts:
+        if _dyn(s):
+            continue
+        a = _abs(s, cwd)
+        ss = s.rstrip("/") or "/"
+        if not (a is None or _is_root_or_above(a, root)) or _find_git_pruned(head, ss + "/.git"):
+            continue
+        for rel, is_dir in _GITDIR_RELS:
+            depth = rel.count("/") + 1
+            if (maxd is not None and depth > maxd) or depth < mind or (is_dir and not dirs):
+                continue
+            if (typ == "d" and not is_dir) or (typ == "f" and is_dir):
+                continue
+            full = (ss if ss != "/" else "") + "/" + rel
+            if all(_find_test_ok(t, v, full) for t, v in tests):
+                return full
+    return None
+
+
 def _find_git_reach(args, cwd):
     """Version 9: a find with no name or path test whose start is .git, or the repo root or above with .git not
     pruned, walks every file in .git: objects, refs and hooks. -> that .git path, or None. -empty is left out:
@@ -3444,6 +3499,9 @@ def _judge(env, argv, stage, upstream, st):
     args = argv[1:]
     if "/" in head and _lit3(head):
         st.script(head, "this runs")
+        why = _disk_script(st, head, False, args)       # version 13 (holdout16 H16-063)
+        if why:
+            return why
     if b == "git":
         st.up = upstream
         return _git3(env, argv, stage, st, 0)
@@ -3489,6 +3547,9 @@ def _judge(env, argv, stage, upstream, st):
         script = args[k] if k < len(args) and not stdin else None
         if script is not None and script not in ("-", "/dev/stdin", "/dev/fd/0"):
             st.script(script, "a shell runs")
+            why = _disk_script(st, script, True, args[k + 1:])  # version 13 (holdout16 H16-063)
+            if why:
+                return why
             if PSUB in script:
                 txt, why = _psub_out(script, st)
                 if txt is not None:
@@ -3521,6 +3582,7 @@ def _judge(env, argv, stage, upstream, st):
                 st.ask("source runs " + why)
         elif a0:
             st.script(a0, "source runs")
+            return _disk_script(st, a0, True, args[1:])     # version 13
         return None
     if b == "eval":
         code = " ".join(args)
@@ -3586,6 +3648,18 @@ TASKFILES = ("Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml", "
 LIFECYCLE = ("preinstall", "install", "postinstall", "prepublish", "preprepare", "prepare", "postprepare")
 NPM_DIRECT = {"test": "test", "t": "test", "tst": "test", "start": "start", "stop": "stop", "restart": "restart"}
 HOOK_SCRIPTS = ("prepare", "postinstall", "preinstall", "install")
+# version 13 (v12 open item, `yarn remove left-pad`): yarn and pnpm subcommands of their own that run no
+# package.json script. v11 and v12 read `yarn <word>` as a script name for every word. Left out on purpose,
+# because they do run scripts or code: run, test, start, install, add, upgrade, up, dedupe, import, pack,
+# publish, version, stage, patch-commit, node, create, exec, dlx, workspace(s), recursive, rebuild.
+YARN_OWN = {"remove", "rm", "uninstall", "un", "info", "why", "list", "ls", "outdated", "audit", "licenses",
+            "owner", "cache", "config", "help", "bin", "dir", "login", "logout", "search", "team", "tag",
+            "versions", "explain", "constraints", "check", "autoclean", "policies", "plugin", "set", "init",
+            "generate-lock-entry", "link", "unlink"}
+PNPM_OWN = {"remove", "rm", "uninstall", "un", "why", "list", "ls", "ll", "la", "outdated", "audit", "licenses",
+            "root", "bin", "store", "config", "c", "help", "search", "doctor", "server", "setup", "init", "fetch",
+            "view", "info", "show", "owner", "link", "ln", "unlink", "whoami", "ping", "login", "logout",
+            "env", "cache"}
 BUN_OWN = {"install", "i", "add", "a", "remove", "rm", "update", "x", "exec", "test", "build", "create", "init", "upgrade",
            "pm", "link", "unlink", "outdated", "publish", "patch", "why", "audit", "info", "repl", "run"}   # version 11
 
@@ -3649,7 +3723,131 @@ def _no_cwd_unread(st, b, args):
     k = "make" if b in ("make", "gmake", "bmake") else "task" if b in ("task", "go-task") else b
     if any(a in _INFO_FLAGS.get(k, ("-v", "--version", "-h", "--help")) for a in args):
         return
-    st.ask(RECIPE_UNREAD + " (" + NO_CWD + ")")
+    _unread_ask(st, args, RECIPE_UNREAD, NO_CWD)
+
+
+# version 13: a name that says the run reaches a remote. An undo point cannot take back a push, a deploy or a
+# publish, so an unread recipe or script with such a name is out of its reach (H15-089, `make -C . deploy`)
+REMOTE_NAME_RE = re.compile(r"^(?:deploy|deployment|release|publish|push|ship|upload|sync|mirror|promote|rollout)"
+                            r"(?:s|ed|ing)?$")
+REMOTE_NAME = ", and its name says it reaches a remote"
+SCRIPT_UNREAD = "a script file the guard cannot read"
+NO_CWD_SCRIPT = "the hook named no cwd, so the script on disk was not read"
+_NAME_FLAGS = {"-C", "--directory", "-f", "--file", "--makefile", "-I", "--include-dir", "-j", "--jobs", "-l",
+               "--load-average", "-o", "--old-file", "-W", "--what-if", "--prefix", "--dir", "--cwd", "-w",
+               "--workspace", "--filter", "-F", "-d", "--working-directory", "--justfile", "-t", "--taskfile"}
+
+
+def _remote_name(words):
+    """Version 13: the first target, script or file name in words whose own name says it reaches a remote."""
+    for a in _positionals(words, _NAME_FLAGS):
+        if "=" in a or not _lit3(a):
+            continue
+        if _pclass(a, None) == "hooks":
+            continue                            # a git hook run by path: pre-push runs before a push, it is none
+        base = posixpath.basename(a.rstrip("/")).lower()
+        base = re.sub(r"\.(?:sh|bash|zsh|ksh|dash|mk|ya?ml)$", "", base)
+        toks = re.split(r"[^a-z0-9]+", base)
+        hit = next((t for j, t in enumerate(toks) if REMOTE_NAME_RE.match(t)
+                    and (j == 0 or toks[j - 1] not in ("pre", "post", "before", "after"))), None)
+        if hit:
+            return hit
+    return None
+
+
+def _unread_ask(st, words, what, detail):
+    """Version 13: an unread recipe or script goes on an undo point, unless its name says it reaches a remote:
+    then it is out of an undo point's reach and stays a deny (fail recoverable never covers a remote)."""
+    hit = _remote_name(words)
+    st.ask(what + (REMOTE_NAME + " (" + hit + ")" if hit else "") + " (" + detail + ")")
+
+
+_SHELL_BANG = re.compile(r"^#![ \t]*(?:\S*/)?(?:env[ \t]+(?:-\S+[ \t]+)*)?(?:sh|bash|zsh|dash|ksh|ash|mksh)\b")
+
+
+SCRIPT_BRANCH = "a script file on disk can run a violation in a branch or function the guard cannot evaluate"
+_SH_OPEN = re.compile(r"^(?:if|case|for|while|until|select)\b|^(?:function\s+[\w.:-]+|[\w.:-]+\s*\(\s*\))\s*(?:\{|\(|$)|^\{(?:\s|$)")
+_SH_CLOSE = re.compile(r"^(?:fi|esac|done|\})(?:\s|;|$|\)|>|&|\|)")
+
+
+def _sh_top_level(text):
+    """Version 13: the lines of a shell script that run every time it runs: outside every function body and every
+    if, case, for, while, until or { } body. A line-based reading, so it errs toward calling a line a branch; a
+    one-line `if ...; then ...; fi` or `f() { ...; }` is a branch."""
+    out, depth = [], 0
+    for line in _strip_heredocs(re.sub(r"\\\n", " ", text)).split("\n"):
+        t = line.strip()
+        if not t or t.startswith("#"):
+            continue
+        opens = bool(_SH_OPEN.match(t))
+        closes = bool(_SH_CLOSE.match(t))
+        if opens:
+            one_line = re.search(r"(?:;|\s)(?:fi|esac|done|\})\s*(?:[;&|>].*)?$", t) is not None
+            if not one_line:
+                depth += 1
+            continue
+        if closes:
+            depth = max(0, depth - 1)
+            continue
+        if depth == 0:
+            out.append(line)
+    return "\n".join(out)
+
+
+def _quiet_check(cmd, root, depth, pos):
+    """_check3 on text from a file on disk, without adding its commands to this decision's trace: what the file
+    could do is judged here, by its blocks, not by version 8's reach rules."""
+    global _TRACE
+    saved, _TRACE = _TRACE, None
+    try:
+        return _check3(cmd, root, depth, None, pos)
+    finally:
+        _TRACE = saved
+
+
+def _disk_script(st, path, by_shell, sargs):
+    """Version 13 (blind holdout16 H16-063, residual res-22): a shell script run by name that this command did
+    not write. Given the hook's cwd, it is read from disk. A hard block in the lines that run every time (outside
+    functions and branches) stops the command; its $1, $2 are the words after it. A hard block only inside a
+    function or a branch the guard cannot evaluate puts the run on an undo point, and stays a deny when it reaches
+    a remote. A file a shell would not read as shell (a program, or a script whose #! names another interpreter)
+    is left alone when it runs by path, and so is a file that is not on disk: as written, nothing runs. With no
+    cwd, or a script that cannot be read, the run goes on an undo point; a name that says it reaches a remote
+    keeps it a deny. -> a block reason, or None."""
+    if not path or not _lit3(path) or PSUB in path:
+        return None
+    a = _abs(path, st.cwd)
+    if a is None or a in st.files:
+        return None
+    if not _DISK[0]:
+        if by_shell or not path.startswith("/") or path.endswith((".sh", ".bash", ".zsh", ".ksh")):
+            _unread_ask(st, [path], SCRIPT_UNREAD, NO_CWD_SCRIPT)
+        return None
+    txt, why = _disk_read(_disk_path(a, st.root))
+    name = posixpath.basename(path)
+    if txt is None and why is None:
+        return None                             # not on disk: as written, the shell finds nothing to run
+    if why:
+        if by_shell and "not a regular file" not in why:
+            _unread_ask(st, [path], SCRIPT_UNREAD, why)
+        return None                             # run by path: a compiled program, not a script
+    if "\x00" in txt or (not by_shell and txt.startswith("#!") and not _SHELL_BANG.match(txt)):
+        return None
+    if st.depth + 1 > MAX_DEPTH:
+        _unread_ask(st, [path], SCRIPT_UNREAD, name + " is nested too deep")
+        return None
+    pre = "" if not st.cwd or st.cwd == st.root else "cd " + _esc_word(st.cwd) + " && "
+    pos = list(sargs) if sargs and all(_lit3(x) for x in sargs) else None
+    v, w = _quiet_check(pre + _sh_top_level(txt), st.root, st.depth + 1, pos)
+    if v == "block":
+        return w + (" (in %s on disk, which this command runs)" % name if "on disk, which this command runs"
+                    not in w else "")
+    v, w = _quiet_check(pre + txt, st.root, st.depth + 1, pos)
+    if v == "block":
+        remote = re.search(r"\bpush\b|remote", w.split(". ")[0])
+        st.ask(SCRIPT_BRANCH + (", and it reaches a remote" if remote else "") + " (" + name + ": " +
+               w.split(". ")[0][:140] + ")")
+    return None
 
 
 def _disk_path(a, root):
@@ -4038,7 +4236,7 @@ def _disk_recipes(b, args, pos, st, cwd, ffile):
     """Version 11: what an already existing Makefile, justfile, Taskfile or package.json runs for this command.
     -> (the walk's dir of the file, its name, recipe lines) or None; asks (fail recoverable) when it cannot read."""
     def unread(why):
-        st.ask(RECIPE_UNREAD + " (" + why + ")")
+        _unread_ask(st, args, RECIPE_UNREAD, why)
         return None
     if cwd is None:
         return unread("the directory it runs in is only known at run time")
@@ -4290,8 +4488,8 @@ def _write_then_run(b, args, st):
             names = [NPM_DIRECT[pos[0]]]
         elif pos[:1] in (["install"], ["i"], ["ci"], ["add"]) or (b == "yarn" and not pos):
             names = list(LIFECYCLE)
-        elif b in ("yarn", "pnpm") and pos[:1]:
-            names = [pos[0]]
+        elif b in ("yarn", "pnpm") and pos[:1] and pos[0] not in (YARN_OWN if b == "yarn" else PNPM_OWN):
+            names = [pos[0]]                    # version 13: a subcommand of its own is not a script name
         elif b == "bun" and pos[:1] and pos[0] not in BUN_OWN:
             names = [pos[0]]                    # version 11: `bun <script>` runs the package.json script
         names = [p for n in names for p in (("pre" + n, n, "post" + n) if n not in LIFECYCLE else (n,))]
@@ -4310,20 +4508,20 @@ def _write_then_run(b, args, st):
                 pass
         elif not pj and _DISK[0] and names:
             if any(_WORKSPACE_FLAGS.match(a) for a in args) or (b == "yarn" and pos[:1] in (["workspace"], ["workspaces"])):
-                st.ask(RECIPE_UNREAD + " (a workspace run reads another package.json)")
+                _unread_ask(st, args, RECIPE_UNREAD, "a workspace run reads another package.json")
             elif pdir is not None and not _lit3(pdir) or pcwd is None:
-                st.ask(RECIPE_UNREAD + " (the directory it runs in is only known at run time)")
+                _unread_ask(st, args, RECIPE_UNREAD, "the directory it runs in is only known at run time")
             else:
                 d, ptxt, why = _disk_find(st, pcwd, ["package.json"], True)
                 got = None
                 if why:
-                    st.ask(RECIPE_UNREAD + " (" + why + ")")
+                    _unread_ask(st, args, RECIPE_UNREAD, why)
                 elif ptxt is not None:
                     try:
                         import json
                         got = json.loads(ptxt).get("scripts") or {}
                     except (ValueError, AttributeError):
-                        st.ask(RECIPE_UNREAD + " (package.json is not valid JSON)")
+                        _unread_ask(st, args, RECIPE_UNREAD, "package.json is not valid JSON")
                 if isinstance(got, dict):
                     merged = dict(got, **scripts)
                     lines = [merged[n] for n in names if isinstance(merged.get(n), str) and _lit3(merged[n])]
@@ -4337,7 +4535,7 @@ def _write_then_run(b, args, st):
         if not lines:
             return None
         if st.depth + 1 > MAX_DEPTH or len(lines) > MAX_RECIPE_LINES:
-            st.ask(RECIPE_UNREAD + " (%s runs more than the guard reads: %s)" % (
+            _unread_ask(st, args, RECIPE_UNREAD, "%s runs more than the guard reads: %s" % (
                 fname, "nested too deep" if st.depth + 1 > MAX_DEPTH else "%d recipe lines" % len(lines)))
             return None
         pre = "" if d == st.root or d is None else "cd " + _esc_word(d) + " && "   # the recipe runs in its dir
@@ -4594,6 +4792,9 @@ def _fs_rules(b, args, stage, st):
         if "-delete" in args:
             if not samples_only and _find_hook_target(args, cwd):     # version 9 (blind holdout11 M077)
                 return "hook_bypass_guard: find -delete removes git hooks" + BYPASS_TAIL
+            gd = _find_gitdir_target(args, cwd, dirs=False)          # version 13 (holdout16 H16-060)
+            if gd:
+                return "data_loss_guard: find -delete removes the repository's history (" + gd + ")" + LOSS_TAIL
             for s in starts:
                 c = _pclass(s, cwd)
                 if c == "hooks" and samples_only:
@@ -5601,6 +5802,9 @@ REDIRECTS = [
     ("F-recipe-unread", r"^fail_closed: a recipe file the guard cannot read",     # version 11
      "Read what the target runs first, with `make -n target-name` or `cat Makefile` (or `cat package.json`), "
      "then run the git steps it shows as plain commands, one call each."),
+    ("F-script-unread", r"^fail_closed: a script file (?:the guard cannot read|on disk can run)",     # version 13
+     "Read the script first, with `cat path/to/script.sh`, then run the git steps it shows as plain commands, "
+     "one call each."),
     ("F-eval", r"^fail_closed: eval of text",
      "Do not eval generated text. Print it with `echo \"$VAR\"`, then run the printed commands as plain "
      "text, one call each."),
@@ -5884,7 +6088,8 @@ _RECOVERABLE_ASK = re.compile(
     r"interpreter code (?:builds the command|builds a git argument list|that touches \.git|the guard cannot resolve)|"
     r"a shell runs -c text the guard cannot resolve|eval of text the guard cannot resolve|"
     r"(?:a shell runs|this runs|source runs) a script this command wrote|"
-    r"a recipe file the guard cannot read)")
+    r"(?:a recipe file|a script file) the guard cannot read(?!, and its name says it reaches a remote)|"
+    r"a script file on disk can run a violation in a branch or function the guard cannot evaluate(?!, and))")
 GIT_REMOTE_WRITE = {"push", "send-pack", "http-push", "svn", "p4", "send-email", "imap-send", "cvsexportcommit"}
 NET_ALWAYS = {"ssh", "scp", "sftp", "ftp", "lftp", "telnet", "nc", "ncat", "netcat", "socat", "mail", "mailx",
               "sendmail", "mutt", "msmtp", "osascript", "at", "batch", "kill", "pkill", "killall", "shutdown",
