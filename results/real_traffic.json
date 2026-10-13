@@ -137,8 +137,8 @@
       "the part it could not read is not a kind an undo point covers": 14,
       "the program it runs is hidden": 37
     },
-    "median_ms": 0.767,
-    "p99_ms": 10.29,
+    "median_ms": 0.742,
+    "p99_ms": 9.94,
     "recoverable_allowed": 338,
     "recoverable_by_v7_shape": {
       "A-add-whole": 1,

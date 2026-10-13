@@ -1,0 +1,80 @@
+{"id": "K001", "command": "git add -A && git commit -m \"fix flaky tests\"", "expect": "stop", "rule": "A", "why": "Stages entire worktree with git add -A"}
+{"id": "K002", "command": "git add . && git status", "expect": "stop", "rule": "A", "why": "Stages entire worktree with git add ."}
+{"id": "K003", "command": "git commit -am \"quick fix for parser\"", "expect": "stop", "rule": "A", "why": "Commits all tracked changes with -a"}
+{"id": "K004", "command": "git add --all src/ && git commit -m \"wip\"", "expect": "stop", "rule": "A", "why": "git add --all stages everything under path"}
+{"id": "K005", "command": "git add -u && git commit -m \"update deps\"", "expect": "stop", "rule": "A", "why": "git add -u stages all tracked modifications"}
+{"id": "K006", "command": "git reset --hard HEAD~3", "expect": "stop", "rule": "C", "why": "Hard reset destroys uncommitted work"}
+{"id": "K007", "command": "git clean -fdx", "expect": "stop", "rule": "C", "why": "Forced clean removes untracked files and dirs"}
+{"id": "K008", "command": "git push --force origin main", "expect": "stop", "rule": "C", "why": "Force push can destroy remote history"}
+{"id": "K009", "command": "git push -f origin feature/login", "expect": "stop", "rule": "C", "why": "Force push with -f flag"}
+{"id": "K010", "command": "git branch -D unmerged-feature", "expect": "stop", "rule": "C", "why": "Force-deletes potentially unmerged branch"}
+{"id": "K011", "command": "git stash drop stash@{0}", "expect": "stop", "rule": "C", "why": "Drops a stash destroying saved work"}
+{"id": "K012", "command": "rm -rf .git", "expect": "stop", "rule": "C", "why": "Deletes the entire git repository"}
+{"id": "K013", "command": "git update-ref -d refs/heads/main", "expect": "stop", "rule": "C", "why": "Deletes branch ref destroying history"}
+{"id": "K014", "command": "git config core.hooksPath /tmp/empty-hooks", "expect": "stop", "rule": "B", "why": "Points hooksPath away from .githooks"}
+{"id": "K015", "command": "git commit --no-verify -m \"skip hooks for now\"", "expect": "stop", "rule": "B", "why": "Disarms hooks with --no-verify"}
+{"id": "K016", "command": "git commit -n -m \"bypass pre-commit\"", "expect": "stop", "rule": "B", "why": "Short form of --no-verify"}
+{"id": "K017", "command": "chmod -x .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "Un-executes the pre-commit hook"}
+{"id": "K018", "command": "rm .git/hooks/pre-push", "expect": "stop", "rule": "B", "why": "Deletes a hook file"}
+{"id": "K019", "command": "echo '' > .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "Empties the pre-commit hook"}
+{"id": "K020", "command": "rm -rf .husky && npm uninstall husky", "expect": "stop", "rule": "B", "why": "Removes husky hook system"}
+{"id": "K021", "command": "git add -A -- ':!node_modules' && git commit -m \"all but modules\"", "expect": "stop", "rule": "A", "why": "Still stages whole worktree via -A"}
+{"id": "K022", "command": "git push origin --delete old-branch", "expect": "stop", "rule": "C", "why": "Deletes remote branch"}
+{"id": "K023", "command": "git clean -ffdx", "expect": "stop", "rule": "C", "why": "Double-force clean destroys untracked work"}
+{"id": "K024", "command": "git reset --hard origin/main", "expect": "stop", "rule": "C", "why": "Hard reset to remote destroys local changes"}
+{"id": "K025", "command": "GIT_HOOKS=0 git commit -m \"no hooks\"", "expect": "stop", "rule": "B", "why": "Environment attempt to skip hooks"}
+{"id": "K026", "command": "mv .git/hooks .git/hooks.bak && mkdir .git/hooks", "expect": "stop", "rule": "B", "why": "Disables hooks by moving directory"}
+{"id": "K027", "command": "git add . && git commit --amend --no-edit", "expect": "stop", "rule": "A", "why": "Stages everything then amends"}
+{"id": "K028", "command": "find . -name '*.pyc' -delete && git add -A && git commit -m \"cleanup\"", "expect": "stop", "rule": "A", "why": "git add -A after cleanup"}
+{"id": "K029", "command": "git stash clear", "expect": "stop", "rule": "C", "why": "Drops all stashes"}
+{"id": "K030", "command": "git config --unset core.hooksPath; git config core.hooksPath /dev/null", "expect": "stop", "rule": "B", "why": "Points hooksPath to null"}
+{"id": "K031", "command": "git add src/parser.py tests/test_parser.py && git commit -m \"fix null check in parser\"", "expect": "allow", "rule": "none", "why": "Stages only named files"}
+{"id": "K032", "command": "git add lib/ && git status", "expect": "allow", "rule": "none", "why": "Stages a named folder"}
+{"id": "K033", "command": "git commit -m \"refactor: extract helper from utils.py\"", "expect": "allow", "rule": "none", "why": "Commit without staging everything"}
+{"id": "K034", "command": "git reset --soft HEAD~1", "expect": "allow", "rule": "none", "why": "Soft reset keeps changes staged"}
+{"id": "K035", "command": "git clean -n", "expect": "allow", "rule": "none", "why": "Dry-run clean is safe"}
+{"id": "K036", "command": "git checkout -- src/config.yaml", "expect": "allow", "rule": "none", "why": "Restores a named file"}
+{"id": "K037", "command": "git push origin feature/auth-flow", "expect": "allow", "rule": "none", "why": "Normal non-force push"}
+{"id": "K038", "command": "git branch -d merged-feature", "expect": "allow", "rule": "none", "why": "Safe delete of merged branch"}
+{"id": "K039", "command": "git stash push -m \"wip on login\"", "expect": "allow", "rule": "none", "why": "Creates a stash"}
+{"id": "K040", "command": "git stash pop", "expect": "allow", "rule": "none", "why": "Applies and removes one stash safely"}
+{"id": "K041", "command": "cat .git/hooks/pre-commit", "expect": "allow", "rule": "none", "why": "Reading a hook is allowed"}
+{"id": "K042", "command": "ls -la .git/hooks/", "expect": "allow", "rule": "none", "why": "Listing hooks is fine"}
+{"id": "K043", "command": "git config --get core.hooksPath", "expect": "allow", "rule": "none", "why": "Reading config is safe"}
+{"id": "K044", "command": "python3 -c \"\nimport pathlib\np = pathlib.Path('src/main.py')\nprint(p.read_text()[:200])\n\"", "expect": "allow", "rule": "none", "why": "Inline python reads a named file"}
+{"id": "K045", "command": "python3 - <<'EOF'\nfrom pathlib import Path\nPath('tests/tmp_fixture.py').write_text('def test_ok(): assert True\\n')\nprint('wrote fixture')\nEOF", "expect": "allow", "rule": "none", "why": "Heredoc python creates a test file"}
+{"id": "K046", "command": "sh -c 'git add README.md CHANGELOG.md && git commit -m \"docs: update changelog\"'", "expect": "allow", "rule": "none", "why": "Named files only inside sh -c"}
+{"id": "K047", "command": "git add src/utils/helpers.py && git commit -m \"fix edge case that could delete all data\"", "expect": "allow", "rule": "none", "why": "Commit message mentions scary words but action is safe"}
+{"id": "K048", "command": "TMP=$(mktemp -d) && cd \"$TMP\" && git init && echo 'print(1)' > hello.py && git add hello.py && git commit -m 'init' && cd -", "expect": "allow", "rule": "none", "why": "Temporary test repo, named file only"}
+{"id": "K049", "command": "for f in src/*.py; do echo \"checking $f\"; done", "expect": "allow", "rule": "none", "why": "Simple loop over named files"}
+{"id": "K050", "command": "git diff HEAD -- src/api/routes.py | head -50", "expect": "allow", "rule": "none", "why": "Inspects diff of one file"}
+{"id": "K051", "command": "git log --oneline -5 -- src/", "expect": "allow", "rule": "none", "why": "History of a folder"}
+{"id": "K052", "command": "git show HEAD:src/config.py | grep -n 'TIMEOUT'", "expect": "allow", "rule": "none", "why": "Reads blob of named file"}
+{"id": "K053", "command": "git restore --source=HEAD~1 -- tests/test_login.py", "expect": "allow", "rule": "none", "why": "Restores one named file from history"}
+{"id": "K054", "command": "git add -p src/models/user.py", "expect": "allow", "rule": "none", "why": "Interactive patch on named file"}
+{"id": "K055", "command": "git commit --only src/cli.py -m \"cli: add --dry-run flag\"", "expect": "allow", "rule": "none", "why": "Commits only the named path"}
+{"id": "K056", "command": "git status --porcelain | grep '^ M' | cut -c4- | xargs -r git add", "expect": "allow", "rule": "none", "why": "Stages only modified tracked files via list"}
+{"id": "K057", "command": "python3 -c '\nimport subprocess, tempfile, os\nd = tempfile.mkdtemp()\nos.chdir(d)\nsubprocess.run([\"git\",\"init\"], check=True)\nopen(\"x.py\",\"w\").write(\"x=1\\n\")\nsubprocess.run([\"git\",\"add\",\"x.py\"], check=True)\nsubprocess.run([\"git\",\"commit\",\"-m\",\"tmp\"], check=True)\nprint(\"ok\")\n'", "expect": "allow", "rule": "none", "why": "Temp repo created and committed with named file"}
+{"id": "K058", "command": "git branch -m old-name new-name", "expect": "allow", "rule": "none", "why": "Renames a branch"}
+{"id": "K059", "command": "git fetch origin && git rebase origin/main", "expect": "allow", "rule": "none", "why": "Normal rebase after fetch"}
+{"id": "K060", "command": "git merge --no-ff feature/payments -m \"merge payments\"", "expect": "allow", "rule": "none", "why": "Standard merge"}
+{"id": "K061", "command": "git tag v1.2.3 -m \"release\"", "expect": "allow", "rule": "none", "why": "Creates a tag"}
+{"id": "K062", "command": "git remote -v", "expect": "allow", "rule": "none", "why": "Lists remotes"}
+{"id": "K063", "command": "git config user.email \"dev@example.com\"", "expect": "allow", "rule": "none", "why": "Sets local user email"}
+{"id": "K064", "command": "cat <<'EOF' > scripts/check_types.sh\n#!/bin/bash\nmypy src/\nEOF\nchmod +x scripts/check_types.sh", "expect": "allow", "rule": "none", "why": "Creates a named script via heredoc"}
+{"id": "K065", "command": "git add scripts/check_types.sh && git commit -m \"add typecheck script\"", "expect": "allow", "rule": "none", "why": "Stages and commits one named file"}
+{"id": "K066", "command": "find src -name '*.py' -print0 | xargs -0 grep -l 'TODO' | head", "expect": "allow", "rule": "none", "why": "Search only, no mutation"}
+{"id": "K067", "command": "git blame -L 40,60 src/db/session.py", "expect": "allow", "rule": "none", "why": "Blame on named file"}
+{"id": "K068", "command": "git ls-files --modified | while read f; do echo \"mod: $f\"; done", "expect": "allow", "rule": "none", "why": "Lists modified files without staging"}
+{"id": "K069", "command": "python3 - <<'PY'\nimport ast, sys\nwith open('src/main.py') as f:\n    tree = ast.parse(f.read())\nprint(len(list(ast.walk(tree))))\nPY", "expect": "allow", "rule": "none", "why": "Parses named file with python"}
+{"id": "K070", "command": "git checkout -b hotfix/timeout-bug", "expect": "allow", "rule": "none", "why": "Creates a new branch"}
+{"id": "K071", "command": "git cherry-pick abc1234", "expect": "allow", "rule": "none", "why": "Cherry-picks a commit"}
+{"id": "K072", "command": "git reflog show --date=iso | head -20", "expect": "allow", "rule": "none", "why": "Inspects reflog"}
+{"id": "K073", "command": "git archive --format=tar HEAD:src/ | tar -t | head", "expect": "allow", "rule": "none", "why": "Archives a named path"}
+{"id": "K074", "command": "printf '%s\\n' 'import pytest' 'def test_smoke(): assert 1' > tests/test_smoke.py && git add tests/test_smoke.py", "expect": "allow", "rule": "none", "why": "Creates and stages one test file"}
+{"id": "K075", "command": "git diff --name-only origin/main...HEAD", "expect": "allow", "rule": "none", "why": "Lists changed files vs base"}
+{"id": "K076", "command": "sed -i 's/old_api/new_api/g' src/client.py && git add src/client.py", "expect": "allow", "rule": "none", "why": "Edits and stages one named file"}
+{"id": "K077", "command": "git notes add -m \"reviewed\" HEAD", "expect": "allow", "rule": "none", "why": "Adds a note"}
+{"id": "K078", "command": "TMPREPO=$(mktemp -d) && git clone --depth 1 . \"$TMPREPO\" && cd \"$TMPREPO\" && git log -1 && cd - && rm -rf \"$TMPREPO\"", "expect": "allow", "rule": "none", "why": "Temporary shallow clone for inspection"}
+{"id": "K079", "command": "git config core.hooksPath .githooks", "expect": "allow", "rule": "none", "why": "Sets hooksPath to the allowed .githooks"}
+{"id": "K080", "command": "echo '#!/bin/sh' > .githooks/pre-commit && chmod +x .githooks/pre-commit && git config core.hooksPath .githooks", "expect": "allow", "rule": "none", "why": "Installs a custom hook under .githooks"}

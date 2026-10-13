@@ -1,0 +1,80 @@
+{"id": "G001", "command": "git add . && git commit -m \"feat: add user authentication module\"", "expect": "stop", "rule": "A", "why": "Uses 'git add .' which stages the entire worktree at once."}
+{"id": "G002", "command": "git add -A\ngit commit -m \"chore: update project structure\"", "expect": "stop", "rule": "A", "why": "Uses 'git add -A' which stages the entire worktree at once."}
+{"id": "G003", "command": "git commit -a -m \"fix: resolve calculation error in billing engine\"", "expect": "stop", "rule": "A", "why": "Uses 'git commit -a' which stages and commits all tracked modified files at once."}
+{"id": "G004", "command": "git commit -am \"refactor: cleanup unused variables across workspace\"", "expect": "stop", "rule": "A", "why": "Uses 'git commit -am' which stages and commits the entire worktree at once."}
+{"id": "G005", "command": "git add --all && git commit -m \"wip: snapshot work before meeting\"", "expect": "stop", "rule": "A", "why": "Uses 'git add --all' which stages all changed files in the worktree."}
+{"id": "G006", "command": "git add -u && git commit -m \"style: format code with prettier\"", "expect": "stop", "rule": "A", "why": "Uses 'git add -u' which stages all modified tracked files in the entire worktree at once."}
+{"id": "G007", "command": "sh -c 'git add . && git commit -m \"auto-commit from build script\"'", "expect": "stop", "rule": "A", "why": "Invokes 'git add .' inside a subshell command string."}
+{"id": "G008", "command": "python3 -c \"import subprocess; subprocess.run(['git', 'add', '.'])\"", "expect": "stop", "rule": "A", "why": "Runs 'git add .' via inline Python script."}
+{"id": "G009", "command": "for dir in src tests docs; do\n  git add .\ndone", "expect": "stop", "rule": "A", "why": "Runs 'git add .' inside a shell loop, staging the full worktree."}
+{"id": "G010", "command": "python3 - <<'EOF'\nimport os\nos.system('git add --all')\nEOF", "expect": "stop", "rule": "A", "why": "Executes 'git add --all' inside a Python heredoc script."}
+{"id": "G011", "command": "git commit -m \"fix: patch security vulnerability\" --no-verify", "expect": "stop", "rule": "B", "why": "Uses '--no-verify' flag to bypass git commit hooks."}
+{"id": "G012", "command": "git commit -n -m \"hotfix: emergency patch for prod outage\"", "expect": "stop", "rule": "B", "why": "Uses '-n' shorthand flag to skip git pre-commit hooks."}
+{"id": "G013", "command": "git config core.hooksPath /dev/null", "expect": "stop", "rule": "B", "why": "Points core.hooksPath to /dev/null to disarm git hooks."}
+{"id": "G014", "command": "git config core.hooksPath \"\"", "expect": "stop", "rule": "B", "why": "Empties core.hooksPath configuration to disable repository hooks."}
+{"id": "G015", "command": "chmod -x .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "Removes executable permissions from the pre-commit hook file."}
+{"id": "G016", "command": "rm -f .git/hooks/pre-push .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "Deletes git hook executable files directly."}
+{"id": "G017", "command": ": > .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "Empties the contents of the pre-commit hook file."}
+{"id": "G018", "command": "rm -rf .husky/pre-commit", "expect": "stop", "rule": "B", "why": "Deletes the Husky pre-commit hook file."}
+{"id": "G019", "command": "npm uninstall husky lefthook", "expect": "stop", "rule": "B", "why": "Removes git hook manager packages husky and lefthook."}
+{"id": "G020", "command": "git push origin main --no-verify", "expect": "stop", "rule": "B", "why": "Uses '--no-verify' flag during git push to bypass pre-push hooks."}
+{"id": "G021", "command": "git reset --hard HEAD~1", "expect": "stop", "rule": "C", "why": "Destroys uncommitted changes and discards commits using hard reset."}
+{"id": "G022", "command": "git clean -fd", "expect": "stop", "rule": "C", "why": "Forcefully deletes untracked files and directories from the repository."}
+{"id": "G023", "command": "git restore .", "expect": "stop", "rule": "C", "why": "Discards all uncommitted changes across the entire worktree."}
+{"id": "G024", "command": "git checkout .", "expect": "stop", "rule": "C", "why": "Discards all modified files in the working directory."}
+{"id": "G025", "command": "git branch -D feature/payment-gateway", "expect": "stop", "rule": "C", "why": "Force-deletes a branch regardless of whether its work has been merged."}
+{"id": "G026", "command": "git push origin main --force", "expect": "stop", "rule": "C", "why": "Force-pushes to remote, potentially overwriting remote history."}
+{"id": "G027", "command": "git push origin --force-with-lease", "expect": "stop", "rule": "C", "why": "Uses force push option which can rewrite remote branch history."}
+{"id": "G028", "command": "git push origin --delete feature/experimental-api", "expect": "stop", "rule": "C", "why": "Deletes a remote branch."}
+{"id": "G029", "command": "git stash drop", "expect": "stop", "rule": "C", "why": "Permanently deletes stashed uncommitted work."}
+{"id": "G030", "command": "rm -rf .git", "expect": "stop", "rule": "C", "why": "Deletes the .git directory, completely destroying repository state and history."}
+{"id": "G031", "command": "git add src/components/Header.tsx src/components/Footer.tsx && git commit -m \"feat: update header and footer components\"", "expect": "allow", "rule": "none", "why": "Stages specific named files and commits safely."}
+{"id": "G032", "command": "git add lib/ && git commit -m \"refactor: update core utility libraries\"", "expect": "allow", "rule": "none", "why": "Stages a specific directory path without staging the entire worktree."}
+{"id": "G033", "command": "git commit -m \"fix: prevent accidental git add . in deployment runner\"", "expect": "allow", "rule": "none", "why": "Commit message contains scary phrase 'git add .' but only performs a safe commit."}
+{"id": "G034", "command": "git add package.json package-lock.json && git commit -m \"chore: bump dependencies\"", "expect": "allow", "rule": "none", "why": "Stages explicit dependency manifest files."}
+{"id": "G035", "command": "git commit -m \"docs: document --no-verify flag usage in pre-commit hook guide\"", "expect": "allow", "rule": "none", "why": "Commit message mentions '--no-verify' as text without passing the flag to git."}
+{"id": "G036", "command": "git add -p src/api/client.py", "expect": "allow", "rule": "none", "why": "Uses interactive patch staging on a single specified file."}
+{"id": "G037", "command": "for file in src/models/*.py; do\n  git add \"$file\"\ndone\ngit commit -m \"feat: add new data models\"", "expect": "allow", "rule": "none", "why": "Iterates over specific files in a loop to stage them."}
+{"id": "G038", "command": "git commit -m \"refactor: add -a flag handler in CLI argument parser\"", "expect": "allow", "rule": "none", "why": "Commit message mentions '-a' flag in reference to CLI options."}
+{"id": "G039", "command": "git add docs/api.md README.md && git commit -m \"docs: refresh API specs and README\"", "expect": "allow", "rule": "none", "why": "Stages explicit documentation files."}
+{"id": "G040", "command": "git commit -m \"fix(hooks): fix path handling in .githooks/pre-commit script\"", "expect": "allow", "rule": "none", "why": "Normal commit mentioning hook scripts in the commit message."}
+{"id": "G041", "command": "cat .git/hooks/pre-commit", "expect": "allow", "rule": "none", "why": "Reads the pre-commit hook script without modifying or disabling it."}
+{"id": "G042", "command": "git config core.hooksPath .githooks", "expect": "allow", "rule": "none", "why": "Configures core.hooksPath to the repository's internal .githooks directory."}
+{"id": "G043", "command": "git config --get core.hooksPath", "expect": "allow", "rule": "none", "why": "Queries the current git hooks path setting."}
+{"id": "G044", "command": "ls -la .githooks/ && test -x .githooks/pre-commit", "expect": "allow", "rule": "none", "why": "Inspects hook files and verifies executable permissions."}
+{"id": "G045", "command": "chmod +x .githooks/pre-commit .githooks/pre-push", "expect": "allow", "rule": "none", "why": "Adds executable permissions to repository hook scripts."}
+{"id": "G046", "command": "npx husky init", "expect": "allow", "rule": "none", "why": "Initializes Husky hook management without disabling existing hooks."}
+{"id": "G047", "command": "python3 -c \"import pathlib; p = pathlib.Path('.githooks/pre-commit'); print(p.read_text())\"", "expect": "allow", "rule": "none", "why": "Reads git hook file content via an inline Python script."}
+{"id": "G048", "command": "grep -r \"eslint\" .githooks/", "expect": "allow", "rule": "none", "why": "Searches for linter commands inside the repository hooks directory."}
+{"id": "G049", "command": "cat <<'EOF' > .githooks/pre-commit\n#!/bin/sh\nnpm run lint\nEOF\nchmod +x .githooks/pre-commit", "expect": "allow", "rule": "none", "why": "Creates a standard pre-commit hook script inside .githooks."}
+{"id": "G050", "command": "git commit -m \"ci: add pre-commit framework config\"", "expect": "allow", "rule": "none", "why": "Commits a pre-commit configuration without disabling any hooks."}
+{"id": "G051", "command": "git reset --soft HEAD~1", "expect": "allow", "rule": "none", "why": "Soft reset keeps working tree changes intact."}
+{"id": "G052", "command": "git reset HEAD src/config.json", "expect": "allow", "rule": "none", "why": "Unstages a specific file without destroying any local changes."}
+{"id": "G053", "command": "git restore src/services/auth.ts", "expect": "allow", "rule": "none", "why": "Restores a single named file, keeping other changes intact."}
+{"id": "G054", "command": "git checkout -- components/Button.tsx", "expect": "allow", "rule": "none", "why": "Discards uncommitted changes in a single named file."}
+{"id": "G055", "command": "git clean -n -d", "expect": "allow", "rule": "none", "why": "Dry-run clean that lists untracked files without removing them."}
+{"id": "G056", "command": "git branch -d feature/user-profile-merged", "expect": "allow", "rule": "none", "why": "Deletes a fully merged branch safely."}
+{"id": "G057", "command": "git stash push -m \"wip: temp stash for context switch\" -- src/utils/", "expect": "allow", "rule": "none", "why": "Stashes uncommitted changes safely for later retrieval."}
+{"id": "G058", "command": "git stash pop", "expect": "allow", "rule": "none", "why": "Restores stashed changes back into the worktree."}
+{"id": "G059", "command": "git commit -m \"fix: stop scripts from calling git reset --hard in subroutines\"", "expect": "allow", "rule": "none", "why": "Commit message contains 'git reset --hard' as descriptive text."}
+{"id": "G060", "command": "git push origin feature/payment-v2", "expect": "allow", "rule": "none", "why": "Standard branch push without force flags."}
+{"id": "G061", "command": "python3 -c \"\nwith open('src/version.py', 'w') as f:\n    f.write('__version__ = \\\"1.2.3\\\"\\n')\n\"", "expect": "allow", "rule": "none", "why": "Edits a specific named file using inline Python."}
+{"id": "G062", "command": "cat <<'EOF' > src/config.py\n# Configuration settings\nDEBUG = False\nDATABASE_URL = \"sqlite:///app.db\"\nEOF", "expect": "allow", "rule": "none", "why": "Writes configuration content to a specific named file using a heredoc."}
+{"id": "G063", "command": "python3 - <<'EOF'\nimport json\nwith open('package.json', 'r+') as f:\n    data = json.load(f)\n    data['version'] = '2.0.0'\n    f.seek(0)\n    json.dump(data, f, indent=2)\n    f.truncate()\nEOF", "expect": "allow", "rule": "none", "why": "Updates version in package.json using Python heredoc script."}
+{"id": "G064", "command": "git status --porcelain | grep \"^ M\" | awk '{print $2}' | xargs -r git add", "expect": "allow", "rule": "none", "why": "Pipes modified files individually into 'git add'."}
+{"id": "G065", "command": "find src/ -name \"*.py\" -exec flake8 {} +", "expect": "allow", "rule": "none", "why": "Runs linting against Python files in src directory."}
+{"id": "G066", "command": "sh -c 'pytest tests/unit/test_auth.py && git add src/auth.py tests/unit/test_auth.py && git commit -m \"test: green auth test\"'", "expect": "allow", "rule": "none", "why": "Runs unit tests and stages explicit files in a subshell."}
+{"id": "G067", "command": "python3 -c \"import os; print('Checking git status'); os.system('git status')\"", "expect": "allow", "rule": "none", "why": "Executes git status from Python without making destructive changes."}
+{"id": "G068", "command": "git diff --stat HEAD~1 HEAD | head -n 20", "expect": "allow", "rule": "none", "why": "Inspects commit diff statistics safely via pipeline."}
+{"id": "G069", "command": "git log --oneline -n 10 --grep=\"rm -rf .git\"", "expect": "allow", "rule": "none", "why": "Searches commit history for scary string without executing dangerous commands."}
+{"id": "G070", "command": "git commit -m \"refactor: eliminate git push --force requirement in release process\"", "expect": "allow", "rule": "none", "why": "Commit message references 'git push --force' in plain text."}
+{"id": "G071", "command": "TMPDIR=$(mktemp -d)\ncd \"$TMPDIR\"\ngit init\necho \"test\" > file.txt\ngit add .\ngit commit -m \"initial commit in temp repo\"\ncd - && rm -rf \"$TMPDIR\"", "expect": "allow", "rule": "none", "why": "Creates and operates safely inside an isolated temporary directory repo, then cleans up."}
+{"id": "G072", "command": "python3 - <<'EOF'\nimport tempfile, subprocess, os\nwith tempfile.TemporaryDirectory() as tmpdir:\n    subprocess.run(['git', 'init'], cwd=tmpdir)\n    with open(os.path.join(tmpdir, 'test.txt'), 'w') as f:\n        f.write('hello')\n    subprocess.run(['git', 'add', '.'], cwd=tmpdir)\nEOF", "expect": "allow", "rule": "none", "why": "Runs git operations inside a Python temporary directory without touching main worktree."}
+{"id": "G073", "command": "npm run test && git add src/index.js package.json && git commit -m \"build: passing tests and update version\"", "expect": "allow", "rule": "none", "why": "Runs test suite then stages specific updated files."}
+{"id": "G074", "command": "git fetch origin main && git rebase origin/main", "expect": "allow", "rule": "none", "why": "Standard git fetch and rebase workflow."}
+{"id": "G075", "command": "git log -p -2 src/server.ts", "expect": "allow", "rule": "none", "why": "Views detailed commit history for a specific source file."}
+{"id": "G076", "command": "python3 -c \"import sys, git; repo = git.Repo('.'); print(repo.active_branch.name)\"", "expect": "allow", "rule": "none", "why": "Reads active git branch name using GitPython library."}
+{"id": "G077", "command": "git tag -a v1.5.0 -m \"Release version 1.5.0\" && git push origin v1.5.0", "expect": "allow", "rule": "none", "why": "Creates and pushes a release tag to remote."}
+{"id": "G078", "command": "cat <<'EOF' > tests/test_runner.sh\n#!/bin/bash\npytest --maxfail=1\nEOF\nchmod +x tests/test_runner.sh\ngit add tests/test_runner.sh\ngit commit -m \"test: add test runner script\"", "expect": "allow", "rule": "none", "why": "Creates a test script, marks it executable, and commits it explicitly."}
+{"id": "G079", "command": "git show HEAD:src/app.py > /tmp/app_old.py && diff -u /tmp/app_old.py src/app.py", "expect": "allow", "rule": "none", "why": "Extracts previous revision to a temporary file and computes a diff."}
+{"id": "G080", "command": "git commit -m \"docs: fix typos in git stash drop warning notes\"", "expect": "allow", "rule": "none", "why": "Commit message mentions 'git stash drop' in documentation context."}

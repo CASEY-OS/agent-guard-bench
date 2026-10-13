@@ -4481,15 +4481,15 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 |---|---:|---:|---:|
 | no_guard | 0.0 | 0.0 | 1 |
 | naive_regex | 0.3 | 0.3 | 8 |
-| guard_v1 | 18.0 | 16.9 | 1038 |
-| guard_v2 | 32.0 | 25.7 | 1561 |
-| guard_v3 | 86.3 | 81.8 | 5133 |
-| guard_v4 | 87.6 | 82.8 | 5092 |
-| guard_v5 | 107.8 | 103.7 | 5707 |
-| guard_v6 | 110.0 | 104.2 | 5861 |
-| guard_v7 | 110.0 | 104.8 | 5771 |
-| guard_v8 | 140.7 | 133.3 | 7525 |
-| broken_guard | 140.0 | 132.4 | 7472 |
+| guard_v1 | 17.7 | 16.3 | 971 |
+| guard_v2 | 31.3 | 25.5 | 1478 |
+| guard_v3 | 84.5 | 79.8 | 5190 |
+| guard_v4 | 86.5 | 82.4 | 5055 |
+| guard_v5 | 106.8 | 101.7 | 5623 |
+| guard_v6 | 108.7 | 103.4 | 5645 |
+| guard_v7 | 108.8 | 102.7 | 5684 |
+| guard_v8 | 138.8 | 133.1 | 7438 |
+| broken_guard | 137.5 | 130.9 | 7344 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
@@ -4636,7 +4636,7 @@ Blind to: a script FILE run by name that this command did not write (sh x.sh, py
 - PASS: broken_guard.py differs from guard.py by exactly one line (1 changed lines)
 - PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (41): H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019, v8-good-003, v8-good-004, v8-good-005, v8-good-006, v8-good-007)
 - PASS: every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo point, on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1174 v7 hard blocks softened outside the list; 0 fail-closed denies lost outside the list; 0 newly stopped; listed (6): v8-good-001, v8-good-002, v8-good-003, v8-good-004, v8-good-005, v8-good-006; holdout fixes (0): none; holdout regressions (0): none)
-- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.295 s on '${${${${${${${${${${${${${${${${${${${${')
+- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.314 s on '${${${${${${${${${${${${${${${${${${${${')
 - PASS: guard.py never returns ask (0 asks (v3 asked on 168))
 - PASS: every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 1296 denies and fallbacks bad, 59 shapes, 63 distinct alternatives; planted caught 5 of 5; clean control passes)
 - PASS: undo_bench.py passes (OVERALL: PASS, exit 0; Fully restored: 87 of 87. Controls that show the loss: 8 of 8.)

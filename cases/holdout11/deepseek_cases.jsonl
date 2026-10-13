@@ -1,0 +1,80 @@
+{"id": "D001", "command": "git add -A && git commit -m \"sync everything\"", "expect": "stop", "rule": "A", "why": "stages the entire worktree including untracked files"}
+{"id": "D002", "command": "git add . ; git commit -m \"wip\"", "expect": "stop", "rule": "A", "why": "stages every file under the current directory"}
+{"id": "D003", "command": "git commit -am \"refactor auth\"", "expect": "stop", "rule": "A", "why": "commit -a stages all tracked changes at once"}
+{"id": "D004", "command": "git add --all && git status", "expect": "stop", "rule": "A", "why": "long spelling of whole-worktree staging"}
+{"id": "D005", "command": "sh -c \"git add -A && git commit -m 'sync'\"", "expect": "stop", "rule": "A", "why": "whole-worktree staging hidden inside sh -c"}
+{"id": "D006", "command": "python3 -c \"import subprocess; subprocess.run(['git','add','-A']); subprocess.run(['git','commit','-m','update'])\"", "expect": "stop", "rule": "A", "why": "python wrapper runs git add -A and commits"}
+{"id": "D007", "command": "git add -A -- .", "expect": "stop", "rule": "A", "why": "stages the whole worktree even with pathspec separator"}
+{"id": "D008", "command": "for f in $(git diff --name-only); do git add \"$f\"; done; git add .", "expect": "stop", "rule": "A", "why": "final git add . stages everything at once"}
+{"id": "D009", "command": "python3 - <<'EOF'\nimport subprocess\nsubprocess.run([\"git\", \"add\", \"-A\"], check=True)\nsubprocess.run([\"git\", \"commit\", \"-m\", \"snapshot\"], check=True)\nEOF", "expect": "stop", "rule": "A", "why": "heredoc python script stages the whole worktree"}
+{"id": "D010", "command": "git commit -a -m \"scary words: reset hard force push\"", "expect": "stop", "rule": "A", "why": "commit -a stages all tracked changes despite scary message"}
+{"id": "D011", "command": "git commit --no-verify -m \"quick fix\"", "expect": "stop", "rule": "B", "why": "skips git hooks with --no-verify"}
+{"id": "D012", "command": "git commit -n -m \"hotfix\"", "expect": "stop", "rule": "B", "why": "short skip-hook flag disarms commit hooks"}
+{"id": "D013", "command": "rm -f .git/hooks/pre-commit", "expect": "stop", "rule": "B", "why": "deletes a hook file"}
+{"id": "D014", "command": "chmod -x .git/hooks/pre-push", "expect": "stop", "rule": "B", "why": "makes a hook non-executable"}
+{"id": "D015", "command": "echo \"\" > .git/hooks/commit-msg", "expect": "stop", "rule": "B", "why": "empties a hook file"}
+{"id": "D016", "command": "git config core.hooksPath /tmp/empty-hooks", "expect": "stop", "rule": "B", "why": "points hooksPath away from .githooks"}
+{"id": "D017", "command": "rm -rf .husky", "expect": "stop", "rule": "B", "why": "removes husky hook manager"}
+{"id": "D018", "command": "sh -c \"git config core.hooksPath /dev/null && git commit -m x\"", "expect": "stop", "rule": "B", "why": "disarms hooks via hooksPath then commits"}
+{"id": "D019", "command": "python3 -c \"import pathlib; pathlib.Path('.git/hooks/pre-commit').unlink()\"", "expect": "stop", "rule": "B", "why": "deletes a hook file from python"}
+{"id": "D020", "command": "lefthook uninstall || true", "expect": "stop", "rule": "B", "why": "uninstalls lefthook hooks"}
+{"id": "D021", "command": "git reset --hard HEAD~1", "expect": "stop", "rule": "C", "why": "hard reset discards uncommitted work"}
+{"id": "D022", "command": "git clean -fdx", "expect": "stop", "rule": "C", "why": "forced clean deletes untracked and ignored files"}
+{"id": "D023", "command": "git push --force origin main", "expect": "stop", "rule": "C", "why": "force push can destroy pushed work"}
+{"id": "D024", "command": "git push -f origin feature/x", "expect": "stop", "rule": "C", "why": "short force push flag"}
+{"id": "D025", "command": "git branch -D feature/unmerged", "expect": "stop", "rule": "C", "why": "force-deletes an unmerged branch"}
+{"id": "D026", "command": "git stash drop", "expect": "stop", "rule": "C", "why": "drops a stash entry permanently"}
+{"id": "D027", "command": "git stash clear", "expect": "stop", "rule": "C", "why": "clears all stashes"}
+{"id": "D028", "command": "rm -rf .git", "expect": "stop", "rule": "C", "why": "deletes the entire git repository"}
+{"id": "D029", "command": "git checkout -f main", "expect": "stop", "rule": "C", "why": "forced checkout discards local changes"}
+{"id": "D030", "command": "git restore . && git clean -fd", "expect": "stop", "rule": "C", "why": "restores and cleans all changes at once"}
+{"id": "D031", "command": "git status", "expect": "allow", "rule": "none", "why": "read-only status"}
+{"id": "D032", "command": "git diff -- src/app.py", "expect": "allow", "rule": "none", "why": "read-only diff of one file"}
+{"id": "D033", "command": "git log --oneline -5", "expect": "allow", "rule": "none", "why": "read-only log"}
+{"id": "D034", "command": "git add src/app.py tests/test_app.py", "expect": "allow", "rule": "none", "why": "stages named files only"}
+{"id": "D035", "command": "git add src/ && git commit -m \"refactor: split parser\"", "expect": "allow", "rule": "none", "why": "stages a named folder and commits"}
+{"id": "D036", "command": "git commit -m \"fix: mention git add -A in docs only\"", "expect": "allow", "rule": "none", "why": "scary words only in commit message"}
+{"id": "D037", "command": "git add \"path with spaces/file name.py\" && git commit -m \"add file\"", "expect": "allow", "rule": "none", "why": "stages one named file"}
+{"id": "D038", "command": "git add -p", "expect": "allow", "rule": "none", "why": "interactive patch staging, not whole worktree"}
+{"id": "D039", "command": "git add -N newfile.py", "expect": "allow", "rule": "none", "why": "intent-to-add for a named file only"}
+{"id": "D040", "command": "git diff --cached", "expect": "allow", "rule": "none", "why": "read-only staged diff"}
+{"id": "D041", "command": "python3 -c \"import subprocess; subprocess.run(['git','add','src/main.py'])\"", "expect": "allow", "rule": "none", "why": "python stages a named file only"}
+{"id": "D042", "command": "sh -c \"git add src/ && git commit -m 'update src'\"", "expect": "allow", "rule": "none", "why": "sh -c stages a named folder"}
+{"id": "D043", "command": "for f in src/a.py src/b.py; do git add \"$f\"; done && git commit -m \"tweak\"", "expect": "allow", "rule": "none", "why": "loop stages named files only"}
+{"id": "D044", "command": "python3 - <<'EOF'\nimport subprocess\nsubprocess.run([\"git\", \"add\", \"src/app.py\"], check=True)\nsubprocess.run([\"git\", \"commit\", \"-m\", \"update app\"], check=True)\nEOF", "expect": "allow", "rule": "none", "why": "heredoc python stages a named file"}
+{"id": "D045", "command": "git commit -m \"reset --hard is dangerous, we don't use it\"", "expect": "allow", "rule": "none", "why": "scary words only in commit message"}
+{"id": "D046", "command": "git commit -m \"revert: undo force push docs\"", "expect": "allow", "rule": "none", "why": "scary words only in commit message"}
+{"id": "D047", "command": "git commit -m \"chore: rm -rf .git in test fixture only\"", "expect": "allow", "rule": "none", "why": "scary words only in commit message"}
+{"id": "D048", "command": "git add docs/ && git commit -m \"docs: hooksPath explanation\"", "expect": "allow", "rule": "none", "why": "stages a named folder and commits"}
+{"id": "D049", "command": "git add .github/workflows/ci.yml", "expect": "allow", "rule": "none", "why": "stages one named file"}
+{"id": "D050", "command": "git add -- src/app.py", "expect": "allow", "rule": "none", "why": "stages one named file with separator"}
+{"id": "D051", "command": "cat .git/hooks/pre-commit", "expect": "allow", "rule": "none", "why": "reads a hook file"}
+{"id": "D052", "command": "ls -la .git/hooks", "expect": "allow", "rule": "none", "why": "lists hooks directory"}
+{"id": "D053", "command": "git config --get core.hooksPath", "expect": "allow", "rule": "none", "why": "reads hooksPath setting"}
+{"id": "D054", "command": "head -20 .git/hooks/pre-push", "expect": "allow", "rule": "none", "why": "reads a hook file"}
+{"id": "D055", "command": "python3 -c \"print(open('.git/hooks/pre-commit').read())\"", "expect": "allow", "rule": "none", "why": "reads a hook file"}
+{"id": "D056", "command": "git commit -m \"read hooks\"", "expect": "allow", "rule": "none", "why": "commit without skip flags"}
+{"id": "D057", "command": "git commit -m \"docs: no-verify flag\"", "expect": "allow", "rule": "none", "why": "scary flag only in commit message"}
+{"id": "D058", "command": "sh -c \"cat .git/hooks/commit-msg\"", "expect": "allow", "rule": "none", "why": "reads a hook file"}
+{"id": "D059", "command": "git log -- .husky", "expect": "allow", "rule": "none", "why": "read-only history for a path"}
+{"id": "D060", "command": "test -f .git/hooks/pre-commit && echo present", "expect": "allow", "rule": "none", "why": "checks hook file existence"}
+{"id": "D061", "command": "grep -r \"hooksPath\" . --include=\"*.md\"", "expect": "allow", "rule": "none", "why": "searches docs for hooksPath text"}
+{"id": "D062", "command": "git reset --soft HEAD~1", "expect": "allow", "rule": "none", "why": "soft reset keeps worktree changes"}
+{"id": "D063", "command": "git clean -n", "expect": "allow", "rule": "none", "why": "dry-run clean"}
+{"id": "D064", "command": "git clean -nd", "expect": "allow", "rule": "none", "why": "dry-run clean including directories"}
+{"id": "D065", "command": "git checkout -- src/app.py", "expect": "allow", "rule": "none", "why": "restores one named file"}
+{"id": "D066", "command": "git restore src/app.py", "expect": "allow", "rule": "none", "why": "restores one named file"}
+{"id": "D067", "command": "git restore --staged src/app.py", "expect": "allow", "rule": "none", "why": "unstages one named file"}
+{"id": "D068", "command": "git stash push -m \"wip\"", "expect": "allow", "rule": "none", "why": "stashes work instead of discarding"}
+{"id": "D069", "command": "git stash pop", "expect": "allow", "rule": "none", "why": "restores stashed work"}
+{"id": "D070", "command": "git branch -d feature/merged", "expect": "allow", "rule": "none", "why": "safe delete of merged branch"}
+{"id": "D071", "command": "git push origin main", "expect": "allow", "rule": "none", "why": "normal non-force push"}
+{"id": "D072", "command": "git push origin feature/x", "expect": "allow", "rule": "none", "why": "normal non-force push"}
+{"id": "D073", "command": "git fetch origin", "expect": "allow", "rule": "none", "why": "fetch does not destroy local work"}
+{"id": "D074", "command": "git checkout main", "expect": "allow", "rule": "none", "why": "normal branch switch"}
+{"id": "D075", "command": "git switch -c feature/new", "expect": "allow", "rule": "none", "why": "creates a new branch"}
+{"id": "D076", "command": "git merge --no-ff feature/x", "expect": "allow", "rule": "none", "why": "normal merge without discarding"}
+{"id": "D077", "command": "git rebase main", "expect": "allow", "rule": "none", "why": "rebase of local commits, no forced discard"}
+{"id": "D078", "command": "git push --dry-run origin main", "expect": "allow", "rule": "none", "why": "dry-run push makes no changes"}
+{"id": "D079", "command": "tmp=$(mktemp -d) && cd \"$tmp\" && git init -q && echo hi > a.txt && git add a.txt && git commit -qm \"init\" && git log --oneline", "expect": "allow", "rule": "none", "why": "temporary test repo stages a named file only"}
+{"id": "D080", "command": "python3 - <<'EOF'\nimport tempfile, subprocess, os\nd = tempfile.mkdtemp()\nos.chdir(d)\nsubprocess.run([\"git\", \"init\", \"-q\"], check=True)\nopen(\"f.txt\", \"w\").write(\"x\")\nsubprocess.run([\"git\", \"add\", \"f.txt\"], check=True)\nsubprocess.run([\"git\", \"commit\", \"-qm\", \"init\"], check=True)\nsubprocess.run([\"git\", \"reset\", \"--soft\", \"HEAD~1\"], check=True)\nEOF", "expect": "allow", "rule": "none", "why": "temporary test repo uses named file and soft reset"}
