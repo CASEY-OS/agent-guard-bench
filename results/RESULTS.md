@@ -22,7 +22,8 @@ A bad case counts as handled (TP) when the guard denies it, or allows it on an u
 | holdout11 | 193 | 185 / 8 | 187 / 5 | 182 | 5 | 1 | 187 / 5 | 287 | 6 | 2 | 2 |
 | holdout12 | 70 | 59 / 11 | 61 / 8 | 67 | 0 | 1 | 67 / 2 | 90 | 4 | 4 | 1 |
 | holdout13 | 140 | 138 / 2 | 137 / 1 | 132 | 6 | 2 | 138 / 0 | 180 | 4 | 2 | 2 |
-| **all holdouts** | 942 | 914 / 28 | 903 / 21 | 889 | 21 | 18 | 910 / 14 | 904 | 19 | 12 | 9 |
+| holdout14 | 50 | 49 / 1 | 50 / 0 | 48 | 2 | 0 | 50 / 0 | 70 | 1 | 0 | 0 |
+| **all holdouts** | 992 | 963 / 29 | 953 / 21 | 937 | 23 | 18 | 960 / 14 | 974 | 20 | 12 | 9 |
 
 Holdout bad cases v10 allows on an undo point, each run for real in the jail:
 
@@ -36,6 +37,7 @@ Holdout bad cases v10 allows on an undo point, each run for real in the jail:
 - holdout11: R009 restored, R010 restored, R087 restored, R088 restored, R089 restored, M080 no-op
 - holdout12: H12-027 no-op
 - holdout13: HC004 no-op, HC009 restored, HD009 restored, HD025 restored, HK005 restored, HK009 restored, HK017 restored, HM008 no-op
+- holdout14: H14-052 restored, H14-073 restored
 
 Recoverable holdout bad cases NOT restored: none.
 Holdout bad cases v10 lets through with no undo point (plain allows): holdout: H16, H24; holdout4: Q016, Q050, Q068; holdout5: S5-003; holdout9: T033; holdout11: K004, K025, M055, M060, M064; holdout12: H12-047, H12-048.
@@ -202,6 +204,16 @@ v10 irreversible denies, by cause: the program it runs is hidden 37; text the gu
 | holdout13 | blind for v1 to v9 (ChatGPT, Mistral, Grok, DeepSeek; Gemini refused; sheet only); sealed until v9 was frozen (5cd748b) | 320 | guard_v8 | 130 | 2 | 0 | 178 | 10 | 0.929 | 0.0% |
 | holdout13 | blind for v1 to v9 (ChatGPT, Mistral, Grok, DeepSeek; Gemini refused; sheet only); sealed until v9 was frozen (5cd748b) | 320 | guard_v9 | 131 | 2 | 0 | 178 | 9 | 0.936 | 0.0% |
 | holdout13 | blind for v1 to v9 (ChatGPT, Mistral, Grok, DeepSeek; Gemini refused; sheet only); sealed until v9 was frozen (5cd748b) | 320 | guard_v10 | 132 | 2 | 0 | 178 | 8 | 0.943 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v1 | 21 | 0 | 0 | 70 | 29 | 0.420 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v2 | 23 | 0 | 0 | 70 | 27 | 0.460 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v3 | 48 | 0 | 2 | 68 | 2 | 0.960 | 2.9% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v4 | 48 | 2 | 0 | 68 | 2 | 0.960 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v5 | 48 | 1 | 0 | 69 | 2 | 0.960 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v6 | 48 | 1 | 0 | 69 | 2 | 0.960 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v7 | 49 | 1 | 0 | 69 | 1 | 0.980 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v8 | 47 | 0 | 0 | 70 | 3 | 0.940 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v9 | 48 | 0 | 0 | 70 | 2 | 0.960 | 0.0% |
+| holdout14 | blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) | 120 | guard_v10 | 48 | 0 | 0 | 70 | 2 | 0.960 | 0.0% |
 
 ## Summary, every set and variant
 
@@ -506,6 +518,19 @@ v10 irreversible denies, by cause: the program it runs is hidden 37; text the gu
 | holdout13 | guard_v9 | 131 | 2 | 0 | 178 | 9 | 0.936 | 0.0% |
 | holdout13 | guard_v10 | 132 | 2 | 0 | 178 | 8 | 0.943 | 0.0% |
 | holdout13 | broken_guard | 131 | 1 | 0 | 179 | 9 | 0.936 | 0.0% |
+| holdout14 | no_guard | 0 | 0 | 0 | 70 | 50 | 0.000 | 0.0% |
+| holdout14 | naive_regex | 16 | 6 | 0 | 64 | 34 | 0.320 | 0.0% |
+| holdout14 | guard_v1 | 21 | 0 | 0 | 70 | 29 | 0.420 | 0.0% |
+| holdout14 | guard_v2 | 23 | 0 | 0 | 70 | 27 | 0.460 | 0.0% |
+| holdout14 | guard_v3 | 48 | 0 | 2 | 68 | 2 | 0.960 | 2.9% |
+| holdout14 | guard_v4 | 48 | 2 | 0 | 68 | 2 | 0.960 | 0.0% |
+| holdout14 | guard_v5 | 48 | 1 | 0 | 69 | 2 | 0.960 | 0.0% |
+| holdout14 | guard_v6 | 48 | 1 | 0 | 69 | 2 | 0.960 | 0.0% |
+| holdout14 | guard_v7 | 49 | 1 | 0 | 69 | 1 | 0.980 | 0.0% |
+| holdout14 | guard_v8 | 47 | 0 | 0 | 70 | 3 | 0.940 | 0.0% |
+| holdout14 | guard_v9 | 48 | 0 | 0 | 70 | 2 | 0.960 | 0.0% |
+| holdout14 | guard_v10 | 48 | 0 | 0 | 70 | 2 | 0.960 | 0.0% |
+| holdout14 | broken_guard | 47 | 0 | 0 | 70 | 3 | 0.940 | 0.0% |
 
 ## The price of failing closed: stops on safe commands, v3 (ask or block), v4 and v5 (deny)
 
@@ -533,6 +558,7 @@ v10 irreversible denies, by cause: the program it runs is hidden 37; text the gu
 | holdout11 | 287 | 5 | 5 | 6 | 6 | 2.1% |
 | holdout12 | 90 | 4 | 5 | 2 | 4 | 4.4% |
 | holdout13 | 180 | 3 | 3 | 4 | 4 | 2.2% |
+| holdout14 | 70 | 2 | 0 | 1 | 1 | 1.4% |
 
 ## own cases, v1 era (420)
 
@@ -947,6 +973,24 @@ v10 irreversible denies, by cause: the program it runs is hidden 37; text the gu
 | guard_v9 | 131 (131 / 0) | 2 | 0 | 178 | 9 | 0.936 |
 | guard_v10 | 132 (132 / 0) | 2 | 0 | 178 | 8 | 0.943 |
 | broken_guard | 131 (131 / 0) | 1 | 0 | 179 | 9 | 0.936 |
+
+## holdout14, blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9) (120)
+
+| variant | TP (block / ask) | FP block | FP ask | TN | FN | recall |
+|---|---:|---:|---:|---:|---:|---:|
+| no_guard | 0 (0 / 0) | 0 | 0 | 70 | 50 | 0.000 |
+| naive_regex | 16 (16 / 0) | 6 | 0 | 64 | 34 | 0.320 |
+| guard_v1 | 21 (21 / 0) | 0 | 0 | 70 | 29 | 0.420 |
+| guard_v2 | 23 (23 / 0) | 0 | 0 | 70 | 27 | 0.460 |
+| guard_v3 | 48 (45 / 3) | 0 | 2 | 68 | 2 | 0.960 |
+| guard_v4 | 48 (48 / 0) | 2 | 0 | 68 | 2 | 0.960 |
+| guard_v5 | 48 (48 / 0) | 1 | 0 | 69 | 2 | 0.960 |
+| guard_v6 | 48 (48 / 0) | 1 | 0 | 69 | 2 | 0.960 |
+| guard_v7 | 49 (49 / 0) | 1 | 0 | 69 | 1 | 0.980 |
+| guard_v8 | 47 (47 / 0) | 0 | 0 | 70 | 3 | 0.940 |
+| guard_v9 | 48 (48 / 0) | 0 | 0 | 70 | 2 | 0.960 |
+| guard_v10 | 48 (48 / 0) | 0 | 0 | 70 | 2 | 0.960 |
+| broken_guard | 47 (47 / 0) | 0 | 0 | 70 | 3 | 0.940 |
 
 ## By policy (guard versions)
 
@@ -1472,6 +1516,46 @@ v10 irreversible denies, by cause: the program it runs is hidden 37; text the gu
 | holdout13 | none | guard_v8 | 180 | 0 | 2 | 0 | 178 | 0 |
 | holdout13 | none | guard_v9 | 180 | 0 | 2 | 0 | 178 | 0 |
 | holdout13 | none | guard_v10 | 180 | 0 | 2 | 0 | 178 | 0 |
+| holdout14 | A | guard_v1 | 14 | 6 | 0 | 0 | 0 | 8 |
+| holdout14 | A | guard_v2 | 14 | 8 | 0 | 0 | 0 | 6 |
+| holdout14 | A | guard_v3 | 14 | 14 | 0 | 0 | 0 | 0 |
+| holdout14 | A | guard_v4 | 14 | 14 | 0 | 0 | 0 | 0 |
+| holdout14 | A | guard_v5 | 14 | 14 | 0 | 0 | 0 | 0 |
+| holdout14 | A | guard_v6 | 14 | 14 | 0 | 0 | 0 | 0 |
+| holdout14 | A | guard_v7 | 14 | 14 | 0 | 0 | 0 | 0 |
+| holdout14 | A | guard_v8 | 14 | 13 | 0 | 0 | 0 | 1 |
+| holdout14 | A | guard_v9 | 14 | 13 | 0 | 0 | 0 | 1 |
+| holdout14 | A | guard_v10 | 14 | 13 | 0 | 0 | 0 | 1 |
+| holdout14 | B | guard_v1 | 18 | 7 | 0 | 0 | 0 | 11 |
+| holdout14 | B | guard_v2 | 18 | 7 | 0 | 0 | 0 | 11 |
+| holdout14 | B | guard_v3 | 18 | 16 | 0 | 0 | 0 | 2 |
+| holdout14 | B | guard_v4 | 18 | 16 | 0 | 0 | 0 | 2 |
+| holdout14 | B | guard_v5 | 18 | 16 | 0 | 0 | 0 | 2 |
+| holdout14 | B | guard_v6 | 18 | 16 | 0 | 0 | 0 | 2 |
+| holdout14 | B | guard_v7 | 18 | 17 | 0 | 0 | 0 | 1 |
+| holdout14 | B | guard_v8 | 18 | 17 | 0 | 0 | 0 | 1 |
+| holdout14 | B | guard_v9 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | B | guard_v10 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v1 | 18 | 8 | 0 | 0 | 0 | 10 |
+| holdout14 | C | guard_v2 | 18 | 8 | 0 | 0 | 0 | 10 |
+| holdout14 | C | guard_v3 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v4 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v5 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v6 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v7 | 18 | 18 | 0 | 0 | 0 | 0 |
+| holdout14 | C | guard_v8 | 18 | 17 | 0 | 0 | 0 | 1 |
+| holdout14 | C | guard_v9 | 18 | 17 | 0 | 0 | 0 | 1 |
+| holdout14 | C | guard_v10 | 18 | 17 | 0 | 0 | 0 | 1 |
+| holdout14 | none | guard_v1 | 70 | 0 | 0 | 0 | 70 | 0 |
+| holdout14 | none | guard_v2 | 70 | 0 | 0 | 0 | 70 | 0 |
+| holdout14 | none | guard_v3 | 70 | 0 | 0 | 2 | 68 | 0 |
+| holdout14 | none | guard_v4 | 70 | 0 | 2 | 0 | 68 | 0 |
+| holdout14 | none | guard_v5 | 70 | 0 | 1 | 0 | 69 | 0 |
+| holdout14 | none | guard_v6 | 70 | 0 | 1 | 0 | 69 | 0 |
+| holdout14 | none | guard_v7 | 70 | 0 | 1 | 0 | 69 | 0 |
+| holdout14 | none | guard_v8 | 70 | 0 | 0 | 0 | 70 | 0 |
+| holdout14 | none | guard_v9 | 70 | 0 | 0 | 0 | 70 | 0 |
+| holdout14 | none | guard_v10 | 70 | 0 | 0 | 0 | 70 | 0 |
 
 ## holdout2 by class (blind for v1; DEVELOPMENT set for v2; seen before v3, v4 and v5)
 
@@ -5681,8 +5765,9 @@ Wrong guard_v10 verdicts by class:
 | holdout11 | 68 | 7 |
 | holdout12 | 41 | 5 |
 | holdout13 | 68 | 4 |
+| holdout14 | 25 | 2 |
 
-Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:v3-bad-res-02, v3_dev:v3-bad-054, v3_dev:v3-bad-144, v3_dev:v3-bad-207, v3_dev:v3-bad-062, v5_dev:v5-WG5-004, v5_dev:v5-WG5-005, v5_dev:v5-WG5-010, v5_dev:v5-WG5-016, v5_dev:v5-WG5-017, v5_dev:v5-WG5-018, v5_dev:v5-WG5-019, v5_dev:v5-WG5-020, v5_dev:v5-WG5-021, v5_dev:v5-WG5-025, v5_dev:v5-WG5-030, v5_dev:v5-WG5-031, v5_dev:v5-WG5-032, v5_dev:v5-WG5-033, v5_dev:v5-WG5-034, v5_dev:v5-WG5-035, v5_dev:v5-WG5-036, v5_dev:v5-WG5-037, v5_dev:v5-WG5-038, v5_dev:v5-WG5-039, v5_dev:v5-S5-111, v5_dev:v5-good-041, v5_dev:v5-good-043, v5_dev:v5-good-048, v5_dev:v5-good-049, v5_dev:v5-good-051, v6_dev:v6-WG6-001, v6_dev:v6-WG6-002, v6_dev:v6-WG6-003, v6_dev:v6-WG6-007, v6_dev:v6-WG6-012, v6_dev:v6-WG6-013, v6_dev:v6-WG6-015, v6_dev:v6-WG6-020, v6_dev:v6-WG6-021, v8_dev:v8-good-001, v8_dev:v8-good-002, v9_dev:v9-good-016, v10_dev:v10-good-008, v10_dev:v10-good-009, holdout:H33, holdout:H34, holdout5:S5-111, holdout6:H6-021, holdout7:S7-096, holdout7:S7-097, holdout9:T062, holdout11:D055, holdout11:G047, holdout11:G049, holdout11:G064, holdout11:G072, holdout11:K056, holdout11:K080, holdout12:H12-074, holdout12:H12-075, holdout12:H12-084, holdout12:H12-085, holdout12:H12-086, holdout13:HC073, holdout13:HK066, holdout13:HK069, holdout13:HM073.
+Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:v3-bad-res-02, v3_dev:v3-bad-054, v3_dev:v3-bad-144, v3_dev:v3-bad-207, v3_dev:v3-bad-062, v5_dev:v5-WG5-004, v5_dev:v5-WG5-005, v5_dev:v5-WG5-010, v5_dev:v5-WG5-016, v5_dev:v5-WG5-017, v5_dev:v5-WG5-018, v5_dev:v5-WG5-019, v5_dev:v5-WG5-020, v5_dev:v5-WG5-021, v5_dev:v5-WG5-025, v5_dev:v5-WG5-030, v5_dev:v5-WG5-031, v5_dev:v5-WG5-032, v5_dev:v5-WG5-033, v5_dev:v5-WG5-034, v5_dev:v5-WG5-035, v5_dev:v5-WG5-036, v5_dev:v5-WG5-037, v5_dev:v5-WG5-038, v5_dev:v5-WG5-039, v5_dev:v5-S5-111, v5_dev:v5-good-041, v5_dev:v5-good-043, v5_dev:v5-good-048, v5_dev:v5-good-049, v5_dev:v5-good-051, v6_dev:v6-WG6-001, v6_dev:v6-WG6-002, v6_dev:v6-WG6-003, v6_dev:v6-WG6-007, v6_dev:v6-WG6-012, v6_dev:v6-WG6-013, v6_dev:v6-WG6-015, v6_dev:v6-WG6-020, v6_dev:v6-WG6-021, v8_dev:v8-good-001, v8_dev:v8-good-002, v9_dev:v9-good-016, v10_dev:v10-good-008, v10_dev:v10-good-009, holdout:H33, holdout:H34, holdout5:S5-111, holdout6:H6-021, holdout7:S7-096, holdout7:S7-097, holdout9:T062, holdout11:D055, holdout11:G047, holdout11:G049, holdout11:G064, holdout11:G072, holdout11:K056, holdout11:K080, holdout12:H12-074, holdout12:H12-075, holdout12:H12-084, holdout12:H12-085, holdout12:H12-086, holdout13:HC073, holdout13:HK066, holdout13:HK069, holdout13:HM073, holdout14:H14-007, holdout14:H14-106.
 
 ## Verdicts that changed from guard_v4 to guard_v5 (stopped versus allowed)
 
@@ -5710,63 +5795,64 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 | holdout11 | 7 | 6 | R009, R010, R087, R088, R089, M080 |
 | holdout12 | 12 | 1 | H12-027 |
 | holdout13 | 4 | 8 | HC004, HC009, HD009, HD025, HK005, HK009, HK017, HM008 |
+| holdout14 | 2 | 2 | H14-052, H14-073 |
 
 ## Timing
 
-3312 decisions per run, in-process (no interpreter start-up).
+3432 decisions per run, in-process (no interpreter start-up).
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 2 |
-| naive_regex | 0.3 | 0.3 | 16 |
-| guard_v1 | 19.2 | 17.5 | 1030 |
-| guard_v2 | 33.0 | 26.9 | 1555 |
-| guard_v3 | 95.1 | 86.5 | 5334 |
-| guard_v4 | 97.2 | 88.7 | 5205 |
-| guard_v5 | 119.3 | 107.9 | 5797 |
-| guard_v6 | 120.8 | 109.1 | 5834 |
-| guard_v7 | 120.7 | 109.3 | 5828 |
-| guard_v8 | 153.6 | 140.9 | 7458 |
-| guard_v9 | 155.3 | 142.1 | 7666 |
-| guard_v10 | 156.9 | 143.2 | 7827 |
-| broken_guard | 156.0 | 141.7 | 7810 |
+| no_guard | 0.0 | 0.0 | 1 |
+| naive_regex | 0.3 | 0.3 | 8 |
+| guard_v1 | 19.5 | 17.5 | 1052 |
+| guard_v2 | 33.3 | 27.2 | 1603 |
+| guard_v3 | 96.7 | 88.2 | 5231 |
+| guard_v4 | 98.4 | 90.1 | 5287 |
+| guard_v5 | 121.1 | 109.9 | 5748 |
+| guard_v6 | 122.8 | 110.8 | 5889 |
+| guard_v7 | 123.2 | 112.0 | 5881 |
+| guard_v8 | 155.8 | 142.1 | 7675 |
+| guard_v9 | 158.1 | 143.2 | 7654 |
+| guard_v10 | 159.2 | 144.6 | 7826 |
+| broken_guard | 158.0 | 144.1 | 7843 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
-1693 denies over every set, 59 shapes, 63 distinct alternative commands, each one allowed by guard.py.
+1741 denies over every set, 59 shapes, 63 distinct alternative commands, each one allowed by guard.py.
 
 | shape | denies | first alternative |
 |---|---:|---|
-| A-add-whole | 347 | `git status --short` |
-| C-reset-hard | 218 | `git stash push -m "before reset"` |
-| B-hook-file | 149 | `cat .git/hooks/pre-commit` |
-| B-no-verify | 115 | `git commit -m "message"` |
-| C-force-push | 114 | `git push origin branch-name` |
-| C-clean | 80 | `git clean -n` |
-| B-hookspath-config | 67 | `git config core.hooksPath .githooks` |
-| A-commit-all | 60 | `git add path/to/file1 path/to/file2` |
+| A-add-whole | 358 | `git status --short` |
+| C-reset-hard | 220 | `git stash push -m "before reset"` |
+| B-hook-file | 154 | `cat .git/hooks/pre-commit` |
+| B-no-verify | 119 | `git commit -m "message"` |
+| C-force-push | 117 | `git push origin branch-name` |
+| C-clean | 82 | `git clean -n` |
+| B-hookspath-config | 69 | `git config core.hooksPath .githooks` |
+| A-commit-all | 61 | `git add path/to/file1 path/to/file2` |
 | C-discard-whole-tree | 50 | `git restore path/to/file` |
 | B-hookspath-oneshot | 41 | `git commit -m "message"` |
-| B-hook-manager-remove | 35 | `git commit -m "message"` |
-| C-branch-delete | 34 | `git branch -d branch-name` |
-| C-stash-drop | 33 | `git stash list` |
-| B-runner-off | 32 | `git commit -m "message"` |
-| C-remote-delete | 30 | `git push origin branch-name` |
-| C-switch-discard | 25 | `git stash push -m "wip"` |
+| B-hook-manager-remove | 37 | `git commit -m "message"` |
+| C-branch-delete | 35 | `git branch -d branch-name` |
+| B-runner-off | 34 | `git commit -m "message"` |
+| C-stash-drop | 34 | `git stash list` |
+| C-remote-delete | 32 | `git push origin branch-name` |
+| C-switch-discard | 27 | `git stash push -m "wip"` |
+| C-delete-dotgit | 23 | `git fsck` |
 | B-commit-n | 22 | `git commit -m "message"` |
-| C-delete-dotgit | 22 | `git fsck` |
 | F-hook-write | 21 | `cat .git/hooks/pre-commit` |
-| B-plumbing | 19 | `git commit -m "message"` |
-| C-branch-move | 17 | `git switch -c new-branch origin/main` |
-| B-config-env | 16 | `git -c user.name="Name" commit -m "message"` |
-| B-interp-hooks | 9 | `ls -la .githooks` |
-| C-reflog | 9 | `git gc` |
+| B-plumbing | 20 | `git commit -m "message"` |
+| C-branch-move | 18 | `git switch -c new-branch origin/main` |
+| B-config-env | 17 | `git -c user.name="Name" commit -m "message"` |
+| B-interp-hooks | 10 | `ls -la .githooks` |
+| C-reflog | 10 | `git gc` |
+| A-add-exclude | 8 | `git status --short` |
 | B-pre-commit-uninstall | 8 | `pre-commit run --all-files` |
-| A-add-exclude | 7 | `git status --short` |
+| C-worktree-force | 8 | `git worktree remove path/to/worktree` |
 | A-rm-cached-all | 7 | `git rm --cached path/to/file` |
 | C-clean-config | 7 | `git clean -n` |
 | C-find-gitdir | 7 | `git log --oneline -5` |
-| C-worktree-force | 7 | `git worktree remove path/to/worktree` |
 | F-pipe-to-shell | 7 | `cat script.sh` |
 | F-shell-c | 7 | `echo "$VAR"` |
 | F-interpreter | 5 | `git status --short` |
@@ -6059,9 +6145,14 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
   - reason: hook_bypass_guard: deletes a git hook (.husky/_). Git's own hooks are the safety checks that run before a commit or push. DO THIS INSTEAD: Leave the hook files in place. Read the hook with `cat .git/h
 - false positive, block `HM073` (policy none, class xargs-stages-named-files): `"git diff --name-only --diff-filter=U | xargs git add"`
 
+### holdout14
+- miss `H14-035` (policy B, class hook-manager-uninstalled): `"pipx uninstall pre-commit && git commit -m \"bump deps\""`
+  - reason: hook_bypass_guard: pipx uninstall removes the hook manager pre-commit, so its git hooks stop running. Git's own hooks are the safety checks that run before a commit or push. DO THIS INSTEAD: Keep the 
+- false positive, block `H14-106` (policy none, class xargs-filtered-stage): `"git ls-files -m | grep '^src/' | xargs git add"`
+
 ## Checks
 
-- guard.py reason names the policy's guard on 1422 of 1435 blocked violations (off: v3-bad-167, v3-bad-168, v3-bad-242, v10-bad-023, Q063, Q067, Q084, Q089, S5-061, S7-062, X075, T049, HK032).
+- guard.py reason names the policy's guard on 1469 of 1482 blocked violations (off: v3-bad-167, v3-bad-168, v3-bad-242, v10-bad-023, Q063, Q067, Q084, Q089, S5-061, S7-062, X075, T049, HK032).
 - Every guard_v3 ask reason starts with `fail_closed`: yes.
 - Every guard.py deny that was a v3 ask still starts with `fail_closed`: yes.
 - Planted bad redirects caught: an empty redirect, an unmatched shape, an alternative the guard stops, no alternative named, a reason without the redirect.
@@ -6085,14 +6176,14 @@ Blind to: a script FILE run by name that this command did not write (sh x.sh, py
 - PASS: guard.py handles every own bad case (a deny, or an allow on an undo point) and allows every own good case (0 errors)
 - PASS: guard.py gives each own stop case the origin it names (block: a hard block; ask: irreversible, recoverable, or a block found inside the text; a v8_origin field: exactly that) (0 differ; 14 cases name a v8 origin; 2 ask cases are blocks found inside unresolved text)
 - PASS: broken_guard.py has at least one error on own cases (negative control) (94 errors)
-- PASS: guard.py hook form agrees with decide() on every case (with no undo point, a recoverable allow is v7's deny), never asks, carries every redirect, and made no snapshot ref here (0 of 3312 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs)
+- PASS: guard.py hook form agrees with decide() on every case (with no undo point, a recoverable allow is v7's deny), never asks, carries every redirect, and made no snapshot ref here (0 of 3432 differ, 0 asks, 0 denies without the redirect, 0 new snapshot refs)
 - PASS: broken_guard.py differs from guard.py by exactly one line (1 changed lines)
 - PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (43): H12-131 (v5-WG5-011), H12-133 (v5-good-054), H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019, v8-good-003, v8-good-004, v8-good-005, v8-good-006, v8-good-007)
-- PASS: every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo point, on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1535 v7 hard blocks softened outside the list; 0 fail-closed denies lost outside the list; 86 newly stopped; listed (6): v8-good-001, v8-good-002, v8-good-003, v8-good-004, v8-good-005, v8-good-006; holdout fixes (0): none; holdout regressions (0): none)
+- PASS: every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo point, on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1581 v7 hard blocks softened outside the list; 0 fail-closed denies lost outside the list; 87 newly stopped; listed (6): v8-good-001, v8-good-002, v8-good-003, v8-good-004, v8-good-005, v8-good-006; holdout fixes (0): none; holdout regressions (0): none)
 - PASS: every v9 deny is a v10 deny and every v9 allow on an undo point is not a plain v10 allow, on own cases, unless an own known_good case with that command says allow (listed); holdout changes reported, never failed (0 softened outside the list; 41 newly denied; listed (6): H12-074 (v10-good-008), H12-097 (v10-good-010), v10-good-008, v10-good-009, v10-good-010, v10-good-011; holdout fixes (1): H12-075; holdout regressions (0): none)
-- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.297 s on '${${${${${${${${${${${${${${${${${${${${')
-- PASS: guard.py never returns ask (0 asks (v3 asked on 209))
-- PASS: every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 1777 denies and fallbacks bad, 59 shapes, 63 distinct alternatives; planted caught 5 of 5; clean control passes)
+- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.296 s on '${${${${${${${${${${${${${${${${${${${${')
+- PASS: guard.py never returns ask (0 asks (v3 asked on 214))
+- PASS: every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 1828 denies and fallbacks bad, 59 shapes, 63 distinct alternatives; planted caught 5 of 5; clean control passes)
 - PASS: undo_bench.py passes (OVERALL: PASS, exit 0; Fully restored: 87 of 87. Controls that show the loss: 8 of 8.)
 - PASS: every own bad case guard.py allows on an undo point, run for real in the write jail through the hook, is fully restored or changed nothing, and the hook allowed it directly with its note and a snapshot (38 cases: 18 fully restored, 20 changed nothing, 0 not restored; hook off-path on 0; jail on, exit 0)
 - PASS: red is reachable: the first restored case, played with the undo layer off, is denied by the hook (no undo point), runs by the script route, and its damage stays (control v2-good-033: hook deny, snapshots 0, damage 1, still lost True)
