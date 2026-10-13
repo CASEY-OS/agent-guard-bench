@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""real_traffic.py: how often v7 (variants/guard_v7.py) and v8 (guard.py) stop real agent Bash calls.
+"""real_traffic.py: how often v7 and v8 (variants/) and v9 (guard.py) stop real agent Bash calls.
 
     python3 real_traffic.py COMMANDS.json [ROOT]
 
@@ -38,19 +38,23 @@ def _category(reason):
     return r[:100]
 
 
+VERSIONS = (("v7", os.path.join(HERE, "variants", "guard_v7.py")), ("v8", os.path.join(HERE, "variants", "guard_v8.py")),
+            ("v9", os.path.join(HERE, "guard.py")))
+CURRENT = VERSIONS[-1][0]
+
+
 def work(cmd):
-    g7 = _load("v7", os.path.join(HERE, "variants", "guard_v7.py"))
-    g8 = _load("v8", os.path.join(HERE, "guard.py"))
-    t = time.perf_counter()
-    d7 = g7.decide_full(cmd)
-    t7 = time.perf_counter() - t
-    t = time.perf_counter()
-    d8 = g8.decide_full(cmd)
-    t8 = time.perf_counter() - t
-    return cmd, {"v7": d7["verdict"], "v7_origin": d7["origin"], "v7_shape": d7["shape"],
-                 "v8": d8["verdict"], "v8_origin": d8["origin"], "v8_shape": d8["shape"],
-                 "v8_why": _category(d8.get("irreversible") or "") if d8["origin"] == "irreversible" else "",
-                 "t7": t7, "t8": t8}
+    out = {}
+    for name, path in VERSIONS:
+        g = _load(name, path)
+        t = time.perf_counter()
+        d = g.decide_full(cmd)
+        out["t_" + name] = time.perf_counter() - t
+        out[name] = d["verdict"]
+        out[name + "_origin"] = d["origin"]
+        out[name + "_shape"] = d["shape"]
+        out[name + "_why"] = _category(d.get("irreversible") or "") if d["origin"] == "irreversible" else ""
+    return cmd, out
 
 
 def main(argv):
@@ -68,33 +72,44 @@ def main(argv):
 
     def pct(k):
         return round(100.0 * k / n, 2) if n else None
-    d7 = sum(1 for r in calls if r["v7"] == "deny")
-    d8 = sum(1 for r in calls if r["v8"] == "deny")
-    rec = sum(1 for r in calls if r["v8_origin"] == "recoverable")
-    trans = collections.Counter("%s -> %s" % (r["v7_origin"] or "allow", r["v8_origin"] or "allow") for r in calls)
-    secs8 = sorted(r["t8"] for r in res.values())
-    out = {
-        "calls": n, "unique_commands": len(uniq), "root": "<the repo root given>",
-        "v7": {"denied": d7, "denied_pct": pct(d7),
-               "denied_by_origin": dict(collections.Counter(r["v7_origin"] for r in calls if r["v7"] == "deny")),
-               "denied_by_shape": dict(collections.Counter(r["v7_shape"] for r in calls if r["v7"] == "deny").most_common())},
-        "v8": {"denied": d8, "denied_pct": pct(d8), "recoverable_allowed": rec, "recoverable_pct": pct(rec),
-               "denied_by_origin": dict(collections.Counter(r["v8_origin"] for r in calls if r["v8"] == "deny")),
-               "denied_by_shape": dict(collections.Counter(r["v8_shape"] for r in calls if r["v8"] == "deny").most_common()),
-               "recoverable_by_v7_shape": dict(collections.Counter(r["v7_shape"] for r in calls
-                                                                   if r["v8_origin"] == "recoverable").most_common()),
-               "irreversible_by_category": dict(collections.Counter(r["v8_why"] for r in calls
-                                                                    if r["v8_origin"] == "irreversible").most_common()),
-               "median_ms": round(1000 * secs8[len(secs8) // 2], 3) if secs8 else None,
-               "p99_ms": round(1000 * secs8[int(len(secs8) * .99)], 2) if secs8 else None},
-        "transitions_v7_to_v8": dict(trans.most_common()),
-    }
+    out = {"calls": n, "unique_commands": len(uniq), "root": "<the repo root given>"}
+    for name, _ in VERSIONS:
+        d = sum(1 for r in calls if r[name] == "deny")
+        rec = sum(1 for r in calls if r[name + "_origin"] == "recoverable")
+        secs = sorted(r["t_" + name] for r in res.values())
+        v = {"denied": d, "denied_pct": pct(d),
+             "denied_by_origin": dict(collections.Counter(r[name + "_origin"] for r in calls if r[name] == "deny")),
+             "denied_by_shape": dict(collections.Counter(r[name + "_shape"] for r in calls if r[name] == "deny").most_common())}
+        if name != "v7":
+            v.update({"recoverable_allowed": rec, "recoverable_pct": pct(rec),
+                      "recoverable_by_v7_shape": dict(collections.Counter(r["v7_shape"] for r in calls
+                                                                          if r[name + "_origin"] == "recoverable").most_common()),
+                      "irreversible_by_category": dict(collections.Counter(r[name + "_why"] for r in calls
+                                                                           if r[name + "_origin"] == "irreversible").most_common())})
+        if name == CURRENT:
+            v.update({"median_ms": round(1000 * secs[len(secs) // 2], 3) if secs else None,
+                      "p99_ms": round(1000 * secs[int(len(secs) * .99)], 2) if secs else None})
+        out[name] = v
+    for a, b in zip(VERSIONS, VERSIONS[1:]):
+        out["transitions_%s_to_%s" % (a[0], b[0])] = dict(collections.Counter(
+            "%s -> %s" % (r[a[0] + "_origin"] or "allow", r[b[0] + "_origin"] or "allow") for r in calls).most_common())
+    # how many calls changed verdict from the previous version to this one, by direction (counts only)
+    prev = VERSIONS[-2][0]
+    out["changed_%s_to_%s" % (prev, CURRENT)] = {
+        "newly_denied": sum(1 for r in calls if r[prev] != "deny" and r[CURRENT] == "deny"),
+        "newly_allowed": sum(1 for r in calls if r[prev] == "deny" and r[CURRENT] != "deny"),
+        "newly_denied_by_shape": dict(collections.Counter(r[CURRENT + "_shape"] for r in calls
+                                                          if r[prev] != "deny" and r[CURRENT] == "deny").most_common())}
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
     with open(os.path.join(HERE, "results", "real_traffic.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2, sort_keys=True)
         fh.write("\n")
-    print("calls %d: v7 denied %d (%.2f%%); v8 denied %d (%.2f%%), allowed on an undo point %d (%.2f%%)"
-          % (n, d7, pct(d7), d8, pct(d8), rec, pct(rec)))
+    print("calls %d: " % n + "; ".join(
+        "%s denied %d (%.2f%%)%s" % (name, out[name]["denied"], out[name]["denied_pct"],
+                                     ", allowed on an undo point %d (%.2f%%)" % (out[name]["recoverable_allowed"],
+                                                                                out[name]["recoverable_pct"])
+                                     if "recoverable_allowed" in out[name] else "")
+        for name, _ in VERSIONS))
     return 0
 
 

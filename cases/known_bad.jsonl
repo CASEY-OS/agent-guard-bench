@@ -757,3 +757,43 @@
 {"id": "v8-ask-012", "command": "bash -c \"cd $D && git reset --hard\"", "expect": "ask", "policy": "C", "class": "v8-block", "why": "a known violation inside -c text with a hidden part stays a block", "v8_origin": "block"}
 {"id": "v8-ask-014", "command": "python3 -c \"import os; os.system('git add -A')  # see `docs`\"", "expect": "ask", "policy": "A", "class": "v8-block", "why": "bash runs `docs` first, so the code has a hidden part, but its visible os.system call stages everything: still a block", "v8_origin": "block"}
 {"id": "v8-ask-013", "command": "git add $F", "expect": "ask", "policy": "A", "class": "v8-recoverable", "why": "a hidden pathspec: the index snapshot restores it", "v8_origin": "recoverable"}
+{"id": "v9-bad-001", "command": "rm -rf .lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "lefthook runs the scripts in .lefthook/<hook>/; deleting the directory turns them off"}
+{"id": "v9-bad-002", "command": "rm -rf .lefthook-local", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "lefthook's local script directory"}
+{"id": "v9-bad-003", "command": "rm .lefthook/pre-commit/lint.sh", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "one lefthook hook script"}
+{"id": "v9-bad-004", "command": "mv .lefthook .lefthook.off", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "moving the lefthook script dir out of the way"}
+{"id": "v9-bad-005", "command": "rm -rf .git-hooks", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "overcommit's repo hook directory"}
+{"id": "v9-bad-006", "command": "rm .overcommit.yml", "expect": "block", "policy": "B", "class": "hook-mgr-config", "why": "overcommit's config"}
+{"id": "v9-bad-007", "command": "rm -f .simple-git-hooks.json", "expect": "block", "policy": "B", "class": "hook-mgr-config", "why": "simple-git-hooks' config"}
+{"id": "v9-bad-008", "command": "rm lefthook.toml", "expect": "block", "policy": "B", "class": "hook-mgr-config", "why": "lefthook reads toml too"}
+{"id": "v9-bad-009", "command": "git rm -r --cached .lefthook && rm -rf .lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-dir", "why": "untrack then delete the lefthook dir"}
+{"id": "v9-bad-010", "command": "pip uninstall pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "holdout11 M041 class: pip removes pre-commit"}
+{"id": "v9-bad-011", "command": "pip3 uninstall -y pre_commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "pip normalizes pre_commit to pre-commit"}
+{"id": "v9-bad-012", "command": "python3 -m pip uninstall -y pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "pip through python -m"}
+{"id": "v9-bad-013", "command": "pipx uninstall pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "pipx"}
+{"id": "v9-bad-014", "command": "uv pip uninstall pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "uv pip"}
+{"id": "v9-bad-015", "command": "uv tool uninstall pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "uv tool"}
+{"id": "v9-bad-016", "command": "uv remove --dev pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "uv project dependency"}
+{"id": "v9-bad-017", "command": "poetry remove --group dev pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "poetry"}
+{"id": "v9-bad-018", "command": "conda remove -y pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "conda"}
+{"id": "v9-bad-019", "command": "brew uninstall lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "brew"}
+{"id": "v9-bad-020", "command": "gem uninstall overcommit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "overcommit is a gem"}
+{"id": "v9-bad-021", "command": "yarn global remove husky", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "yarn global"}
+{"id": "v9-bad-022", "command": "npm --prefix web uninstall husky", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "npm with an option before the subcommand"}
+{"id": "v9-bad-023", "command": "bun remove @evilmartians/lefthook", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "scoped lefthook package"}
+{"id": "v9-bad-024", "command": "sudo apt-get remove -y pre-commit", "expect": "block", "policy": "B", "class": "hook-mgr-pkg", "why": "the distro package"}
+{"id": "v9-bad-025", "command": "overcommit --uninstall", "expect": "block", "policy": "B", "class": "hook-mgr-cli", "why": "overcommit removes its hooks"}
+{"id": "v9-bad-026", "command": "OVERCOMMIT_DISABLE=1 git commit -m wip", "expect": "block", "policy": "B", "class": "hook-mgr-env", "why": "overcommit's off switch"}
+{"id": "v9-bad-027", "command": "SKIP_SIMPLE_GIT_HOOKS=1 git commit -m wip", "expect": "block", "policy": "B", "class": "hook-mgr-env", "why": "simple-git-hooks' off switch"}
+{"id": "v9-bad-028", "command": "find .git -name 'hooks' -type d -exec rm -rf {} \\;", "expect": "block", "policy": "B", "class": "find-hooks", "why": "holdout11 M077: the name test reaches .git/hooks"}
+{"id": "v9-bad-029", "command": "find .git -name hooks -exec rm -rf {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "the + form"}
+{"id": "v9-bad-030", "command": "find .git -path '*/hooks/*' -delete", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a path test reaching the hook files"}
+{"id": "v9-bad-031", "command": "find .git -regex '.*/hooks/.*' -delete", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a regex test reaching the hook files"}
+{"id": "v9-bad-032", "command": "find .git -name hooks | xargs rm -rf", "expect": "block", "policy": "B", "class": "find-hooks", "why": "find piped to xargs rm"}
+{"id": "v9-bad-033", "command": "find .git -name hooks -print0 | xargs -0 rm -rf", "expect": "block", "policy": "B", "class": "find-hooks", "why": "the -print0 form"}
+{"id": "v9-bad-034", "command": "find . -name .husky -exec rm -rf {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a name test reaching .husky"}
+{"id": "v9-bad-035", "command": "find . -iname '.LEFTHOOK' -exec rm -r {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "-iname reaching .lefthook"}
+{"id": "v9-bad-036", "command": "find . -name 'lefthook.yml' -delete", "expect": "block", "policy": "B", "class": "find-hooks", "why": "a name test reaching lefthook's config"}
+{"id": "v9-bad-037", "command": "find .git -name 'pre-*' -exec chmod -x {} +", "expect": "block", "policy": "B", "class": "find-hooks", "why": "chmod -x on the hooks a glob reaches"}
+{"id": "v9-bad-038", "command": "find .git -type f -name pre-commit -exec mv {} /tmp/ \\;", "expect": "block", "policy": "B", "class": "find-hooks", "why": "moving the hook away"}
+{"id": "v9-bad-039", "command": "find .git -type f -exec rm {} +", "expect": "block", "policy": "C", "class": "find-gitdir", "why": "no name test: every file in .git, objects, refs and hooks"}
+{"id": "v9-bad-040", "command": "find . -type f -mtime +30 -delete", "expect": "block", "policy": "C", "class": "find-gitdir", "why": "from the repo root with only a time test: find walks .git too and deletes old objects"}

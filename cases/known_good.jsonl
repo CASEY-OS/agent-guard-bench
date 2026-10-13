@@ -574,3 +574,24 @@
 {"id": "v8-good-005", "command": "D=$(mktemp -d); R=$D/r; mkdir -p \"$R\"; cd \"$R\" && git init -q && echo x > a.txt && git add -A", "expect": "allow", "policy": "none", "class": "scratch-repo", "why": "R is a path under the mktemp dir D, so the repo is scratch"}
 {"id": "v8-good-006", "command": "T=$(mktemp -d) && git -C \"$T\" init -q && git -C \"$T\" add -A && git -C \"$T\" commit -qam x", "expect": "allow", "policy": "none", "class": "scratch-repo", "why": "git -C into the scratch repo it made"}
 {"id": "v8-good-007", "command": "(cd src && git add .); git commit -m x -- src", "expect": "allow", "policy": "none", "class": "glued-operators", "why": "the subshell stages only src; the commit names src"}
+{"id": "v9-good-001", "command": "cat .lefthook/pre-commit/lint.sh", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "reading a lefthook script"}
+{"id": "v9-good-002", "command": "ls -la .lefthook", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "listing the lefthook dir"}
+{"id": "v9-good-003", "command": "cp lefthook.yml lefthook.yml.bak", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "a backup copy beside the config"}
+{"id": "v9-good-004", "command": "pip uninstall -y black", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "removing a formatter, not a hook manager"}
+{"id": "v9-good-005", "command": "pip uninstall pre-commit-hooks", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "pre-commit-hooks is a set of hooks, not the manager"}
+{"id": "v9-good-006", "command": "pip install pre-commit && pre-commit install", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "installing the hooks"}
+{"id": "v9-good-007", "command": "uv add --dev pre-commit", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "adding pre-commit"}
+{"id": "v9-good-008", "command": "npm uninstall lint-staged", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "lint-staged is run by the hook, not the hook manager"}
+{"id": "v9-good-009", "command": "brew uninstall jq", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "an unrelated package"}
+{"id": "v9-good-010", "command": "OVERCOMMIT_DISABLE=0 git commit -m wip", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "the switch left on"}
+{"id": "v9-good-011", "command": "find . -name hooks -type d", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "listing only"}
+{"id": "v9-good-012", "command": "find src -name hooks -type d -exec rm -rf {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "React hooks folders under src; .git is not under src"}
+{"id": "v9-good-013", "command": "find . -path ./.git -prune -o -name hooks -type d -exec rm -rf {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": ".git pruned: only source folders named hooks"}
+{"id": "v9-good-014", "command": "find . -maxdepth 1 -name pre-commit -delete", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "depth 1 cannot reach .git/hooks or .husky/pre-commit"}
+{"id": "v9-good-015", "command": "find .git/hooks -type f -exec chmod +x {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "making the hooks executable"}
+{"id": "v9-good-016", "command": "find .git/hooks -name '*.sample' -delete", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "the sample files git never runs"}
+{"id": "v9-good-017", "command": "find . -type d -name __pycache__ -exec rm -rf {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "a cache cleanup"}
+{"id": "v9-good-018", "command": "find . -name '.DS_Store' -delete", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "Finder files"}
+{"id": "v9-good-019", "command": "find . -type d -empty -delete", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "only empty directories"}
+{"id": "v9-good-020", "command": "find .git -name 'index.lock' -exec rm {} \\;", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "a stale lock file"}
+{"id": "v9-good-021", "command": "find .git -type f -exec ls -l {} +", "expect": "allow", "policy": "none", "class": "v9-neighbor", "why": "read-only over .git"}

@@ -103,6 +103,15 @@ cause: a spawn word or backtick inside a Python string is text, and a repo this 
 init in a fresh mktemp dir is scratch, not the project (policies A and C do not apply inside it).
 Optional: AGENT_GUARD_JUDGE=haiku|sonnet asks a Claude model about an irreversible one (off by default).
 
+VERSION 9. HOOK MANAGERS BY CLASS (blind holdout11's three real misses). A hook manager's script directory
+is its hooks (.lefthook, .lefthook-local, overcommit's .git-hooks), and so is every config name the managers
+read. Any package manager removing a hook manager (husky, lefthook, pre-commit, prek, overcommit,
+simple-git-hooks, yorkie) is denied: pip, pipx, uv, poetry, pdm, conda, brew, gem, cargo, apt and the
+other system tools, as well as npm, yarn, pnpm and bun. A find whose name, path or regex test can reach a
+hook makes its -exec, -delete or xargs act on that hook; a find with no such test that walks .git and
+deletes is a data-loss deny. overcommit --uninstall, OVERCOMMIT_DISABLE, SKIP_SIMPLE_GIT_HOOKS and
+LEFTHOOK_EXCLUDE join the hook-runner switches.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -1488,8 +1497,28 @@ READONLY = {"cat", "less", "more", "head", "tail", "ls", "stat", "file", "wc", "
             "od", "hexdump", "strings", "sort", "uniq", "cut", "true", "false", ":", "cd", "pushd",
             "popd", "git", "which", "type", "command", "file", "view", "nl", "column", "shellcheck"}
 _HOOKS_RE = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)(?:/|$)"
+                       # version 9 (blind holdout11 R100): a hook manager's script directory is its hooks too:
+                       # lefthook's .lefthook and .lefthook-local, overcommit's .git-hooks
+                       r"|(?:^|/)(?:\.lefthook|\.lefthook-local|\.git-hooks)(?:/|$)"
                        # version 7 (blind holdout9 T029): a hook manager's own config IS its hooks
-                       r"|(?:^|/)\.?lefthook(?:-local)?\.ya?ml$|(?:^|/)\.pre-commit-config\.ya?ml$|(?:^|/)\.huskyrc(?:\.\w+)?$")
+                       # version 9: every config name the five managers read (lefthook toml/json, overcommit,
+                       # simple-git-hooks)
+                       r"|(?:^|/)\.?lefthook(?:-local)?\.(?:ya?ml|toml|jsonc?)$|(?:^|/)\.pre-commit-config\.ya?ml$"
+                       r"|(?:^|/)\.huskyrc(?:\.\w+)?$|(?:^|/)\.overcommit\.ya?ml$"
+                       r"|(?:^|/)\.?simple-git-hooks\.(?:json|js|cjs|mjs)$")
+# version 9 (blind holdout11 R100, M041, M077): the hook managers by name, for find tests and package removals
+HOOK_DIR_NAMES = (".githooks", ".husky", ".lefthook", ".lefthook-local", ".git-hooks")
+HOOK_CFG_NAMES = ("lefthook.yml", "lefthook.yaml", ".lefthook.yml", ".lefthook.yaml", "lefthook-local.yml",
+                  "lefthook-local.yaml", "lefthook.toml", "lefthook.json", ".pre-commit-config.yaml",
+                  ".pre-commit-config.yml", ".huskyrc", ".overcommit.yml", ".simple-git-hooks.json",
+                  ".simple-git-hooks.js", ".simple-git-hooks.cjs", "simple-git-hooks.json", "simple-git-hooks.js")
+GIT_HOOK_NAMES = ("pre-commit", "prepare-commit-msg", "commit-msg", "post-commit", "pre-push", "pre-rebase",
+                  "post-checkout", "post-merge", "pre-merge-commit", "post-rewrite", "applypatch-msg",
+                  "pre-applypatch", "post-applypatch", "pre-auto-gc", "reference-transaction", "push-to-checkout",
+                  "sendemail-validate", "post-index-change", "pre-receive", "update", "post-receive", "post-update")
+# package names, normalized: lower case, runs of - _ . read as one -
+HOOK_MANAGER_PKGS = {"husky", "lefthook", "@evilmartians/lefthook", "@arkweid/lefthook", "pre-commit", "prek",
+                     "overcommit", "simple-git-hooks", "yorkie"}
 _GITDIR_RE = re.compile(r"(?:^|/)\.git(?:/(?:refs|objects|logs|HEAD|index|packed-refs|config|\*)(?:/.*)?)?/?$")
 _GITLOCK_RE = re.compile(r"(?:^|/)\.git/.*\.lock$")
 _GITANY_RE = re.compile(r"(?:^|/)\.git/")
@@ -1672,7 +1701,7 @@ def _is_dry(sub, args):
     return False
 
 
-_HOOK_BACKUP = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky)/[^/*?\[\]]+(?:\.(?:bak|orig|old|backup|save|"
+_HOOK_BACKUP = re.compile(r"(?:^|/)(?:\.git/hooks|\.githooks|\.husky|\.lefthook|\.lefthook-local|\.git-hooks)/[^/*?\[\]]+(?:\.(?:bak|orig|old|backup|save|"
                           r"copy|tmp|sample)|~)$")
 _GIT_BENIGN = re.compile(r"(?:^|/)\.git/(?:gc\.log|COMMIT_EDITMSG)$")
 _CFGFILE_HOME = re.compile(r"^(?:~[^/]*|[\x01\x02][^/]*|/(?:Users|home)/[^/]+|/root)/(?:\.gitconfig|\.config/git/config)$"
@@ -2572,7 +2601,7 @@ def _pclass(p, cwd):
         import fnmatch
         if fnmatch.fnmatchcase(".git", base) and not _HOOKS_RE.search(a):
             return "gitdir"
-        if any(fnmatch.fnmatchcase(h, base) for h in (".githooks", ".husky")) or _HOOKS_RE.search(a):
+        if any(fnmatch.fnmatchcase(h, base) for h in HOOK_DIR_NAMES) or _HOOKS_RE.search(a):
             return "hooks"
     if _HOOK_BACKUP.search(a) and not re.search(r"(?:^|/)\.husky/_/", a):
         return "path"                           # a backup copy beside the hooks is not a hook git runs
@@ -2844,6 +2873,10 @@ def _peel(argv, stage, upstream, st):
                     words = [_scoped_names(upstream, st.cwd)]   # staging a named subfolder is allowed; discarding is not
                 elif _listing(upstream):
                     words = ["n" + Q]   # names git listed: one name per word, never a flag (version 5)
+                if words is None and upstream[0]["argv"] and posixpath.basename(upstream[0]["argv"][0]) == "find" \
+                        and all(_lit3(x) for x in upstream[0]["argv"]):
+                    hook = _find_hook_target(upstream[0]["argv"][1:], st.cwd)   # version 9: find | xargs rm
+                    words = [hook] if hook else None
             if words is None:
                 words = [U]
             if b == "parallel" and repl is None and any("{}" in a for a in inner):
@@ -2865,6 +2898,8 @@ def _peel(argv, stage, upstream, st):
             # version 5: find hands -exec each path as ONE word under its start, never "..": FOUND
             stub = (starts[0].rstrip("/") + "/" + FOUND) if (b == "find" and len(starts) == 1
                                                             and not _dyn(starts[0])) else U
+            if b == "find":             # version 9: a name or path test that reaches a hook makes -exec act on it
+                stub = _find_hook_target(rest, st.cwd) or stub
             j = 0
             while j < len(rest):
                 a = rest[j]
@@ -3085,6 +3120,146 @@ def _find_filtered(expr):
     return False
 
 
+
+_FIND_NAME_TESTS = {"-name": False, "-iname": True}
+_FIND_PATH_TESTS = {"-path": False, "-ipath": True, "-wholename": False, "-iwholename": True}
+_FIND_RE_TESTS = {"-regex": False, "-iregex": True}
+
+
+def _find_test_ok(kind, pat, full):
+    """Does one find test accept the path find would print as `full`?"""
+    import fnmatch
+    base = posixpath.basename(full)
+    if kind in _FIND_NAME_TESTS:
+        return fnmatch.fnmatchcase(base.lower(), pat.lower()) if _FIND_NAME_TESTS[kind] else \
+            fnmatch.fnmatchcase(base, pat)
+    if kind in _FIND_PATH_TESTS:
+        return fnmatch.fnmatchcase(full.lower(), pat.lower()) if _FIND_PATH_TESTS[kind] else \
+            fnmatch.fnmatchcase(full, pat)
+    try:
+        return re.fullmatch(pat, full, re.I if _FIND_RE_TESTS[kind] else 0) is not None
+    except re.error:
+        return True                     # a regex Python cannot read could match anything
+
+
+def _find_parse(args):
+    """find's words -> (starts, head, last, tests, type, maxdepth, mindepth). `last` is the branch after the last
+    -o (where -delete or -exec sits, as _find_filtered reads it), `head` what comes before it, `tests` the
+    positive name, path and regex tests in `last`; None if a test is a value the guard cannot read."""
+    starts = []
+    for a in args:
+        if a.startswith("-") or a in ("(", "!", ")"):
+            break
+        starts.append(a)
+    expr, j = [], len(starts)
+    while j < len(args):                # -exec bodies are commands, not tests
+        if args[j] in ("-exec", "-execdir", "-ok", "-okdir"):
+            k = j + 1
+            while k < len(args) and args[k] not in (";", "+", "\\;"):
+                k += 1
+            expr.append(args[j])
+            j = k + 1
+            continue
+        expr.append(args[j])
+        j += 1
+    head, last = [], expr
+    for k in range(len(expr) - 1, -1, -1):
+        if expr[k] in ("-o", "-or"):
+            head, last = expr[:k], expr[k + 1:]
+            break
+    tests, neg, maxd, mind, typ = [], False, None, 0, None
+    for k, t in enumerate(last):
+        v = last[k + 1] if k + 1 < len(last) else None
+        if t in ("!", "-not"):
+            neg = True
+            continue
+        if v is not None and (t in _FIND_NAME_TESTS or t in _FIND_PATH_TESTS or t in _FIND_RE_TESTS):
+            if _dyn(v):
+                return None
+            if not neg:
+                tests.append((t, v))
+        elif t in ("-type", "-xtype") and v in ("d", "f") and not neg:
+            typ = v
+        neg = False
+    for k, t in enumerate(expr):
+        v = expr[k + 1] if k + 1 < len(expr) else ""
+        if t == "-maxdepth" and v.isdigit():
+            maxd = int(v)
+        elif t == "-mindepth" and v.isdigit():
+            mind = int(v)
+    return starts, head, last, tests, typ, maxd, mind
+
+
+def _find_git_pruned(head, gitp):
+    return "-prune" in head and any(
+        (t in _FIND_NAME_TESTS or t in _FIND_PATH_TESTS or t in _FIND_RE_TESTS) and _find_test_ok(t, v, gitp)
+        for t, v in zip(head, head[1:]))
+
+
+def _find_hook_target(args, cwd):
+    """Version 9 (blind holdout11 M077): can this find reach a git hook, a hook manager's directory or its
+    config through its name and path tests? `find .git -name hooks -exec rm -rf {} +` names only .git, and v8
+    judged what -exec ran on the stub .git/<found>, which is not a hook. -> the hook path the tests can match,
+    spelled the way find prints it, or None. A -prune of .git before the last -o keeps .git out; -maxdepth,
+    -mindepth and -type d or f are honoured. A find with no name or path test, or a start that is itself a
+    hook path, is left to the other rules."""
+    parsed = _find_parse(args)
+    if not parsed:
+        return None
+    starts, head, last, tests, typ, maxd, mind = parsed
+    if not tests:
+        return None
+    root = _root()
+    for s in starts:
+        if _dyn(s) or _pclass(s, cwd) == "hooks":
+            continue
+        a = _abs(s, cwd)
+        ss = s.rstrip("/")
+        rels = []
+        if a and a.endswith("/.git"):
+            rels += ["hooks"] + ["hooks/" + h for h in GIT_HOOK_NAMES]
+        elif a is None or a == root or a.startswith(root + "/") or _is_root_or_above(a, root):
+            if (a is None or _is_root_or_above(a, root)) and not _find_git_pruned(head, (ss or ".") + "/.git"):
+                rels += [".git/hooks"] + [".git/hooks/" + h for h in GIT_HOOK_NAMES]
+            rels += list(HOOK_DIR_NAMES) + [d + "/" + h for d in HOOK_DIR_NAMES for h in GIT_HOOK_NAMES]
+            rels += list(HOOK_CFG_NAMES)
+        for rel in rels:
+            depth = rel.count("/") + 1
+            if (maxd is not None and depth > maxd) or depth < mind:
+                continue
+            is_dir = rel in ("hooks", ".git/hooks") or rel in HOOK_DIR_NAMES
+            if (typ == "d" and not is_dir) or (typ == "f" and is_dir):
+                continue
+            full = ss + "/" + rel
+            if all(_find_test_ok(t, v, full) for t, v in tests):
+                return full
+    return None
+
+
+def _find_git_reach(args, cwd):
+    """Version 9: a find with no name or path test whose start is .git, or the repo root or above with .git not
+    pruned, walks every file in .git: objects, refs and hooks. -> that .git path, or None. -empty is left out:
+    it removes only what holds nothing."""
+    parsed = _find_parse(args)
+    if not parsed:
+        return None
+    starts, head, last, tests, typ, maxd, mind = parsed
+    if tests or "-empty" in last or (maxd is not None and maxd < 1):
+        return None
+    root = _root()
+    for s in starts:
+        if _dyn(s):
+            continue
+        a = _abs(s, cwd)
+        ss = s.rstrip("/")
+        if a and a.endswith("/.git"):
+            return s
+        if (a is None and s in (".", "./")) or (a and _is_root_or_above(a, root)):
+            if not _find_git_pruned(head, (ss or ".") + "/.git") and (maxd is None or maxd >= 2):
+                return (ss or ".") + "/.git"
+    return None
+
+
 def _is_cfgfile(p, cwd, root):
     """A git config file: the repo's .git/config, or the global or system one (version 5)."""
     a = _abs(p, cwd)
@@ -3161,7 +3336,7 @@ def _interp_code(code, st, lang=None):
         return
     spawn = _SPAWN.search(view)
     if not spawn:
-        if re.search(r"\.git/hooks|\.githooks|\.git/config|['\"]\.git['\"/]|\.husky", code):
+        if re.search(r"\.git/hooks|\.githooks|\.git/config|['\"]\.git['\"/]|\.husky|\.lefthook|\.git-hooks", code):
             st.ask("interpreter code that touches .git or a hooks directory")
         return
     joined = re.sub(r"(['\"])\s*\+\s*(['\"])", "", code)
@@ -3269,6 +3444,9 @@ def _judge(env, argv, stage, upstream, st):
         elif why:
             st.ask("a shell runs " + why)
         return None
+    removal = _hook_manager_removal(b, args)        # version 9 (blind holdout11 M041): any package manager
+    if removal:
+        return "hook_bypass_guard: " + removal + ", so its git hooks stop running" + BYPASS_TAIL
     if b in ("source", "."):
         a0 = args[0] if args else ""
         if a0 in ("/dev/stdin", "-", "/dev/fd/0"):
@@ -3315,13 +3493,10 @@ def _judge(env, argv, stage, upstream, st):
                     st.ask("an interpreter runs " + why)
         _interp_code(code, st, b)
         return _fs_rules(b, args, stage, st)
-    if b in ("pre-commit", "prek", "husky", "lefthook") and "uninstall" in args:
+    if b in ("pre-commit", "prek", "husky", "lefthook", "simple-git-hooks") and "uninstall" in args:
         return "hook_bypass_guard: " + b + " uninstall removes the git hooks" + BYPASS_TAIL
-    # version 7 (blind holdout9 T028): removing the hook manager's package turns its hooks off
-    if b in ("npm", "yarn", "pnpm", "bun") and args and args[0] in ("uninstall", "un", "remove", "rm", "r", "unlink") \
-            and any(re.match(r"^(?:husky|lefthook|@evilmartians/lefthook|pre-commit|simple-git-hooks|yorkie)(?:@.*)?$", a)
-                    for a in args[1:]):
-        return "hook_bypass_guard: " + b + " " + args[0] + " removes the hook manager, so its git hooks stop running" + BYPASS_TAIL
+    if b == "overcommit" and "--uninstall" in args:     # version 9
+        return "hook_bypass_guard: overcommit --uninstall removes the git hooks" + BYPASS_TAIL
     if b in ("at", "batch"):
         txt, why = _stdin_code(stage, upstream, st)
         if txt is not None:
@@ -3546,6 +3721,8 @@ def _fs_rules(b, args, stage, st):
         samples_only = any(a in ("-name", "-iname") and j + 1 < len(args) and args[j + 1].endswith(".sample")
                            for j, a in enumerate(args)) and not any(a in ("-o", "-or", ",") for a in args)
         if "-delete" in args:
+            if not samples_only and _find_hook_target(args, cwd):     # version 9 (blind holdout11 M077)
+                return "hook_bypass_guard: find -delete removes git hooks" + BYPASS_TAIL
             for s in starts:
                 c = _pclass(s, cwd)
                 if c == "hooks" and samples_only:
@@ -3559,6 +3736,9 @@ def _fs_rules(b, args, stage, st):
         how = "-delete" if "-delete" in expr else next(
             ("-exec " + expr[j + 1] for j, a in enumerate(expr[:-1]) if a in ("-exec", "-execdir", "-ok", "-okdir")
              and posixpath.basename(expr[j + 1]) in ("rm", "unlink", "shred", "srm", "trash")), None)
+        if how and _find_git_reach(args, cwd):          # version 9: find -exec rm or -delete walking .git
+            return "data_loss_guard: find " + how + " removes the repository's history in " + \
+                _find_git_reach(args, cwd) + LOSS_TAIL
         if how and not _find_filtered(expr):
             for s in (starts or ["."]):
                 if s in (".", "./") and cwd is None:
@@ -3684,7 +3864,9 @@ def _git3(env, argv, stage, st, depth):
         envd.setdefault(k, v)
     if sub in HOOKED3:
         for k, off in (("HUSKY", ("0", "false")), ("HUSKY_SKIP_HOOKS", None), ("LEFTHOOK", ("0", "false")),
-                       ("SKIP", None), ("PRE_COMMIT_SKIP", None)):
+                       ("SKIP", None), ("PRE_COMMIT_SKIP", None),
+                       # version 9: the same switch for overcommit, simple-git-hooks and lefthook's skip list
+                       ("OVERCOMMIT_DISABLE", None), ("SKIP_SIMPLE_GIT_HOOKS", None), ("LEFTHOOK_EXCLUDE", None)):
             if k in envd:
                 v = envd[k]
                 if _dyn(v):
@@ -4385,13 +4567,13 @@ REDIRECTS = [
     ("B-runner-off", r"^hook_bypass_guard: .*switches the hook runner off",
      "Run the command without HUSKY=0, LEFTHOOK=0, HUSKY_SKIP_HOOKS or SKIP=, for example "
      "`git commit -m \"message\"`. If a hook fails, fix what it names and run it again."),
-    ("B-hook-manager-remove", r"^hook_bypass_guard: (?:npm|yarn|pnpm|bun) \S+ removes the hook manager",
+    ("B-hook-manager-remove", r"^hook_bypass_guard: \S+ (?:\S+ ){1,2}?removes the hook manager",
      "Keep the hook manager installed. If a hook fails, read its output, fix what it names, and commit again with "
      "`git commit -m \"message\"`. Check what changed with `git status --short`."),
-    ("C-find-gitdir", r"^data_loss_guard: find -delete removes the repository's history",
+    ("C-find-gitdir", r"^data_loss_guard: find (?:-delete|-exec \S+) removes the repository's history",
      "Leave .git and its logs in place: they are how lost work is found again. To read history, run "
      "`git log --oneline -5`; to see the reflog, run `git reflog -5`."),
-    ("B-pre-commit-uninstall", r"^hook_bypass_guard: pre-commit uninstall",
+    ("B-pre-commit-uninstall", r"^hook_bypass_guard: (?:pre-commit uninstall|overcommit --uninstall)",
      "Keep the hooks installed. Run them by hand with `pre-commit run --all-files` and fix what they report."),
     ("B-plumbing", r"^hook_bypass_guard: git plumbing",
      "Use the commands that run the hooks: `git commit -m \"message\"` to commit, `git push origin "
@@ -4857,7 +5039,7 @@ _AWK_WRITE = re.compile(r"\bprint[f]?\b[^\n;]*>\s*['\"]|\bsystem\s*\(")
 _PERL_WRITE = re.compile(r"\bopen\s*\(?\s*(?:my\s+)?[\$\w]+\s*,\s*['\"]?\+?>|\bunlink\b|\brename\b|\brmdir\b|\bmkdir\b")
 _HOME_CODE = re.compile(r"expanduser|Path\.home|['\"]HOME['\"]|os\.homedir|process\.env\.HOME|\$ENV\{HOME\}|"
                         r"\$HOME\b|['\"]~/|['\"]~['\"]")
-_DOTGIT_CODE = re.compile(r"(?:^|[/'\"])\.git(?:/|['\"]|$)|\.githooks|\.husky")
+_DOTGIT_CODE = re.compile(r"(?:^|[/'\"])\.git(?:/|['\"]|$)|\.githooks|\.husky|\.lefthook|\.git-hooks")
 _PLACEHOLDER = re.compile(r"\{[^{}\n]*\}|%\(?\w*\)?[sdrif]|\$\{[^}\n]*\}|#\{[^}\n]*\}")
 
 
@@ -4922,6 +5104,61 @@ def _undo_module():
         sys.path.insert(0, here)
     import undo
     return undo
+
+
+# version 9 (blind holdout11 M041): which subcommand of which package manager removes a named package.
+# version 7 had npm, yarn, pnpm and bun; pip uninstall pre-commit went through.
+_PKG_REMOVE = {
+    "npm": (("uninstall",), ("un",), ("remove",), ("rm",), ("r",), ("unlink",)),
+    "yarn": (("remove",), ("global", "remove")), "pnpm": (("remove",), ("rm",), ("uninstall",), ("un",)),
+    "bun": (("remove",), ("rm",)), "pip": (("uninstall",),), "pipx": (("uninstall",),),
+    "uv": (("pip", "uninstall"), ("tool", "uninstall"), ("remove",)), "poetry": (("remove",),),
+    "pdm": (("remove",),), "rye": (("remove",),), "pipenv": (("uninstall",),), "conda": (("remove",), ("uninstall",)),
+    "mamba": (("remove",), ("uninstall",)), "micromamba": (("remove",), ("uninstall",)),
+    "brew": (("uninstall",), ("remove",), ("rm",)), "gem": (("uninstall",),), "cargo": (("uninstall",),),
+    "apt": (("remove",), ("purge",), ("autoremove",)), "apt-get": (("remove",), ("purge",), ("autoremove",)),
+    "dnf": (("remove",), ("erase",)), "yum": (("remove",), ("erase",)), "apk": (("del",),),
+    "zypper": (("remove",), ("rm",)), "port": (("uninstall",),), "snap": (("remove",),),
+    "scoop": (("uninstall",),), "choco": (("uninstall",),), "winget": (("uninstall",),),
+}
+_PKG_VALS = {"--group", "-G", "-n", "--name", "-p", "--prefix", "-c", "--channel", "--python", "--project",
+             "--package", "--workspace", "-w", "--filter", "-F", "--directory", "--cwd", "--log", "--proxy",
+             "--target", "--root", "-r", "--requirement", "--env", "--dir", "-C", "-i", "--index-url", "--file"}
+
+
+def _pkg_name(a):
+    """npm `@scope/name@1.2`, pip `Pre_Commit==3.0` or `pre-commit[extra]` -> the normalized package name."""
+    a = a.strip().lower()
+    a = a[:1] + re.split(r"@", a[1:], 1)[0] if a else a
+    a = re.split(r"[=<>!~;\[\s]", a, 1)[0]
+    return re.sub(r"[-_.]+", "-", a)
+
+
+def _hook_manager_removal(b, args):
+    """Version 9: a package manager removing a hook manager (husky, lefthook, pre-commit, prek, overcommit,
+    simple-git-hooks, yorkie) turns its git hooks off. -> "<tool> <subcommand> removes the hook manager <name>",
+    or None. pacman -R and nix-env -e/--uninstall are flag-shaped and read here too."""
+    args = list(args)
+    if re.match(r"^python[0-9.]*$", b) and "-m" in args and args.index("-m") + 1 < len(args):
+        k = args.index("-m")
+        b, args = args[k + 1], args[k + 2:]
+    if re.match(r"^pip[0-9.]*$", b):
+        b = "pip"
+    pos = _positionals(args, _PKG_VALS)
+    names = None
+    if b == "pacman" and any(re.match(r"^-R[a-zA-Z]*$", a) or a == "--remove" for a in args):
+        sub, names = "-R", pos
+    elif b == "nix-env" and any(a in ("-e", "--uninstall") for a in args):
+        sub, names = "-e", pos
+    else:
+        for form in _PKG_REMOVE.get(b, ()):
+            if tuple(pos[:len(form)]) == form:
+                sub, names = " ".join(form), pos[len(form):]
+                break
+    if not names:
+        return None
+    hit = next((n for n in names if _pkg_name(n) in HOOK_MANAGER_PKGS), None)
+    return "%s %s removes the hook manager %s" % (b, sub, _pkg_name(hit)) if hit else None
 
 
 def _positionals(args, vals=()):
