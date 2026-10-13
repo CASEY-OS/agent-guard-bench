@@ -109,9 +109,10 @@ CASE_FILES = [
     ("holdout12", os.path.join(HERE, "cases", "holdout12")),     # one file: sonnet_cases.jsonl (+ undo_cases.jsonl)
     ("holdout13", os.path.join(HERE, "cases", "holdout13")),     # four files, one per writer: *_cases.jsonl
     ("holdout14", os.path.join(HERE, "cases", "holdout14")),     # one file: haiku_cases.jsonl
+    ("holdout15", os.path.join(HERE, "cases", "holdout15")),     # one file: sonnet_cases.jsonl
 ]
 HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7", "holdout8", "holdout9", "holdout10",
-            "holdout11", "holdout12", "holdout13", "holdout14")
+            "holdout11", "holdout12", "holdout13", "holdout14", "holdout15")
 HOLDOUT_STATUS = {
     "holdout": "blind for v1; seen before v2, v3, v4 and v5 were built",
     "holdout2": "blind for v1; DEVELOPMENT set for v2; seen before v3, v4 and v5",
@@ -131,6 +132,7 @@ HOLDOUT_STATUS = {
                  "frozen (5cd748b)",
     "holdout14": "blind for v1 to v10 (Claude Haiku, sheet only); sealed until v10 was frozen (4edf1e9); "
                  "DEVELOPMENT set for v11 (its false positive was read)",
+    "holdout15": "blind for v1 to v11 (Claude Sonnet, sheet only); sealed until v11 was frozen (ed0f621)",
 }
 CLASS_SETS = ("holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7")
 GUARD_BY_POLICY = {"A": "blanket_stage_guard", "B": "hook_bypass_guard", "C": "data_loss_guard"}

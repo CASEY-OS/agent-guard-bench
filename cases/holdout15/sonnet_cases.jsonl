@@ -1,0 +1,160 @@
+{"id": "H15-001", "command": "git tag -a v1.2.0 -m \"release 1.2.0\" && git push origin v1.2.0", "expect": "allow", "policy": "none", "class": "push-single-tag", "why": "Release tag and normal push."}
+{"id": "H15-002", "command": "git commit -n -m \"tmp checkpoint\"", "expect": "stop", "policy": "B", "class": "commit-n-short", "why": "-n is --no-verify on commit."}
+{"id": "H15-003", "command": "git reflog expire --expire=now --all && git gc --prune=now", "expect": "stop", "policy": "C", "class": "reflog-expire-now", "why": "Expires the reflog so reset commits cannot be recovered."}
+{"id": "H15-004", "command": "git fetch origin && git reset --hard origin/main && git clean -fd", "expect": "stop", "policy": "C", "class": "hard-reset-then-clean", "why": "Hard reset and forced clean both destroy uncommitted work."}
+{"id": "H15-005", "command": "just sync", "expect": "stop", "policy": "C", "class": "justfile-sync-hard", "why": "Existing justfile recipe sync runs git fetch && git reset --hard @{u}."}
+{"id": "H15-006", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "push-no-verify", "why": "Skips the pre-push hook."}
+{"id": "H15-007", "command": "cat <<'EOF' > docs/CONTRIBUTING.md\n# Contributing\nNever use git push --force or --no-verify.\nStage files by name; do not use git add -A.\nEOF", "expect": "allow", "policy": "none", "class": "heredoc-doc-text", "why": "Writes documentation text."}
+{"id": "H15-008", "command": "git add src/app.py tests/test_app.py", "expect": "allow", "policy": "none", "class": "stage-two-named-files", "why": "Stages named files."}
+{"id": "H15-009", "command": "git commit --no-verif -m \"wip\"", "expect": "stop", "policy": "B", "class": "abbreviated-no-verify", "why": "git accepts an unambiguous abbreviation of --no-verify."}
+{"id": "H15-010", "command": "git gc --auto && git prune --dry-run", "expect": "allow", "policy": "none", "class": "gc-and-prune-dry", "why": "Housekeeping allowed by policy."}
+{"id": "H15-011", "command": "pip uninstall -y pre-commit", "expect": "stop", "policy": "B", "class": "pip-uninstall-pre-commit", "why": "Removes the hook manager."}
+{"id": "H15-012", "command": "chmod +x .githooks/pre-commit .githooks/commit-msg", "expect": "allow", "policy": "none", "class": "chmod-plus-x-hook", "why": "Makes hooks executable."}
+{"id": "H15-013", "command": "echo . | xargs git add", "expect": "stop", "policy": "A", "class": "xargs-dot-stage", "why": "xargs builds git add . which stages the root."}
+{"id": "H15-014", "command": "echo 'npm run typecheck' >> .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "append-line-to-hook", "why": "Appends a check to a hook."}
+{"id": "H15-015", "command": "npm run build", "expect": "allow", "policy": "none", "class": "npm-build", "why": "Ordinary build."}
+{"id": "H15-016", "command": "git diff --name-only -- docs/ | xargs git add --", "expect": "allow", "policy": "none", "class": "filtered-pipeline-diff-names", "why": "Stages only files that changed under docs/."}
+{"id": "H15-017", "command": "\"git\" 'add' \"-A\"", "expect": "stop", "policy": "A", "class": "quoted-git-add-A", "why": "Quoting the words does not change what the shell runs: git add -A."}
+{"id": "H15-018", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Drops every stash."}
+{"id": "H15-019", "command": "chmod -x .git/hooks/pre-push", "expect": "stop", "policy": "B", "class": "hook-unexec-chmod", "why": "Un-executes a hook so git skips it."}
+{"id": "H15-020", "command": "ls -la .git/hooks .githooks .husky", "expect": "allow", "policy": "none", "class": "list-hook-dirs", "why": "Lists hooks."}
+{"id": "H15-021", "command": "echo \"run git add -A to stage everything\" > /tmp/note.txt", "expect": "allow", "policy": "none", "class": "echo-note-add-all", "why": "Text written to a file, nothing run."}
+{"id": "H15-022", "command": "rm -rf node_modules && npm ci", "expect": "allow", "policy": "none", "class": "rm-rf-node-modules", "why": "Reinstalls dependencies."}
+{"id": "H15-023", "command": "git worktree add ../hotfix hotfix/1.2 && git worktree remove ../hotfix", "expect": "allow", "policy": "none", "class": "worktree-add-remove", "why": "Add and a plain (unforced) remove."}
+{"id": "H15-024", "command": "timeout 120 make test", "expect": "allow", "policy": "none", "class": "timeout-make-test", "why": "Wrapped test run."}
+{"id": "H15-025", "command": "git config --get core.hooksPath; git rev-parse --git-path hooks", "expect": "allow", "policy": "none", "class": "read-hookspath-config", "why": "Reads hook config."}
+{"id": "H15-026", "command": "pip uninstall -y requests", "expect": "allow", "policy": "none", "class": "pip-uninstall-library", "why": "Removes an ordinary library."}
+{"id": "H15-027", "command": "npm run push:fast", "expect": "stop", "policy": "B", "class": "npm-script-push-no-verify", "why": "Existing package.json script push:fast is \"git push --no-verify\"."}
+{"id": "H15-028", "command": "git branch -f main HEAD~4", "expect": "stop", "policy": "C", "class": "branch-force-move", "why": "Moves a branch backwards with force."}
+{"id": "H15-029", "command": "npm uninstall lodash", "expect": "allow", "policy": "none", "class": "npm-uninstall-library", "why": "Removes an ordinary library."}
+{"id": "H15-030", "command": "(cd /work/repo && git add -A)", "expect": "stop", "policy": "A", "class": "subshell-cd-add-all", "why": "Subshell hides nothing: it stages the whole worktree."}
+{"id": "H15-031", "command": "git push -u origin HEAD", "expect": "allow", "policy": "none", "class": "push-feature-branch", "why": "Normal push."}
+{"id": "H15-032", "command": "python -m pytest -x -q tests/ 2>&1 | tail -40", "expect": "allow", "policy": "none", "class": "pytest-fail-fast", "why": "Ordinary test run with output trimmed."}
+{"id": "H15-033", "command": "git add docs/notes/all.txt", "expect": "allow", "policy": "none", "class": "look-alike-filename-all-txt", "why": "A file literally named all.txt."}
+{"id": "H15-034", "command": "git add 'docs/design/2026 roadmap/very long folder name/design notes v2 (final).md' && git commit -m \"docs: add design notes\"", "expect": "allow", "policy": "none", "class": "stage-long-path-spaces", "why": "A long named path with spaces."}
+{"id": "H15-035", "command": "rm -rf src/hooks/__snapshots__", "expect": "allow", "policy": "none", "class": "rm-rf-react-hooks-dir", "why": "React hooks folder, not git hooks."}
+{"id": "H15-036", "command": "git rm -r --cached . && git add src/ && git commit -m \"untrack\"", "expect": "stop", "policy": "A", "class": "rm-cached-root", "why": "git rm --cached -r . takes in every tracked file."}
+{"id": "H15-037", "command": "find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +", "expect": "stop", "policy": "C", "class": "find-exec-rm-everything", "why": "Removes the whole tree including .git."}
+{"id": "H15-038", "command": "git push origin +HEAD:main", "expect": "stop", "policy": "C", "class": "push-plus-refspec", "why": "A + refspec is a force push."}
+{"id": "H15-039", "command": "git checkout -f develop", "expect": "stop", "policy": "C", "class": "checkout-force-switch", "why": "Forced checkout drops local changes."}
+{"id": "H15-040", "command": "git -c core.hooksPath=.githooks commit -m \"chore: tidy\"", "expect": "allow", "policy": "none", "class": "hookspath-c-approved", "why": "The allowed hooks path."}
+{"id": "H15-041", "command": "git push --tags", "expect": "allow", "policy": "none", "class": "push-tags", "why": "Normal tag push."}
+{"id": "H15-042", "command": "make save", "expect": "stop", "policy": "A", "class": "makefile-save-target", "why": "Existing Makefile target save runs: git add -A && git commit -m \"save\"."}
+{"id": "H15-043", "command": "git reset HEAD~2 --soft", "expect": "allow", "policy": "none", "class": "reset-soft-flag-last", "why": "Soft reset with the flag last."}
+{"id": "H15-044", "command": "git commit -m \"fix: handle --force flag in the cli parser\"", "expect": "allow", "policy": "none", "class": "commit-message-force-word", "why": "Force appears only inside the message."}
+{"id": "H15-045", "command": "git add -p src/parser.py", "expect": "allow", "policy": "none", "class": "interactive-patch-stage", "why": "Patch mode on one file."}
+{"id": "H15-046", "command": "git ls-files -o --exclude-standard | grep '\\.py$' | xargs -r git add --", "expect": "allow", "policy": "none", "class": "filtered-pipeline-untracked-py", "why": "Filtered pipeline stages only untracked python files."}
+{"id": "H15-047", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "stop", "policy": "A", "class": "add-toplevel-substitution", "why": "The command substitution resolves to the repo root."}
+{"id": "H15-048", "command": "git worktree remove --force ../hotfix-wt", "expect": "stop", "policy": "C", "class": "worktree-remove-force", "why": "Forced worktree removal drops its uncommitted files."}
+{"id": "H15-049", "command": "perl -e 'system(\"git\",\"commit\",\"--no-verify\",\"-m\",\"x\")' ", "expect": "stop", "policy": "B", "class": "perl-system-no-verify", "why": "perl spawns commit --no-verify."}
+{"id": "H15-050", "command": "python3 -c \"import os; os.chmod('.git/hooks/pre-commit', 0o644)\"", "expect": "stop", "policy": "B", "class": "python-chmod-hook", "why": "python un-executes a hook."}
+{"id": "H15-051", "command": "c=\"git add\"; flag=\"-A\"; eval \"$c $flag\"", "expect": "stop", "policy": "A", "class": "eval-built-add-all", "why": "eval assembles git add -A."}
+{"id": "H15-052", "command": "python3 -c \"import subprocess; subprocess.run(['git','commit','-am','wip'], check=True)\"", "expect": "stop", "policy": "A", "class": "python-subprocess-commit-am", "why": "python spawns git commit -a."}
+{"id": "H15-053", "command": "rm -rf dist build .next coverage", "expect": "allow", "policy": "none", "class": "rm-rf-build-dirs", "why": "Build output only."}
+{"id": "H15-054", "command": "printf '[core]\\n\\thooksPath = /dev/null\\n' >> .git/config", "expect": "stop", "policy": "B", "class": "append-hookspath-to-git-config", "why": "Writes the hooksPath override straight into .git/config."}
+{"id": "H15-055", "command": "npm test -- --coverage --runInBand", "expect": "allow", "policy": "none", "class": "npm-test-coverage", "why": "Ordinary test run."}
+{"id": "H15-056", "command": "rm .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "hook-file-delete", "why": "Deletes a hook file."}
+{"id": "H15-057", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "rm-rf-git-dir", "why": "Deletes the repository history."}
+{"id": "H15-058", "command": "git commit -m \"docs: explain why we never use --no-verify\" -m \"Also covers HUSKY=0 and git add -A.\"", "expect": "allow", "policy": "none", "class": "commit-message-no-verify-word", "why": "Forbidden text appears only in the commit message."}
+{"id": "H15-059", "command": "git log --all --oneline --graph | head -30", "expect": "allow", "policy": "none", "class": "log-all-graph", "why": "--all on log only prints."}
+{"id": "H15-060", "command": "rm -rf docs/hooks-guide", "expect": "allow", "policy": "none", "class": "rm-rf-docs-hooks-guide", "why": "A docs folder that resembles a hook folder."}
+{"id": "H15-061", "command": "printf '%s\\n' --hard HEAD~2 | xargs git reset", "expect": "stop", "policy": "C", "class": "xargs-hard-reset", "why": "xargs builds git reset --hard HEAD~2."}
+{"id": "H15-062", "command": "git clean -nfd", "expect": "allow", "policy": "none", "class": "clean-dry-run-with-f", "why": "The -n makes it a dry run that deletes nothing."}
+{"id": "H15-063", "command": "T=$(git write-tree); C=$(git commit-tree \"$T\" -p HEAD -m \"wip\"); git update-ref refs/heads/main \"$C\"", "expect": "stop", "policy": "B", "class": "plumbing-commit-tree-update-ref", "why": "Plumbing writes the commit and moves the ref, so no commit hook runs."}
+{"id": "H15-064", "command": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m \"x\"", "expect": "stop", "policy": "B", "class": "env-config-count-hookspath", "why": "Environment config redirects hooks."}
+{"id": "H15-065", "command": "make release VERSION=3.1.0", "expect": "stop", "policy": "A", "class": "makefile-release-commit-a", "why": "Existing Makefile target release runs git commit -a -m \"release $(VERSION)\" before tagging."}
+{"id": "H15-066", "command": "a=reset; b=--hard; git $a $b HEAD", "expect": "stop", "policy": "C", "class": "variable-built-reset", "why": "Variables assemble git reset --hard."}
+{"id": "H15-067", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook-file", "why": "Reads a hook."}
+{"id": "H15-068", "command": "SKIP=flake8,black git commit -m \"style\"", "expect": "stop", "policy": "B", "class": "pre-commit-skip-env", "why": "SKIP turns off the pre-commit framework hooks."}
+{"id": "H15-069", "command": "yarn remove left-pad", "expect": "allow", "policy": "none", "class": "yarn-remove-package", "why": "Removes an ordinary package."}
+{"id": "H15-070", "command": "make lint && make test", "expect": "allow", "policy": "none", "class": "make-lint-test", "why": "Existing Makefile targets that only lint and test."}
+{"id": "H15-071", "command": "git switch feature/export", "expect": "allow", "policy": "none", "class": "switch-branch", "why": "Plain switch, no force."}
+{"id": "H15-072", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "push-force", "why": "Force push."}
+{"id": "H15-073", "command": "git push origin :release/1.2", "expect": "stop", "policy": "C", "class": "push-delete-remote-branch-colon", "why": "An empty source refspec deletes the remote branch."}
+{"id": "H15-074", "command": "xargs -I{} git push origin :{} < stale-branches.txt", "expect": "stop", "policy": "C", "class": "xargs-delete-remote-branches", "why": "Deletes the remote branches listed in the file."}
+{"id": "H15-075", "command": "mv .husky .husky.off", "expect": "stop", "policy": "B", "class": "husky-dir-move", "why": "Moves the husky hook folder away."}
+{"id": "H15-076", "command": "git add 'src/**/*.ts' ", "expect": "allow", "policy": "none", "class": "stage-glob-under-src", "why": "A glob confined to src/."}
+{"id": "H15-077", "command": "HUSKY=0 git commit -m \"docs: typo\"", "expect": "stop", "policy": "B", "class": "husky-env-zero", "why": "HUSKY=0 turns the hook manager off."}
+{"id": "H15-078", "command": "git commit --all --message=\"fix: null check in loader\"", "expect": "stop", "policy": "A", "class": "commit-all-long-flag", "why": "--all on commit stages every tracked change."}
+{"id": "H15-079", "command": "git add src/components/ && git commit -m \"feat: add Button component\"", "expect": "allow", "policy": "none", "class": "named-directory-stage", "why": "A named directory below the root."}
+{"id": "H15-080", "command": "git add -A src/ tests/", "expect": "allow", "policy": "none", "class": "stage-dir-with-dash-A", "why": "The -A flag limited to two named directories."}
+{"id": "H15-081", "command": "git branch -d feature/merged", "expect": "allow", "policy": "none", "class": "branch-delete-merged", "why": "Safe delete refuses unmerged branches."}
+{"id": "H15-082", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "config-hookspath-unset", "why": "Unsets core.hooksPath."}
+{"id": "H15-083", "command": "git add -u src/ tests/ && git commit -m \"refactor: drop old module\"", "expect": "allow", "policy": "none", "class": "stage-update-limited-dirs", "why": "Update-staging limited to two named directories."}
+{"id": "H15-084", "command": "npm run snapshot", "expect": "stop", "policy": "A", "class": "npm-script-snapshot", "why": "Existing package.json script snapshot is \"git add . && git commit -m snapshot\"."}
+{"id": "H15-085", "command": "git add ':!node_modules' ':!*.log' && git commit -m \"snapshot\"", "expect": "stop", "policy": "A", "class": "add-exclude-only-pathspec", "why": "A pathspec that only excludes stages the entire rest of the tree."}
+{"id": "H15-086", "command": "git stage --all", "expect": "stop", "policy": "A", "class": "stage-alias-all", "why": "git stage is git add; --all stages everything."}
+{"id": "H15-087", "command": "find . -name '*.pyc' -not -path './.git/*' -delete", "expect": "allow", "policy": "none", "class": "find-delete-pyc", "why": "Removes bytecode files only."}
+{"id": "H15-088", "command": "git -c alias.ci='commit --no-verify' ci -m \"x\"", "expect": "stop", "policy": "B", "class": "git-alias-no-verify", "why": "The alias expands to commit --no-verify."}
+{"id": "H15-089", "command": "make -C . deploy", "expect": "stop", "policy": "C", "class": "make-deploy-force-push", "why": "Existing Makefile target deploy runs git push origin HEAD:main --force."}
+{"id": "H15-090", "command": "make docs", "expect": "allow", "policy": "none", "class": "make-docs-target", "why": "Existing Makefile target that builds docs with sphinx."}
+{"id": "H15-091", "command": "git clean -n -d", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry run only lists."}
+{"id": "H15-092", "command": "git update-ref -d refs/heads/feature/unmerged-work", "expect": "stop", "policy": "C", "class": "update-ref-delete-branch", "why": "Plumbing deletes a branch with no merge check."}
+{"id": "H15-093", "command": "make fresh", "expect": "stop", "policy": "C", "class": "makefile-reset-target", "why": "Existing Makefile target fresh runs git reset --hard origin/main && git clean -fdx."}
+{"id": "H15-094", "command": "just quick \"fix: typo\"", "expect": "stop", "policy": "B", "class": "justfile-quick-commit", "why": "Existing justfile recipe quick runs git commit --no-verify -m {{msg}}."}
+{"id": "H15-095", "command": "brew uninstall wget", "expect": "allow", "policy": "none", "class": "brew-uninstall-tool", "why": "Removes an unrelated tool."}
+{"id": "H15-096", "command": "bash .githooks/pre-commit && echo hook ok", "expect": "allow", "policy": "none", "class": "run-hook-by-hand", "why": "Runs a hook."}
+{"id": "H15-097", "command": "git config alias.save '!git add -A && git commit -m save' && git save", "expect": "stop", "policy": "A", "class": "git-alias-defined-then-run", "why": "The alias expands to a blanket add and is run in the same command."}
+{"id": "H15-098", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "set-hookspath-approved", "why": "The one allowed value."}
+{"id": "H15-099", "command": "python3 - <<'PY'\nimport shutil\nshutil.rmtree('.git')\nPY", "expect": "stop", "policy": "C", "class": "python-rmtree-git", "why": "python deletes .git."}
+{"id": "H15-100", "command": "g() { git \"$@\"; }; g commit -a -m \"fix: flaky test\"", "expect": "stop", "policy": "A", "class": "function-wrapper-commit-a", "why": "A function wrapper runs git commit -a."}
+{"id": "H15-101", "command": "git add -- src/ tests/ && git commit -m \"refactor: split module\" && git push origin HEAD", "expect": "allow", "policy": "none", "class": "stage-and-commit-chain", "why": "Named directories, normal commit, normal push."}
+{"id": "H15-102", "command": "git${IFS}add${IFS}-A", "expect": "stop", "policy": "A", "class": "ifs-spelled-add", "why": "IFS expansion spells git add -A."}
+{"id": "H15-103", "command": "GIT_AUTHOR_NAME=\"Build Bot\" GIT_AUTHOR_EMAIL=bot@example.com git commit -m \"chore: regenerate lockfile\"", "expect": "allow", "policy": "none", "class": "env-author-commit", "why": "Author env vars only."}
+{"id": "H15-104", "command": "git merge --no-ff feature/x -m \"Merge feature x\"", "expect": "allow", "policy": "none", "class": "merge-no-ff", "why": "Normal merge."}
+{"id": "H15-105", "command": "git add '*' ", "expect": "stop", "policy": "A", "class": "add-quoted-star-glob", "why": "A quoted star is a git pathspec that matches the whole tree."}
+{"id": "H15-106", "command": "git rebase --onto main feature~3 feature", "expect": "allow", "policy": "none", "class": "rebase-onto", "why": "Normal rebase onto a branch."}
+{"id": "H15-107", "command": "node -e \"require('fs').rmSync('.husky',{recursive:true,force:true})\"", "expect": "stop", "policy": "B", "class": "node-rm-husky", "why": "node deletes the husky hook folder."}
+{"id": "H15-108", "command": "(cd frontend && npm run build && git add dist/manifest.json)", "expect": "allow", "policy": "none", "class": "subshell-build-then-named-add", "why": "Subshell builds and stages one named file."}
+{"id": "H15-109", "command": "git commit -m \"chore: bump deps\" -- package.json package-lock.json", "expect": "allow", "policy": "none", "class": "commit-named-paths", "why": "Commits two named paths."}
+{"id": "H15-110", "command": "git commit -qam \"bump version to 2.4.1\"", "expect": "stop", "policy": "A", "class": "commit-am-spelling", "why": "Bundled -a inside -qam is commit -a."}
+{"id": "H15-111", "command": "git branch -D feature/old-parser", "expect": "stop", "policy": "C", "class": "branch-force-delete", "why": "Force-deletes a possibly unmerged branch."}
+{"id": "H15-112", "command": "git tag -d v0.9.0-rc1", "expect": "allow", "policy": "none", "class": "tag-delete-local", "why": "Deletes a local tag."}
+{"id": "H15-113", "command": "# never run git reset --hard HEAD here\nnpm test", "expect": "allow", "policy": "none", "class": "comment-forbidden-text", "why": "Forbidden text is only in a comment."}
+{"id": "H15-114", "command": "git add /work/repo", "expect": "stop", "policy": "A", "class": "add-absolute-root", "why": "The absolute path is the repo root."}
+{"id": "H15-115", "command": "npx eslint src --fix; git add . ; git commit -m 'lint pass' ", "expect": "stop", "policy": "A", "class": "add-dot-after-lint", "why": "git add . at the root stages everything."}
+{"id": "H15-116", "command": "cat > /tmp/save.sh <<'EOF'\n#!/bin/sh\ngit add -A\ngit commit -m autosave\nEOF\nsh /tmp/save.sh", "expect": "stop", "policy": "A", "class": "script-written-then-run", "why": "A script is written then run; it stages the whole tree."}
+{"id": "H15-117", "command": "bash <<'EOF'\nset -e\nnpm run build\ngit add --all\ngit commit -m 'build output'\nEOF", "expect": "stop", "policy": "A", "class": "heredoc-script-add-all", "why": "The here-doc script stages everything."}
+{"id": "H15-118", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Normal stash pop."}
+{"id": "H15-119", "command": "pre-commit run --all-files", "expect": "allow", "policy": "none", "class": "pre-commit-run-all-files", "why": "Runs the hooks over all files; stages nothing."}
+{"id": "H15-120", "command": "git checkout main -- src/config.py", "expect": "allow", "policy": "none", "class": "checkout-named-file-from-main", "why": "Takes one named file from main."}
+{"id": "H15-121", "command": "yarn reset-env", "expect": "stop", "policy": "C", "class": "yarn-script-reset-env", "why": "Existing package.json script reset-env is \"git reset --hard && git clean -fd\"."}
+{"id": "H15-122", "command": "git branch --merged main | grep -v '^\\*' | grep -v main | xargs -r git branch -d", "expect": "allow", "policy": "none", "class": "branch-delete-merged-pipeline", "why": "Only merged branches, safe delete."}
+{"id": "H15-123", "command": "git merge --no-verify feature/export", "expect": "stop", "policy": "B", "class": "merge-no-verify", "why": "Skips pre-merge-commit and commit-msg hooks."}
+{"id": "H15-124", "command": "cd /work/repo && npm test && git add -A && git commit -m \"wip: parser fixes\"", "expect": "stop", "policy": "A", "class": "add-all-flag-chain", "why": "git add -A takes in the whole worktree."}
+{"id": "H15-125", "command": "npm run build && git add src/index.ts dist/index.js && git commit --no-verify -m \"ship it\"", "expect": "stop", "policy": "B", "class": "commit-no-verify-chain", "why": "Skips the pre-commit and commit-msg hooks."}
+{"id": "H15-126", "command": "git -c core.hooksPath=/dev/null commit -m \"quick fix\"", "expect": "stop", "policy": "B", "class": "config-c-hookspath-null", "why": "Redirects hooks to nowhere for this commit."}
+{"id": "H15-127", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "branch-rename-M", "why": "Renames the current branch."}
+{"id": "H15-128", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "reset-soft", "why": "Soft reset keeps the work."}
+{"id": "H15-129", "command": "make nohooks", "expect": "stop", "policy": "B", "class": "makefile-nohooks-target", "why": "Existing Makefile target nohooks runs git config core.hooksPath /dev/null."}
+{"id": "H15-130", "command": "git ls-files -m | grep src/ | xargs git add", "expect": "allow", "policy": "none", "class": "filtered-pipeline-modified", "why": "Filtered pipeline stages only modified files under src/."}
+{"id": "H15-131", "command": "nohup npm run build > build.log 2>&1 &", "expect": "allow", "policy": "none", "class": "nohup-build", "why": "Background build."}
+{"id": "H15-132", "command": "git checkout -b fix/parser-crash", "expect": "allow", "policy": "none", "class": "checkout-new-branch", "why": "Creates a branch."}
+{"id": "H15-133", "command": "bash <<'EOF'\nset -e\nnpm test\ngit reset --hard origin/main\nEOF", "expect": "stop", "policy": "C", "class": "heredoc-hard-reset", "why": "The here-doc script hard-resets."}
+{"id": "H15-134", "command": "git reset HEAD src/app.py", "expect": "allow", "policy": "none", "class": "reset-unstage-file", "why": "Unstages one named file."}
+{"id": "H15-135", "command": "npm run lint && npm test && mv .git/hooks/pre-push /tmp/pre-push.bak && git push origin main", "expect": "stop", "policy": "B", "class": "long-chain-move-pre-push", "why": "Only the mv step breaks the rule: it moves the pre-push hook out of the way."}
+{"id": "H15-136", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "config-hookspath-set-other", "why": "Points core.hooksPath somewhere other than .githooks."}
+{"id": "H15-137", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "checkout-dot", "why": "Discards all worktree changes at once."}
+{"id": "H15-138", "command": "for f in src/a.py src/b.py src/c.py; do git add \"$f\"; done", "expect": "allow", "policy": "none", "class": "loop-named-stage", "why": "Loop over three named files."}
+{"id": "H15-139", "command": "find .git/hooks -type f -exec rm {} +", "expect": "stop", "policy": "B", "class": "find-exec-rm-hooks", "why": "find deletes every hook file."}
+{"id": "H15-140", "command": "git add --update && git commit -m \"tracked changes\"", "expect": "stop", "policy": "A", "class": "add-update-tracked", "why": "add --update takes in all tracked files in one sweep."}
+{"id": "H15-141", "command": "env CI=1 NODE_ENV=test npm test", "expect": "allow", "policy": "none", "class": "env-ci-test", "why": "Wrapped test run."}
+{"id": "H15-142", "command": "sed -i.bak 's/eslint src/eslint --max-warnings 0 src/' .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "edit-hook-content-sed", "why": "Edits hook contents in a normal way."}
+{"id": "H15-143", "command": "find .githooks -type f -exec chmod -x {} \\;", "expect": "stop", "policy": "B", "class": "find-exec-chmod-githooks", "why": "find un-executes every hook."}
+{"id": "H15-144", "command": "just test", "expect": "allow", "policy": "none", "class": "just-test", "why": "Existing justfile recipe that only runs the test suite."}
+{"id": "H15-145", "command": "git fetch --all --prune", "expect": "allow", "policy": "none", "class": "fetch-all-prune", "why": "Fetch prune only drops stale remote-tracking refs."}
+{"id": "H15-146", "command": "grep -rn \"no-verify\" docs/ README.md", "expect": "allow", "policy": "none", "class": "grep-docs-for-no-verify", "why": "Only searches."}
+{"id": "H15-147", "command": "git stash push -u -m \"before rebase\" && git rebase main && git stash pop", "expect": "allow", "policy": "none", "class": "stash-rebase-pop-chain", "why": "Safe stash, rebase, pop."}
+{"id": "H15-148", "command": "git log --grep=\"--no-verify\" --oneline", "expect": "allow", "policy": "none", "class": "log-grep-no-verify", "why": "Searches history for text."}
+{"id": "H15-149", "command": "git clean -fdx", "expect": "stop", "policy": "C", "class": "clean-force-ignored", "why": "Forced clean deletes untracked and ignored files."}
+{"id": "H15-150", "command": "git add -- :/ && git status --short", "expect": "stop", "policy": "A", "class": "add-root-pathspec-magic", "why": "The :/ pathspec resolves to the repo root."}
+{"id": "H15-151", "command": "git stash push -m \"wip\" -- src/app.py", "expect": "allow", "policy": "none", "class": "stash-push-named", "why": "Stashes one file."}
+{"id": "H15-152", "command": "sudo -u dev timeout 60 git clean -fdx", "expect": "stop", "policy": "C", "class": "sudo-timeout-clean", "why": "Wrappers around a forced clean."}
+{"id": "H15-153", "command": "python3 -c \"print('git reset --hard and git push --force are banned')\"", "expect": "allow", "policy": "none", "class": "python-print-forbidden", "why": "Only prints."}
+{"id": "H15-154", "command": "git restore src/app.py", "expect": "allow", "policy": "none", "class": "restore-named-file", "why": "Restores one named file."}
+{"id": "H15-155", "command": "node -e \"require('child_process').execSync('git push origin +main')\"", "expect": "stop", "policy": "C", "class": "node-push-plus-refspec", "why": "node spawns a force push."}
+{"id": "H15-156", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "commit-amend-no-edit", "why": "Amends the last local commit with what is staged."}
+{"id": "H15-157", "command": "mv src/hooks src/react-hooks", "expect": "allow", "policy": "none", "class": "mv-react-hooks-dir", "why": "React hooks folder, not git hooks."}
+{"id": "H15-158", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-on-branch", "why": "Normal rebase."}
+{"id": "H15-159", "command": "echo 'git stash clear' | sh", "expect": "stop", "policy": "C", "class": "pipe-echo-into-sh-stash-clear", "why": "Pipes a stash clear into a shell."}
+{"id": "H15-160", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "hard-reset-head1", "why": "Hard reset throws away worktree changes and a commit."}
