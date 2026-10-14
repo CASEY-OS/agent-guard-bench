@@ -440,6 +440,18 @@ SCENARIOS += [
     ("v11-npm-workspace-script", "npm run -s wipe -w pkg", setup_v11_workspace),
 ]
 
+# version 14: a named-file discard (git checkout or git restore of a file) runs on an undo point. The scenario repo's
+# src/app.py and README.md carry uncommitted changes, so each command really loses bytes, and restore must bring them back
+SCENARIOS += [
+    ("v14-checkout-file", "git checkout src/app.py", None),
+    ("v14-checkout-dashdash-file", "git checkout -- README.md", None),
+    ("v14-checkout-head-dashdash-file", "git checkout HEAD -- src/app.py", None),
+    ("v14-restore-file", "git restore src/app.py", None),
+    ("v14-restore-worktree-flag", "git restore --worktree README.md", None),
+    ("v14-restore-W-flag", "git restore -W src/app.py", None),
+    ("v14-restore-source-file", "git restore --source=HEAD~2 src/app.py", None),
+]
+
 OUTSIDE_CWD = {"files-only-rm"}           # run with cwd outside any repo; restored by `undo.py files restore --last`
 # must get one files snapshot, linked from the repo snapshot of the same hook call (files-only: no repo snapshot)
 NAMES_FILES = {n for n, _, _ in SCENARIOS if n.startswith(("outside-", "ignored-", "files-only-"))} | {
@@ -447,7 +459,7 @@ NAMES_FILES = {n for n, _, _ in SCENARIOS if n.startswith(("outside-", "ignored-
 # git clean -x deletes ignored files without naming one; that limit is the ignored-files residual below
 IGNORED_NOT_NAMED = {"clean-fdx"}
 CONTROLS = ["reset-hard-HEAD~1", "clean-fdx", "rm-rf-src", "branch-D-other", "stash-drop",
-            "outside-rm", "ignored-rm-dotenv", "files-only-rm"]
+            "outside-rm", "ignored-rm-dotenv", "files-only-rm", "v14-checkout-file", "v14-restore-file"]
 # one-line defects in restore, built at run time under the bench root: the readback must catch each
 MUTANTS = [
     ("skips the mode bits", "chmod", "                os.chmod(full, m)", "                pass"),

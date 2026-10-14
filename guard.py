@@ -5047,10 +5047,12 @@ def _git3(env, argv, stage, st, depth):
             and not any(a in ("-n", "--dry-run", "-i", "--interactive") or re.match(r"^-[A-Za-z]*n", a) for a in args):
         return ("data_loss_guard: git clean with clean.requireForce=%s deletes untracked files"
                 % (cfg["clean.requireforce"] or '""')) + LOSS_TAIL
-    n_asks = len(st.asks)
+    n_asks, n_trace = len(st.asks), len(_TRACE) if _TRACE is not None else 0
     why = _fed_rules(sub, args, cwd, stage, st) or _git_rules3(sub, args, cwd, st)
     if scratch:                             # version 8: only the hook rules still apply in a scratch repo
         del st.asks[n_asks:]
+        if _TRACE is not None:              # version 14: nor does an undo point for a named discard there
+            _TRACE[n_trace:] = [t for t in _TRACE[n_trace:] if t[0] != "snap"]
         return why if why and why.startswith("hook_bypass_guard") else None
     if why:
         return why
@@ -5194,6 +5196,35 @@ def _opts_and_pos(sub, args):
     return out
 
 
+NAMED_DISCARD_WHY = ("data_loss_guard: git %s of a named file throws away that file's uncommitted changes, "
+                     "and git cannot give them back")
+_FILE_NAMES = {"makefile", "readme", "license", "licence", "dockerfile", "gemfile", "rakefile", "procfile", "justfile",
+               "vagrantfile", "changelog", "contributing", "authors", "notice", "codeowners", "jenkinsfile",
+               "brewfile", "pipfile", "podfile", "cname", "version", "todo"}
+_REMOTE_REF = re.compile(r"^(?:origin|upstream|remotes|refs|heads|tags|stash|FETCH_HEAD|HEAD|ORIG_HEAD|MERGE_HEAD|@)(?:[/@~^{:]|$)",
+                         re.I)
+_VERSION_TAG = re.compile(r"^v?\d+(?:\.\d+)+(?:[-+][\w.]+)?$")
+
+
+def _looks_like_file(p, cwd):
+    """Version 14. `git checkout X` is a branch switch or a file restore, and only git's own refs tell which.
+    X is read as a FILE when it has a path or an extension and is not a ref name or a version tag, when it is a
+    well-known extensionless file name, or when a file of that name is on disk in the hook's cwd. A branch
+    read as a file only costs an undo point; a file read as a branch stays a plain allow (named as a limit)."""
+    if not p or p.startswith(("-", "@")) or _REMOTE_REF.match(p) or _VERSION_TAG.match(p):
+        return False
+    if p.startswith(("./", "../", "/", ".")) or "/" in p and not p.startswith(("feature/", "fix/", "bugfix/", "hotfix/",
+                                                                              "release/", "dependabot/")):
+        return True
+    if re.search(r"\.[A-Za-z0-9]{1,8}$", p) or p.lower() in _FILE_NAMES:
+        return True
+    a = _abs(p, _DISK[0] or cwd) if (_DISK[0] or cwd) else None
+    try:
+        return bool(a) and os.path.isfile(a)
+    except Exception:
+        return False
+
+
 def _git_rules3(sub, args, cwd, st):
     """Block reasons for the routes version 3 adds."""
     root = st.root
@@ -5215,6 +5246,33 @@ def _git_rules3(sub, args, cwd, st):
         if "whole" in kinds:
             return True
         return bool(kinds) and all(k == "exclude" for k in kinds) and len(kinds) == len(ps)
+
+    def named_discard():
+        """Version 14. A checkout or restore that overwrites NAMED files in the worktree from the index or a
+        commit throws away whatever uncommitted change those files hold. Incidents INC-036, INC-049 and INC-054
+        lost days of work in ONE named file this way. -> True when it names files (and is not a whole-tree
+        discard, which is a deny above, or an index-only restore, which keeps the work)."""
+        lit = lambda ps: bool(ps) and all(_lit3(p) for p in ps)
+        if sub == "checkout":
+            if any(c in shorts for c in "bBtdpmf") or any(has_long(n, m) for n, m in (
+                    ("--orphan", 3), ("--track", 3), ("--detach", 3), ("--patch", 3), ("--merge", 3))):
+                return False
+            paths = [t for t, k in tp if k == "path"]
+            ppos = [t for t, k in tp if k == "pos"]
+            if paths:
+                return lit(paths)
+            if len(ppos) >= 2:
+                return lit(ppos)
+            return len(ppos) == 1 and lit(ppos) and _looks_like_file(ppos[0], cwd)
+        if sub == "restore":
+            if "p" in shorts or has_long("--patch", 3):
+                return False
+            staged = "S" in shorts or has_long("--staged", 4)
+            worktree = "W" in shorts or has_long("--worktree", 3)
+            if staged and not worktree:
+                return False                    # index only: the file in the worktree keeps its changes
+            return lit(pos)
+        return False
 
     if sub in ("add", "stage"):
         if any(o == "--chmod=-x" for o in opts) or any(a == "--chmod" and b == "-x" for a, b in zip(args, args[1:])):
@@ -5267,6 +5325,8 @@ def _git_rules3(sub, args, cwd, st):
         tree = bool(ppos) if "--" in args else bool(ppos) and _pclass(ppos[0], cwd) != "hooks"
         if hp and tree:                         # version 5: from the index it is the repo's own version
             st.ask("git checkout rewrites hook files from another version")
+        if named_discard():
+            _trace("snap", NAMED_DISCARD_WHY % "checkout", cwd)
     elif sub == "restore":
         if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)) and ("s" in shorts or has_long("--source", 3)):
             st.ask("git restore rewrites hook files from another version")
@@ -5274,6 +5334,8 @@ def _git_rules3(sub, args, cwd, st):
         worktree = "W" in shorts or has_long("--worktree", 3)
         if whole(pos) and (worktree or not staged):
             return "data_loss_guard: git restore over the whole tree discards every uncommitted change" + LOSS_TAIL
+        if named_discard():
+            _trace("snap", NAMED_DISCARD_WHY % "restore", cwd)
     elif sub == "switch":
         if "f" in shorts or "C" in shorts or has_long("--discard-changes", 5) or \
                 any(n.startswith("--force") or (len(n) >= 6 and "--force".startswith(n)) for n in longs):
@@ -5772,6 +5834,9 @@ REDIRECTS = [
     ("C-discard-whole-tree", r"^data_loss_guard: .*over the whole tree discards",
      "Discard changes one file at a time, by name: `git restore path/to/file`. To set everything aside "
      "instead, run `git stash push -m \"wip\"`."),
+    ("C-named-discard", r"^data_loss_guard: git (?:checkout|restore) of a named file",     # version 14
+     "Keep the file's changes. See what would be lost with `git diff path/to/file`, set the file aside with "
+     "`cp path/to/file path/to/file.bak`, then run the discard again."),
     ("C-switch-discard", r"^data_loss_guard: (?:git checkout --force|git switch that discards)",
      "Save your changes first with `git stash push -m \"wip\"`, then switch with `git switch branch-name`. "
      "Bring the changes back later with `git stash apply`."),
@@ -6995,6 +7060,15 @@ def _decide_full(command):
     finally:
         _TRACE = None
     if v3 == "allow":
+        snaps = [i for i in trace if i[0] == "snap"]
+        if snaps:                           # version 14: a named-file discard runs on an undo point, never a plain allow
+            snap_core = snaps[0][1]
+            shape, text = redirect_for(snap_core)
+            return {"verdict": "allow", "origin": "recoverable", "v3": v3, "shape": None, "redirect": "",
+                    "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": snap_core, "unsure": False,
+                    "fallback": {"shape": shape, "redirect": text, "alternatives": alternatives(text),
+                                 "reason": snap_core.rstrip() + " Version 14 lets this run only on an undo point, "
+                                           "and none could be taken here." + REDIRECT_MARK + text}}
         return {"verdict": "allow", "origin": None, "v3": v3, "shape": None, "redirect": "",
                 "alternatives": [], "reason": "", "note": ""}
     core = _core_reason(why).replace(FRESH, "")
