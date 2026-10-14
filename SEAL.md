@@ -1,6 +1,6 @@
 # holdout18 seal (commit before reveal)
 
-Written 2026-10-14, 14:30 to 15:00 Central. Four outside models each got the same prompt in a fresh chat on its own site:
+Written 2026-10-14, about 14:00 to 14:12 Central (an earlier version of this line said 14:30 to 15:00, which was wrong; the push time of the commit before this one is the record). Four outside models each got the same prompt in a fresh chat on its own site:
 ChatGPT (chatgpt.com, temporary chat; its "Unpersonalized" switch did not take, so the chat may have read account memory),
 DeepSeek (chat.deepseek.com), Mistral (Le Chat), Grok (grok.com, private chat). Each was asked for 80 cases, 40 stop and 40 allow.
 Gemini was asked too and returned an error twice; it is not in this set.
