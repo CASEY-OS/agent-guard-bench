@@ -20,10 +20,10 @@ Version 13 of the guard on holdout17: 160 commands (80 dangerous, 80 safe) writt
 
 ### Scope and open work
 
-- It reads only the command text. A script file it never saw, settings changed by an earlier command, and tools other than the shell can get past it. The undo layer covers part of that, inside the repo only. The full list is under "What this does not prove".
+- It reads only the command text. A script file it never saw, settings changed by an earlier command, and tools other than the shell can get past it. The undo layer covers part of that, inside the repo only. The full list is under "What this does not prove" in each version's section of [CHANGELOG.md](CHANGELOG.md).
 - The test sets are self-sealed. AI sessions wrote them, and each was locked on this machine before the guard version it tests was frozen. Git shows that order. It cannot show that nobody looked.
-- The 68,636 real agent commands below come from one person's machine, are private, and are not labeled. A deny rate on them is not a false-positive rate.
-- GitHub's runner fails one speed bound (issue #1): the slowest of 270 pathological inputs takes 1.42 s there against a 1 s limit.
+- The 68,636 real agent commands in [CHANGELOG.md](CHANGELOG.md) ("Earlier results") come from one person's machine, are private, and are not labeled. A deny rate on them is not a false-positive rate.
+- Speed: the slowest of 270 pathological inputs took 1.42 s on GitHub's runner against a 1 s limit (issue #1). The parser now bounds that scan, every decision unchanged on 71,652 inputs, and the slowest input takes 0.035 s (Python 3.12) and 0.052 s (Python 3.9) on GitHub's macOS runner (run 38631156709).
 
 ## How I built this
 
@@ -53,7 +53,7 @@ As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},
 - Denied: `git add src/..` and `git add ':(top)'`, which resolve to the repo root.
 - Allowed: `git add src/app.py tests/test_app.py`.
 
-**Policy B, never disarm the hooks.** Do not skip, switch off, move or edit the git hooks that run before a commit or push.
+**Policy B, never disarm the hooks.** Do not skip, switch off, redirect, move, empty or delete the git hooks that run before a commit or push. Editing a hook's contents by name is allowed.
 - Denied: `git commit --no-verify -m x` and `git commit -n -m x`.
 - Denied: `git config core.hooksPath /tmp/none` and `rm .git/hooks/pre-commit`.
 - Allowed: `git commit -m fix`.
