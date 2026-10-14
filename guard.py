@@ -4677,6 +4677,68 @@ def _manager_install_path(p):
     return None
 
 
+_WORKTREE_NAME = re.compile(r"worktree", re.I)
+
+
+def _worktree_dirs():
+    """Version 14. The linked worktrees of the repo the hook's cwd is in, read from git's own admin files
+    (.git/worktrees/<name>/gitdir) without running git. -> a list of absolute paths; [] when the hook has no cwd."""
+    start = _DISK[0]                        # only the hook's own cwd: with none, nothing is read from disk (version 12)
+    if not start:
+        return []
+    try:
+        d, common = start, None
+        for _ in range(64):
+            g = posixpath.join(d, ".git")
+            if os.path.isdir(g):
+                common = g
+                break
+            if os.path.isfile(g):
+                with open(g, encoding="utf-8", errors="replace") as fh:
+                    first = fh.readline().strip()
+                if first.startswith("gitdir:"):
+                    gd = first[7:].strip()
+                    gd = gd if gd.startswith("/") else posixpath.normpath(posixpath.join(d, gd))
+                    cd = posixpath.join(gd, "commondir")
+                    common = posixpath.normpath(posixpath.join(gd, open(cd).read().strip())) if os.path.isfile(cd) \
+                        else posixpath.dirname(posixpath.dirname(gd))
+                break
+            nd = posixpath.dirname(d)
+            if nd == d:
+                break
+            d = nd
+        if not common:
+            return []
+        wdir = posixpath.join(common, "worktrees")
+        out = []
+        for name in sorted(os.listdir(wdir))[:200]:
+            gf = posixpath.join(wdir, name, "gitdir")
+            if os.path.isfile(gf):
+                with open(gf, encoding="utf-8", errors="replace") as fh:
+                    t = fh.readline().strip()
+                if t:
+                    out.append(posixpath.dirname(posixpath.normpath(t)))
+        return out
+    except Exception:
+        return []
+
+
+def _worktree_target(p, a, st):
+    """Version 14. Is a recursive delete of `p` (absolute form `a`) a delete of a git worktree, or of a directory
+    that holds one? Two tests. Name: any path part says "worktree" (.claude/worktrees, worktrees/agent-1). Disk:
+    with the hook's cwd known, the target is, or is above, a worktree that `git worktree list` would print.
+    An undo point cannot hold a worktree (it is its own checkout, with state under .git/worktrees), so this is
+    a deny, not an undo point; proved in a throwaway repo, where restore brought back an EMPTY worktree directory."""
+    if _WORKTREE_NAME.search(p.replace(FOUND, "*")):
+        return True
+    if not a:
+        return False
+    for wt in _worktree_dirs():
+        if wt == a or wt.startswith(a.rstrip("/") + "/"):
+            return True
+    return False
+
+
 def _fs_rules(b, args, stage, st):
     """Non-git routes to the same effects: hooks removed or overwritten, .git deleted."""
     cwd = st.cwd
@@ -4708,6 +4770,9 @@ def _fs_rules(b, args, stage, st):
             a = _abs(p, cwd)
             while a and posixpath.basename(a) in ("*", ".*"):
                 a = posixpath.dirname(a)
+            if rec and _lit3(p) and _worktree_target(p, a, st):
+                return ("data_loss_guard: " + b + " -r of a git worktree directory (" + p + ") deletes a checkout and "
+                        "the uncommitted work in it, and an undo point does not hold a worktree" + LOSS_TAIL)
             if a and rec and _is_root_or_above(a, st.root):
                 st.ask("a recursive delete of the whole worktree (" + p + ")")
             elif rec and p in (".", "./", "*", "./*") and cwd is None:
@@ -5876,6 +5941,10 @@ REDIRECTS = [
      "branch with `git stash branch new-branch`."),
     ("C-reflog", r"^data_loss_guard: git reflog",
      "Leave the reflog alone; it is how lost commits come back. To shrink the repo, run `git gc`."),
+    ("C-worktree-rm", r"^data_loss_guard: \S+ -r of a git worktree directory",     # version 14
+     "Check each worktree for unsaved work first: `git worktree list`, then `git status --short` inside it. "
+     "Commit or stash that work, then remove a finished worktree with git itself: "
+     "`git worktree remove path/to/worktree`, which refuses while work is unsaved."),
     ("C-worktree-force", r"^data_loss_guard: git worktree remove --force",
      "Commit or stash inside the worktree first, then remove it without --force: "
      "`git worktree remove path/to/worktree`."),
