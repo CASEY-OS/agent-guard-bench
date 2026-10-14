@@ -53,7 +53,7 @@ As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},
 - Denied: `git add src/..` and `git add ':(top)'`, which resolve to the repo root.
 - Allowed: `git add src/app.py tests/test_app.py`.
 
-**Policy B, never disarm the hooks.** Do not skip, switch off, redirect, move, empty or delete the git hooks that run before a commit or push. Editing a hook's contents by name is allowed.
+**Policy B, never disarm the hooks.** Do not skip, switch off, redirect, move, empty or delete the git hooks that run before a commit or push. From the shell, appending a comment or a blank line to a hook file by name is allowed; appending a command is denied, because a command added after a failing check can make the hook pass.
 - Denied: `git commit --no-verify -m x` and `git commit -n -m x`.
 - Denied: `git config core.hooksPath /tmp/none` and `rm .git/hooks/pre-commit`.
 - Allowed: `git commit -m fix`.
