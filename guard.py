@@ -980,6 +980,10 @@ def _subst_vars(text):
 
 def _match_close(text, j):
     """text[j-1] is an open paren. Index of its matching close paren, or -1."""
+    return _close_long(text, j, "(", ")", _match_close_scan) if len(text) >= 200 else _match_close_scan(text, j)
+
+
+def _match_close_scan(text, j):
     depth, q, k = 1, 0, j
     while k < len(text):
         c = text[k]
@@ -1863,8 +1867,68 @@ def _unq(text):
     return "".join(t) if t else text
 
 
+_CLOSE = {}
+
+
+def _close_table(text, op, cl):
+    """Every answer a bracket scan could give for this text, in one backward pass (linear in len(text)).
+    The scan reads one character at a time in one of three quote states (0 none, 1 single, 2 double), so each
+    (position, state) has one successor and a depth change of 0, +1 or -1. tab[3 * k + q] is the index of the
+    closing bracket that first brings the depth back below where it was at (k, q), or -1. An opening bracket
+    is closed by the first close after its own, then the search resumes right after that close, outside any
+    quote. op, cl are "{" "}" for _close_brace and "(" ")" for _match_close."""
+    n = len(text)
+    tab = [-1] * (3 * (n + 2))
+
+    def at(k, q):
+        return tab[3 * k + q] if k < n else -1
+    for k in range(n - 1, -1, -1):
+        c = text[k]
+        for q in (0, 1, 2):
+            if q == 1:
+                tab[3 * k + q] = at(k + 1, 0 if c == "'" else 1)
+            elif c == "\\":
+                tab[3 * k + q] = at(k + 2, q)
+            elif c == "'" and q == 0:
+                tab[3 * k + q] = at(k + 1, 1)
+            elif c == '"':
+                tab[3 * k + q] = at(k + 1, 2 if q == 0 else 0)
+            elif q == 0 and c == op:
+                m = at(k + 1, 0)
+                tab[3 * k + q] = at(m + 1, 0) if m >= 0 else -1
+            elif q == 0 and c == cl:
+                tab[3 * k + q] = k
+            else:
+                tab[3 * k + q] = at(k + 1, q)
+    return tab
+
+
+def _close_long(text, j, op, cl, scan):
+    """_close_brace / _match_close for a long text. The one-character scan is quadratic when one long text is
+    asked about many times (3000 characters of '${' took 0.3 s here and 1.4 s on a shared CI runner), so a
+    text asked about more than 8 times is answered from one precomputed table instead. The answers are the
+    same as the scan's. A text asked about a few times, as when each level of a nested $( ) is a new
+    substring, is still scanned: building a table for each would cost more than it saves."""
+    key = (op, text)
+    ent = _CLOSE.get(key)
+    if ent is None:
+        if len(_CLOSE) >= 16:
+            _CLOSE.clear()
+        ent = _CLOSE[key] = [0, None]
+    if ent[1] is None:
+        ent[0] += 1
+        if ent[0] <= 8:
+            return scan(text, j)
+        ent[1] = _close_table(text, op, cl)
+    return ent[1][3 * j] if j < len(text) else -1
+
+
 def _close_brace(text, j):
     """text[j-1] is the '{' of '${'. Index of the matching '}', or -1."""
+    return _close_long(text, j, "{", "}", _close_brace_scan) if len(text) >= 200 else _close_brace_scan(text, j)
+
+
+def _close_brace_scan(text, j):
     depth, q, k = 1, 0, j
     while k < len(text):
         c = text[k]
