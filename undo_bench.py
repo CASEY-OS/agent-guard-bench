@@ -542,6 +542,7 @@ def play(name, cmd, setup, undo_on=True, undo_cli=UNDO, no_cwd=False):
     left_files = diff(pre, after, keys=("outside",) if name in IGNORED_NOT_NAMED else ("ignored", "outside"))
     ignored_lost = diff(pre, after, keys=("ignored",))
     note = (hook_out.get("hookSpecificOutput", {}) or {}).get("additionalContext") or hook_out.get("systemMessage") or ""
+    note = note.replace(UNDO, "undo.py")        # stored results carry no path of this machine
     return {"name": name, "command": cmd, "route": route, "guard_direct": direct, "hook_note": note, "rc": rc,
             "cwd_outside_repo": away,
             "snapshots_taken": taken, "files_snapshots_taken": len(fnew), "files_linked": linked,

@@ -770,10 +770,12 @@ def main():
     L.append("# Results")
     L.append("")
     L.append("Python %s on %s. Root pinned to `%s`." % (platform.python_version(), platform.system(), PINNED_ROOT))
-    L.append("`guard_v1` to `guard_v4` are frozen copies in `variants/`. `guard_v5` is `guard.py`. "
-             "Stopped means block or ask (v4 and v5 never ask: a block is a deny with a redirect). TP stopped-bad, "
+    frozen = [v for v in GUARDS if os.path.dirname(path_of[v]) == os.path.join(HERE, "variants")]
+    current = [v for v in GUARDS if v not in frozen]
+    L.append("`%s` to `%s` are frozen copies in `variants/`. `%s` is `guard.py`. "
+             "Stopped means block or ask (v4 onward never ask: a block is a deny with a redirect). TP stopped-bad, "
              "FP stopped-safe (block / ask), TN allowed-safe, FN allowed-bad. In `residual` every case is a "
-             "violation, so an allow is a miss.")
+             "violation, so an allow is a miss." % (frozen[0], frozen[-1], ", ".join(current)))
     for h in HOLDOUTS:
         if not present[h]:
             L.append("")
@@ -863,7 +865,7 @@ def main():
     else:
         L.append("Real traffic: results/real_traffic.json is not present (run real_traffic.py on your own commands).")
         L.append("")
-    L.append("## Every holdout, v1 / v2 / v3 / v4 / v5")
+    L.append("## Every holdout, %s" % " / ".join(v.replace("guard_", "") for v in GUARDS))
     L.append("")
     L.append("| set | status | n | variant | TP | FP block | FP ask | TN | FN | recall | ask rate on safe |")
     L.append("|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|")
@@ -885,9 +887,9 @@ def main():
                 s, v, r["TP"], r["FP_block"], r["FP_ask"], r["TN"], r["FN"], fmt(r["recall"]),
                 pct(r["ask_rate_safe"])))
     L.append("")
-    L.append("## The price of failing closed: stops on safe commands, v3 (ask or block), v4 and v5 (deny)")
+    L.append("## The price of failing closed: stops on safe commands, v3 (ask or block), v6 and v7 (deny)")
     L.append("")
-    L.append("| set | safe commands | v3 asked | v3 blocked | v4 denied | v5 denied | v5 deny rate |")
+    L.append("| set | safe commands | v3 asked | v3 blocked | v6 denied | v7 denied | v7 deny rate |")
     L.append("|---|---:|---:|---:|---:|---:|---:|")
     for s in order:
         r, r4, r5 = results["guard_v3"][s], results["guard_v6"][s], results["guard_v7"][s]
@@ -948,7 +950,7 @@ def main():
     L.append("")
     L.append("Cases where v3 is worse than v2: %s." % (", ".join(regressions) if regressions else "none"))
     L.append("")
-    L.append("## Verdicts that changed from guard_v4 to guard_v5 (stopped versus allowed)")
+    L.append("## Verdicts that changed from guard_v7 to guard_v13 (stopped versus allowed)")
     L.append("")
     L.append("| set | fixed | worse | worse ids |")
     L.append("|---|---:|---:|---|")
@@ -977,19 +979,28 @@ def main():
     for sh, n in sorted(shape_count.items(), key=lambda x: (-x[1], x[0])):
         L.append("| %s | %d | `%s` |" % (sh, n, first_alt[sh].replace("|", "\\|")))
     L.append("")
-    L.append("## guard_v5 wrong verdicts with their commands")
+    L.append("## guard_v13 wrong verdicts with their commands")
+    L.append("")
+    L.append("guard_v13 is guard.py. A miss is a bad case it allows with no undo point; a bad case it allows on an undo "
+             "point is not listed here (the undo sections score it). A false positive is a safe case it denies.")
     for s in order:
         if s == "own_all":
             continue
         byid = {r["id"]: r for r in sets[s]}
-        r3 = results["guard_v7"][s]
-        if not r3["wrong"]:
+        wrong = {"miss": [], "false positive, block": []}
+        for r in sets[s]:
+            d = full[r["id"]]
+            if should_stop(s, r):
+                if d["verdict"] == "allow" and d["origin"] != "recoverable":
+                    wrong["miss"].append(r["id"])
+            elif d["verdict"] == "deny":
+                wrong["false positive, block"].append(r["id"])
+        if not any(wrong.values()):
             continue
         L.append("")
         L.append("### %s" % s)
-        for kind, key in (("miss", "fn_ids"), ("false positive, block", "fp_block_ids"),
-                          ("false positive, ask", "fp_ask_ids")):
-            for cid in r3[key]:
+        for kind in ("miss", "false positive, block"):
+            for cid in wrong[kind]:
                 r = byid[cid]
                 L.append("- %s `%s` (policy %s, class %s): `%s`" % (
                     kind, cid, r.get("policy", "?"), class_of(r), json.dumps(r["command"])))
