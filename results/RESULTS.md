@@ -8380,23 +8380,23 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 1 |
-| naive_regex | 0.3 | 0.3 | 7 |
-| guard_v1 | 19.8 | 18.0 | 1030 |
-| guard_v2 | 33.4 | 27.5 | 1588 |
-| guard_v3 | 99.0 | 89.5 | 5291 |
-| guard_v4 | 101.1 | 91.0 | 5420 |
-| guard_v5 | 125.1 | 111.6 | 5830 |
-| guard_v6 | 125.1 | 112.0 | 6022 |
-| guard_v7 | 124.1 | 111.7 | 5855 |
-| guard_v8 | 162.1 | 144.8 | 7532 |
-| guard_v9 | 169.3 | 153.7 | 7583 |
-| guard_v10 | 162.7 | 145.5 | 7678 |
-| guard_v11 | 162.9 | 145.0 | 7852 |
-| guard_v12 | 163.0 | 144.9 | 7800 |
-| guard_v13 | 163.9 | 146.0 | 7726 |
-| guard_v14 | 165.1 | 146.9 | 7935 |
-| broken_guard | 162.9 | 146.8 | 11703 |
+| no_guard | 0.0 | 0.0 | 3 |
+| naive_regex | 0.3 | 0.3 | 8 |
+| guard_v1 | 19.4 | 17.2 | 1069 |
+| guard_v2 | 32.2 | 26.7 | 1538 |
+| guard_v3 | 94.6 | 85.7 | 5212 |
+| guard_v4 | 97.0 | 86.7 | 5113 |
+| guard_v5 | 118.2 | 105.5 | 5703 |
+| guard_v6 | 118.7 | 105.8 | 5917 |
+| guard_v7 | 119.5 | 107.4 | 5830 |
+| guard_v8 | 152.1 | 136.8 | 7437 |
+| guard_v9 | 155.1 | 139.5 | 7435 |
+| guard_v10 | 157.3 | 139.9 | 7559 |
+| guard_v11 | 157.0 | 139.3 | 7675 |
+| guard_v12 | 158.0 | 140.7 | 7700 |
+| guard_v13 | 158.6 | 140.9 | 7607 |
+| guard_v14 | 159.5 | 140.5 | 7660 |
+| broken_guard | 157.7 | 140.5 | 7694 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
@@ -8623,7 +8623,7 @@ Blind to: a script FILE run by name that this command did not write (sh x.sh, py
 - PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (43): H12-131 (v5-WG5-011), H12-133 (v5-good-054), H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019, v8-good-003, v8-good-004, v8-good-005, v8-good-006, v8-good-007)
 - PASS: every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo point, on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 1768 v7 hard blocks softened outside the list; 0 fail-closed denies lost outside the list; 176 newly stopped; listed (7): v11-good-030, v8-good-001, v8-good-002, v8-good-003, v8-good-004, v8-good-005, v8-good-006; holdout fixes (0): none; holdout regressions (0): none)
 - PASS: every v13 deny is a v14 deny and every v13 allow on an undo point is not a plain v14 allow, on own cases, unless an own known_good case with that command says allow (listed); holdout changes reported, never failed (0 softened outside the list; 17 newly denied; listed (0): none; holdout fixes (3): DV14-049, DV14-050, DV14-051; holdout regressions (1): R098)
-- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.015 s on ':(exclude):(exclude):(exclude):(exclude)')
+- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.014 s on ':(exclude):(exclude):(exclude):(exclude)')
 - PASS: guard.py never returns ask (0 asks (v3 asked on 275))
 - PASS: every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 2307 denies and fallbacks bad, 62 shapes, 68 distinct alternatives; planted caught 5 of 5; clean control passes)
 - PASS: undo_bench.py passes (OVERALL: PASS, exit 0; Fully restored: 96 of 96. Controls that show the loss: 10 of 10.)

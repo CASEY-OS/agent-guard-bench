@@ -18,7 +18,7 @@ No set is blind for v14. holdout17 was blind for v13 and is development data now
 - holdout17 safe cases v14 denies: H17-008, H17-042, H17-111, H17-160.
 - Own bad cases allowed on an undo point: 53, fully restored 30, changed nothing 23, not restored 0.
 - Undo bench: OVERALL: PASS. Fully restored: 96 of 96.
-- Slowest of 270 pathological inputs: 0.015 s against a 1 s bound.
+- Slowest of 270 pathological inputs: 0.014 s against a 1 s bound.
 - The pooled row is mostly development sets: their misses were read to build later versions. Only the newest blind set is evidence for the current guard.
 
 Full report: [RESULTS.md](RESULTS.md). Method and scoring: [../docs/METHOD.md](../docs/METHOD.md). Version history: [../CHANGELOG.md](../CHANGELOG.md).

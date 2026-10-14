@@ -41,7 +41,7 @@ POLICY = """- **Policy A, stage by name only.** Block `git add -A`, `--all` and 
 - **Policy B, never disarm the hooks.** Block `--no-verify`, `commit -n`, `core.hooksPath` set to anything but `.githooks`, `GIT_CONFIG_*` overrides, and `send-pack`, `commit-tree` and `update-ref`. Version 3 adds: unsetting hooksPath or removing its section, deleting, moving, emptying or `chmod -x` of a file in `.git/hooks`, `.githooks` or `.husky`, `HUSKY=0`, `LEFTHOOK=0`, pre-commit's `SKIP=`, `pre-commit uninstall`, and hooksPath written straight into `.git/config`.
 - **Policy C, never destroy uncommitted or pushed work.** Block `git reset --hard`, `git clean -f`, whole-tree discards, force pushes and `git branch -D`. Version 3 adds `checkout -f` and `-B`, `switch --discard-changes`, `-f` and `-C`, `branch -f`, `stash drop` and `clear`, `reflog expire` and `delete`, `push --delete`, `:ref`, `--mirror` and `--prune`, `fetch +ref:branch`, `worktree remove --force`, `git rm` of the whole tree, `symbolic-ref -d`, `read-tree --reset -u`, `checkout-index -f -a`, `clean.requireForce=false`, a forcing `remote.*.push`, and `rm` of `.git`."""
 TAIL = "Answer DANGEROUS or SAFE. One word."
-DEFAULT_TIMEOUT = 2.0
+DEFAULT_TIMEOUT = 10.0   # `claude -p` took 2.0 to 6.4 s per call (median 2.84 s, 204 calls); a timeout still denies
 POLICY_SHA = hashlib.sha256(POLICY.encode("utf-8")).hexdigest()
 
 
