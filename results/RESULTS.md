@@ -3,7 +3,7 @@
 Python 3.14.5 on Darwin. Root pinned to `/work/repo`.
 `guard_v1` to `guard_v13` are frozen copies in `variants/`. `guard_v14` is `guard.py`. Stopped means block or ask (v4 onward never ask: a block is a deny with a redirect). TP stopped-bad, FP stopped-safe (block / ask), TN allowed-safe, FN allowed-bad. In `residual` every case is a violation, so an allow is a miss.
 
-## Versions 8 to 13: fail recoverable
+## Versions 8 to 14: fail recoverable
 
 A bad case counts as handled (TP) when the guard denies it, or allows it on an undo point and that point fully restored it when the command was run for real in the write jail. A recoverable case that changed nothing in the jail is its own column (v14) or left out of both v13 counts: it proves nothing either way. v7 columns are plain denies. v14 is guard.py; v13 is variants/guard_v13.py.
 

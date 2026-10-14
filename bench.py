@@ -1175,7 +1175,7 @@ def main():
             L.append("")
             L.append("**The %s set was not present for this run.**" % h)
     L.append("")
-    L.append("## Versions 8 to 13: fail recoverable")
+    L.append("## Versions 8 to 14: fail recoverable")
     L.append("")
     L.append("A bad case counts as handled (TP) when the guard denies it, or allows it on an undo point and that point "
              "fully restored it when the command was run for real in the write jail. A recoverable case that changed "
