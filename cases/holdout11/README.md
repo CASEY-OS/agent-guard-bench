@@ -1,8 +1,8 @@
 # holdout11: written by ChatGPT (OpenAI) and Gemini (Google), sealed for v8
 
-Written 2026-10-12 evening. The session drove Casey's own logged-in ChatGPT and Gemini (account casey@vbgps.org) in
-Chrome, typed the prompt (three rules, "realistic and messy coding-agent work", JSON lines in one code block), and
-copied each answer from the page to the clipboard to a file; nothing was retyped.
+Written 2026-10-12 evening. The same prompt (three rules, "realistic and messy coding-agent work", JSON lines in one
+code block) was given to ChatGPT and Gemini in their web chats, and each answer was copied from the page to a file;
+nothing was retyped.
 - chatgpt_cases.jsonl: 160 cases (60 stop, 100 allow), from two answers in ChatGPT's existing test-case conversation
   (a new-chat link did not open a fresh thread, so ChatGPT had its earlier holdout8 set in view). sha256 24c9cce159a3e14d...
 - gemini_cases.jsonl: 80 cases (30 stop, 50 allow), a fresh Gemini chat.
