@@ -6,6 +6,8 @@ Read first: [results/SUMMARY.md](results/SUMMARY.md), the result in about 30 lin
 
 ## The current result
 
+**Status.** Version 14 is built on the `v14` branch (changes in [CHANGELOG.md](CHANGELOG.md)). No set is blind for it yet: it is scored on a new sealed set, written after v14 is frozen. The table below is still version 13 on holdout17, which is development data for v14.
+
 Version 13 of the guard on holdout17: 160 commands (80 dangerous, 80 safe) written by a separate Claude Sonnet session and committed after v13 was frozen. It is the one test set v13 had not seen. A plain pattern-matching guard (`variants/naive_regex.py`) is scored on the same set for comparison.
 
 | holdout17 | guard v13 | plain regex |
@@ -35,6 +37,8 @@ python3 undo_bench.py
 ```
 
 It needs Python 3.9 or newer and git, nothing else. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`. `exit 0` is not the verdict. Read the `OVERALL:` line.
+
+Version 14 adds an optional judge for commands the guard cannot read to the end. It is off unless `AGENT_GUARD_JUDGE` is set (a model name, `haiku` for example). Then `judge.py` asks `claude -p` one question per command: DANGEROUS denies, SAFE allows on an undo point, and an error, a timeout (2 s, `AGENT_GUARD_JUDGE_TIMEOUT`) or an unreadable reply denies. A remote write or anything else an undo point cannot take back is denied and never sent. `bench.py` replays the judge's replies from `results/judge_cache.jsonl` and calls the model only for a miss, with `--judge-live`.
 
 As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},"cwd":"..."}` on stdin. To stop a command it prints a deny decision whose reason ends with `DO THIS INSTEAD:` and a redirect. To allow it prints nothing, after the undo snapshot. Since version 8 it can also allow a command it could not fully read, on an undo point. Then it prints a note to the agent and to me: `agent-guard: allowed; an undo point was taken: python3 /path/to/undo.py restore <id>`. In code, `guard.decide(command)` returns `("block"|"allow", reason)` and `guard.decide_full(command)` adds the origin (`block`, `irreversible`, `recoverable`, or none), the shape, the redirect and its alternatives.
 
