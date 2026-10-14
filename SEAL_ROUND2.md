@@ -1,6 +1,6 @@
 # holdout18, round 2 seal (commit before reveal)
 
-Written 2026-10-14, about 14:40 to 15:05 Central, after round 1 (SEAL.md) was already public.
+Written 2026-10-14, about 14:30 to 14:43 Central (an earlier version of this line said 14:40 to 15:05, which was wrong; the push time is the record), after round 1 (SEAL.md) was already public.
 Three more outside models got the same prompt (PROMPT_TEMPLATE.md in round 1, only the id prefix changed) in a fresh chat on its own site:
 Microsoft Copilot (copilot.microsoft.com), Kimi (kimi.ai; the prompt went in as an attached text file with the line "Follow the attached writer sheet exactly."), Qwen (chat.qwen.ai, Qwen3.7-Plus).
 Each wrote 80 cases, 40 stop and 40 allow.
