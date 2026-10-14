@@ -1,8 +1,10 @@
 name: bench
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
   bench:
-    runs-on: ubuntu-latest
+    # macOS: the undo checks need a write jail, and sandbox-exec ships with macOS.
+    # The first public run, on ubuntu-latest, had no jail (no bwrap) and failed those checks.
+    runs-on: macos-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.12"]
