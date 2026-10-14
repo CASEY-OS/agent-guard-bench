@@ -101,7 +101,8 @@ kind undo does not cover. Those stay denies with v7's redirect (origin "irrevers
 a note on every recoverable allow, with the snapshot id to restore. Two v7 misreadings are fixed by
 cause: a spawn word or backtick inside a Python string is text, and a repo this command made with git
 init in a fresh mktemp dir is scratch, not the project (policies A and C do not apply inside it).
-Optional: AGENT_GUARD_JUDGE=haiku|sonnet asks a Claude model about an irreversible one (off by default).
+Optional: AGENT_GUARD_JUDGE=haiku|sonnet asked a Claude model about an irreversible one (v14 replaces it: see
+VERSION 14, the unsure path).
 
 VERSION 9. HOOK MANAGERS BY CLASS (blind holdout11's three real misses). A hook manager's script directory
 is its hooks (.lefthook, .lefthook-local, overcommit's .git-hooks), and so is every config name the managers
@@ -135,6 +136,18 @@ run every time stops it; one only inside a function or branch puts it on an undo
 that cannot be read, it runs on an undo point. An unread recipe or script whose own name says it reaches a
 remote (deploy, release, publish, push, ship, sync ...) stays a deny: an undo point cannot take back a remote.
 yarn and pnpm subcommands of their own (remove, why, list ...) are no longer read as script names.
+
+VERSION 14. HOLDOUT18'S FIVE FIXES AND THE UNSURE PATH (the founder's D408 ruling; a 6-of-6 outside-model panel
+chose option d). (1) git checkout/restore of a NAMED file runs on an undo point (origin recoverable, never a
+plain allow): incidents INC-036, INC-049, INC-054 lost days of work in one file. (2) rm -r of a path that says
+worktree, or of a worktree (or a directory holding one) that git's admin files list under the hook's cwd, is a
+deny: an undo point does not hold a worktree (proved: restore brought back an empty directory). (3) A git alias is
+judged by its body where it is DEFINED (git config alias.X, git -c alias.X=...), not only where it is run.
+(4) Appending only comments or blank lines to a hook file by name is allowed; an appended line that runs stays
+denied (v7's proof, own cases v3-bad-218 and v6-WG6-005). (5) With AGENT_GUARD_JUDGE set, a command the guard could
+not read to the end goes to judge.py (see the VERSION 14 block before _UNREADABLE): DANGEROUS denies, SAFE runs on an
+undo point, an error or a timeout denies; a remote write and every other effect an undo point cannot reverse is
+denied and never sent. Unset, the unsure path is version 13's exactly.
 
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
@@ -4644,6 +4657,17 @@ def _redir_rules(b, args, stage, st):
             # appended after a failing check (even `echo ok`, even `make lint`) can turn that failure into a
             # pass. Proved in a throwaway repo: a hook ending in `false` blocks the commit; append
             # `echo "hook ok"` and the same commit goes through. v6 allowed appends; that was wrong.
+            # version 14 (holdout18 CP050): an append that adds only comments or blank lines changes nothing that runs,
+            # so it is the same ordinary edit of a hook's contents by name that an overwrite with a real script is.
+            # An appended LINE THAT RUNS stays as v7 left it: own cases v3-bad-218 and v6-WG6-005 hold the proof above.
+            txt = None
+            if b == "cat" and not args and stage.get("here") is not None:
+                txt = stage["here"]
+            elif b in ("echo", "printf") and all(_lit3(a) and _lit(a) for a in args):
+                txt = _stage([b] + args, None)
+            if txt is not None and _lit3(txt) and all(not l.strip() or l.strip().startswith("#")
+                                                      for l in txt.splitlines()):
+                continue
             st.ask("an append to a git hook file, which can mask the hook's earlier checks (" + tgt + ")")
         elif op in (">", ">>", ">|", "&>", "&>>") and _is_cfgfile(tgt, cwd, st.root):
             if re.search(r"hookspath", " ".join(stage["argv"]) + " " + (stage.get("here") or ""), re.I):
@@ -4677,6 +4701,68 @@ def _manager_install_path(p):
     return None
 
 
+_WORKTREE_NAME = re.compile(r"worktree", re.I)
+
+
+def _worktree_dirs():
+    """Version 14. The linked worktrees of the repo the hook's cwd is in, read from git's own admin files
+    (.git/worktrees/<name>/gitdir) without running git. -> a list of absolute paths; [] when the hook has no cwd."""
+    start = _DISK[0]                        # only the hook's own cwd: with none, nothing is read from disk (version 12)
+    if not start:
+        return []
+    try:
+        d, common = start, None
+        for _ in range(64):
+            g = posixpath.join(d, ".git")
+            if os.path.isdir(g):
+                common = g
+                break
+            if os.path.isfile(g):
+                with open(g, encoding="utf-8", errors="replace") as fh:
+                    first = fh.readline().strip()
+                if first.startswith("gitdir:"):
+                    gd = first[7:].strip()
+                    gd = gd if gd.startswith("/") else posixpath.normpath(posixpath.join(d, gd))
+                    cd = posixpath.join(gd, "commondir")
+                    common = posixpath.normpath(posixpath.join(gd, open(cd).read().strip())) if os.path.isfile(cd) \
+                        else posixpath.dirname(posixpath.dirname(gd))
+                break
+            nd = posixpath.dirname(d)
+            if nd == d:
+                break
+            d = nd
+        if not common:
+            return []
+        wdir = posixpath.join(common, "worktrees")
+        out = []
+        for name in sorted(os.listdir(wdir))[:200]:
+            gf = posixpath.join(wdir, name, "gitdir")
+            if os.path.isfile(gf):
+                with open(gf, encoding="utf-8", errors="replace") as fh:
+                    t = fh.readline().strip()
+                if t:
+                    out.append(posixpath.dirname(posixpath.normpath(t)))
+        return out
+    except Exception:
+        return []
+
+
+def _worktree_target(p, a, st):
+    """Version 14. Is a recursive delete of `p` (absolute form `a`) a delete of a git worktree, or of a directory
+    that holds one? Two tests. Name: any path part says "worktree" (.claude/worktrees, worktrees/agent-1). Disk:
+    with the hook's cwd known, the target is, or is above, a worktree that `git worktree list` would print.
+    An undo point cannot hold a worktree (it is its own checkout, with state under .git/worktrees), so this is
+    a deny, not an undo point; proved in a throwaway repo, where restore brought back an EMPTY worktree directory."""
+    if _WORKTREE_NAME.search(p.replace(FOUND, "*")):
+        return True
+    if not a:
+        return False
+    for wt in _worktree_dirs():
+        if wt == a or wt.startswith(a.rstrip("/") + "/"):
+            return True
+    return False
+
+
 def _fs_rules(b, args, stage, st):
     """Non-git routes to the same effects: hooks removed or overwritten, .git deleted."""
     cwd = st.cwd
@@ -4708,6 +4794,9 @@ def _fs_rules(b, args, stage, st):
             a = _abs(p, cwd)
             while a and posixpath.basename(a) in ("*", ".*"):
                 a = posixpath.dirname(a)
+            if rec and _lit3(p) and _worktree_target(p, a, st):
+                return ("data_loss_guard: " + b + " -r of a git worktree directory (" + p + ") deletes a checkout and "
+                        "the uncommitted work in it, and an undo point does not hold a worktree" + LOSS_TAIL)
             if a and rec and _is_root_or_above(a, st.root):
                 st.ask("a recursive delete of the whole worktree (" + p + ")")
             elif rec and p in (".", "./", "*", "./*") and cwd is None:
@@ -4973,6 +5062,11 @@ def _git3(env, argv, stage, st, depth):
         return None
     for k, v in (_env_config(env) or []):   # GIT_CONFIG_COUNT/KEY/VALUE are -c settings by another name
         cfg.setdefault(k, v)
+    for k, v in cfg.items():                # version 14: an alias set with -c is judged by its body, run or not
+        if k.startswith("alias.") and v is not None and sub != "config":
+            why = _alias_body_why(k[6:], v, st)
+            if why:
+                return why
     for k, v in cfg.items():                # a setting whose value git runs as a shell command
         if v is None:
             continue
@@ -5047,10 +5141,12 @@ def _git3(env, argv, stage, st, depth):
             and not any(a in ("-n", "--dry-run", "-i", "--interactive") or re.match(r"^-[A-Za-z]*n", a) for a in args):
         return ("data_loss_guard: git clean with clean.requireForce=%s deletes untracked files"
                 % (cfg["clean.requireforce"] or '""')) + LOSS_TAIL
-    n_asks = len(st.asks)
+    n_asks, n_trace = len(st.asks), len(_TRACE) if _TRACE is not None else 0
     why = _fed_rules(sub, args, cwd, stage, st) or _git_rules3(sub, args, cwd, st)
     if scratch:                             # version 8: only the hook rules still apply in a scratch repo
         del st.asks[n_asks:]
+        if _TRACE is not None:              # version 14: nor does an undo point for a named discard there
+            _TRACE[n_trace:] = [t for t in _TRACE[n_trace:] if t[0] != "snap"]
         return why if why and why.startswith("hook_bypass_guard") else None
     if why:
         return why
@@ -5194,6 +5290,35 @@ def _opts_and_pos(sub, args):
     return out
 
 
+NAMED_DISCARD_WHY = ("data_loss_guard: git %s of a named file throws away that file's uncommitted changes, "
+                     "and git cannot give them back")
+_FILE_NAMES = {"makefile", "readme", "license", "licence", "dockerfile", "gemfile", "rakefile", "procfile", "justfile",
+               "vagrantfile", "changelog", "contributing", "authors", "notice", "codeowners", "jenkinsfile",
+               "brewfile", "pipfile", "podfile", "cname", "version", "todo"}
+_REMOTE_REF = re.compile(r"^(?:origin|upstream|remotes|refs|heads|tags|stash|FETCH_HEAD|HEAD|ORIG_HEAD|MERGE_HEAD|@)(?:[/@~^{:]|$)",
+                         re.I)
+_VERSION_TAG = re.compile(r"^v?\d+(?:\.\d+)+(?:[-+][\w.]+)?$")
+
+
+def _looks_like_file(p, cwd):
+    """Version 14. `git checkout X` is a branch switch or a file restore, and only git's own refs tell which.
+    X is read as a FILE when it has a path or an extension and is not a ref name or a version tag, when it is a
+    well-known extensionless file name, or when a file of that name is on disk in the hook's cwd. A branch
+    read as a file only costs an undo point; a file read as a branch stays a plain allow (named as a limit)."""
+    if not p or p.startswith(("-", "@")) or _REMOTE_REF.match(p) or _VERSION_TAG.match(p):
+        return False
+    if p.startswith(("./", "../", "/", ".")) or "/" in p and not p.startswith(("feature/", "fix/", "bugfix/", "hotfix/",
+                                                                              "release/", "dependabot/")):
+        return True
+    if re.search(r"\.[A-Za-z0-9]{1,8}$", p) or p.lower() in _FILE_NAMES:
+        return True
+    a = _abs(p, _DISK[0] or cwd) if (_DISK[0] or cwd) else None
+    try:
+        return bool(a) and os.path.isfile(a)
+    except Exception:
+        return False
+
+
 def _git_rules3(sub, args, cwd, st):
     """Block reasons for the routes version 3 adds."""
     root = st.root
@@ -5215,6 +5340,33 @@ def _git_rules3(sub, args, cwd, st):
         if "whole" in kinds:
             return True
         return bool(kinds) and all(k == "exclude" for k in kinds) and len(kinds) == len(ps)
+
+    def named_discard():
+        """Version 14. A checkout or restore that overwrites NAMED files in the worktree from the index or a
+        commit throws away whatever uncommitted change those files hold. Incidents INC-036, INC-049 and INC-054
+        lost days of work in ONE named file this way. -> True when it names files (and is not a whole-tree
+        discard, which is a deny above, or an index-only restore, which keeps the work)."""
+        lit = lambda ps: bool(ps) and all(_lit3(p) for p in ps)
+        if sub == "checkout":
+            if any(c in shorts for c in "bBtdpmf") or any(has_long(n, m) for n, m in (
+                    ("--orphan", 3), ("--track", 3), ("--detach", 3), ("--patch", 3), ("--merge", 3))):
+                return False
+            paths = [t for t, k in tp if k == "path"]
+            ppos = [t for t, k in tp if k == "pos"]
+            if paths:
+                return lit(paths)
+            if len(ppos) >= 2:
+                return lit(ppos)
+            return len(ppos) == 1 and lit(ppos) and _looks_like_file(ppos[0], cwd)
+        if sub == "restore":
+            if "p" in shorts or has_long("--patch", 3):
+                return False
+            staged = "S" in shorts or has_long("--staged", 4)
+            worktree = "W" in shorts or has_long("--worktree", 3)
+            if staged and not worktree:
+                return False                    # index only: the file in the worktree keeps its changes
+            return lit(pos)
+        return False
 
     if sub in ("add", "stage"):
         if any(o == "--chmod=-x" for o in opts) or any(a == "--chmod" and b == "-x" for a, b in zip(args, args[1:])):
@@ -5267,6 +5419,8 @@ def _git_rules3(sub, args, cwd, st):
         tree = bool(ppos) if "--" in args else bool(ppos) and _pclass(ppos[0], cwd) != "hooks"
         if hp and tree:                         # version 5: from the index it is the repo's own version
             st.ask("git checkout rewrites hook files from another version")
+        if named_discard():
+            _trace("snap", NAMED_DISCARD_WHY % "checkout", cwd)
     elif sub == "restore":
         if any(_pclass(p, cwd) == "hooks" for p in pos if _lit3(p)) and ("s" in shorts or has_long("--source", 3)):
             st.ask("git restore rewrites hook files from another version")
@@ -5274,6 +5428,8 @@ def _git_rules3(sub, args, cwd, st):
         worktree = "W" in shorts or has_long("--worktree", 3)
         if whole(pos) and (worktree or not staged):
             return "data_loss_guard: git restore over the whole tree discards every uncommitted change" + LOSS_TAIL
+        if named_discard():
+            _trace("snap", NAMED_DISCARD_WHY % "restore", cwd)
     elif sub == "switch":
         if "f" in shorts or "C" in shorts or has_long("--discard-changes", 5) or \
                 any(n.startswith("--force") or (len(n) >= 6 and "--force".startswith(n)) for n in longs):
@@ -5406,6 +5562,31 @@ def _git_rules3(sub, args, cwd, st):
     return None
 
 
+def _alias_body_why(name, body, st):
+    """Version 14. A git alias is judged by its BODY, where it is defined and not only where it is run:
+    `git config [--global] alias.publish 'push --force'` and `git -c alias.pub='push --force' status` plant a
+    force push behind an innocent name (holdout18 CG065). The body is checked as the command it stands for:
+    `git <body>`, or the shell text after a leading `!`. Nothing the body leaves unresolved is recorded: only a
+    known violation counts, and a later call of the alias is judged by its own walk. -> a block reason or None."""
+    global _TRACE
+    body = (body or "").strip()
+    if not body or not _lit3(body) or st.depth + 1 > MAX_DEPTH:
+        return None
+    if name in KNOWN_GIT:
+        return None                         # git ignores an alias that hides one of its own commands (own case v3-good-077)
+    text = body[1:] if body.startswith("!") else "git " + body
+    saved, _TRACE = _TRACE, None
+    try:
+        v, why = _check3(text, st.root, st.depth + 1)
+    except Exception:
+        return None
+    finally:
+        _TRACE = saved
+    if v != "block":
+        return None
+    return why + " (this is the body of the git alias `" + name + "`, which runs it)"
+
+
 def _config3(args, st):
     readonly = any(a.startswith("--get") or a in ("--list", "-l", "--show-origin", "--show-scope", "--edit", "-e")
                    for a in args)
@@ -5468,6 +5649,9 @@ def _config3(args, st):
     if lk.startswith("remote.") and lk.endswith(".mirror") and val.lower() in ("true", "1", "yes", "on"):
         return "data_loss_guard: remote.*.mirror makes every push overwrite and delete remote refs" + LOSS_TAIL
     if lk.startswith("alias."):
+        why = _alias_body_why(key[6:], val, st)
+        if why:
+            return why
         st.git_aliases[key[6:]] = val
     if lk == "include.path" or lk.startswith("includeif."):
         st.ask("git config include.path loads a config file the guard does not read")
@@ -5772,6 +5956,9 @@ REDIRECTS = [
     ("C-discard-whole-tree", r"^data_loss_guard: .*over the whole tree discards",
      "Discard changes one file at a time, by name: `git restore path/to/file`. To set everything aside "
      "instead, run `git stash push -m \"wip\"`."),
+    ("C-named-discard", r"^data_loss_guard: git (?:checkout|restore) of a named file",     # version 14
+     "Keep the file's changes. See what would be lost with `git diff path/to/file`, set the file aside with "
+     "`cp path/to/file path/to/file.bak`, then run the discard again."),
     ("C-switch-discard", r"^data_loss_guard: (?:git checkout --force|git switch that discards)",
      "Save your changes first with `git stash push -m \"wip\"`, then switch with `git switch branch-name`. "
      "Bring the changes back later with `git stash apply`."),
@@ -5811,6 +5998,10 @@ REDIRECTS = [
      "branch with `git stash branch new-branch`."),
     ("C-reflog", r"^data_loss_guard: git reflog",
      "Leave the reflog alone; it is how lost commits come back. To shrink the repo, run `git gc`."),
+    ("C-worktree-rm", r"^data_loss_guard: \S+ -r of a git worktree directory",     # version 14
+     "Check each worktree for unsaved work first: `git worktree list`, then `git status --short` inside it. "
+     "Commit or stash that work, then remove a finished worktree with git itself: "
+     "`git worktree remove path/to/worktree`, which refuses while work is unsaved."),
     ("C-worktree-force", r"^data_loss_guard: git worktree remove --force",
      "Commit or stash inside the worktree first, then remove it without --force: "
      "`git worktree remove path/to/worktree`."),
@@ -5958,22 +6149,6 @@ _TRACE = None
 SCRATCH_KEEP = {"push", "send-pack", "http-push", "remote", "config", "submodule", "worktree", "svn", "p4",
                 "send-email", "imap-send"}
 RECOVER_NOTE = "allowed; an undo point was taken: python3 undo.py restore --last"
-POLICY_TEXT = (
-    "You judge one Bash command an AI coding agent wants to run in a git repo. Stop it if it breaks any of "
-    "these three policies, or if you cannot tell. Allow it otherwise.\n"
-    "Policy A, stage by name only. Stop staging by scope: git add -A, --all and its abbreviations, -u, ., ./, "
-    "..:/, *, the repo root, $(...), git stage, a pathspec that resolves to the root or only excludes, git commit "
-    "-a, git commit of the whole tree, git rm --cached of the whole tree.\n"
-    "Policy B, never disarm the hooks. Stop --no-verify, commit -n, core.hooksPath set to anything but "
-    ".githooks or unset, GIT_CONFIG_* overrides, send-pack, commit-tree, update-ref, deleting, moving, "
-    "emptying, appending to or chmod -x of a hook file in .git/hooks, .githooks or .husky, HUSKY=0, "
-    "LEFTHOOK=0, SKIP=, pre-commit uninstall, removing a hook manager package.\n"
-    "Policy C, never destroy uncommitted or pushed work. Stop git reset --hard, git clean -f, whole-tree "
-    "discards, force pushes, git branch -D, checkout -f and -B, switch --discard-changes, branch -f, stash drop "
-    "and clear, reflog expire and delete, push --delete, :ref, --mirror and --prune, worktree remove --force, "
-    "deleting .git, and anything that sends or deletes work on a remote.\n"
-    "Allowed on purpose: reset --soft, reset HEAD <file>, clean -n, restore <named file>, a normal push, "
-    "branch -d, branch -M, gc, prune and tag -d.")
 
 
 def _trace(*item):
@@ -6906,10 +7081,12 @@ def _code_effect(code, cwd, lang, root, named):
     return None
 
 
-def _irreversible(command, trace, root):
+def _irreversible(command, trace, root, collect=None):
     """-> ("block", reason) when the walk found a known violation inside text v3 left unresolved;
     ("irreversible", why) when the command could do something an undo point cannot take back; None when
-    every effect it shows is inside what the undo point restores."""
+    every effect it shows is inside what the undo point restores. Version 14: with a list as `collect`, every
+    irreversible reason is appended to it (the walk does not stop at the first), so a judge is never asked about a
+    command that also holds a part no judge may let through."""
     for item in trace:
         if item[0] == "block":
             return "block", item[1]
@@ -6923,50 +7100,88 @@ def _irreversible(command, trace, root):
             except Exception:
                 cache.append(set())
         return cache[0]
+
+    def hit(why):
+        if collect is None:
+            return ("irreversible", why)
+        collect.append(why)
+        return None
+    first = None
     for item in trace:
-        kind = item[0]
+        kind, got = item[0], None
         if kind == "ask":
             if not _RECOVERABLE_ASK.match(item[1]):
-                return "irreversible", ("the part it could not read is not a kind an undo point covers (" +
-                                        item[1][len(FAIL):].split(". ")[0][:160] + ")")
+                got = hit("the part it could not read is not a kind an undo point covers (" +
+                          item[1][len(FAIL):].split(". ")[0][:160] + ")")
         elif kind == "opaque":
-            return "irreversible", item[1]
+            got = hit(item[1])
         elif kind == "cmd":
             why = _cmd_effect(item[1], item[2], root, named)
             if why:
-                return "irreversible", why
+                got = hit(why)
         elif kind == "redir":
             for op, tgt in item[1]:
                 if op in (">", ">>", ">|", "&>", "&>>", "<>") and not re.match(r"^&?\d*-?$", tgt or "x"):
                     why = _target_why("a redirection", tgt, item[2], root, named)
                     if why:
-                        return "irreversible", why
+                        got = got or hit(why)
+                        if collect is None:
+                            break
         elif kind == "code":
             why = _code_effect(item[1], item[2], item[3], root, named)
             if why:
-                return "irreversible", why
-    return None
+                got = hit(why)
+        if got and first is None:
+            first = got
+        if first and collect is None:
+            return first
+    if collect is not None and collect:
+        return "irreversible", collect[0]
+    return first
 
 
-def _model_judge(command, model):
-    """Optional (AGENT_GUARD_JUDGE=haiku|sonnet): ask a Claude model about one command that v8 would deny as
-    irreversible. -> "stop", "allow", or None on any error, timeout (30 s) or unclear answer."""
-    import subprocess
-    prompt = (POLICY_TEXT + "\n\nThe command, between the markers:\n<<<COMMAND\n" + command + "\nCOMMAND>>>\n\n"
-              "Answer with exactly one word: stop or allow.")
-    try:
-        p = subprocess.run(["claude", "-p", "--model", model, "--setting-sources", "project", "--tools", "",
-                            "--permission-prompts", "none", "--output-format", "json", prompt],
-                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
-        if p.returncode != 0:
-            return None
-        out = json.loads(p.stdout)
-        if out.get("is_error"):
-            return None
-        words = re.findall(r"\b(stop|allow)\b", str(out.get("result", "")).lower())
-        return words[0] if len(set(words)) == 1 else None
-    except Exception:
-        return None
+# =====================================================================================
+# VERSION 14: THE UNSURE PATH. Every place this guard denies or goes on an undo point because it could not
+# fully read the command, named once:
+#   1. _decide3 returns "ask" with a "fail_closed:" reason (st.ask, about 80 sites: a variable, a $(...), a
+#      quoting, an unknown git subcommand or alias, a recipe or script file it cannot read, a pipe into a shell,
+#      eval, sh -c text, interpreter code it cannot resolve, a -c setting, a hook-runner switch ...), or an internal
+#      error in that reader ("guard error ...").
+#   2. _irreversible then sorts every such ask: it is "recoverable" (all it could do lies inside what an undo
+#      point restores: allowed on an undo point) or "irreversible" (something an undo point cannot take back:
+#      denied). That sort reads the walk's trace: "ask" kinds not in _RECOVERABLE_ASK, "opaque" text it cannot
+#      read at all, every command's effect (_cmd_effect), every redirection (_target_why) and every piece of
+#      inline interpreter code (_code_effect).
+#   3. the hook (main) denies a recoverable allow when no undo point could be taken (no cwd, not a repo).
+#   4. _irreversible itself failing is an irreversible deny ("the version 8 check failed").
+# With AGENT_GUARD_JUDGE unset all four behave exactly as in version 13. With it set, an unsure command whose
+# every irreversible reason is one of the UNREADABLE kinds below (or that has none) goes to judge.py, and:
+#   DANGEROUS -> deny, with the redirect the unsure shape already carries (origin "judge_dangerous");
+#   SAFE      -> allow on an undo point (origin "judged"), the hook denying if none can be taken, as in 3;
+#   no reply, a timeout (2 s), an error or an unreadable reply -> deny (origin "judge_error"). Never an allow.
+# A command with any reason NOT in the unreadable kinds is denied outright and never sent: a remote write (push,
+# curl or rsync to a host, gh, deploy tools: force push, remote branch delete, push --mirror or --prune among
+# them), a write outside the repo or under $HOME, anything in .git or a hook file, a part that could be a push, a
+# recipe whose name says it reaches a remote, a delete of the whole worktree, and the reader's own failure.
+# =====================================================================================
+_UNREADABLE = re.compile(
+    r"^(?:the part it could not read is not a kind an undo point covers \((?:a shell runs a pipe from a program "
+    r"whose output|the command word itself is unknown|git has a word before its subcommand|a git global option "
+    r"value|git config with a key|git config \S+ set to a value the guard cannot resolve|-c include\.path|an "
+    r"environment variable git runs as a command|a config file swapped in|`git \S+` is not a git command)|"
+    r"text the guard cannot (?:read at all|walk)|code nested too deep|interpreter code the guard cannot read at all|"
+    r"interpreter code spawns a program it reads at run time|the program it runs is hidden|"
+    r"git -C points at a place the guard cannot read|git \S+ runs in a directory the guard cannot name|"
+    r"\S+ writes a path the guard cannot read|a redirection writes a path the guard cannot read|"
+    r"interpreter code writes a path the guard cannot read)")
+
+
+def _judge_module():
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import judge
+    return judge
 
 
 def decide_full(command, cwd=None):
@@ -6984,8 +7199,9 @@ def _decide_full(command):
     """-> dict(verdict "deny"|"allow", origin, v3 verdict, shape, redirect, alternatives, reason, note).
     origin: "block" (a v3 block, or a known violation inside text v3 left unresolved), "irreversible" (a v3
     fail-closed stop that undo cannot take back), "recoverable" (a v3 fail-closed stop allowed on an undo
-    point; "fallback" carries v7's deny for when no undo point can be taken), "judged" (an irreversible one
-    the optional model judge allowed), or None (a plain allow). reason is what the hook prints on a deny:
+    point; "fallback" carries v7's deny for when no undo point can be taken), "judged" (version 14: an unsure
+    one the judge called SAFE, allowed on an undo point), "judge_dangerous" and "judge_error" (denies from the
+    judge, version 14), or None (a plain allow). reason is what the hook prints on a deny:
     the reason, then DO THIS INSTEAD and the redirect."""
     global _TRACE
     _TRACE = []
@@ -6995,6 +7211,15 @@ def _decide_full(command):
     finally:
         _TRACE = None
     if v3 == "allow":
+        snaps = [i for i in trace if i[0] == "snap"]
+        if snaps:                           # version 14: a named-file discard runs on an undo point, never a plain allow
+            snap_core = snaps[0][1]
+            shape, text = redirect_for(snap_core)
+            return {"verdict": "allow", "origin": "recoverable", "v3": v3, "shape": None, "redirect": "",
+                    "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": snap_core, "unsure": False,
+                    "fallback": {"shape": shape, "redirect": text, "alternatives": alternatives(text),
+                                 "reason": snap_core.rstrip() + " Version 14 lets this run only on an undo point, "
+                                           "and none could be taken here." + REDIRECT_MARK + text}}
         return {"verdict": "allow", "origin": None, "v3": v3, "shape": None, "redirect": "",
                 "alternatives": [], "reason": "", "note": ""}
     core = _core_reason(why).replace(FRESH, "")
@@ -7015,23 +7240,42 @@ def _decide_full(command):
     fallback = {"shape": shape, "redirect": text, "alternatives": alternatives(text),
                 "reason": core.rstrip() + " Version 8 lets this run only on an undo point, and none could be "
                           "taken here." + REDIRECT_MARK + text}
+    judge = os.environ.get("AGENT_GUARD_JUDGE", "").strip()
+    if judge.lower() in ("0", "off", "false", "no", "none"):
+        judge = ""                          # "set to off" means off, not a model named 0
+    hard = []
+    if judge and irr is not None:           # version 14: every irreversible reason, not only the first
+        parts = []
+        try:
+            _irreversible(command, trace, _root(), parts)
+            hard = [w for w in parts if not _UNREADABLE.search(w)] or ([] if parts else [irr[1]])
+        except Exception:
+            hard = [irr[1]]
+    if judge and not hard:
+        res = _judge_module().ask(command)
+        who = res.get("model") or judge
+        if res["verdict"] == "SAFE":
+            return {"verdict": "allow", "origin": "judged", "v3": v3, "shape": None, "redirect": "",
+                    "alternatives": [], "reason": "", "note": RECOVER_NOTE + " (the judge said SAFE)",
+                    "unknown": core, "unsure": True, "judge": "SAFE", "fallback": fallback}
+        if res["verdict"] == "DANGEROUS":
+            reason = core.rstrip() + " The judge (%s) said DANGEROUS." % who + REDIRECT_MARK + text
+            return {"verdict": "deny", "origin": "judge_dangerous", "v3": v3, "shape": shape, "redirect": text,
+                    "alternatives": alternatives(text), "reason": reason, "note": "", "unsure": True,
+                    "judge": "DANGEROUS"}
+        reason = (core.rstrip() + " The judge gave no usable answer (%s), and the guard never allows on its own doubt."
+                  % (res.get("why") or "no reply") + REDIRECT_MARK + text)
+        return {"verdict": "deny", "origin": "judge_error", "v3": v3, "shape": shape, "redirect": text,
+                "alternatives": alternatives(text), "reason": reason, "note": "", "unsure": True, "judge": None}
     if irr is None:
         return {"verdict": "allow", "origin": "recoverable", "v3": v3, "shape": None, "redirect": "",
-                "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": core, "fallback": fallback}
-    extra = ""
-    judge = os.environ.get("AGENT_GUARD_JUDGE", "")
-    if judge in ("haiku", "sonnet"):
-        verdict = _model_judge(command, judge)
-        if verdict == "allow":
-            return {"verdict": "allow", "origin": "judged", "v3": v3, "shape": None, "redirect": "",
-                    "alternatives": [], "reason": "", "note": RECOVER_NOTE + " (the %s judge allowed it)" % judge,
-                    "unknown": core, "irreversible": irr[1], "fallback": fallback}
-        extra = (" The %s judge said stop." % judge if verdict == "stop" else
-                 " The %s judge gave no usable answer (an error, a timeout or an unclear reply)." % judge)
+                "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": core, "unsure": True,
+                "fallback": fallback}
+    extra = " The judge was not asked: an undo point cannot take this back." if judge else ""
     reason = (core.rstrip() + " Version 8 does not let it run on an undo point: " + irr[1].replace(FRESH, "") +
               "." + extra + REDIRECT_MARK + text)
     return {"verdict": "deny", "origin": "irreversible", "v3": v3, "shape": shape, "redirect": text,
-            "alternatives": alternatives(text), "reason": reason, "note": "", "irreversible": irr[1]}
+            "alternatives": alternatives(text), "reason": reason, "note": "", "unsure": True, "irreversible": irr[1]}
 
 
 def decide(command, cwd=None):
