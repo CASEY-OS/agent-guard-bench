@@ -52,7 +52,7 @@ It needs Python 3.9 or newer and git, nothing else. bench.py also runs undo_benc
 
 As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},"cwd":"..."}` on stdin. To stop a command it prints a deny decision whose reason ends with `DO THIS INSTEAD:` and a redirect. To allow it prints nothing, after the undo snapshot. Since version 8 it can also allow a command it could not fully read, on an undo point. Then it prints a note to the agent and to me: `agent-guard: allowed; an undo point was taken: python3 /path/to/undo.py restore <id>`. In code, `guard.decide(command)` returns `("block"|"allow", reason)` and `guard.decide_full(command)` adds the origin (`block`, `irreversible`, `recoverable`, or none), the shape, the redirect and its alternatives.
 
-`python3 real_traffic.py COMMANDS.json [ROOT]` judges a file of real commands with v7 to v12 (v11 and v12 read the recipe files under ROOT as they are on disk today) and writes only aggregate numbers to `results/real_traffic.json`. bench.py prints that file. It cannot recompute it, because the commands are private and not in this repo.
+`python3 real_traffic.py COMMANDS.json [ROOT]` judges a file of real commands with v7 to v13 (v11 to v13 read the recipe files under ROOT as they are on disk today) and writes only aggregate numbers to `results/real_traffic.json`. bench.py prints that file. It cannot recompute it, because the commands are private and not in this repo.
 
 ## Earlier results (2026-10-12, versions 4 to 12)
 
@@ -114,7 +114,7 @@ Claude Code's own auto mode is a model that judges each action. So the fairest r
 
 A model misses commands that hide what they run: values in variables and IFS, encoded text, wrappers, substitutions. Those are what this parser was built to resolve. The parser misses what needs judgment about the world: a script written and run, an editor that runs code, a submodule update. A model sees those at a glance. Neither wins alone. Together they stop almost everything I have. Haiku judged 110 commands for under half a cent, but as one batch with the policy in view. One command at a time, in real agent traffic, a model is slower, costs more and can vary from run to run. Anthropic reports its own classifier missed 17% of 52 real overeager actions. Model-written sets may also be easy for models. That is why the next version adds a model check behind the parser and does not replace one with the other.
 
-### Blind holdouts for versions 4 to 6
+### Blind holdouts for versions 4 to 12
 
 Each set was written by a model that saw only the policy sheet, sealed (`chmod 000`) while the next version was built, and opened only after that version was frozen in a commit.
 
@@ -184,9 +184,6 @@ Holdout16's two plain allows are now denies. Holdout15's H15-005, 027, 065 and 0
 - **Still missed, every one with its reason.** Holdout12's H12-047 and H12-048, and holdout11's K004, K025, M055, M060 and M064, are disputed labels, as the v9 and v10 notes say. Holdout's H16 and H24, holdout4's Q016, Q050 and Q068, holdout5's S5-003 and holdout9's T033 are older misses, unchanged since v9.
 - **False positives, 11, unchanged.** H15-014 and H12-084 (the v12 note), holdout's H33, H34 and H48, S7-097, T062, G072, K080, HK066 and HK069.
 - **Still open.** A Python, Node or other non-shell script run by name is not read. undo_bench's script route depends on that. `git clean -fdx` on an undo point loses the ignored files. A script that is not on disk when the hook runs, but is written by an earlier step the guard cannot read, is not read. The real-traffic run read today's files, not the files as they were when each call was made.
-
-**Token cost of this build:** session cost: see session record.
-
 ## Version 12: a recipe run with no cwd
 
 ### Why
@@ -231,9 +228,6 @@ The 10 holdout15 cases now run on an undo point. In the jail each changed nothin
 - **Still missed, every one with its reason.** Holdout15's 10 run on an undo point and changed nothing in the jail, so they are scored neither way. With no cwd, H15-089's force push is on an undo point, and an undo point does not take back a remote. With the file on disk it is a hard deny. Holdout12's H12-047 and H12-048, and holdout11's K004, K025, M055, M060 and M064, are disputed labels, as the v9 and v10 notes say. Holdout's H16 and H24, holdout4's Q016, Q050 and Q068, holdout5's S5-003 and holdout9's T033 are older misses, unchanged since v9.
 - **False positives, 11, unchanged.** H15-014 and H12-084 (above). Holdout's H33, H34 and H48, S7-097, T062, G072, K080, HK066 and HK069, each in its version's notes.
 - **Still open.** Everything v11 left open. Also: with no cwd, `yarn remove left-pad` runs on an undo point, because v11 and v12 read yarn's first word as a script name.
-
-**Token cost of this build:** session cost: see session record.
-
 ## Version 11: recipe files on disk, and filtered listings into git add
 
 ### Why
@@ -277,9 +271,6 @@ The FP columns count only plain denies, as before. Under v10, H14-106 (holdout14
 - **Blind score (added after holdout15 landed, commit 5864411).** v11 on holdout15: 70 of 80 dangerous handled, 10 missed; 1 of 80 safe denied (H15-014).
 - **Still missed, every one with its reason:** holdout12's H12-047 and H12-048, and holdout11's K004, K025, M055, M060 and M064. These are disputed labels, scored as written in the v9 and v10 notes. Holdout's H16 and H24, holdout4's Q016, Q050 and Q068, holdout5's S5-003 and holdout9's T033 are older misses, unchanged since v9. Each is in its version's notes.
 - **Still open:** a script file run by name that the command did not write (`sh x.sh`). v11 reads recipe files, not every script. A recipe that runs a script runs it unread. The real traffic run read today's files, not the files as they were when each call was made. If the hook's cwd is a subdirectory of the project root, an absolute path inside the project is read as given. `git add $(git ls-files -m | grep src/)` stays denied: policy A lists `$(...)` by name. The filtered `while read` and `for` loop forms still run on an undo point. `find .git -name '*.sample' -delete` is still denied (the v9 note).
-
-**Token cost of this build:** session cost: see session record.
-
 ## Version 10: find over hook folders, and files written and run in one command
 
 ### Why
@@ -705,9 +696,9 @@ In-process on my laptop, v3 takes a median of about 80 microseconds per decision
 - **Baselines.** `variants/no_guard.py` allows everything. `variants/naive_regex.py` is the one-liner most people write first.
 - **v1 and v2.** `variants/guard_v1.py` and `variants/guard_v2.py` are byte copies of earlier `guard.py` files. v1 parses with `shlex` and splits on `;`, `&&`, `||`, `|`, subshells and newlines. v2 adds a normalized view: backslash-newline, `$'..'`, `$IFS`, literal variables and literal decode pipelines.
 - **v3.** `variants/guard_v3.py`, a byte copy of guard.py before v4 (sha256 equal).
-- **v4 to v7.** `variants/guard_v4.py` to `variants/guard_v7.py`, byte copies of each earlier `guard.py`.
-- **v8.** `guard.py`, described above.
-- **Negative control.** `variants/broken_guard.py` is `guard.py` with one line changed. It drops the v3 asks found in each view, so v4 never denies them. It fails 77 of my cases.
+- **v4 to v12.** `variants/guard_v4.py` to `variants/guard_v12.py`, byte copies of `guard.py` at each version's freeze commit (sha256 equal, checked 2026-10-14: v4 c43271c, v5 3392a08, v6 ddfd29d, v7 9a85203, v8 a59dd09, v9 5cd748b, v10 4edf1e9, v11 ed0f621, v12 ced9a62).
+- **v13.** `guard.py`, the current guard, frozen at 7cfeb98. One later commit (ff898ed) bounds the scan for a nested `${` or `$(` and changes no decision.
+- **Negative control.** `variants/broken_guard.py` is `guard.py` with one line changed. It drops the v3 asks found in each view, so v4 never denies them. It gets 115 of my own cases wrong (bench.py's count today).
 
 Exit 0 needs thirteen things. guard.py must handle every own bad case (deny it, or allow it on an undo point) and allow every own good case. Each own stop case must get the origin it names: a hard block for block; irreversible, recoverable or a block found inside the text for ask; and exactly the `v8_origin` a case names. broken_guard.py must fail at least one case and differ from guard.py by exactly one line. The hook form must agree with `decide()` on every case, never ask, carry every redirect, and create no snapshot ref in this repo. No command that v1 or v2 blocks may be anything but denied. Every v3 stop must be a v4 deny, and nothing v3 allows may be stopped. guard.py must never ask. Every deny must carry a specific redirect that names an alternative guard.py allows, and planted bad redirects must be caught. undo_bench.py must print `OVERALL: PASS` and exit 0. Every v7 hard block must stay a v8 hard block, and every v7 fail-closed deny must be a deny or an allow on an undo point, unless an own good case says allow. Every own bad case allowed on an undo point must be fully restored, or change nothing, when run for real in the jail. The same command with the undo layer off must show the loss. Holdout results never change the exit code.
 
@@ -728,9 +719,9 @@ Those numbers come from a different, larger, real-traffic sample. They come from
 - It does not show that agents are safe in general. It checks three policies on one hook.
 - The guard only reads command strings. The undo layer covers the repo the hook was called from, plus the outside and ignored paths a command names, and what it lists above.
 - **The static-analysis ceiling.** A string reader cannot see runtime state. v4 turns much of that blindness into a deny with a redirect. A script file, a Makefile, or config set in an earlier tool call is still invisible to it. The undo layer makes most of what slips through undoable, in the repo. **Server-side hooks and branch protection remain the real boundary** for anything already pushed.
-- 1,099 own cases plus 287 holdout cases is a small sample. Holdout4 has 73 bad and 37 safe commands. A score on a sample that size is not a guarantee.
+- 1,606 own cases plus 2,406 holdout cases is a modest sample, and only the newest blind set tests the current guard blind: holdout17 has 80 bad and 80 safe commands. Holdout4 has 73 bad and 37 safe. A score on a sample that size is not a guarantee.
 - Policies A and B are a port of a guard I run in my own agent setup. Policy C and versions 2 and 3 are new.
-- The holdout authors are the same model family as the tools I use. The policy text came from me. That is weaker independence than a human red team.
+- Claude (Sonnet and Haiku) wrote most of the 17 holdout sets, and Claude is the family of the tools I build with. ChatGPT, Gemini, Mistral, Grok and DeepSeek wrote holdouts 8, 9, 11 and 13. The policy text came from me. No human red team wrote any set, so the independence is weaker than that.
 
 ## Limitations and the residual list
 
