@@ -5038,6 +5038,11 @@ def _git3(env, argv, stage, st, depth):
         return None
     for k, v in (_env_config(env) or []):   # GIT_CONFIG_COUNT/KEY/VALUE are -c settings by another name
         cfg.setdefault(k, v)
+    for k, v in cfg.items():                # version 14: an alias set with -c is judged by its body, run or not
+        if k.startswith("alias.") and v is not None and sub != "config":
+            why = _alias_body_why(k[6:], v, st)
+            if why:
+                return why
     for k, v in cfg.items():                # a setting whose value git runs as a shell command
         if v is None:
             continue
@@ -5533,6 +5538,29 @@ def _git_rules3(sub, args, cwd, st):
     return None
 
 
+def _alias_body_why(name, body, st):
+    """Version 14. A git alias is judged by its BODY, where it is defined and not only where it is run:
+    `git config [--global] alias.publish 'push --force'` and `git -c alias.pub='push --force' status` plant a
+    force push behind an innocent name (holdout18 CG065). The body is checked as the command it stands for:
+    `git <body>`, or the shell text after a leading `!`. Nothing the body leaves unresolved is recorded: only a
+    known violation counts, and a later call of the alias is judged by its own walk. -> a block reason or None."""
+    global _TRACE
+    body = (body or "").strip()
+    if not body or not _lit3(body) or st.depth + 1 > MAX_DEPTH:
+        return None
+    text = body[1:] if body.startswith("!") else "git " + body
+    saved, _TRACE = _TRACE, None
+    try:
+        v, why = _check3(text, st.root, st.depth + 1)
+    except Exception:
+        return None
+    finally:
+        _TRACE = saved
+    if v != "block":
+        return None
+    return why + " (this is the body of the git alias `" + name + "`, which runs it)"
+
+
 def _config3(args, st):
     readonly = any(a.startswith("--get") or a in ("--list", "-l", "--show-origin", "--show-scope", "--edit", "-e")
                    for a in args)
@@ -5595,6 +5623,9 @@ def _config3(args, st):
     if lk.startswith("remote.") and lk.endswith(".mirror") and val.lower() in ("true", "1", "yes", "on"):
         return "data_loss_guard: remote.*.mirror makes every push overwrite and delete remote refs" + LOSS_TAIL
     if lk.startswith("alias."):
+        why = _alias_body_why(key[6:], val, st)
+        if why:
+            return why
         st.git_aliases[key[6:]] = val
     if lk == "include.path" or lk.startswith("includeif."):
         st.ask("git config include.path loads a config file the guard does not read")
