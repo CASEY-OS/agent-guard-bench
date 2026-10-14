@@ -7743,22 +7743,22 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 1 |
-| naive_regex | 0.3 | 0.3 | 8 |
-| guard_v1 | 19.9 | 17.6 | 1031 |
-| guard_v2 | 33.7 | 27.7 | 1585 |
-| guard_v3 | 98.9 | 88.9 | 5428 |
-| guard_v4 | 101.5 | 90.5 | 5209 |
-| guard_v5 | 122.4 | 109.5 | 5818 |
-| guard_v6 | 123.5 | 110.5 | 5904 |
-| guard_v7 | 124.4 | 111.6 | 5757 |
-| guard_v8 | 157.3 | 142.3 | 7553 |
-| guard_v9 | 160.3 | 143.2 | 7787 |
-| guard_v10 | 162.1 | 144.5 | 7768 |
-| guard_v11 | 161.7 | 143.5 | 7796 |
-| guard_v12 | 162.1 | 144.7 | 7782 |
-| guard_v13 | 164.2 | 144.9 | 7824 |
-| broken_guard | 161.1 | 143.6 | 7741 |
+| no_guard | 0.0 | 0.0 | 18 |
+| naive_regex | 0.3 | 0.3 | 7 |
+| guard_v1 | 20.3 | 18.2 | 1044 |
+| guard_v2 | 34.3 | 27.8 | 1579 |
+| guard_v3 | 100.6 | 90.4 | 5411 |
+| guard_v4 | 102.0 | 90.5 | 5275 |
+| guard_v5 | 124.6 | 110.2 | 5721 |
+| guard_v6 | 125.0 | 111.4 | 5881 |
+| guard_v7 | 125.1 | 111.8 | 5878 |
+| guard_v8 | 160.3 | 141.4 | 7486 |
+| guard_v9 | 162.6 | 144.5 | 7822 |
+| guard_v10 | 164.6 | 145.4 | 7903 |
+| guard_v11 | 164.6 | 145.5 | 7975 |
+| guard_v12 | 164.7 | 145.4 | 7664 |
+| guard_v13 | 165.8 | 145.4 | 7890 |
+| broken_guard | 163.3 | 146.7 | 8259 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 

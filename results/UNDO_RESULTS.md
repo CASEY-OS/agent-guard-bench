@@ -160,17 +160,17 @@ Made 55 snapshots with the default bound: 50 kept, the newest ones (ok). Same st
 
 | measure | value |
 |---|---:|
-| first snapshot, clean tree (one run) | 312 ms, 56204 bytes added to .git/objects |
-| snapshot, nothing changed (dedupe) | 72 ms median |
-| snapshot, 10 files changed and 1 new | 143 ms median, 5561 bytes median |
+| first snapshot, clean tree (one run) | 290 ms, 56194 bytes added to .git/objects |
+| snapshot, nothing changed (dedupe) | 69 ms median |
+| snapshot, 10 files changed and 1 new | 153 ms median, 5562 bytes median |
 | plan() for a read-only command, in-process | 16 us |
-| whole hook, read-only command (Python start-up included) | 70 ms median |
-| whole hook, command that gets a snapshot | 233 ms median |
-| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 227 ms median |
-| whole hook, in a repo, command naming one ignored file (.env) | 236 ms median |
+| whole hook, read-only command (Python start-up included) | 74 ms median |
+| whole hook, command that gets a snapshot | 259 ms median |
+| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 240 ms median |
+| whole hook, in a repo, command naming one ignored file (.env) | 243 ms median |
 | whole hook, outside any repo, files-only | 76 ms median |
-| files restore --last, CLI, one file | 36 ms |
-| restore --last, CLI | 454 ms |
+| files restore --last, CLI, one file | 48 ms |
+| restore --last, CLI | 471 ms |
 | .git/objects before any snapshot | 899860 bytes |
 
 Blind to: ignored files and files outside the repo that the command does not name (git clean -X, a script that deletes them), a target over the files bound, empty directories inside the repo, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps writing). Proven on this machine's OS and git only.
@@ -193,6 +193,6 @@ Blind to: ignored files and files outside the repo that the command does not nam
 - PASS: the printed repair push put every pushed remote back (2 push scenarios)
 - PASS: every destructive command ran under the bench root (113 runs, 0 outside)
 
-Runtime 125 s.
+Runtime 129 s.
 
 OVERALL: PASS
