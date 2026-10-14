@@ -4644,6 +4644,17 @@ def _redir_rules(b, args, stage, st):
             # appended after a failing check (even `echo ok`, even `make lint`) can turn that failure into a
             # pass. Proved in a throwaway repo: a hook ending in `false` blocks the commit; append
             # `echo "hook ok"` and the same commit goes through. v6 allowed appends; that was wrong.
+            # version 14 (holdout18 CP050): an append that adds only comments or blank lines changes nothing that runs,
+            # so it is the same ordinary edit of a hook's contents by name that an overwrite with a real script is.
+            # An appended LINE THAT RUNS stays as v7 left it: own cases v3-bad-218 and v6-WG6-005 hold the proof above.
+            txt = None
+            if b == "cat" and not args and stage.get("here") is not None:
+                txt = stage["here"]
+            elif b in ("echo", "printf") and all(_lit3(a) and _lit(a) for a in args):
+                txt = _stage([b] + args, None)
+            if txt is not None and _lit3(txt) and all(not l.strip() or l.strip().startswith("#")
+                                                      for l in txt.splitlines()):
+                continue
             st.ask("an append to a git hook file, which can mask the hook's earlier checks (" + tgt + ")")
         elif op in (">", ">>", ">|", "&>", "&>>") and _is_cfgfile(tgt, cwd, st.root):
             if re.search(r"hookspath", " ".join(stage["argv"]) + " " + (stage.get("here") or ""), re.I):
