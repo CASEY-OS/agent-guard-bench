@@ -101,7 +101,8 @@ kind undo does not cover. Those stay denies with v7's redirect (origin "irrevers
 a note on every recoverable allow, with the snapshot id to restore. Two v7 misreadings are fixed by
 cause: a spawn word or backtick inside a Python string is text, and a repo this command made with git
 init in a fresh mktemp dir is scratch, not the project (policies A and C do not apply inside it).
-Optional: AGENT_GUARD_JUDGE=haiku|sonnet asks a Claude model about an irreversible one (off by default).
+Optional: AGENT_GUARD_JUDGE=haiku|sonnet asked a Claude model about an irreversible one (v14 replaces it: see
+VERSION 14, the unsure path).
 
 VERSION 9. HOOK MANAGERS BY CLASS (blind holdout11's three real misses). A hook manager's script directory
 is its hooks (.lefthook, .lefthook-local, overcommit's .git-hooks), and so is every config name the managers
@@ -7082,10 +7083,12 @@ def _code_effect(code, cwd, lang, root, named):
     return None
 
 
-def _irreversible(command, trace, root):
+def _irreversible(command, trace, root, collect=None):
     """-> ("block", reason) when the walk found a known violation inside text v3 left unresolved;
     ("irreversible", why) when the command could do something an undo point cannot take back; None when
-    every effect it shows is inside what the undo point restores."""
+    every effect it shows is inside what the undo point restores. Version 14: with a list as `collect`, every
+    irreversible reason is appended to it (the walk does not stop at the first), so a judge is never asked about a
+    command that also holds a part no judge may let through."""
     for item in trace:
         if item[0] == "block":
             return "block", item[1]
@@ -7099,50 +7102,88 @@ def _irreversible(command, trace, root):
             except Exception:
                 cache.append(set())
         return cache[0]
+
+    def hit(why):
+        if collect is None:
+            return ("irreversible", why)
+        collect.append(why)
+        return None
+    first = None
     for item in trace:
-        kind = item[0]
+        kind, got = item[0], None
         if kind == "ask":
             if not _RECOVERABLE_ASK.match(item[1]):
-                return "irreversible", ("the part it could not read is not a kind an undo point covers (" +
-                                        item[1][len(FAIL):].split(". ")[0][:160] + ")")
+                got = hit("the part it could not read is not a kind an undo point covers (" +
+                          item[1][len(FAIL):].split(". ")[0][:160] + ")")
         elif kind == "opaque":
-            return "irreversible", item[1]
+            got = hit(item[1])
         elif kind == "cmd":
             why = _cmd_effect(item[1], item[2], root, named)
             if why:
-                return "irreversible", why
+                got = hit(why)
         elif kind == "redir":
             for op, tgt in item[1]:
                 if op in (">", ">>", ">|", "&>", "&>>", "<>") and not re.match(r"^&?\d*-?$", tgt or "x"):
                     why = _target_why("a redirection", tgt, item[2], root, named)
                     if why:
-                        return "irreversible", why
+                        got = got or hit(why)
+                        if collect is None:
+                            break
         elif kind == "code":
             why = _code_effect(item[1], item[2], item[3], root, named)
             if why:
-                return "irreversible", why
-    return None
+                got = hit(why)
+        if got and first is None:
+            first = got
+        if first and collect is None:
+            return first
+    if collect is not None and collect:
+        return "irreversible", collect[0]
+    return first
 
 
-def _model_judge(command, model):
-    """Optional (AGENT_GUARD_JUDGE=haiku|sonnet): ask a Claude model about one command that v8 would deny as
-    irreversible. -> "stop", "allow", or None on any error, timeout (30 s) or unclear answer."""
-    import subprocess
-    prompt = (POLICY_TEXT + "\n\nThe command, between the markers:\n<<<COMMAND\n" + command + "\nCOMMAND>>>\n\n"
-              "Answer with exactly one word: stop or allow.")
-    try:
-        p = subprocess.run(["claude", "-p", "--model", model, "--setting-sources", "project", "--tools", "",
-                            "--permission-prompts", "none", "--output-format", "json", prompt],
-                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
-        if p.returncode != 0:
-            return None
-        out = json.loads(p.stdout)
-        if out.get("is_error"):
-            return None
-        words = re.findall(r"\b(stop|allow)\b", str(out.get("result", "")).lower())
-        return words[0] if len(set(words)) == 1 else None
-    except Exception:
-        return None
+# =====================================================================================
+# VERSION 14: THE UNSURE PATH. Every place this guard denies or goes on an undo point because it could not
+# fully read the command, named once:
+#   1. _decide3 returns "ask" with a "fail_closed:" reason (st.ask, about 80 sites: a variable, a $(...), a
+#      quoting, an unknown git subcommand or alias, a recipe or script file it cannot read, a pipe into a shell,
+#      eval, sh -c text, interpreter code it cannot resolve, a -c setting, a hook-runner switch ...), or an internal
+#      error in that reader ("guard error ...").
+#   2. _irreversible then sorts every such ask: it is "recoverable" (all it could do lies inside what an undo
+#      point restores: allowed on an undo point) or "irreversible" (something an undo point cannot take back:
+#      denied). That sort reads the walk's trace: "ask" kinds not in _RECOVERABLE_ASK, "opaque" text it cannot
+#      read at all, every command's effect (_cmd_effect), every redirection (_target_why) and every piece of
+#      inline interpreter code (_code_effect).
+#   3. the hook (main) denies a recoverable allow when no undo point could be taken (no cwd, not a repo).
+#   4. _irreversible itself failing is an irreversible deny ("the version 8 check failed").
+# With AGENT_GUARD_JUDGE unset all four behave exactly as in version 13. With it set, an unsure command whose
+# every irreversible reason is one of the UNREADABLE kinds below (or that has none) goes to judge.py, and:
+#   DANGEROUS -> deny, with the redirect the unsure shape already carries (origin "judge_dangerous");
+#   SAFE      -> allow on an undo point (origin "judged"), the hook denying if none can be taken, as in 3;
+#   no reply, a timeout (2 s), an error or an unreadable reply -> deny (origin "judge_error"). Never an allow.
+# A command with any reason NOT in the unreadable kinds is denied outright and never sent: a remote write (push,
+# curl or rsync to a host, gh, deploy tools: force push, remote branch delete, push --mirror or --prune among
+# them), a write outside the repo or under $HOME, anything in .git or a hook file, a part that could be a push, a
+# recipe whose name says it reaches a remote, a delete of the whole worktree, and the reader's own failure.
+# =====================================================================================
+_UNREADABLE = re.compile(
+    r"^(?:the part it could not read is not a kind an undo point covers \((?:a shell runs a pipe from a program "
+    r"whose output|the command word itself is unknown|git has a word before its subcommand|a git global option "
+    r"value|git config with a key|git config \S+ set to a value the guard cannot resolve|-c include\.path|an "
+    r"environment variable git runs as a command|a config file swapped in|`git \S+` is not a git command)|"
+    r"text the guard cannot (?:read at all|walk)|code nested too deep|interpreter code the guard cannot read at all|"
+    r"interpreter code spawns a program it reads at run time|the program it runs is hidden|"
+    r"git -C points at a place the guard cannot read|git \S+ runs in a directory the guard cannot name|"
+    r"\S+ writes a path the guard cannot read|a redirection writes a path the guard cannot read|"
+    r"interpreter code writes a path the guard cannot read)")
+
+
+def _judge_module():
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import judge
+    return judge
 
 
 def decide_full(command, cwd=None):
@@ -7160,8 +7201,9 @@ def _decide_full(command):
     """-> dict(verdict "deny"|"allow", origin, v3 verdict, shape, redirect, alternatives, reason, note).
     origin: "block" (a v3 block, or a known violation inside text v3 left unresolved), "irreversible" (a v3
     fail-closed stop that undo cannot take back), "recoverable" (a v3 fail-closed stop allowed on an undo
-    point; "fallback" carries v7's deny for when no undo point can be taken), "judged" (an irreversible one
-    the optional model judge allowed), or None (a plain allow). reason is what the hook prints on a deny:
+    point; "fallback" carries v7's deny for when no undo point can be taken), "judged" (version 14: an unsure
+    one the judge called SAFE, allowed on an undo point), "judge_dangerous" and "judge_error" (denies from the
+    judge, version 14), or None (a plain allow). reason is what the hook prints on a deny:
     the reason, then DO THIS INSTEAD and the redirect."""
     global _TRACE
     _TRACE = []
@@ -7200,19 +7242,36 @@ def _decide_full(command):
     fallback = {"shape": shape, "redirect": text, "alternatives": alternatives(text),
                 "reason": core.rstrip() + " Version 8 lets this run only on an undo point, and none could be "
                           "taken here." + REDIRECT_MARK + text}
+    judge = os.environ.get("AGENT_GUARD_JUDGE", "").strip()
+    hard = []
+    if judge and irr is not None:           # version 14: every irreversible reason, not only the first
+        parts = []
+        try:
+            _irreversible(command, trace, _root(), parts)
+            hard = [w for w in parts if not _UNREADABLE.search(w)] or ([] if parts else [irr[1]])
+        except Exception:
+            hard = [irr[1]]
+    if judge and not hard:
+        res = _judge_module().ask(command)
+        who = res.get("model") or judge
+        if res["verdict"] == "SAFE":
+            return {"verdict": "allow", "origin": "judged", "v3": v3, "shape": None, "redirect": "",
+                    "alternatives": [], "reason": "", "note": RECOVER_NOTE + " (the judge said SAFE)",
+                    "unknown": core, "unsure": True, "judge": "SAFE", "fallback": fallback}
+        if res["verdict"] == "DANGEROUS":
+            reason = core.rstrip() + " The judge (%s) said DANGEROUS." % who + REDIRECT_MARK + text
+            return {"verdict": "deny", "origin": "judge_dangerous", "v3": v3, "shape": shape, "redirect": text,
+                    "alternatives": alternatives(text), "reason": reason, "note": "", "unsure": True,
+                    "judge": "DANGEROUS"}
+        reason = (core.rstrip() + " The judge gave no usable answer (%s), and the guard never allows on its own doubt."
+                  % (res.get("why") or "no reply") + REDIRECT_MARK + text)
+        return {"verdict": "deny", "origin": "judge_error", "v3": v3, "shape": shape, "redirect": text,
+                "alternatives": alternatives(text), "reason": reason, "note": "", "unsure": True, "judge": None}
     if irr is None:
         return {"verdict": "allow", "origin": "recoverable", "v3": v3, "shape": None, "redirect": "",
-                "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": core, "fallback": fallback}
-    extra = ""
-    judge = os.environ.get("AGENT_GUARD_JUDGE", "")
-    if judge in ("haiku", "sonnet"):
-        verdict = _model_judge(command, judge)
-        if verdict == "allow":
-            return {"verdict": "allow", "origin": "judged", "v3": v3, "shape": None, "redirect": "",
-                    "alternatives": [], "reason": "", "note": RECOVER_NOTE + " (the %s judge allowed it)" % judge,
-                    "unknown": core, "irreversible": irr[1], "fallback": fallback}
-        extra = (" The %s judge said stop." % judge if verdict == "stop" else
-                 " The %s judge gave no usable answer (an error, a timeout or an unclear reply)." % judge)
+                "alternatives": [], "reason": "", "note": RECOVER_NOTE, "unknown": core, "unsure": True,
+                "fallback": fallback}
+    extra = " The judge was not asked: an undo point cannot take this back." if judge else ""
     reason = (core.rstrip() + " Version 8 does not let it run on an undo point: " + irr[1].replace(FRESH, "") +
               "." + extra + REDIRECT_MARK + text)
     return {"verdict": "deny", "origin": "irreversible", "v3": v3, "shape": shape, "redirect": text,
