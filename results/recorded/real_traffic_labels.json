@@ -18,7 +18,7 @@
    "n": {
     "source": {
      "field": "bucket",
-     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/sample.jsonl",
      "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
     },
     "value": 200
@@ -70,7 +70,7 @@
    "n": {
     "source": {
      "field": "bucket",
-     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/sample.jsonl",
      "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
     },
     "value": 200
@@ -122,7 +122,7 @@
    "n": {
     "source": {
      "field": "bucket",
-     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/sample.jsonl",
      "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
     },
     "value": 100
@@ -160,7 +160,7 @@
  "calls": {
   "source": {
    "field": "calls_total",
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/counts.json",
    "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
   },
   "value": 68636
@@ -174,7 +174,7 @@
  "distinct_commands": {
   "source": {
    "field": "distinct_total",
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/counts.json",
    "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
   },
   "value": 67242
@@ -228,7 +228,7 @@
    "denominator": 68,
    "source": {
     "field": "sandbox",
-    "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1_context.jsonl",
+    "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/labels_rater1_context.jsonl",
     "sha256": "7ddb4ebc04c12b35fab15a9b227b3cf592da1c3481897833e7b45d4290ed8d54"
    },
    "value": 41
@@ -240,23 +240,23 @@
  },
  "sources": [
   {
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/counts.json",
    "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
   },
   {
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1.jsonl",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/labels_rater1.jsonl",
    "sha256": "ab1140a1c58f398924ad08fed88484144f0b15c93af1767011efb5df0d21b4d4"
   },
   {
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater2.jsonl",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/labels_rater2.jsonl",
    "sha256": "c90faf92a9cd84f832e44eabbe8bcc7c329bef64a9b0ad6032329bf8c5bf7777"
   },
   {
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/rater2_key.json",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/rater2_key.json",
    "sha256": "c4245377ce311f875d5617e066e93b93f9439a72c1393e74a5219f4d6f9b72d7"
   },
   {
-   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1_context.jsonl",
+   "file": "private, not in this repo (the commands are one person's real agent traffic): labels_2026-10-14/labels_rater1_context.jsonl",
    "sha256": "7ddb4ebc04c12b35fab15a9b227b3cf592da1c3481897833e7b45d4290ed8d54"
   }
  ],

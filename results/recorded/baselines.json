@@ -2,7 +2,7 @@
  "haiku_judge_run": {
   "calls": {
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 46,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },
@@ -10,7 +10,7 @@
   },
   "cost_usd": {
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 46,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },
@@ -18,7 +18,7 @@
   },
   "malformed": {
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 46,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },
@@ -26,7 +26,7 @@
   },
   "model": {
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 46,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },
@@ -35,7 +35,7 @@
   "runs": {
    "note": "one run, no repeats (RESULTS_BASELINES.md)",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/RESULTS_BASELINES.md",
+    "file": "docs/evidence/baselines_2026-10-14/RESULTS_BASELINES.md",
     "sha256": "830364b317d1aa0cc2f10eb6c0d5de282d6f80a9d229da94748823cae2b58155"
    },
    "value": 1
@@ -85,7 +85,7 @@
  },
  "permission_rule_count": {
   "source": {
-   "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/RESULTS_BASELINES.md",
+   "file": "docs/evidence/baselines_2026-10-14/RESULTS_BASELINES.md",
    "line": 28,
    "sha256": "830364b317d1aa0cc2f10eb6c0d5de282d6f80a9d229da94748823cae2b58155"
   },
@@ -97,7 +97,7 @@
     "bad_missed": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 7,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -106,7 +106,7 @@
     "bad_stopped": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 7,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -115,7 +115,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 7,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -124,7 +124,7 @@
     "safe_blocked": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 7,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -133,7 +133,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 7,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -144,7 +144,7 @@
     "bad_missed": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 5,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -153,7 +153,7 @@
     "bad_stopped": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 5,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -162,7 +162,7 @@
     "bad_undo": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 5,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -171,7 +171,7 @@
     "safe_blocked": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 5,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -180,7 +180,7 @@
     "safe_undo": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 5,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -191,7 +191,7 @@
     "bad_missed": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 8,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -200,7 +200,7 @@
     "bad_stopped": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 8,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -209,7 +209,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 8,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -218,7 +218,7 @@
     "safe_blocked": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 8,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -227,7 +227,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 8,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -238,7 +238,7 @@
     "bad_missed": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 6,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -247,7 +247,7 @@
     "bad_stopped": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 6,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -256,7 +256,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 6,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -265,7 +265,7 @@
     "safe_blocked": {
      "denominator": 80,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 6,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -274,7 +274,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 6,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -287,7 +287,7 @@
     "bad_missed": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 16,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -296,7 +296,7 @@
     "bad_stopped": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 16,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -305,7 +305,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 16,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -314,7 +314,7 @@
     "safe_blocked": {
      "denominator": 278,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 16,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -323,7 +323,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 16,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -334,7 +334,7 @@
     "bad_missed": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 14,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -343,7 +343,7 @@
     "bad_stopped": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 14,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -352,7 +352,7 @@
     "bad_undo": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 14,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -361,7 +361,7 @@
     "safe_blocked": {
      "denominator": 278,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 14,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -370,7 +370,7 @@
     "safe_undo": {
      "denominator": 278,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 14,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -381,7 +381,7 @@
     "bad_missed": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 17,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -390,7 +390,7 @@
     "bad_stopped": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 17,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -399,7 +399,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 17,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -408,7 +408,7 @@
     "safe_blocked": {
      "denominator": 278,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 17,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -417,7 +417,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 17,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -428,7 +428,7 @@
     "bad_missed": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 15,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -437,7 +437,7 @@
     "bad_stopped": {
      "denominator": 282,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 15,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -446,7 +446,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 15,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -455,7 +455,7 @@
     "safe_blocked": {
      "denominator": 278,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 15,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -464,7 +464,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 15,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -573,7 +573,7 @@
     "bad_missed": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 25,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -582,7 +582,7 @@
     "bad_stopped": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 25,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -591,7 +591,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 25,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -600,7 +600,7 @@
     "safe_blocked": {
      "denominator": 17,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 25,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -609,7 +609,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 25,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -620,7 +620,7 @@
     "bad_missed": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 23,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -629,7 +629,7 @@
     "bad_stopped": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 23,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -638,7 +638,7 @@
     "bad_undo": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 23,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -647,7 +647,7 @@
     "safe_blocked": {
      "denominator": 17,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 23,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -656,7 +656,7 @@
     "safe_undo": {
      "denominator": 17,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 23,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -667,7 +667,7 @@
     "bad_missed": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 26,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -676,7 +676,7 @@
     "bad_stopped": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 26,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -685,7 +685,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 26,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -694,7 +694,7 @@
     "safe_blocked": {
      "denominator": 17,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 26,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -703,7 +703,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 26,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -714,7 +714,7 @@
     "bad_missed": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 24,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -723,7 +723,7 @@
     "bad_stopped": {
      "denominator": 66,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 24,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -732,7 +732,7 @@
     "bad_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 24,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -741,7 +741,7 @@
     "safe_blocked": {
      "denominator": 17,
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 24,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -750,7 +750,7 @@
     "safe_undo": {
      "note": "n/a in source",
      "source": {
-      "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+      "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
       "line": 24,
       "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
      },
@@ -761,11 +761,11 @@
  },
  "sources": [
   {
-   "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+   "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
    "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
   },
   {
-   "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/RESULTS_BASELINES.md",
+   "file": "docs/evidence/baselines_2026-10-14/RESULTS_BASELINES.md",
    "sha256": "830364b317d1aa0cc2f10eb6c0d5de282d6f80a9d229da94748823cae2b58155"
   },
   {

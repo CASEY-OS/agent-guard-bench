@@ -244,26 +244,9 @@
   },
   {
    "file": "README.md",
-   "pattern": "labeled a sample of (\\d+)\\.",
+   "pattern": "so a sample of (\\d+) was labeled twice",
    "keys": [
     "real_traffic.labeled_sample.cohens_kappa_all_500.n"
-   ]
-  },
-  {
-   "file": "README.md",
-   "pattern": "Of the (\\d+) commands v13 denied, rater 1 called (\\d+) safe and rater 2 called (\\d+) safe",
-   "keys": [
-    "real_traffic.labeled_sample.buckets.DENY.n",
-    "real_traffic.labeled_sample.buckets.DENY.rater1.SAFE",
-    "real_traffic.labeled_sample.buckets.DENY.rater2.SAFE"
-   ]
-  },
-  {
-   "file": "README.md",
-   "pattern": "Cohen's kappa between the raters on those (\\d+) is ([0-9.]+)\\.",
-   "keys": [
-    "real_traffic.labeled_sample.buckets.DENY.cohens_kappa.n",
-    "real_traffic.labeled_sample.buckets.DENY.cohens_kappa.kappa"
    ]
   },
   {
@@ -718,6 +701,80 @@
    "scope": [
     "## 2026-10-14: version 14 (branch `v14`)",
     "## 2026-10-14: version 13, parser made bounded"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Of the (\\d+) commands v13 denied, rater 1 called (\\d+) safe, (\\d+) dangerous and (\\d+) unsure\\. Rater 2 called (\\d+) safe \\(\\d+ of them by the default\\), (\\d+) dangerous and (\\d+) unsure\\.",
+   "keys": [
+    "real_traffic.labeled_sample.buckets.DENY.n",
+    "real_traffic.labeled_sample.buckets.DENY.rater1.SAFE",
+    "real_traffic.labeled_sample.buckets.DENY.rater1.DANGEROUS",
+    "real_traffic.labeled_sample.buckets.DENY.rater1.UNSURE",
+    "real_traffic.labeled_sample.buckets.DENY.rater2.SAFE",
+    "real_traffic.labeled_sample.buckets.DENY.rater2.DANGEROUS",
+    "real_traffic.labeled_sample.buckets.DENY.rater2.UNSURE"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "decided denies is (\\d+) of (\\d+) \\(66%\\) for rater 1 and (\\d+) of (\\d+) \\(83%\\) for rater 2",
+   "keys": [
+    "real_traffic.labeled_sample.false_block_share_of_deny.rater1",
+    "real_traffic.labeled_sample.false_block_share_of_deny.rater1@denominator",
+    "real_traffic.labeled_sample.false_block_share_of_deny.rater2",
+    "real_traffic.labeled_sample.false_block_share_of_deny.rater2@denominator"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Cohen's kappa between the raters on the (\\d+) is ([0-9.]+)\\.",
+   "keys": [
+    "real_traffic.labeled_sample.buckets.DENY.cohens_kappa.n",
+    "real_traffic.labeled_sample.buckets.DENY.cohens_kappa.kappa"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "On the (\\d+) rows that no other file under `cases/` contains, the Haiku judge denied (\\d+) of (\\d+) dangerous commands and v14 denied (\\d+)\\. The judge wrongly denied (\\d+) of (\\d+) safe ones and v14 wrongly denied (\\d+)\\.",
+   "keys": [
+    "blind.new_rows.cases",
+    "blind.new_rows.baselines.haiku_judge.denied",
+    "blind.new_rows.baselines.haiku_judge.denied@denominator",
+    "blind.new_rows.guards.v14.denied",
+    "blind.new_rows.baselines.haiku_judge.safe_denied",
+    "blind.new_rows.baselines.haiku_judge.safe_denied@denominator",
+    "blind.new_rows.guards.v14.safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "On the (\\d+) repeated rows, v14 denied (\\d+) of (\\d+) and the judge (\\d+)\\.",
+   "keys": [
+    "blind.repeated_rows.cases",
+    "blind.repeated_rows.guards.v14.denied",
+    "blind.repeated_rows.guards.v14.denied@denominator",
+    "blind.repeated_rows.baselines.haiku_judge.denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "fewer dangerous commands run with nothing behind them \\((\\d+) against the judge's (\\d+)\\), because it puts (\\d+) more on an undo point",
+   "keys": [
+    "blind.new_rows.guards.v14.missed",
+    "blind.new_rows.baselines.haiku_judge.missed",
+    "blind.new_rows.guards.v14.undo_point"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "So of the (\\d+) dangerous commands, v14 denied (\\d+), (\\d+) ran and were restored in the bench's test jail, (\\d+) ran and changed nothing there, and (\\d+) were missed\\.",
+   "keys": [
+    "blind.guards.v14.bad",
+    "blind.guards.v14.denied",
+    "blind.guards.v14.undo_restored",
+    "blind.guards.v14.undo_noop",
+    "blind.guards.v14.missed"
    ]
   }
  ]

@@ -8722,23 +8722,23 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 3 |
-| naive_regex | 0.3 | 0.3 | 12 |
-| guard_v1 | 18.7 | 16.8 | 1048 |
-| guard_v2 | 30.8 | 25.8 | 1561 |
-| guard_v3 | 90.3 | 82.9 | 5042 |
-| guard_v4 | 93.1 | 85.7 | 5082 |
-| guard_v5 | 119.2 | 104.0 | 5681 |
-| guard_v6 | 114.4 | 104.5 | 5795 |
-| guard_v7 | 114.1 | 104.3 | 5685 |
-| guard_v8 | 144.9 | 134.4 | 8147 |
-| guard_v9 | 147.5 | 135.0 | 7464 |
-| guard_v10 | 153.1 | 143.4 | 7537 |
-| guard_v11 | 149.0 | 137.3 | 7583 |
-| guard_v12 | 149.5 | 137.0 | 7614 |
-| guard_v13 | 151.5 | 137.9 | 7709 |
-| guard_v14 | 151.8 | 146.7 | 8219 |
-| broken_guard | 149.1 | 137.3 | 7706 |
+| no_guard | 0.0 | 0.0 | 1 |
+| naive_regex | 0.3 | 0.3 | 8 |
+| guard_v1 | 20.0 | 18.2 | 1089 |
+| guard_v2 | 32.1 | 28.6 | 1811 |
+| guard_v3 | 97.5 | 89.3 | 5291 |
+| guard_v4 | 101.7 | 93.8 | 5480 |
+| guard_v5 | 121.2 | 111.4 | 5894 |
+| guard_v6 | 138.9 | 112.7 | 6093 |
+| guard_v7 | 127.3 | 116.5 | 6021 |
+| guard_v8 | 151.5 | 146.9 | 10895 |
+| guard_v9 | 152.4 | 141.2 | 7715 |
+| guard_v10 | 154.5 | 141.4 | 7728 |
+| guard_v11 | 152.8 | 140.6 | 7716 |
+| guard_v12 | 154.1 | 141.6 | 7681 |
+| guard_v13 | 154.5 | 141.9 | 7713 |
+| guard_v14 | 155.8 | 143.9 | 7904 |
+| broken_guard | 154.1 | 141.0 | 7836 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
@@ -9085,18 +9085,18 @@ Blind errors with a jail verdict: 11 of 11.
 
 | set | subset | guard | source | result |
 |---|---|---|---|---|
-| holdout19 | all | v14 | ~/agent-guard-bench-holdout-19/scores/h19_v14.txt line 25 | REPRODUCED |
-| holdout19 | all | naive_regex | ~/agent-guard-bench-holdout-19/scores/h19_v14.txt line 25 | REPRODUCED |
-| holdout19 | all | v13 | ~/agent-guard-bench-holdout-19/scores/h19_v13.txt line 25 | REPRODUCED |
-| holdout19 | all | naive_regex | ~/agent-guard-bench-holdout-19/scores/h19_v13.txt line 25 | REPRODUCED |
-| holdout18 | seven_models | v13 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 3 | REPRODUCED |
-| holdout18 | seven_models | v14 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 4 | REPRODUCED |
-| holdout18 | gemini_round3 | v13 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 9 | REPRODUCED |
-| holdout18 | gemini_round3 | v14 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 10 | REPRODUCED |
-| incidents | all | v13 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 15 | REPRODUCED |
-| incidents | all | v14 | ~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt line 16 | REPRODUCED |
-| holdout18 | seven_models | naive_regex | ~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt line 15 | REPRODUCED |
-| incidents | all | naive_regex | ~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt line 24 | REPRODUCED |
+| holdout19 | all | v14 | docs/evidence/scores_2026-10-14/h19_v14.txt line 25 | REPRODUCED |
+| holdout19 | all | naive_regex | docs/evidence/scores_2026-10-14/h19_v14.txt line 25 | REPRODUCED |
+| holdout19 | all | v13 | docs/evidence/scores_2026-10-14/h19_v13.txt line 25 | REPRODUCED |
+| holdout19 | all | naive_regex | docs/evidence/scores_2026-10-14/h19_v13.txt line 25 | REPRODUCED |
+| holdout18 | seven_models | v13 | docs/evidence/scores_2026-10-14/outside_out.txt line 3 | REPRODUCED |
+| holdout18 | seven_models | v14 | docs/evidence/scores_2026-10-14/outside_out.txt line 4 | REPRODUCED |
+| holdout18 | gemini_round3 | v13 | docs/evidence/scores_2026-10-14/outside_out.txt line 9 | REPRODUCED |
+| holdout18 | gemini_round3 | v14 | docs/evidence/scores_2026-10-14/outside_out.txt line 10 | REPRODUCED |
+| incidents | all | v13 | docs/evidence/scores_2026-10-14/outside_out.txt line 15 | REPRODUCED |
+| incidents | all | v14 | docs/evidence/scores_2026-10-14/outside_out.txt line 16 | REPRODUCED |
+| holdout18 | seven_models | naive_regex | docs/evidence/baselines_2026-10-14/score_output.txt line 15 | REPRODUCED |
+| incidents | all | naive_regex | docs/evidence/baselines_2026-10-14/score_output.txt line 24 | REPRODUCED |
 
 ## Live system
 

@@ -25,7 +25,7 @@
    "safe_undo_point": 24,
    "set": "holdout19",
    "source": {
-    "file": "~/agent-guard-bench-holdout-19/scores/h19_v14.txt",
+    "file": "docs/evidence/scores_2026-10-14/h19_v14.txt",
     "line": 25,
     "sha256": "5f1292012482dada0baedf38cb32bbc208893e1578d8014e47eb22be984ade21"
    },
@@ -40,7 +40,7 @@
    "safe_denied": 12,
    "set": "holdout19",
    "source": {
-    "file": "~/agent-guard-bench-holdout-19/scores/h19_v14.txt",
+    "file": "docs/evidence/scores_2026-10-14/h19_v14.txt",
     "line": 25,
     "sha256": "5f1292012482dada0baedf38cb32bbc208893e1578d8014e47eb22be984ade21"
    },
@@ -75,7 +75,7 @@
    "safe_undo_point": 7,
    "set": "holdout19",
    "source": {
-    "file": "~/agent-guard-bench-holdout-19/scores/h19_v13.txt",
+    "file": "docs/evidence/scores_2026-10-14/h19_v13.txt",
     "line": 25,
     "sha256": "a1c7ea4e66f5ee9fc8aff0789bd1a8f207edbf98609c46a56357afcaa0c641ff"
    },
@@ -90,7 +90,7 @@
    "safe_denied": 12,
    "set": "holdout19",
    "source": {
-    "file": "~/agent-guard-bench-holdout-19/scores/h19_v13.txt",
+    "file": "docs/evidence/scores_2026-10-14/h19_v13.txt",
     "line": 25,
     "sha256": "a1c7ea4e66f5ee9fc8aff0789bd1a8f207edbf98609c46a56357afcaa0c641ff"
    },
@@ -117,7 +117,7 @@
    "safe_undo_point": 4,
    "set": "holdout18",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 3,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -143,7 +143,7 @@
    "safe_undo_point": 13,
    "set": "holdout18",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 4,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -164,7 +164,7 @@
    "safe_undo_point": 1,
    "set": "holdout18",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 9,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -185,7 +185,7 @@
    "safe_undo_point": 2,
    "set": "holdout18",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 10,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -217,7 +217,7 @@
    "safe_undo_point": 0,
    "set": "incidents",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 15,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -245,7 +245,7 @@
    "safe_undo_point": 0,
    "set": "incidents",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/v14_proof_2026-10-14/outside_out.txt",
+    "file": "docs/evidence/scores_2026-10-14/outside_out.txt",
     "line": 16,
     "sha256": "8ff38dbe9e276f58afa3792f11da2ff3ca2801e6944cab2b42d7c745d7183810"
    },
@@ -260,7 +260,7 @@
    "safe_denied": 14,
    "set": "holdout18",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 15,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },
@@ -274,7 +274,7 @@
    "safe_denied": 3,
    "set": "incidents",
    "source": {
-    "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/score_output.txt",
+    "file": "docs/evidence/baselines_2026-10-14/score_output.txt",
     "line": 24,
     "sha256": "5ccb22e02ce74b880c6e613690280487c04144fb068c476aa7443640df2cd9d1"
    },

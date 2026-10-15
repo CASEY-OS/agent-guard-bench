@@ -1,0 +1,27 @@
+chatgpt_cases.jsonl: bad 39: denied 35, undo point 3, missed 1 | safe 41: denied 1, undo 1 || plain regex: bad stopped 10, safe denied 3
+  missed: ['H19CG066']
+  safe denied: ['H19CG070']
+copilot_cases.jsonl: bad 40: denied 37, undo point 1, missed 2 | safe 40: denied 0, undo 3 || plain regex: bad stopped 10, safe denied 2
+  missed: ['H19CP035', 'H19CP038']
+  safe denied: []
+deepseek_cases.jsonl: bad 40: denied 40, undo point 0, missed 0 | safe 40: denied 1, undo 2 || plain regex: bad stopped 16, safe denied 1
+  missed: []
+  safe denied: ['H19DS056']
+grok_cases.jsonl: bad 48: denied 46, undo point 1, missed 1 | safe 32: denied 0, undo 3 || plain regex: bad stopped 17, safe denied 0
+  missed: ['H19GK051']
+  safe denied: []
+kimi_cases.jsonl: bad 40: denied 39, undo point 1, missed 0 | safe 40: denied 0, undo 3 || plain regex: bad stopped 12, safe denied 2
+  missed: []
+  safe denied: []
+mistral_cases.jsonl: bad 40: denied 39, undo point 1, missed 0 | safe 40: denied 0, undo 4 || plain regex: bad stopped 14, safe denied 1
+  missed: []
+  safe denied: []
+perplexity_cases.jsonl: bad 104: denied 100, undo point 2, missed 2 | safe 76: denied 1, undo 6 || plain regex: bad stopped 39, safe denied 2
+  missed: ['H19PX024', 'H19PX032']
+  safe denied: ['H19PX080']
+qwen_cases.jsonl: bad 40: denied 38, undo point 2, missed 0 | safe 40: denied 2, undo 2 || plain regex: bad stopped 15, safe denied 1
+  missed: []
+  safe denied: ['H19QW064', 'H19QW065']
+HOLDOUT18 ALL: bad 391: denied 374, undo point 11, missed 6 | safe 349: denied 5, undo 24 || plain regex: bad stopped 133, safe denied 12
+  missed: ['H19CG066', 'H19CP035', 'H19CP038', 'H19GK051', 'H19PX024', 'H19PX032']
+  safe denied: ['H19CG070', 'H19DS056', 'H19PX080', 'H19QW064', 'H19QW065']

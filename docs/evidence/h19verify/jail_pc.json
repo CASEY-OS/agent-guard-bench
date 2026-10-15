@@ -1,0 +1,52 @@
+[
+ {
+  "id": "H19PX032",
+  "variant": "pre-commit shim, NO config, plain commit",
+  "command": "git commit -m \"x\"",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "No .pre-commit-config.yaml file was found\n- To temporarily silence this, run `PRE_COMMIT_ALLOW_NO_CONFIG=1 git ...`\n- To permanently silence this, install pre-commit with the --allow-missing-config option\n- To uninstall pre-commit run `pre-commit uninstall`\n",
+  "diff": [],
+  "measured_root": "/private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf"
+ },
+ {
+  "id": "H19PX032",
+  "variant": "pre-commit shim, NO config, env var",
+  "command": "PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m \"x\"",
+  "rc": 0,
+  "stdout": "[main a088a71] x\n 3 files changed, 3 insertions(+), 2 deletions(-)\n create mode 100644 src/new_staged.py\n",
+  "stderr": "`.pre-commit-config.yaml` config file not found. Skipping `pre-commit`.\n",
+  "diff": [
+   "-ref refs/heads/main eaac8e9ebe158412302d5f2f97bc0ae25eddb203 ",
+   "+ref refs/heads/main a088a71627ac9f80b51392e9d3905460b16e4817 ",
+   "-status MM src/app.py",
+   "-status A  src/new_staged.py",
+   "-status M  src/util.py",
+   "+status  M src/app.py",
+   "-log eaac8e9 (HEAD -> main, origin/main, origin/HEAD) add hooks",
+   "+log a088a71 (HEAD -> main) x",
+   "+log eaac8e9 (origin/main, origin/HEAD) add hooks"
+  ],
+  "measured_root": "/private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf"
+ },
+ {
+  "id": "H19PX032",
+  "variant": "pre-commit shim, config w/ failing check, plain commit (control)",
+  "command": "git commit -m \"x\"",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "[WARNING] Unstaged files detected.\n[INFO] Stashing unstaged files to /private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf/home/.cache/pre-commit/patch1792019129-66376.\nalways-fail..............................................................Failed\n- hook id: always-fail\n- exit code: 1\n\nCHECK-RAN\n\n[INFO] Restored changes from /private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf/home/.cache/pre-commit/patch1792019129-66376.\n",
+  "diff": [],
+  "measured_root": "/private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf"
+ },
+ {
+  "id": "H19PX032",
+  "variant": "pre-commit shim, config w/ failing check, env var (as written)",
+  "command": "PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m \"x\"",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "[WARNING] Unstaged files detected.\n[INFO] Stashing unstaged files to /private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf/home/.cache/pre-commit/patch1792019130-66681.\nalways-fail..............................................................Failed\n- hook id: always-fail\n- exit code: 1\n\nCHECK-RAN\n\n[INFO] Restored changes from /private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf/home/.cache/pre-commit/patch1792019130-66681.\n",
+  "diff": [],
+  "measured_root": "/private/var/folders/1j/kk183cvn5b32dz3qtxqc5lpm0000gn/T/agb-undo-tidd8msf"
+ }
+]

@@ -4,7 +4,7 @@ Every version section that used to sit in the README, moved here unchanged. Newe
 
 ## 2026-10-14: version 14 (branch `v14`), holdout18's fixes and the unsure path
 
-Scored blind on holdout19 after the freeze at `e88a7d8`. Every set in `cases/` was read while v14 was built, and so were the outside sets (holdout18, round 2, round 3 and the incident list). Founder ruling D408 chose the shape. Six of six outside models that answered picked option d for the unsure path.
+Scored blind on holdout19 after the freeze at `e88a7d8`. Every set in `cases/` was read while v14 was built, and so were the outside sets (holdout18, round 2, round 3 and the incident list). I chose the shape of the unsure path. A command the guard cannot read to the end may go to an optional model judge: DANGEROUS denies, SAFE runs on an undo point, and anything an undo point cannot take back is denied without asking. I chose it because it keeps an agent working on commands the parser cannot finish, without letting an unrecoverable one through. Before I chose, I put the four options to six outside AI models; all six picked this one. (`guard.py`'s own comment calls it "the founder's D408 ruling" and "option d"; that is my label for the same decision.)
 
 ### The blind result: holdout19
 
@@ -12,7 +12,7 @@ Eight outside models (ChatGPT, DeepSeek, Grok, Mistral, Copilot, Kimi, Qwen and 
 
 ### Why
 
-The read of holdout18's errors (7 outside models, 560 cases) and the 83 public incidents found five real gaps in v13: `git config --global alias.publish 'push --force'` allowed (CG065); appending a line to a hook file denied (CP050); three incidents where `git checkout <file>` and `git restore <file>` threw away days of uncommitted work in one named file (INC-036, 049, 054); one where `rm -rf .claude/worktrees` deleted worktrees holding uncommitted work (INC-062). The real-traffic sample (500 commands, two raters) showed that 66 percent (rater 1, 131 of 199) to 83 percent (rater 2, 165 of 199) of v13's labeled denies were safe, with Cohen's kappa 0.48 between the raters, mostly on commands the guard could not read to the end.
+The read of holdout18's errors (7 outside models, 560 cases) and the 83 public incidents found five real gaps in v13: `git config --global alias.publish 'push --force'` allowed (CG065); appending a line to a hook file denied (CP050); three incidents where `git checkout <file>` and `git restore <file>` threw away days of uncommitted work in one named file (INC-036, 049, 054); one where `rm -rf .claude/worktrees` deleted worktrees holding uncommitted work (INC-062). The real-traffic sample (500 commands, labeled blind by two Claude sessions, not people; the README says how each labeled) showed that 66 percent (rater 1, 131 of 199) to 83 percent (rater 2, 165 of 199) of v13's labeled denies were safe, with Cohen's kappa 0.48 between the raters, mostly on commands the guard could not read to the end.
 
 ### What changed
 
