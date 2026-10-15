@@ -34,19 +34,21 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| dangerous commands denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| dangerous commands denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.denied",
     "blind.guards.v14.denied@denominator",
     "blind.guards.v13.denied",
     "blind.guards.v13.denied@denominator",
+    "blind.guards.v7.denied",
+    "blind.guards.v7.denied@denominator",
     "blind.guards.naive_regex.denied",
     "blind.guards.naive_regex.denied@denominator"
    ]
   },
   {
    "file": "README.md",
-   "pattern": "\\| dangerous, allowed on an undo point \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| dangerous, allowed on an undo point \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| no undo layer \\|",
    "keys": [
     "blind.guards.v14.undo_point",
     "blind.guards.v14.undo_point@denominator",
@@ -56,24 +58,28 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| dangerous, allowed with no undo point: missed \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| dangerous, allowed with no undo point: missed \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.missed",
     "blind.guards.v14.missed@denominator",
     "blind.guards.v13.missed",
     "blind.guards.v13.missed@denominator",
+    "blind.guards.v7.missed",
+    "blind.guards.v7.missed@denominator",
     "blind.guards.naive_regex.missed",
     "blind.guards.naive_regex.missed@denominator"
    ]
   },
   {
    "file": "README.md",
-   "pattern": "\\| safe commands wrongly denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| safe commands wrongly denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.safe_denied",
     "blind.guards.v14.safe_denied@denominator",
     "blind.guards.v13.safe_denied",
     "blind.guards.v13.safe_denied@denominator",
+    "blind.guards.v7.safe_denied",
+    "blind.guards.v7.safe_denied@denominator",
     "blind.guards.naive_regex.safe_denied",
     "blind.guards.naive_regex.safe_denied@denominator"
    ]
@@ -561,6 +567,101 @@
     "real_traffic.labeled_sample.buckets.DENY.rater1.SAFE",
     "real_traffic.labeled_sample.buckets.DENY.rater2.SAFE",
     "real_traffic.labeled_sample.buckets.DENY.both_safe"
+   ],
+   "scope": [
+    "## 2026-10-14: version 14 (branch `v14`)",
+    "## 2026-10-14: version 13, parser made bounded"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| real agent commands denied \\(([0-9,]+) calls, not a test set\\) \\| ([0-9.]+%) \\| ([0-9.]+%) \\| ([0-9.]+%) \\| not run \\|",
+   "keys": [
+    "real_traffic.calls",
+    "real_traffic.v14.denied_pct",
+    "real_traffic.v13.denied_pct",
+    "real_traffic.v7.denied_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v7 denies more outright \\((\\d+) against (\\d+)\\) but misses (\\d+) where v14 misses (\\d+)\\.",
+   "keys": [
+    "blind.guards.v7.denied",
+    "blind.guards.v14.denied",
+    "blind.guards.v7.missed",
+    "blind.guards.v14.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v7 denied ([0-9.]+%) of ([0-9,]+) real agent commands, and v14 denies ([0-9.]+%)\\.",
+   "keys": [
+    "real_traffic.v7.denied_pct",
+    "real_traffic.calls",
+    "real_traffic.v14.denied_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "(\\d+) of the (\\d+) holdout19 rows repeat a command from another file under `cases/` word for word \\((\\d+) dangerous, (\\d+) safe\\)\\.",
+   "keys": [
+    "blind.overlap.rows_repeating_earlier_sets",
+    "blind.overlap.rows_repeating_earlier_sets@denominator",
+    "blind.overlap.bad_repeating",
+    "blind.overlap.safe_repeating"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Inside holdout19, (\\d+) rows repeat a command written earlier in the same set",
+   "keys": [
+    "blind.overlap.rows_repeating_within_set"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "and one command, `([^`]+)`, carries both labels",
+   "keys": [
+    "blind.overlap.commands_with_both_labels"
+   ],
+   "type": "sole"
+  },
+  {
+   "file": "README.md",
+   "pattern": "On the (\\d+) rows found nowhere else, v14 denied (\\d+) of (\\d+) dangerous commands, put (\\d+) on an undo point, missed (\\d+), and wrongly denied (\\d+) of (\\d+) safe ones\\.",
+   "keys": [
+    "blind.new_rows.cases",
+    "blind.new_rows.guards.v14.denied",
+    "blind.new_rows.guards.v14.denied@denominator",
+    "blind.new_rows.guards.v14.undo_point",
+    "blind.new_rows.guards.v14.missed",
+    "blind.new_rows.guards.v14.safe_denied",
+    "blind.new_rows.guards.v14.safe_denied@denominator"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v14's slowest took ([0-9.]+) s on Python 3\\.9 and ([0-9.]+) s on Python 3\\.12 \\(run 38676452601\\)",
+   "keys": [
+    "timing.pathological_worst_s_github_runner.v14.python_3_9_s",
+    "timing.pathological_worst_s_github_runner.v14.python_3_12_s"
+   ]
+  },
+  {
+   "file": "docs/METHOD.md",
+   "pattern": "from run 38676452601's log, is ([0-9.]+) s on Python 3\\.9 and ([0-9.]+) s on Python 3\\.12",
+   "keys": [
+    "timing.pathological_worst_s_github_runner.v14.python_3_9_s",
+    "timing.pathological_worst_s_github_runner.v14.python_3_12_s"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "pattern": "66 percent \\(rater 1, (\\d+) of 199\\) to 83 percent \\(rater 2, (\\d+) of 199\\)",
+   "keys": [
+    "real_traffic.labeled_sample.buckets.DENY.rater1.SAFE",
+    "real_traffic.labeled_sample.buckets.DENY.rater2.SAFE"
    ],
    "scope": [
     "## 2026-10-14: version 14 (branch `v14`)",

@@ -15,3 +15,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run the benchmark
         run: python3 bench.py
+      # The exit code is not the verdict: read the OVERALL line, then check every mapped number on the surfaces.
+      - name: The verdict line
+        run: grep -q '^\*\*OVERALL: PASS\*\*' results/SUMMARY.md
+      - name: Every mapped number on the surfaces
+        run: python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json

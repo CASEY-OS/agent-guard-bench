@@ -14,7 +14,8 @@ A key is a dotted path into NUMBERS.json; a node that carries "value" gives its 
 denominator. Types: number (commas and a trailing % are dropped; a claim with k decimals is compared with the NUMBERS
 value rounded to k decimals; "scale" multiplies the NUMBERS value first), ids (the claim's ids as a set against the
 NUMBERS list), text (exact), under (the claim is a stated upper bound: it agrees when the NUMBERS value, times
-"scale", is below it; for a figure that moves with machine and load, such as a timing). Paths may be absolute, ~ or relative to the root. Every match of a pattern is checked,
+"scale", is below it; for a figure that moves with machine and load, such as a timing), sole (the NUMBERS list holds exactly one
+item and it is the claim, word for word). Paths may be absolute, ~ or relative to the root. Every match of a pattern is checked,
 not only the first. A claim with "when": {"python": "3.14"} is checked only when NUMBERS.json's own python field is that version
 (whole version parts: 3.14 matches 3.14.5, 3.1 does not); otherwise each match prints SKIPPED and is counted in the
 summary, never failed, and a missing phrase is still MISSING. A claim with "scope": [start, end] reads only the text from the first start marker to the next
@@ -75,6 +76,9 @@ def compare(kind, claim, value, scale=1.0):
         return got == want, ", ".join(sorted(want)) or "none"
     if kind == "text":
         return claim.strip() == str(value), str(value)
+    if kind == "sole":
+        return isinstance(value, list) and value == [claim], (" | ".join(map(str, value)) if isinstance(value, list)
+                                                              else repr(value))
     if kind == "under":
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return False, repr(value)
@@ -292,6 +296,19 @@ def self_test():
              surface="# S\n\nSlowest under 0.01 s.\n", mp=bmap)
         case("bound boundary: a value equal to the bound is not under it", 1, "MISMATCH",
              surface="# S\n\nSlowest under 0.0142 s.\n", mp=bmap)
+        # "sole": the list holds exactly the one item the surface names
+        sole = [{"file": "S.md", "pattern": r"one command, `([^`]+)`, carries", "keys": ["blind.both"], "type": "sole"}]
+        smap = {"root": ".", "surfaces": {"S.md": {}}, "claims": sole}
+        def nb(v):
+            d = numbers()
+            d["blind"]["both"] = {"value": v}
+            return d
+        case("sole, clean control: the one item, word for word", 0, "VERDICT: PASS",
+             surface="# S\n\nAnd one command, `git add $(x)`, carries both.\n", nums=nb(["git add $(x)"]), mp=smap)
+        case("sole, planted violation: a second item in the list", 1, "MISMATCH",
+             surface="# S\n\nAnd one command, `git add $(x)`, carries both.\n", nums=nb(["git add $(x)", "y"]), mp=smap)
+        case("sole, planted violation: a different command", 1, "MISMATCH",
+             surface="# S\n\nAnd one command, `git add $(y)`, carries both.\n", nums=nb(["git add $(x)"]), mp=smap)
         case("a key NUMBERS does not have", 1, "NOKEY",
              mp={"root": ".", "surfaces": {"S.md": {}},
                  "claims": claims + [{"file": "S.md", "pattern": r"denied (\d+)", "keys": ["blind.nope"]}]})

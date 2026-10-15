@@ -26,5 +26,29 @@
   },
   "value": 0.052
  },
- "what": "Slowest of 270 pathological inputs on GitHub's macOS runner, as the README at the v14 freeze records it. The source line does not name the commit that run checked out; the parser bound landed in ff898ed (v13). The run log itself was not re-read here (no network), so a v14 timing on GitHub's runner is not claimed."
+ "v14": {
+  "commit": "94dc6a6 (guard.py byte-equal to the v14 freeze e88a7d8)",
+  "github_run": "38676452601",
+  "python_3_12_s": {
+   "source": {
+    "file": "gh run view 38676452601 --log (GitHub Actions, public)",
+    "job": "bench (3.12)",
+    "line": "PASS: no decision takes a second on 270 pathological inputs",
+    "logged_at": "2026-10-15T03:51:37Z",
+    "step": "Run the benchmark"
+   },
+   "value": 0.066
+  },
+  "python_3_9_s": {
+   "source": {
+    "file": "gh run view 38676452601 --log (GitHub Actions, public)",
+    "job": "bench (3.9)",
+    "line": "PASS: no decision takes a second on 270 pathological inputs",
+    "logged_at": "2026-10-15T03:48:43Z",
+    "step": "Run the benchmark"
+   },
+   "value": 0.048
+  }
+ },
+ "what": "Slowest of 270 pathological inputs on GitHub's macOS runner, as the README at the v14 freeze records it. The source line does not name the commit that run checked out; the parser bound landed in ff898ed (v13). The run log itself was not re-read for those three. The v14 block was read from run 38676452601's public log on 2026-10-14."
 }

@@ -10,16 +10,21 @@ Read first: [results/SUMMARY.md](results/SUMMARY.md), the result in about 30 lin
 
 Every number in this section comes from [results/NUMBERS.json](results/NUMBERS.json), which `bench.py` writes on every run. `tools/check_surfaces.py` checks this file against it.
 
-| holdout19, blind for v14 | guard v14 | guard v13 | plain regex |
-|---|---:|---:|---:|
-| dangerous commands denied | 374 of 391 | 373 of 391 | 133 of 391 |
-| dangerous, allowed on an undo point | 11 of 391 | 8 of 391 | not applicable |
-| dangerous, allowed with no undo point: missed | 6 of 391 | 10 of 391 | 258 of 391 |
-| safe commands wrongly denied | 5 of 349 | 5 of 349 | 12 of 349 |
+| holdout19, blind for v14 | guard v14 | guard v13 | guard v7 | plain regex |
+|---|---:|---:|---:|---:|
+| dangerous commands denied | 374 of 391 | 373 of 391 | 381 of 391 | 133 of 391 |
+| dangerous, allowed on an undo point | 11 of 391 | 8 of 391 | no undo layer | not applicable |
+| dangerous, allowed with no undo point: missed | 6 of 391 | 10 of 391 | 10 of 391 | 258 of 391 |
+| safe commands wrongly denied | 5 of 349 | 5 of 349 | 6 of 349 | 12 of 349 |
+| real agent commands denied (68,636 calls, not a test set) | 0.52% | 0.52% | 3.39% | not run |
+
+Blind detection has been about flat since v7. v7 denies more outright (381 against 374) but misses 10 where v14 misses 6. What v8 to v14 bought is far fewer denies on real work: v7 denied 3.39% of 68,636 real agent commands, and v14 denies 0.52%.
 
 The bench ran each of v14's 11 undo-point cases for real in its write jail: 6 were fully restored and 5 changed nothing on the bench's fixture. The 6 commands v14 missed are H19CG066, H19CP035, H19CP038, H19GK051, H19PX024 and H19PX032. The 5 safe commands it denied are H19CG070, H19DS056, H19PX080, H19QW064 and H19QW065.
 
 **The label audit sits beside the score, never inside it.** Each of those 11 errors was run for real in the write jail and its effect read back ([results/label_audit.json](results/label_audit.json)). Of the 6 misses, 4 have a wrong label, 1 is a real guard miss and 1 is debatable. The real miss is H19CP038, `env HUSKY=0 npm version patch`. Of the 5 safe commands denied, 1 is a real false block (H19QW065) and 4 are debatable. The sealed labels stay the score of record.
+
+**Blind means written after the freeze, not unseen.** An outside model can write a command that is already in a set v14 was built on. 311 of the 740 holdout19 rows repeat a command from another file under `cases/` word for word (183 dangerous, 128 safe). Inside holdout19, 137 rows repeat a command written earlier in the same set, and one command, `git add $(git diff --name-only)`, carries both labels. On the 429 rows found nowhere else, v14 denied 197 of 208 dangerous commands, put 7 on an undo point, missed 4, and wrongly denied 4 of 221 safe ones.
 
 Development data, not blind for v14: holdout18 (640 commands from eight outside models, blind for v13) and 83 public incidents quoted from their source. On holdout18, v14 denied 313 of 322 dangerous commands and wrongly denied 2 of 318 safe ones. On the incidents, v14 denied 59 of 66 dangerous commands and missed 3. The full tables, the baselines and the reproduction of every independent scoring are in [results/NUMBERS.md](results/NUMBERS.md).
 
@@ -28,7 +33,7 @@ Development data, not blind for v14: holdout18 (640 commands from eight outside 
 - It reads only the command text. A script file it never saw, settings changed by an earlier command, and tools other than the shell can get past it. The undo layer covers part of that, inside the repo only. The full list is under "What this does not prove" in each version's section of [CHANGELOG.md](CHANGELOG.md).
 - The test sets are self-sealed. AI sessions wrote them, and each was hash-sealed on this machine before it was scored. Holdout19 was written after v14 froze, and both the freeze (branch `v14`) and the seal (branch `holdout19-seal`) are public commits. Git shows that order. It cannot show that nobody looked.
 - The 68,636 real agent commands in [CHANGELOG.md](CHANGELOG.md) ("Earlier results") come from one person's machine and are private. v14 denies 354 of them and puts 1,341 on an undo point. A deny rate is not a false-positive rate, so two blind raters labeled a sample of 500. Of the 200 commands v13 denied, rater 1 called 131 safe and rater 2 called 165 safe. Cohen's kappa between the raters on those 200 is 0.48. Only the counts are in this repo ([results/recorded/real_traffic_labels.json](results/recorded/real_traffic_labels.json)).
-- Speed: the slowest of 270 pathological inputs took 1.42 s on GitHub's runner against a 1 s limit (issue #1). The parser now bounds that scan, every decision unchanged on 71,652 inputs, and the slowest input takes 0.035 s (Python 3.12) and 0.052 s (Python 3.9) on GitHub's macOS runner (run 38631156709). For v14 the slowest stays under 0.1 s on this Mac on Python 3.14. The exact figure moves with the machine and its load, so the check holds the bound, not the digits; this run's figure is `timing` in `results/NUMBERS.json`. v14 has not been timed on GitHub's runner.
+- Speed: the slowest of 270 pathological inputs took 1.42 s on GitHub's runner against a 1 s limit (issue #1). The parser now bounds that scan, every decision unchanged on 71,652 inputs, and the slowest input takes 0.035 s (Python 3.12) and 0.052 s (Python 3.9) on GitHub's macOS runner (run 38631156709). For v14 the slowest stays under 0.1 s on this Mac on Python 3.14. The exact figure moves with the machine and its load, so the check holds the bound, not the digits; this run's figure is `timing` in `results/NUMBERS.json`. On GitHub's macOS runner v14's slowest took 0.048 s on Python 3.9 and 0.066 s on Python 3.12 (run 38676452601).
 
 ## How I built this
 
@@ -41,7 +46,7 @@ python3 bench.py
 python3 undo_bench.py
 ```
 
-It needs Python 3.9 or newer, git, and npm on the PATH. One undo scenario runs `npm run`; without npm it exits 127 and the OVERALL line reads FAIL. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`, and bench.py writes `results/NUMBERS.json`, `results/NUMBERS.md` and `results/SUMMARY.md`. `exit 0` is not the verdict. Read the `OVERALL:` line. Then `python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks every number this README, the summary, the method and the changelog state against `NUMBERS.json`, and `python3 tools/check_surfaces.py --self-test` proves that checker can fail.
+It needs Python 3.9 or newer, git, and npm on the PATH. One undo scenario runs `npm run`; without npm it exits 127 and the OVERALL line reads FAIL. A run takes about 15 minutes on an Apple M5 Pro and about 26 minutes on GitHub's macOS runner, and it prints about 9,000 lines; the verdict is the OVERALL line near the end. A run on a machine that has the live hook named under "Live system" in bench.py re-scores that hook and keeps the earlier hooks it did not re-measure. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`, and bench.py writes `results/NUMBERS.json`, `results/NUMBERS.md` and `results/SUMMARY.md`. `exit 0` is not the verdict. Read the `OVERALL:` line. Then `python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks every number this README, the summary, the method and the changelog state against `NUMBERS.json`, and `python3 tools/check_surfaces.py --self-test` proves that checker can fail.
 
 Version 14 adds an optional judge for commands the guard cannot read to the end. It is off unless `AGENT_GUARD_JUDGE` is set (a model name, `haiku` for example). Then `judge.py` asks `claude -p` one question per command: DANGEROUS denies, SAFE allows on an undo point, and an error, a timeout (10 s, `AGENT_GUARD_JUDGE_TIMEOUT`; `claude -p` takes 2.0 to 6.4 s) or an unreadable reply denies. A remote write or anything else an undo point cannot take back is denied and never sent. `bench.py` replays the judge's replies from `results/judge_cache.jsonl` and calls the model only for a miss, with `--judge-live`.
 

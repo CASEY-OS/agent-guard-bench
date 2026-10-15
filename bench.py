@@ -884,6 +884,17 @@ def score_live_system(score_sets):
                 sec["hooks"][label]["cwd_written"] = sorted(os.listdir(cwd))
         finally:
             shutil.rmtree(cwd, ignore_errors=True)
+    for h in sec["hooks"].values():
+        h["measured_at"] = sec["measured_at"]
+    # a hook measured on an earlier run and not re-measured here is kept, with its own date: a run that finds only
+    # the current hook must not erase the record of the copies before it (a stranger's run did, 2026-10-14)
+    if os.path.exists(LIVE_RECORDED):
+        old = json.load(open(LIVE_RECORDED, encoding="utf-8"))
+        for label, h in (old.get("hooks") or {}).items():
+            if label not in sec["hooks"]:
+                h.setdefault("measured_at", old.get("measured_at"))
+                h["carried_from_earlier_run"] = True
+                sec["hooks"][label] = h
     os.makedirs(RECORDED, exist_ok=True)
     with open(LIVE_RECORDED, "w", encoding="utf-8") as fh:
         json.dump(sec, fh, indent=1, sort_keys=True)
@@ -1043,7 +1054,8 @@ def numbers_md_sections(N):
         for lab, h in ls["hooks"].items():
             for sn, s in h["sets"].items():
                 L.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
-                    lab, h["sha256"][:12], sn, _v(s, "bad"), _v(s, "denied"), _v(s, "missed"), _v(s, "safe"),
+                    lab + (" (earlier run, %s)" % str(h.get("measured_at"))[:10] if h.get("carried_from_earlier_run")
+                           else ""), h["sha256"][:12], sn, _v(s, "bad"), _v(s, "denied"), _v(s, "missed"), _v(s, "safe"),
                     _v(s, "safe_denied"), _v(s, "errors")))
     else:
         L.append("Live system: %s." % (ls.get("skipped") or ls.get("status") or "not scored"))
@@ -1648,6 +1660,27 @@ def main():
                       "cases": num(len(rows), None, "cases/%s/*_cases.jsonl" % BLIND),
                       "files": num(len({ROW_FILE[(BLIND, r["id"])] for r in rows}), None, "cases/%s/" % BLIND),
                       "guards": set_block(BLIND, rows, "cases/%s (740 cases)" % BLIND)}
+        # "blind" means written after the freeze, not unseen: an outside model can write a command already in a set
+        # the guard was built on. Count those word for word, and score the rows that are new.
+        earlier = {r["command"] for name, rs in loaded.items() if name != BLIND for r in rs}
+        osrc = "bench.py: a %s command found word for word in any other file under cases/" % BLIND
+        rep = [r for r in rows if r["command"] in earlier]
+        new = [r for r in rows if r["command"] not in earlier]
+        seen, dup = {}, 0
+        for r in rows:
+            dup += r["command"] in seen
+            seen.setdefault(r["command"], set()).add(should_stop(BLIND, r))
+        N["blind"]["overlap"] = {
+            "rows_repeating_earlier_sets": num(len(rep), len(rows), osrc),
+            "bad_repeating": num(sum(1 for r in rep if should_stop(BLIND, r)), None, osrc),
+            "safe_repeating": num(sum(1 for r in rep if not should_stop(BLIND, r)), None, osrc),
+            "rows_repeating_within_set": num(dup, len(rows), "bench.py: rows whose command appears earlier in %s" % BLIND),
+            "commands_with_both_labels": num(sorted(c for c, v in seen.items() if len(v) > 1), None,
+                                             "bench.py: one %s command labeled both stop and allow" % BLIND)}
+        N["blind"]["new_rows"] = {
+            "cases": num(len(new), len(rows), osrc.replace("found", "NOT found")),
+            "guards": {"v14": guard_cols(new, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
+                                         "the %s rows not found in any other file under cases/" % BLIND)}}
     if OUTSIDE_DEV in sets:
         o = {"set": OUTSIDE_DEV, "status": HOLDOUT_STATUS[OUTSIDE_DEV], "subsets": {}}
         for key, pred, lab in (("all", lambda f: True, "all eight files"),
@@ -1709,14 +1742,15 @@ def main():
     rtv = {"calls": num(real["calls"], None, "results/real_traffic.json: calls") if real else None,
            "distinct_commands": num(real["unique_commands"], None, "results/real_traffic.json: unique_commands") if real else None}
     if real:
-        for vn in ("v13", "v14"):
+        for vn in ("v7", "v13", "v14"):      # v7: the last version before real traffic shaped the rules; no undo layer
             if vn in real:
                 rtv[vn] = {"denied": num(real[vn]["denied"], real["calls"], "results/real_traffic.json: %s.denied" % vn),
-                           "denied_pct": num(real[vn]["denied_pct"], None, "results/real_traffic.json: %s.denied_pct" % vn),
-                           "undo_point": num(real[vn]["recoverable_allowed"], real["calls"],
-                                             "results/real_traffic.json: %s.recoverable_allowed" % vn),
-                           "undo_point_pct": num(real[vn]["recoverable_pct"], None,
-                                                 "results/real_traffic.json: %s.recoverable_pct" % vn)}
+                           "denied_pct": num(real[vn]["denied_pct"], None, "results/real_traffic.json: %s.denied_pct" % vn)}
+                if "recoverable_allowed" in real[vn]:
+                    rtv[vn]["undo_point"] = num(real[vn]["recoverable_allowed"], real["calls"],
+                                                "results/real_traffic.json: %s.recoverable_allowed" % vn)
+                    rtv[vn]["undo_point_pct"] = num(real[vn]["recoverable_pct"], None,
+                                                    "results/real_traffic.json: %s.recoverable_pct" % vn)
     rtv["labeled_sample"] = rtl if rtl else {"skipped": "results/recorded/real_traffic_labels.json not present"}
     N["real_traffic"] = rtv
     # 7. undo
