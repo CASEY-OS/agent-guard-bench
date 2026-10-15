@@ -112,7 +112,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/reset-hard-HEAD~1-raoigc94"
+      "store": "<bench root>/store/reset-hard-HEAD~1-11_q4vw1"
     },
     {
       "command": "git clean -fdx",
@@ -144,7 +144,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/clean-fdx-1n01kjqf"
+      "store": "<bench root>/store/clean-fdx-0albc1w9"
     },
     {
       "command": "rm -rf src",
@@ -181,7 +181,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/rm-rf-src-mw5c0hxa"
+      "store": "<bench root>/store/rm-rf-src-aw5opq40"
     },
     {
       "command": "git branch -D other",
@@ -208,7 +208,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/branch-D-other-dup1umfw"
+      "store": "<bench root>/store/branch-D-other-c4n4ljjg"
     },
     {
       "command": "git stash drop",
@@ -237,7 +237,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/stash-drop-djxzat6r"
+      "store": "<bench root>/store/stash-drop-65pbv5d8"
     },
     {
       "command": "rm -f ../outside.txt",
@@ -264,7 +264,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/outside-rm-1_a3074c"
+      "store": "<bench root>/store/outside-rm-vwsdx1ge"
     },
     {
       "command": "rm .env",
@@ -291,7 +291,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/ignored-rm-dotenv-0qluo02c"
+      "store": "<bench root>/store/ignored-rm-dotenv-p7x5p7yq"
     },
     {
       "command": "rm -f outside.txt outdir/a.txt",
@@ -320,7 +320,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/files-only-rm-winp5c0f"
+      "store": "<bench root>/store/files-only-rm-hhr5prwb"
     },
     {
       "command": "git checkout src/app.py",
@@ -347,7 +347,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/v14-checkout-file-vuqcsnyr"
+      "store": "<bench root>/store/v14-checkout-file-l5jxemo7"
     },
     {
       "command": "git restore src/app.py",
@@ -374,25 +374,25 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/v14-restore-file-e_bw0hkd"
+      "store": "<bench root>/store/v14-restore-file-9ymn9huy"
     }
   ],
   "cost": {
-    "dirty_snapshot_bytes_median": 5561.5,
-    "dirty_snapshot_ms_median": 131.00666657555848,
+    "dirty_snapshot_bytes_median": 5560.5,
+    "dirty_snapshot_ms_median": 131.88925001304597,
     "files": 1000,
-    "files_restore_ms": 35.530207911506295,
-    "first_snapshot_bytes": 56196,
-    "first_snapshot_ms": 221.79845813661814,
-    "hook_files_only_ms_median": 74.77404084056616,
-    "hook_ignored_ms_median": 215.3229999821633,
-    "hook_outside_ms_median": 213.58745777979493,
-    "hook_read_only_ms_median": 67.75012495927513,
-    "hook_with_snapshot_ms_median": 217.18366700224578,
-    "no_change_ms_median": 62.5069789821282,
-    "objects_bytes_before": 899858,
-    "plan_us_read_only": 15.946333529427648,
-    "restore_ms": 397.3540829028934
+    "files_restore_ms": 35.260749980807304,
+    "first_snapshot_bytes": 56262,
+    "first_snapshot_ms": 284.5456670038402,
+    "hook_files_only_ms_median": 73.64966697059572,
+    "hook_ignored_ms_median": 213.75474985688925,
+    "hook_outside_ms_median": 211.05512487702072,
+    "hook_read_only_ms_median": 67.02941586263478,
+    "hook_with_snapshot_ms_median": 214.91891681216657,
+    "no_change_ms_median": 61.40714546199888,
+    "objects_bytes_before": 899860,
+    "plan_us_read_only": 15.724646043963732,
+    "restore_ms": 390.832707984373
   },
   "mutants": [
     {
@@ -422,7 +422,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/chmod-iev_e0us",
+      "store": "<bench root>/store/chmod-hteizg16",
       "what": "skips the mode bits"
     },
     {
@@ -452,7 +452,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-drop-fv0uzq5p",
+      "store": "<bench root>/store/stash-drop-6cb_rmr9",
       "what": "skips the stash reflog"
     },
     {
@@ -490,7 +490,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-chmod-R-a-w-d0aeuwz_",
+      "store": "<bench root>/store/wu5-chmod-R-a-w-ku5518dz",
       "what": "does not reopen read-only directories"
     },
     {
@@ -524,7 +524,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/chmod-dirs-go-rx-u1eqmgqi",
+      "store": "<bench root>/store/chmod-dirs-go-rx-f24f2lb1",
       "what": "skips the directory mode bits"
     },
     {
@@ -554,7 +554,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-ignore-added-then-file-fz1x_m50",
+      "store": "<bench root>/store/wu5-ignore-added-then-file-m0zl7qyc",
       "what": "judges ignores by the post-command .gitignore"
     },
     {
@@ -586,7 +586,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-merge-squash-17jdw1y0",
+      "store": "<bench root>/store/wu5-merge-squash-3vw4hqol",
       "what": "does not save SQUASH_MSG"
     },
     {
@@ -657,7 +657,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rm-rf-dotgit-kj4b_es3",
+      "store": "<bench root>/store/rm-rf-dotgit-na0ydgid",
       "what": "does not import from the store"
     },
     {
@@ -669,7 +669,7 @@
         "outside: lost outside.txt"
       ],
       "files_ids": [
-        "20261014T224517.251407Z"
+        "20261015T002003.148532Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -688,7 +688,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-rm-mjtq_ht9",
+      "store": "<bench root>/store/outside-rm-bfvqd3eo",
       "what": "ignores the files link in meta.json"
     },
     {
@@ -702,7 +702,7 @@
         "outside: changed outside.txt"
       ],
       "files_ids": [
-        "20261014T224518.171240Z"
+        "20261015T002004.052274Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -722,7 +722,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-chmod-ks85y9yf",
+      "store": "<bench root>/store/outside-chmod-e9jwrh5q",
       "what": "skips the mode bits of files outside the repo"
     },
     {
@@ -735,7 +735,7 @@
         "outside: extra moved_notes.txt"
       ],
       "files_ids": [
-        "20261014T224519.093484Z"
+        "20261015T002004.960024Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -754,7 +754,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/mv-out-of-repo-00j893tj",
+      "store": "<bench root>/store/mv-out-of-repo-fce4azcx",
       "what": "leaves a file the command created outside the repo"
     }
   ],
@@ -796,7 +796,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/ignored-files-qlhrlvsj",
+      "store": "<bench root>/store/ignored-files-02ziss0o",
       "why": "git clean -X names no path, so no ignored file is copied; covering it would mean copying every ignored file (node_modules, build caches) before every git clean"
     },
     {
@@ -821,7 +821,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/empty-directory-oe4e6g41",
+      "store": "<bench root>/store/empty-directory-2omtlsqp",
       "why": "git does not record empty directories"
     },
     {
@@ -847,13 +847,13 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:4134f1ecc1ef0aa95ed5f335ac4b474655d3b0c5 origin 54d9d0e61425239ea0bffe2e60b8c3ad89f5f868:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:c91507548d6f643bbc34a3a553b3b35bb3e8d224 origin b367fc940f9f8493c8a6739cdc88dc6095397302:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/remote-only-commit-18s2aouj",
+      "store": "<bench root>/store/remote-only-commit-ak_43uzl",
       "their_commit_on_remote": false,
       "their_commit_recoverable": false,
       "why": "a commit that only the remote held is gone once it is overwritten"
@@ -886,7 +886,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/reset-hard-HEAD~1-i0_voowr"
+      "store": "<bench root>/store/reset-hard-HEAD~1-44_4jsup"
     },
     {
       "command": "git reset --hard",
@@ -914,7 +914,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/reset-hard-4ixa2xoj"
+      "store": "<bench root>/store/reset-hard-01ggguwd"
     },
     {
       "command": "git reset --mixed HEAD~2",
@@ -940,7 +940,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/reset-mixed-HEAD~2-_ymfmarl"
+      "store": "<bench root>/store/reset-mixed-HEAD~2-2bzzv19i"
     },
     {
       "command": "git reset --soft HEAD~2",
@@ -965,7 +965,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/reset-soft-HEAD~2-tpe9x11w"
+      "store": "<bench root>/store/reset-soft-HEAD~2-a38ulc51"
     },
     {
       "command": "git clean -fdx",
@@ -993,7 +993,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/clean-fdx-5cxg0hll"
+      "store": "<bench root>/store/clean-fdx-a62pd5id"
     },
     {
       "command": "git clean -fd",
@@ -1020,7 +1020,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/clean-fd-qto7qipu"
+      "store": "<bench root>/store/clean-fd-bfimjaxl"
     },
     {
       "command": "git checkout -- .",
@@ -1048,7 +1048,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/checkout-dash-dash-dot-2yno3afx"
+      "store": "<bench root>/store/checkout-dash-dash-dot-k8hdfc9f"
     },
     {
       "command": "git restore .",
@@ -1076,7 +1076,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/restore-dot-28r7yr_3"
+      "store": "<bench root>/store/restore-dot-qlsr7y78"
     },
     {
       "command": "git restore --staged .",
@@ -1101,7 +1101,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/restore-staged-dot-b19kj57m"
+      "store": "<bench root>/store/restore-staged-dot-qyyj2ntj"
     },
     {
       "command": "git restore --source=HEAD~2 --staged --worktree src",
@@ -1117,7 +1117,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224342.207901Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001829.056438Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -1129,7 +1129,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/restore-source-src-q5v3bnao"
+      "store": "<bench root>/store/restore-source-src-88ckidk_"
     },
     {
       "command": "git checkout -f other",
@@ -1157,7 +1157,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/checkout-force-other-xj8tbs0p"
+      "store": "<bench root>/store/checkout-force-other-51vmfnxm"
     },
     {
       "command": "git switch --discard-changes other",
@@ -1185,7 +1185,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/switch-discard-other-2mxbgt9a"
+      "store": "<bench root>/store/switch-discard-other-q3nvqbmj"
     },
     {
       "command": "git checkout other -- .",
@@ -1213,7 +1213,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/checkout-other-whole-tree-9keq1b02"
+      "store": "<bench root>/store/checkout-other-whole-tree-p703c_5c"
     },
     {
       "command": "git branch -D other",
@@ -1238,7 +1238,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/branch-D-other-_v6_aeyr"
+      "store": "<bench root>/store/branch-D-other-s49kqkns"
     },
     {
       "command": "git branch -f other HEAD~2",
@@ -1263,7 +1263,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/branch-f-other-fnl9g7sf"
+      "store": "<bench root>/store/branch-f-other-86b0t7_3"
     },
     {
       "command": "git stash push -m wip",
@@ -1291,7 +1291,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-push-owc1kx6y"
+      "store": "<bench root>/store/stash-push-w313hwkg"
     },
     {
       "command": "git stash drop",
@@ -1317,7 +1317,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-drop-36k6v6fu"
+      "store": "<bench root>/store/stash-drop-5qx2b83a"
     },
     {
       "command": "git stash clear",
@@ -1343,7 +1343,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-clear-a23takse"
+      "store": "<bench root>/store/stash-clear-sdgdnnpa"
     },
     {
       "command": "git stash && git stash drop",
@@ -1371,7 +1371,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-then-drop-t7dhltp4"
+      "store": "<bench root>/store/stash-then-drop-6g5lipir"
     },
     {
       "command": "git commit -q -m 'agent commit'",
@@ -1396,7 +1396,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/commit-oz754737"
+      "store": "<bench root>/store/commit-jsbv1gf4"
     },
     {
       "command": "git commit -q --amend -m amended",
@@ -1421,7 +1421,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/commit-amend-yx86yhtn"
+      "store": "<bench root>/store/commit-amend-eb7ashlh"
     },
     {
       "command": "git stash -q && git merge -q --no-edit other",
@@ -1449,7 +1449,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/stash-then-merge-5d4kqwfd"
+      "store": "<bench root>/store/stash-then-merge-yz8j2c1c"
     },
     {
       "command": "git rebase -q --autostash other",
@@ -1476,7 +1476,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rebase-autostash-zh6e30ts"
+      "store": "<bench root>/store/rebase-autostash-am3tzjbx"
     },
     {
       "command": "git rebase -q --autostash --onto HEAD~2 HEAD~1",
@@ -1504,7 +1504,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rebase-drop-commit-4k9j78y9"
+      "store": "<bench root>/store/rebase-drop-commit-usls0g4l"
     },
     {
       "command": "git update-ref -d refs/heads/other",
@@ -1529,7 +1529,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/update-ref-delete-6z004nji"
+      "store": "<bench root>/store/update-ref-delete-tugpv8ns"
     },
     {
       "command": "git update-ref refs/heads/main HEAD~2",
@@ -1554,7 +1554,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/update-ref-move-_fj8pno4"
+      "store": "<bench root>/store/update-ref-move-x15c7aof"
     },
     {
       "command": "git reset -q --hard HEAD~2 && git reflog expire --expire=now --all && git gc -q --prune=now",
@@ -1582,7 +1582,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/reset-then-gc-uxyc651_"
+      "store": "<bench root>/store/reset-then-gc-2y8i5y9y"
     },
     {
       "command": "git tag -d v1 light && git reflog expire --expire=now --all && git gc -q --prune=now",
@@ -1609,7 +1609,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/tag-delete-then-gc-ifmtvcs3"
+      "store": "<bench root>/store/tag-delete-then-gc-se8_rpcf"
     },
     {
       "command": "git merge --abort",
@@ -1637,7 +1637,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/merge-abort-conflict-zb0lel03"
+      "store": "<bench root>/store/merge-abort-conflict-sayj6p00"
     },
     {
       "command": "git push -q -f origin main",
@@ -1660,13 +1660,13 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push --force-with-lease=refs/heads/main:60241d63ad5086319a1b7c9b553293c9b5e4add6 origin c527a481eeca735cd39d3ccb8aca775fcfa8ce20:refs/heads/main"
+        "git push --force-with-lease=refs/heads/main:9f27915bf90598b399b4e04f9f9e44b4d6073145 origin 0c292ec96f3798ad3db9073f0844440ce8f17d09:refs/heads/main"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/force-push-lswuww_q"
+      "store": "<bench root>/store/force-push-xkiapapp"
     },
     {
       "command": "git push -q origin --delete other",
@@ -1688,13 +1688,13 @@
       "outside_changed": false,
       "rc": 0,
       "remote_repair": [
-        "git push origin a7ff7e0ffc3fc7d03bf03be72ee9405ba541e89c:refs/heads/other"
+        "git push origin 3b7615a9d591860e3d937a0972d436edd39eec09:refs/heads/other"
       ],
       "restore_rc": 0,
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/push-delete-3n3l2dwl"
+      "store": "<bench root>/store/push-delete-harrxvqi"
     },
     {
       "command": "rm -rf src",
@@ -1722,7 +1722,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rm-rf-src-s7foyr7b"
+      "store": "<bench root>/store/rm-rf-src-qh6pw07i"
     },
     {
       "command": "rm -f README.md notes.txt bin/run.sh",
@@ -1750,7 +1750,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rm-files-b154ep_n"
+      "store": "<bench root>/store/rm-files-2rrufqjx"
     },
     {
       "command": "mv src lib",
@@ -1778,7 +1778,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/mv-dir-239zze2g"
+      "store": "<bench root>/store/mv-dir-q5ndmjki"
     },
     {
       "command": "mv notes.txt ../moved_notes.txt",
@@ -1789,7 +1789,7 @@
         "outside: extra moved_notes.txt"
       ],
       "files_ids": [
-        "20261014T224406.398377Z"
+        "20261015T001853.032276Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -1806,7 +1806,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/mv-out-of-repo-eeocd7y3"
+      "store": "<bench root>/store/mv-out-of-repo-knv7irfh"
     },
     {
       "command": "cp README.md src/app.py",
@@ -1831,7 +1831,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/cp-over-fb3lx6nx"
+      "store": "<bench root>/store/cp-over-05ryrf_s"
     },
     {
       "command": "sed -i.bak 's/a/X/g' src/app.py README.md",
@@ -1859,7 +1859,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/sed-in-place-3hd5zw41"
+      "store": "<bench root>/store/sed-in-place-i1b433a1"
     },
     {
       "command": "truncate -s 0 src/util.py data/blob.bin",
@@ -1885,7 +1885,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/truncate-lajby04b"
+      "store": "<bench root>/store/truncate-8tqtrd_h"
     },
     {
       "command": "echo junk > README.md && echo more >> notes.txt",
@@ -1911,7 +1911,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/redirect-write-pl_74khh"
+      "store": "<bench root>/store/redirect-write-s_wocv4e"
     },
     {
       "command": "echo x | tee src/app.py src/lib/deep.py",
@@ -1937,7 +1937,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/tee-qvvpjg9r"
+      "store": "<bench root>/store/tee-mzl78n1x"
     },
     {
       "command": "find . -name '*.py' -not -path './.git/*' -delete",
@@ -1950,7 +1950,7 @@
         "files: lost src/new_staged.py"
       ],
       "files_ids": [
-        "20261014T224411.942352Z"
+        "20261015T001858.423467Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -1967,7 +1967,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/find-delete-5o9sl2qd"
+      "store": "<bench root>/store/find-delete-uirlgfwx"
     },
     {
       "command": "git rm -r -q -f src",
@@ -1995,7 +1995,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/git-rm-r-force-evlvg9ge"
+      "store": "<bench root>/store/git-rm-r-force-5hiakn3c"
     },
     {
       "command": "git mv README.md README2.md",
@@ -2022,7 +2022,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/git-mv-8bp760a1"
+      "store": "<bench root>/store/git-mv-dwdrfkqf"
     },
     {
       "command": "chmod 600 bin/run.sh && chmod 755 notes.txt",
@@ -2048,7 +2048,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/chmod-zaq0m5h1"
+      "store": "<bench root>/store/chmod-74emtaqs"
     },
     {
       "command": "rm src/util.py && mkdir src/util.py && echo x > src/util.py/inner",
@@ -2075,7 +2075,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/file-becomes-dir-_bnqerqi"
+      "store": "<bench root>/store/file-becomes-dir-nkk00uxd"
     },
     {
       "command": "rm link && echo plain > link",
@@ -2100,7 +2100,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/symlink-becomes-file-zy8i0fuh"
+      "store": "<bench root>/store/symlink-becomes-file-wlh1uyd0"
     },
     {
       "command": "rm -rf src/lib && ln -s ../docs src/lib",
@@ -2127,7 +2127,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/dir-becomes-symlink-3zic3261"
+      "store": "<bench root>/store/dir-becomes-symlink-ib1xivcq"
     },
     {
       "command": "head -c 512 /dev/zero > data/blob.bin",
@@ -2152,7 +2152,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/binary-overwrite-ozs21eal"
+      "store": "<bench root>/store/binary-overwrite-54a84999"
     },
     {
       "command": "python3 -c \"import shutil; shutil.rmtree('src')\"",
@@ -2180,7 +2180,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/python-rmtree-xzy2oap9"
+      "store": "<bench root>/store/python-rmtree-g0lofa0w"
     },
     {
       "command": "rm -rf .git",
@@ -2208,7 +2208,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rm-rf-dotgit-1hrmv6k5"
+      "store": "<bench root>/store/rm-rf-dotgit-ou964vb2"
     },
     {
       "command": "rm -rf .git && git init -q",
@@ -2236,7 +2236,7 @@
       "route": "script",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/rm-rf-dotgit-reinit-n4x0flz5"
+      "store": "<bench root>/store/rm-rf-dotgit-reinit-dnwplvl6"
     },
     {
       "command": "chmod -x bin/run.sh",
@@ -2261,7 +2261,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-chmod-dash-x-l_jpt77_"
+      "store": "<bench root>/store/wu5-chmod-dash-x-sy6d_jh_"
     },
     {
       "command": "chmod -R -w src",
@@ -2289,7 +2289,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-chmod-R-dash-w-92p78h1a"
+      "store": "<bench root>/store/wu5-chmod-R-dash-w-fkez3hpy"
     },
     {
       "command": "chmod -R a-w src",
@@ -2317,7 +2317,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-chmod-R-a-w-l23zjssf"
+      "store": "<bench root>/store/wu5-chmod-R-a-w-c0as7esp"
     },
     {
       "command": "find . -name '*.py' -not -path './.git/*' -print0 | xargs -0 rm -f",
@@ -2345,7 +2345,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-find-print0-xargs-rm-5yqgfht6"
+      "store": "<bench root>/store/wu5-find-print0-xargs-rm-p_h5einn"
     },
     {
       "command": "git ls-files bin | xargs chmod 600",
@@ -2370,7 +2370,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-ls-files-xargs-chmod-1apk8_2t"
+      "store": "<bench root>/store/wu5-ls-files-xargs-chmod-w20h7onb"
     },
     {
       "command": "git ls-files src | xargs gzip -f",
@@ -2398,7 +2398,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-ls-files-xargs-gzip-lubtx62w"
+      "store": "<bench root>/store/wu5-ls-files-xargs-gzip-72exnzim"
     },
     {
       "command": "patch -p0 <<'EOP'\n--- README.md\n+++ README.md\n@@ -1,3 +1,3 @@\n # demo\n-alpha beta\n+alpha gamma\n unstaged line\nEOP",
@@ -2423,7 +2423,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-patch-heredoc-uu4jcbba"
+      "store": "<bench root>/store/wu5-patch-heredoc-dlsz9ck0"
     },
     {
       "command": "sed -Ei '' 's/alpha/ALPHA/' README.md",
@@ -2448,7 +2448,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-sed-Ei-eoz6s212"
+      "store": "<bench root>/store/wu5-sed-Ei-vja8magm"
     },
     {
       "command": "sort -ro README.md README.md",
@@ -2473,7 +2473,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-sort-ro-6e3tdngj"
+      "store": "<bench root>/store/wu5-sort-ro-brydmsiy"
     },
     {
       "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && tar -cf ../a.tar README.md); tar -xf ../a.tar",
@@ -2486,7 +2486,7 @@
         "outside: extra stage/README.md"
       ],
       "files_ids": [
-        "20261014T224430.620051Z"
+        "20261015T001916.737440Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2503,7 +2503,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-tar-extract-outside-g3jr1pun"
+      "store": "<bench root>/store/wu5-tar-extract-outside-jsgug_gd"
     },
     {
       "command": "mkdir ../stage && echo changed > ../stage/README.md && (cd ../stage && zip -q ../a.zip README.md); unzip -qo ../a.zip",
@@ -2516,7 +2516,7 @@
         "outside: extra stage/README.md"
       ],
       "files_ids": [
-        "20261014T224431.543030Z"
+        "20261015T001917.648599Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2533,7 +2533,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-unzip-outside-2lc_52rv"
+      "store": "<bench root>/store/wu5-unzip-outside-pc7lnjaj"
     },
     {
       "command": "(cd .. && ls) ; rm -f notes.txt README.md",
@@ -2559,7 +2559,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-subshell-cd-mm675e91"
+      "store": "<bench root>/store/wu5-subshell-cd-cercv376"
     },
     {
       "command": "cd .. && cd - && rm -f notes.txt",
@@ -2584,7 +2584,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-cd-dash-353awxzd"
+      "store": "<bench root>/store/wu5-cd-dash-zh8u374q"
     },
     {
       "command": "env -S 'rm -f notes.txt README.md'",
@@ -2610,7 +2610,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-env-S-ntrxvtf2"
+      "store": "<bench root>/store/wu5-env-S-lw0nfs84"
     },
     {
       "command": "git -c core.fsmonitor='rm -f notes.txt;' status",
@@ -2635,7 +2635,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-git-c-fsmonitor-hhu60oi7"
+      "store": "<bench root>/store/wu5-git-c-fsmonitor-lnww7e90"
     },
     {
       "command": "GIT_EXTERNAL_DIFF='rm -f' git diff",
@@ -2660,7 +2660,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-git-external-diff-amo6sn94"
+      "store": "<bench root>/store/wu5-git-external-diff-2scvsq02"
     },
     {
       "command": "echo '*.out' >> .gitignore && echo result > result.out",
@@ -2686,7 +2686,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-ignore-added-then-file-h7xxhj_3"
+      "store": "<bench root>/store/wu5-ignore-added-then-file-c0evpphz"
     },
     {
       "command": "printf 'tmp/\\n' >> .gitignore && mkdir tmp && echo x > tmp/a.txt",
@@ -2712,7 +2712,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-ignore-dir-then-file-adllx2wj"
+      "store": "<bench root>/store/wu5-ignore-dir-then-file-3_qbdsef"
     },
     {
       "command": "git stash -q && git merge --squash other",
@@ -2740,7 +2740,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-merge-squash-qqy5xp0y"
+      "store": "<bench root>/store/wu5-merge-squash-3g5yp0ds"
     },
     {
       "command": "git stash -q && git checkout -q other && git revert --no-edit main main~1",
@@ -2768,7 +2768,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/wu5-revert-sequencer-r_e4card"
+      "store": "<bench root>/store/wu5-revert-sequencer-rr_hvlbk"
     },
     {
       "command": "chmod -R go-rx src docs",
@@ -2796,7 +2796,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/chmod-dirs-go-rx-5cwte2o4"
+      "store": "<bench root>/store/chmod-dirs-go-rx-7n9qnk50"
     },
     {
       "command": "rm -f ../outside.txt",
@@ -2806,7 +2806,7 @@
         "outside: lost outside.txt"
       ],
       "files_ids": [
-        "20261014T224441.823482Z"
+        "20261015T001927.701818Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2823,7 +2823,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-rm-55s_4idh"
+      "store": "<bench root>/store/outside-rm-m4s1b8dg"
     },
     {
       "command": "cp README.md ../outside.txt",
@@ -2833,7 +2833,7 @@
         "outside: changed outside.txt"
       ],
       "files_ids": [
-        "20261014T224442.737783Z"
+        "20261015T001928.598785Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2850,7 +2850,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-cp-over-ev3the39"
+      "store": "<bench root>/store/outside-cp-over-925o8nki"
     },
     {
       "command": "cp README.md bin/run.sh ../outdir/",
@@ -2861,7 +2861,7 @@
         "outside: changed outdir/run.sh"
       ],
       "files_ids": [
-        "20261014T224443.650981Z"
+        "20261015T001929.510165Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2878,7 +2878,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-cp-into-dir-q42oc6th"
+      "store": "<bench root>/store/outside-cp-into-dir-i5t5rpvs"
     },
     {
       "command": "sed -i.bak 's/o/0/g' ../outside.txt",
@@ -2889,7 +2889,7 @@
         "outside: changed outside.txt"
       ],
       "files_ids": [
-        "20261014T224444.578258Z"
+        "20261015T001930.419113Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2906,7 +2906,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-sed-in-place-l4zgiazn"
+      "store": "<bench root>/store/outside-sed-in-place-ri9o23_d"
     },
     {
       "command": "echo junk > ../outside.txt && echo more >> ../outdir/a.txt",
@@ -2917,7 +2917,7 @@
         "outside: changed outside.txt"
       ],
       "files_ids": [
-        "20261014T224445.491116Z"
+        "20261015T001931.325235Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2934,7 +2934,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-redirect-jqgkfgka"
+      "store": "<bench root>/store/outside-redirect-5mwmmeia"
     },
     {
       "command": "rm -rf ../outdir",
@@ -2947,7 +2947,7 @@
         "outside: lost outdir/escape"
       ],
       "files_ids": [
-        "20261014T224446.404957Z"
+        "20261015T001932.223420Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2964,7 +2964,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-rm-rf-dir-28x6may7"
+      "store": "<bench root>/store/outside-rm-rf-dir-x2khlru8"
     },
     {
       "command": "chmod 755 ../outside.txt && chmod 700 ../outdir ../outdir/secret",
@@ -2976,7 +2976,7 @@
         "outside: changed outside.txt"
       ],
       "files_ids": [
-        "20261014T224447.313027Z"
+        "20261015T001933.138117Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -2993,7 +2993,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-chmod-ohjyif36"
+      "store": "<bench root>/store/outside-chmod-yrav9bqn"
     },
     {
       "command": "echo created > ../created.txt && mkdir ../newdir && echo x > ../newdir/f",
@@ -3005,7 +3005,7 @@
         "outside: extra newdir/f"
       ],
       "files_ids": [
-        "20261014T224448.222933Z"
+        "20261015T001934.039756Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3022,7 +3022,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-created-fsawcwne"
+      "store": "<bench root>/store/outside-created-0doj_wbf"
     },
     {
       "command": "mv ../outside.txt imported.txt",
@@ -3033,7 +3033,7 @@
         "outside: lost outside.txt"
       ],
       "files_ids": [
-        "20261014T224449.145239Z"
+        "20261015T001934.944185Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3050,7 +3050,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/mv-outside-into-repo-nv9krpzv"
+      "store": "<bench root>/store/mv-outside-into-repo-pfcg1p7e"
     },
     {
       "command": "rm .env",
@@ -3060,7 +3060,7 @@
         "ignored: lost .env"
       ],
       "files_ids": [
-        "20261014T224450.069186Z"
+        "20261015T001935.861155Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3077,7 +3077,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/ignored-rm-dotenv-yl9_0u6v"
+      "store": "<bench root>/store/ignored-rm-dotenv-aqmmvaf9"
     },
     {
       "command": "rm -f debug.log build/out.o",
@@ -3088,7 +3088,7 @@
         "ignored: lost debug.log"
       ],
       "files_ids": [
-        "20261014T224450.980313Z"
+        "20261015T001936.767033Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3105,7 +3105,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/ignored-rm-files-jm962v3q"
+      "store": "<bench root>/store/ignored-rm-files-3i2n5pkb"
     },
     {
       "command": "rm -rf build",
@@ -3115,7 +3115,7 @@
         "ignored: lost build/out.o"
       ],
       "files_ids": [
-        "20261014T224451.891761Z"
+        "20261015T001937.670501Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3132,7 +3132,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/ignored-rm-rf-dir-4re99ag5"
+      "store": "<bench root>/store/ignored-rm-rf-dir-tp0vm4ds"
     },
     {
       "command": "echo SECRET=changed > .env",
@@ -3142,7 +3142,7 @@
         "ignored: changed .env"
       ],
       "files_ids": [
-        "20261014T224452.805854Z"
+        "20261015T001938.595446Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3159,7 +3159,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/ignored-overwrite-dotenv-eyb9dmn4"
+      "store": "<bench root>/store/ignored-overwrite-dotenv-l85vn66l"
     },
     {
       "command": "rm -f ~/tilde-notes.txt",
@@ -3169,7 +3169,7 @@
         "outside: lost ~/tilde-notes.txt"
       ],
       "files_ids": [
-        "20261014T224453.761309Z"
+        "20261015T001939.499581Z"
       ],
       "files_linked": true,
       "files_snapshots_taken": 1,
@@ -3186,7 +3186,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/outside-tilde-cisrg2za"
+      "store": "<bench root>/store/outside-tilde-g3msjfta"
     },
     {
       "command": "rm -f outside.txt outdir/a.txt",
@@ -3197,7 +3197,7 @@
         "outside: lost outside.txt"
       ],
       "files_ids": [
-        "20261014T224454.674629Z"
+        "20261015T001940.397963Z"
       ],
       "files_linked": null,
       "files_snapshots_taken": 1,
@@ -3214,7 +3214,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 0,
-      "store": "<bench root>/store/files-only-rm-sl6xdidl"
+      "store": "<bench root>/store/files-only-rm-dczlbl3e"
     },
     {
       "command": "make -s wipe",
@@ -3230,7 +3230,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224455.160459Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001940.877269Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3242,7 +3242,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v11-make-unreadable-makefile-n1ajpgme"
+      "store": "<bench root>/store/v11-make-unreadable-makefile-41mn33e9"
     },
     {
       "command": "npm run -s wipe -w pkg",
@@ -3258,7 +3258,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224456.088989Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001941.805636Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3270,7 +3270,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v11-npm-workspace-script-qdbdilc6"
+      "store": "<bench root>/store/v11-npm-workspace-script-6xzpjph3"
     },
     {
       "command": "git checkout src/app.py",
@@ -3283,7 +3283,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224457.469475Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001943.634907Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3295,7 +3295,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-checkout-file-keqkwzdd"
+      "store": "<bench root>/store/v14-checkout-file-1f87m64v"
     },
     {
       "command": "git checkout -- README.md",
@@ -3308,7 +3308,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224458.384066Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001944.546415Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3320,7 +3320,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-checkout-dashdash-file-sy5nlcee"
+      "store": "<bench root>/store/v14-checkout-dashdash-file-vcofh13l"
     },
     {
       "command": "git checkout HEAD -- src/app.py",
@@ -3334,7 +3334,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224459.300751Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001945.455381Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3346,7 +3346,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-checkout-head-dashdash-file-21a35ewh"
+      "store": "<bench root>/store/v14-checkout-head-dashdash-file-hmvjgosf"
     },
     {
       "command": "git restore src/app.py",
@@ -3359,7 +3359,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224500.219841Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001946.368867Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3371,7 +3371,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-restore-file-n78z2n0_"
+      "store": "<bench root>/store/v14-restore-file-ia27agp7"
     },
     {
       "command": "git restore --worktree README.md",
@@ -3384,7 +3384,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224501.141928Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001947.285267Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3396,7 +3396,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-restore-worktree-flag-8dzkee_r"
+      "store": "<bench root>/store/v14-restore-worktree-flag-j77j0s55"
     },
     {
       "command": "git restore -W src/app.py",
@@ -3409,7 +3409,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224502.063338Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001948.194438Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3421,7 +3421,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-restore-W-flag-a23kozom"
+      "store": "<bench root>/store/v14-restore-W-flag-2f3s_jt3"
     },
     {
       "command": "git restore --source=HEAD~2 src/app.py",
@@ -3434,7 +3434,7 @@
       "files_linked": null,
       "files_snapshots_taken": 0,
       "guard_direct": "allow",
-      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261014T224502.976560Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
+      "hook_note": "agent-guard: allowed; an undo point was taken: python3 undo.py restore 20261015T001949.120287Z (the guard could not read every part of this command, and nothing it shows reaches past what that point restores)",
       "ignored_lost": 0,
       "left": [],
       "left_files": [],
@@ -3446,7 +3446,7 @@
       "route": "direct",
       "snapshot_left_state_untouched": true,
       "snapshots_taken": 1,
-      "store": "<bench root>/store/v14-restore-source-file-cq5kiuhm"
+      "store": "<bench root>/store/v14-restore-source-file-dxnrc01p"
     }
   ]
 }
