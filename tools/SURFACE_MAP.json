@@ -225,13 +225,14 @@
   },
   {
    "file": "README.md",
-   "pattern": "For v14 the slowest takes ([0-9.]+) s on this Mac on Python 3\\.14",
+   "pattern": "For v14 the slowest stays under ([0-9.]+) s on this Mac on Python 3\\.14",
    "keys": [
     "timing.pathological_worst_s_this_machine"
    ],
    "when": {
     "python": "3.14"
-   }
+   },
+   "type": "under"
   },
   {
    "file": "results/SUMMARY.md",
@@ -312,13 +313,14 @@
   },
   {
    "file": "docs/METHOD.md",
-   "pattern": "for v14 it reads ([0-9.]+) s on Python 3\\.14",
+   "pattern": "for v14 it stays under ([0-9.]+) s on Python 3\\.14",
    "keys": [
     "timing.pathological_worst_s_this_machine"
    ],
    "when": {
     "python": "3.14"
-   }
+   },
+   "type": "under"
   },
   {
    "file": "docs/METHOD.md",
@@ -539,7 +541,7 @@
   },
   {
    "file": "CHANGELOG.md",
-   "pattern": "The slowest of 270 pathological inputs takes ([0-9.]+) s on Python 3\\.14\\.",
+   "pattern": "The slowest of 270 pathological inputs stays under ([0-9.]+) s on Python 3\\.14",
    "keys": [
     "timing.pathological_worst_s_this_machine"
    ],
@@ -549,7 +551,8 @@
    ],
    "when": {
     "python": "3.14"
-   }
+   },
+   "type": "under"
   },
   {
    "file": "CHANGELOG.md",
