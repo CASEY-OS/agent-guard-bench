@@ -12,7 +12,7 @@ Eight outside models (ChatGPT, DeepSeek, Grok, Mistral, Copilot, Kimi, Qwen and 
 
 ### Why
 
-The read of holdout18's errors (7 outside models, 560 cases) and the 83 public incidents found five real gaps in v13: `git config --global alias.publish 'push --force'` allowed (CG065); appending a line to a hook file denied (CP050); three incidents where `git checkout <file>` and `git restore <file>` threw away days of uncommitted work in one named file (INC-036, 049, 054); one where `rm -rf .claude/worktrees` deleted worktrees holding uncommitted work (INC-062). The real-traffic sample (500 commands, two raters) showed that 59 to 66 percent of v13's denies were safe, mostly on commands the guard could not read to the end.
+The read of holdout18's errors (7 outside models, 560 cases) and the 83 public incidents found five real gaps in v13: `git config --global alias.publish 'push --force'` allowed (CG065); appending a line to a hook file denied (CP050); three incidents where `git checkout <file>` and `git restore <file>` threw away days of uncommitted work in one named file (INC-036, 049, 054); one where `rm -rf .claude/worktrees` deleted worktrees holding uncommitted work (INC-062). The real-traffic sample (500 commands, two raters) showed that 66 percent (rater 1, 131 of 199) to 83 percent (rater 2, 165 of 199) of v13's labeled denies were safe, with Cohen's kappa 0.48 between the raters, mostly on commands the guard could not read to the end.
 
 ### What changed
 
