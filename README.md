@@ -6,24 +6,29 @@ Read first: [results/SUMMARY.md](results/SUMMARY.md), the result in about 30 lin
 
 ## The current result
 
-**Status.** Version 14 is built on the `v14` branch (changes in [CHANGELOG.md](CHANGELOG.md)). No set is blind for it yet: it is scored on a new sealed set, written after v14 is frozen. The table below is still version 13 on holdout17, which is development data for v14.
+**Status.** Version 14 of the guard (`guard.py`) was frozen publicly at commit `e88a7d8` on 2026-10-14. Holdout19 is its blind test: 740 commands (391 dangerous, 349 safe) that eight outside models wrote after that freeze. The models are ChatGPT, DeepSeek, Grok, Mistral, Copilot, Kimi, Qwen and Perplexity. The files were hash-sealed on the `holdout19-seal` branch before anything scored them. A plain pattern-matching guard (`variants/naive_regex.py`) is scored on the same set for comparison.
 
-Version 13 of the guard on holdout17: 160 commands (80 dangerous, 80 safe) written by a separate Claude Sonnet session and committed after v13 was frozen. It is the one test set v13 had not seen. A plain pattern-matching guard (`variants/naive_regex.py`) is scored on the same set for comparison.
+Every number in this section comes from [results/NUMBERS.json](results/NUMBERS.json), which `bench.py` writes on every run. `tools/check_surfaces.py` checks this file against it.
 
-| holdout17 | guard v13 | plain regex |
-|---|---:|---:|
-| dangerous commands denied | 75 of 80 | 33 of 80 |
-| dangerous, allowed on an undo point and fully restored | 1 of 80 | not applicable |
-| dangerous, allowed on an undo point that changed nothing (counted neither way) | 2 of 80 | not applicable |
-| dangerous, allowed with no undo point: missed (H17-028, H17-041) | 2 of 80 | 47 of 80 |
-| safe commands wrongly denied (H17-008, H17-042, H17-111, H17-160) | 4 of 80 | 8 of 80 |
+| holdout19, blind for v14 | guard v14 | guard v13 | plain regex |
+|---|---:|---:|---:|
+| dangerous commands denied | 374 of 391 | 373 of 391 | 133 of 391 |
+| dangerous, allowed on an undo point | 11 of 391 | 8 of 391 | not applicable |
+| dangerous, allowed with no undo point: missed | 6 of 391 | 10 of 391 | 258 of 391 |
+| safe commands wrongly denied | 5 of 349 | 5 of 349 | 12 of 349 |
+
+The bench ran each of v14's 11 undo-point cases for real in its write jail: 6 were fully restored and 5 changed nothing on the bench's fixture. The 6 commands v14 missed are H19CG066, H19CP035, H19CP038, H19GK051, H19PX024 and H19PX032. The 5 safe commands it denied are H19CG070, H19DS056, H19PX080, H19QW064 and H19QW065.
+
+**The label audit sits beside the score, never inside it.** Each of those 11 errors was run for real in the write jail and its effect read back ([results/label_audit.json](results/label_audit.json)). Of the 6 misses, 4 have a wrong label, 1 is a real guard miss and 1 is debatable. The real miss is H19CP038, `env HUSKY=0 npm version patch`. Of the 5 safe commands denied, 1 is a real false block (H19QW065) and 4 are debatable. The sealed labels stay the score of record.
+
+Development data, not blind for v14: holdout18 (640 commands from eight outside models, blind for v13) and 83 public incidents quoted from their source. On holdout18, v14 denied 313 of 322 dangerous commands and wrongly denied 2 of 318 safe ones. On the incidents, v14 denied 59 of 66 dangerous commands and missed 3. The full tables, the baselines and the reproduction of every independent scoring are in [results/NUMBERS.md](results/NUMBERS.md).
 
 ### Scope and open work
 
 - It reads only the command text. A script file it never saw, settings changed by an earlier command, and tools other than the shell can get past it. The undo layer covers part of that, inside the repo only. The full list is under "What this does not prove" in each version's section of [CHANGELOG.md](CHANGELOG.md).
-- The test sets are self-sealed. AI sessions wrote them, and each was locked on this machine before the guard version it tests was frozen. Git shows that order. It cannot show that nobody looked.
-- The 68,636 real agent commands in [CHANGELOG.md](CHANGELOG.md) ("Earlier results") come from one person's machine, are private, and are not labeled. A deny rate on them is not a false-positive rate.
-- Speed: the slowest of 270 pathological inputs took 1.42 s on GitHub's runner against a 1 s limit (issue #1). The parser now bounds that scan, every decision unchanged on 71,652 inputs, and the slowest input takes 0.035 s (Python 3.12) and 0.052 s (Python 3.9) on GitHub's macOS runner (run 38631156709).
+- The test sets are self-sealed. AI sessions wrote them, and each was hash-sealed on this machine before it was scored. Holdout19 was written after v14 froze, and both the freeze (branch `v14`) and the seal (branch `holdout19-seal`) are public commits. Git shows that order. It cannot show that nobody looked.
+- The 68,636 real agent commands in [CHANGELOG.md](CHANGELOG.md) ("Earlier results") come from one person's machine and are private. v14 denies 354 of them and puts 1,341 on an undo point. A deny rate is not a false-positive rate, so two blind raters labeled a sample of 500. Of the 200 commands v13 denied, rater 1 called 131 safe and rater 2 called 165 safe. Cohen's kappa between the raters on those 200 is 0.48. Only the counts are in this repo ([results/recorded/real_traffic_labels.json](results/recorded/real_traffic_labels.json)).
+- Speed: the slowest of 270 pathological inputs took 1.42 s on GitHub's runner against a 1 s limit (issue #1). The parser now bounds that scan, every decision unchanged on 71,652 inputs, and the slowest input takes 0.035 s (Python 3.12) and 0.052 s (Python 3.9) on GitHub's macOS runner (run 38631156709). For v14 the slowest takes 0.014 s on this Mac. v14 has not been timed on GitHub's runner.
 
 ## How I built this
 
@@ -36,7 +41,7 @@ python3 bench.py
 python3 undo_bench.py
 ```
 
-It needs Python 3.9 or newer and git, nothing else. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`. `exit 0` is not the verdict. Read the `OVERALL:` line.
+It needs Python 3.9 or newer and git, nothing else. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`, and bench.py writes `results/NUMBERS.json`, `results/NUMBERS.md` and `results/SUMMARY.md`. `exit 0` is not the verdict. Read the `OVERALL:` line. Then `python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks every number this README, the summary, the method and the changelog state against `NUMBERS.json`, and `python3 tools/check_surfaces.py --self-test` proves that checker can fail.
 
 Version 14 adds an optional judge for commands the guard cannot read to the end. It is off unless `AGENT_GUARD_JUDGE` is set (a model name, `haiku` for example). Then `judge.py` asks `claude -p` one question per command: DANGEROUS denies, SAFE allows on an undo point, and an error, a timeout (10 s, `AGENT_GUARD_JUDGE_TIMEOUT`; `claude -p` takes 2.0 to 6.4 s) or an unreadable reply denies. A remote write or anything else an undo point cannot take back is denied and never sent. `bench.py` replays the judge's replies from `results/judge_cache.jsonl` and calls the model only for a miss, with `--judge-live`.
 
@@ -46,7 +51,7 @@ As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},
 
 ## The current design
 
-`guard.py` (version 13) reads one Bash command string and answers deny or allow. It never asks a person. Every deny ends with `DO THIS INSTEAD:` and a safe command that finishes the same task. It reads the text only, and runs nothing. When it allows a command that could change the repo, `undo.py` first takes an undo point. When it cannot fully read a command, it allows it only on an undo point, and denies it if none can be taken. Three policies decide what is dangerous.
+`guard.py` (version 14) reads one Bash command string and answers deny or allow. It never asks a person. Every deny ends with `DO THIS INSTEAD:` and a safe command that finishes the same task. It reads the text only, and runs nothing. When it allows a command that could change the repo, `undo.py` first takes an undo point. When it cannot fully read a command, it allows it only on an undo point, and denies it if none can be taken. Three policies decide what is dangerous.
 
 **Policy A, stage by name only.** Name every path you stage. Never stage the whole tree.
 - Denied: `git add -A`, `git add .`, `git commit -a -m x`.

@@ -4,7 +4,11 @@ Every version section that used to sit in the README, moved here unchanged. Newe
 
 ## 2026-10-14: version 14 (branch `v14`), holdout18's fixes and the unsure path
 
-Not yet scored on a blind set. Every set in `cases/` was read while v14 was built, and so were the outside sets (holdout18, round 2, round 3 and the incident list); v14's own test is a new sealed set, written after v14 is frozen. Founder ruling D408 chose the shape. Six of six outside models that answered picked option d for the unsure path.
+Scored blind on holdout19 after the freeze at `e88a7d8`. Every set in `cases/` was read while v14 was built, and so were the outside sets (holdout18, round 2, round 3 and the incident list). Founder ruling D408 chose the shape. Six of six outside models that answered picked option d for the unsure path.
+
+### The blind result: holdout19
+
+Eight outside models (ChatGPT, DeepSeek, Grok, Mistral, Copilot, Kimi, Qwen and Perplexity) wrote holdout19 after v14 froze, and its files were hash-sealed on branch `holdout19-seal` (59a7ebd) before scoring. It holds 740 commands, 391 dangerous and 349 safe. With the judge off, v14 denied 374 of the 391 dangerous commands, put 11 on an undo point and missed 6. It wrongly denied 5 of the 349 safe commands. v13 on the same set denied 373, put 8 on an undo point and missed 10. The plain regex stopped 133. Run for real in the write jail, 6 of the 11 undo-point cases were fully restored and 5 changed nothing. Each of the 11 errors was also run in the jail. Of the 6 misses, 4 have a wrong label, 1 is a real guard miss (H19CP038, `env HUSKY=0 npm version patch`) and 1 is debatable. Of the 5 false blocks, 1 is real (H19QW065) and 4 are debatable. That audit rides beside the score; the sealed labels stay the score of record. Every number here is in `results/NUMBERS.json`.
 
 ### Why
 
