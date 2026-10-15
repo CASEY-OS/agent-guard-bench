@@ -34,7 +34,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| dangerous commands denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| dangerous commands denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.denied",
     "blind.guards.v14.denied@denominator",
@@ -42,6 +42,10 @@
     "blind.guards.v13.denied@denominator",
     "blind.guards.v7.denied",
     "blind.guards.v7.denied@denominator",
+    "baselines.sets.blind.haiku_judge.bad_stopped",
+    "baselines.sets.blind.haiku_judge.bad_stopped@denominator",
+    "baselines.sets.blind.claude_code_permission_rules.bad_stopped",
+    "baselines.sets.blind.claude_code_permission_rules.bad_stopped@denominator",
     "blind.guards.naive_regex.denied",
     "blind.guards.naive_regex.denied@denominator"
    ]
@@ -58,7 +62,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| dangerous, allowed with no undo point: missed \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| dangerous, allowed with no undo point: missed \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.missed",
     "blind.guards.v14.missed@denominator",
@@ -66,13 +70,17 @@
     "blind.guards.v13.missed@denominator",
     "blind.guards.v7.missed",
     "blind.guards.v7.missed@denominator",
+    "baselines.sets.blind.haiku_judge.bad_missed",
+    "baselines.sets.blind.haiku_judge.bad_missed@denominator",
+    "baselines.sets.blind.claude_code_permission_rules.bad_missed",
+    "baselines.sets.blind.claude_code_permission_rules.bad_missed@denominator",
     "blind.guards.naive_regex.missed",
     "blind.guards.naive_regex.missed@denominator"
    ]
   },
   {
    "file": "README.md",
-   "pattern": "\\| safe commands wrongly denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| safe commands wrongly denied \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "blind.guards.v14.safe_denied",
     "blind.guards.v14.safe_denied@denominator",
@@ -80,9 +88,53 @@
     "blind.guards.v13.safe_denied@denominator",
     "blind.guards.v7.safe_denied",
     "blind.guards.v7.safe_denied@denominator",
+    "baselines.sets.blind.haiku_judge.safe_blocked",
+    "baselines.sets.blind.haiku_judge.safe_blocked@denominator",
+    "baselines.sets.blind.claude_code_permission_rules.safe_blocked",
+    "baselines.sets.blind.claude_code_permission_rules.safe_blocked@denominator",
     "blind.guards.naive_regex.safe_denied",
     "blind.guards.naive_regex.safe_denied@denominator"
    ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "It denied (\\d+) of (\\d+) dangerous commands, let (\\d+) run, and wrongly denied (\\d+) of (\\d+) safe ones\\.",
+   "keys": [
+    "baselines.sets.blind.haiku_judge.bad_stopped",
+    "baselines.sets.blind.haiku_judge.bad_stopped@denominator",
+    "baselines.sets.blind.haiku_judge.bad_missed",
+    "baselines.sets.blind.haiku_judge.safe_blocked",
+    "baselines.sets.blind.haiku_judge.safe_blocked@denominator"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The Claude Code permission rules are (\\d+) deny rules written from the same policies; they denied (\\d+), let (\\d+) run, and wrongly denied (\\d+)\\.",
+   "keys": [
+    "baselines.permission_rule_count",
+    "baselines.sets.blind.claude_code_permission_rules.bad_stopped",
+    "baselines.sets.blind.claude_code_permission_rules.bad_missed",
+    "baselines.sets.blind.claude_code_permission_rules.safe_blocked"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "outright \\((\\d+) against (\\d+)\\), and of the rest it puts (\\d+) on an undo point and lets (\\d+) run with none, where the judge lets (\\d+) run with none",
+   "keys": [
+    "blind.guards.v14.denied",
+    "baselines.sets.blind.haiku_judge.bad_stopped",
+    "blind.guards.v14.undo_point",
+    "blind.guards.v14.missed",
+    "baselines.sets.blind.haiku_judge.bad_missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The Haiku judge is Claude Haiku \\(([a-z0-9-]+)\\)",
+   "keys": [
+    "baselines.haiku_judge_run_holdout19.model"
+   ],
+   "type": "text"
   },
   {
    "file": "README.md",

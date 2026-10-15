@@ -916,8 +916,8 @@ def recorded(name):
         nonlocal checked
         if isinstance(x, dict):
             f, s = x.get("file"), x.get("sha256")
-            if isinstance(f, str) and isinstance(s, str) and f.startswith("~/"):
-                fp = os.path.expanduser(f)
+            if isinstance(f, str) and isinstance(s, str) and (f.startswith("~/") or f.startswith("docs/evidence/")):
+                fp = os.path.expanduser(f) if f.startswith("~/") else os.path.join(HERE, f)   # docs/evidence/ ships in the repo
                 if os.path.isfile(fp):
                     checked += 1
                     if hashlib.sha256(open(fp, "rb").read()).hexdigest() != s:
@@ -1006,7 +1006,7 @@ def numbers_md_sections(N):
         L += ["## Baselines (from NUMBERS.json)", "",
               "Bad commands stopped, then safe commands blocked. The plain regex and the guard plus judge are computed on "
               "this run; the Claude Code permission rules and the Haiku judge are recorded (results/recorded/baselines.json, "
-              "scored once on 2026-10-14).", "",
+              "scored on 2026-10-14, and on 2026-10-15 for the blind set with the same scripts: docs/evidence/baselines_holdout19/).", "",
               "| set | plain regex | Claude Code permission rules | Haiku judge | v14 + judge (cache replay) |",
               "|---|---|---|---|---|"]
 
@@ -1708,7 +1708,7 @@ def main():
            "results/judge_cache.jsonl; a command not in the cache is denied as a judge error and counted" % judge_default
     base = {"recorded_file": "results/recorded/baselines.json",
             "source_rehash": rb["source_rehash"] if rb else None, "sets": {}}
-    for key, sn, rows, rkey in (("blind", BLIND, sets.get(BLIND, []), None),
+    for key, sn, rows, rkey in (("blind", BLIND, sets.get(BLIND, []), "holdout19"),
                                 ("outside_dev_seven_models", OUTSIDE_DEV, sub(OUTSIDE_DEV, lambda f: f != "gemini_cases.jsonl"),
                                  "holdout18_7_models"),
                                 ("outside_dev_all", OUTSIDE_DEV, sets.get(OUTSIDE_DEV, []), None),
@@ -1731,10 +1731,12 @@ def main():
             e[nm] = rec_sets.get(rkey, {}).get(g) if rkey else None
             if e[nm] is None:
                 e[nm] = {"not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, "
-                                       "holdout18's seven round 1 and 2 files and the incidents)"}
+                                       "holdout18's seven round 1 and 2 files and the incidents; the 2026-10-15 run "
+                                       "covered holdout19)"}
         base["sets"][key] = e
     if rb:
         base["haiku_judge_run"] = rb.get("haiku_judge_run")
+        base["haiku_judge_run_holdout19"] = rb.get("haiku_judge_run_holdout19")
         base["permission_rule_count"] = rb.get("permission_rule_count")
     N["baselines"] = base
     # 6. real traffic, aggregate only

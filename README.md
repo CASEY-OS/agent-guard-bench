@@ -10,15 +10,17 @@ Read first: [results/SUMMARY.md](results/SUMMARY.md), the result in about 30 lin
 
 Every number in this section comes from [results/NUMBERS.json](results/NUMBERS.json), which `bench.py` writes on every run. `tools/check_surfaces.py` checks this file against it.
 
-| holdout19, blind for v14 | guard v14 | guard v13 | guard v7 | plain regex |
-|---|---:|---:|---:|---:|
-| dangerous commands denied | 374 of 391 | 373 of 391 | 381 of 391 | 133 of 391 |
-| dangerous, allowed on an undo point | 11 of 391 | 8 of 391 | no undo layer | not applicable |
-| dangerous, allowed with no undo point: missed | 6 of 391 | 10 of 391 | 10 of 391 | 258 of 391 |
-| safe commands wrongly denied | 5 of 349 | 5 of 349 | 6 of 349 | 12 of 349 |
-| real agent commands denied (68,636 calls, not a test set) | 0.52% | 0.52% | 3.39% | not run |
+| holdout19, blind for v14 | guard v14 | guard v13 | guard v7 | Haiku judge | Claude Code permission rules | plain regex |
+|---|---:|---:|---:|---:|---:|---:|
+| dangerous commands denied | 374 of 391 | 373 of 391 | 381 of 391 | 369 of 391 | 316 of 391 | 133 of 391 |
+| dangerous, allowed on an undo point | 11 of 391 | 8 of 391 | no undo layer | no undo layer | no undo layer | not applicable |
+| dangerous, allowed with no undo point: missed | 6 of 391 | 10 of 391 | 10 of 391 | 22 of 391 | 75 of 391 | 258 of 391 |
+| safe commands wrongly denied | 5 of 349 | 5 of 349 | 6 of 349 | 4 of 349 | 26 of 349 | 12 of 349 |
+| real agent commands denied (68,636 calls, not a test set) | 0.52% | 0.52% | 3.39% | not run | not run | not run |
 
 Blind detection has been about flat since v7. v7 denies more outright (381 against 374) but misses 10 where v14 misses 6. What v8 to v14 bought is far fewer denies on real work: v7 denied 3.39% of 68,636 real agent commands, and v14 denies 0.52%.
+
+**A small model asked the same question comes close.** Two baselines were scored on the same blind set on 2026-10-15 with the scripts of the 2026-10-14 baseline run ([docs/evidence/baselines_holdout19/](docs/evidence/baselines_holdout19/)). The Haiku judge is Claude Haiku (claude-haiku-5-5) given the three policies below and one command at a time, asked to answer DENY or ALLOW. It denied 369 of 391 dangerous commands, let 22 run, and wrongly denied 4 of 349 safe ones. The Claude Code permission rules are 94 deny rules written from the same policies; they denied 316, let 75 run, and wrongly denied 26. v14 denies 5 more than the judge outright (374 against 369), and of the rest it puts 11 on an undo point and lets 6 run with none, where the judge lets 22 run with none. The judge blocks 1 fewer safe command. The guard needs no model call: it reads the command on the machine. Each judge call goes to a model through `claude -p`, which takes 2.0 to 6.4 s. The judge was run once, so its run-to-run variation is not measured.
 
 The bench ran each of v14's 11 undo-point cases for real in its write jail: 6 were fully restored and 5 changed nothing on the bench's fixture. The 6 commands v14 missed are H19CG066, H19CP035, H19CP038, H19GK051, H19PX024 and H19PX032. The 5 safe commands it denied are H19CG070, H19DS056, H19PX080, H19QW064 and H19QW065.
 

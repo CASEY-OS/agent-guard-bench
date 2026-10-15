@@ -42,6 +42,48 @@
     "value": 1
    }
   },
+  "haiku_judge_run_holdout19": {
+   "calls": {
+    "source": {
+     "file": "docs/evidence/baselines_holdout19/score_output.txt",
+     "line": 22,
+     "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+    },
+    "value": 740
+   },
+   "cost_usd": {
+    "source": {
+     "file": "docs/evidence/baselines_holdout19/score_output.txt",
+     "line": 22,
+     "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+    },
+    "value": 0.1952
+   },
+   "malformed": {
+    "source": {
+     "file": "docs/evidence/baselines_holdout19/score_output.txt",
+     "line": 22,
+     "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+    },
+    "value": 0
+   },
+   "model": {
+    "source": {
+     "file": "docs/evidence/baselines_holdout19/score_output.txt",
+     "line": 22,
+     "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+    },
+    "value": "claude-haiku-5-5"
+   },
+   "runs": {
+    "note": "one run, no repeats (docs/evidence/baselines_holdout19/README.md)",
+    "source": {
+     "file": "docs/evidence/baselines_holdout19/README.md",
+     "sha256": "e6dda47c1ace6d1355b32db0a108308c546d6c8b01d6f52ee579efd998e1416c"
+    },
+    "value": 1
+   }
+  },
   "permission_rule_count": {
    "source": {
     "file": "~/agent-guard-bench-holdout-18/baselines_2026-10-14/RESULTS_BASELINES.md",
@@ -54,7 +96,51 @@
   "sets": {
    "blind": {
     "claude_code_permission_rules": {
-     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents)"
+     "bad_missed": {
+      "denominator": 391,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 7,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 75
+     },
+     "bad_stopped": {
+      "denominator": 391,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 7,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 316
+     },
+     "bad_undo": {
+      "note": "n/a in source",
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 7,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": null
+     },
+     "safe_blocked": {
+      "denominator": 349,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 7,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 26
+     },
+     "safe_undo": {
+      "note": "n/a in source",
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 7,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": null
+     }
     },
     "guard_plus_judge": {
      "bad": {
@@ -117,7 +203,51 @@
      }
     },
     "haiku_judge": {
-     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents)"
+     "bad_missed": {
+      "denominator": 391,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 8,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 22
+     },
+     "bad_stopped": {
+      "denominator": 391,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 8,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 369
+     },
+     "bad_undo": {
+      "note": "n/a in source",
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 8,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": null
+     },
+     "safe_blocked": {
+      "denominator": 349,
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 8,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": 4
+     },
+     "safe_undo": {
+      "note": "n/a in source",
+      "source": {
+       "file": "docs/evidence/baselines_holdout19/score_output.txt",
+       "line": 8,
+       "sha256": "b3aaf178b214da27fe040255b34f83f76ef9e2c523e3f6313bdd59ddbba5c2c2"
+      },
+      "value": null
+     }
     },
     "plain_regex": {
      "bad": {
@@ -486,7 +616,7 @@
    },
    "outside_dev_all": {
     "claude_code_permission_rules": {
-     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents)"
+     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents; the 2026-10-15 run covered holdout19)"
     },
     "guard_plus_judge": {
      "bad": {
@@ -544,7 +674,7 @@
      }
     },
     "haiku_judge": {
-     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents)"
+     "not_scored": "no recorded run on this set (the 2026-10-14 baseline run covered holdout17, holdout18's seven round 1 and 2 files and the incidents; the 2026-10-15 run covered holdout19)"
     },
     "plain_regex": {
      "bad": {
@@ -791,7 +921,7 @@
   },
   "source_rehash": {
    "differ": [],
-   "rehashed_here": 68
+   "rehashed_here": 84
   }
  },
  "blind": {
@@ -1190,7 +1320,7 @@
   "value": 18
  },
  "frozen_commit": "e88a7d8",
- "generated_at": "2026-10-14T23:05:25-05:00",
+ "generated_at": "2026-10-15T07:55:00-05:00",
  "generated_by": "bench.py (python3 bench.py); never edited by hand",
  "guard": {
   "frozen_commit": {
@@ -2275,7 +2405,7 @@
     "sha256": "3b41eee635c6c081503be2a4e71e102658335fbf343f2171a92b932d9b914848"
    },
    "current": {
-    "measured_at": "2026-10-14T23:05:25-0500",
+    "measured_at": "2026-10-15T07:55:00-0500",
     "path": "~/CASEY_OS/02_SYSTEMS/GATES/guard_pretooluse.py",
     "sets": {
      "holdout18": {
@@ -2709,7 +2839,7 @@
     "sha256": "b603d71b1544683b696047659802289862fde97978043581e99c065c743d3844"
    }
   },
-  "measured_at": "2026-10-14T23:05:25-0500",
+  "measured_at": "2026-10-15T07:55:00-0500",
   "status": "measured on this run",
   "what": "The live PreToolUse hook of the system this guard was ported into, scored on the same sets: each command sent as a Bash payload on stdin whose cwd is the bench's pinned root /work/repo (the process runs in an empty temp directory), judge off, no undo layer in that hook (an allow there is a plain allow). Deny or allow only. That hook acts only on the vendored guard's named-rule denies: a deny the guard gives because it could not read the command falls through to an allow there, by its own design."
  },
@@ -3669,21 +3799,21 @@
  "timing": {
   "decide_max_us": {
    "source": "timing_us(guard.py decide), slowest command",
-   "value": 8384
+   "value": 8219
   },
   "decide_median_us": {
    "source": "timing_us(guard.py decide), in-process, median per command, run 1",
-   "value": 146.3
+   "value": 146.7
   },
   "hook_median_ms": {
    "runs": 5556,
    "source": "wall time of every hook run in the hook-form check (Python start-up included)",
-   "value": 57.0
+   "value": 57.7
   },
   "hook_p95_ms": {
    "runs": 5556,
    "source": "same runs, 95th percentile",
-   "value": 58.8
+   "value": 67.1
   },
   "pathological_worst_s_github_runner": {
    "before_the_fix_s": {
@@ -3750,7 +3880,7 @@
    "machine": "Darwin arm64",
    "python": "3.14.5",
    "source": "pathological_timing(guard.py), 270 inputs, this run",
-   "value": 0.0148
+   "value": 0.0143
   }
  },
  "undo": {
