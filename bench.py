@@ -1740,6 +1740,7 @@ def main():
     N["timing"] = {"pathological_worst_s_this_machine": num(round(patho[0], 4), None,
                                                              "pathological_timing(guard.py), 270 inputs, this run",
                                                              input_head=patho[1], bound_s=1.0,
+                                                             python=platform.python_version(),
                                                              machine="%s %s" % (platform.system(), platform.machine())),
                    "pathological_worst_s_github_runner": tg if tg else {"skipped": "no recorded GitHub runner timing"},
                    "hook_median_ms": num(round(1000 * hs[len(hs) // 2], 1) if hs else None, None,
@@ -2152,7 +2153,8 @@ def main():
           "- Own bad cases allowed on an undo point: %d, fully restored %d, changed nothing %d, not restored %d."
           % (len(rec_own_ids), rec_count["restored"], rec_count["no-op"], len(rec_own_bad)),
           "- Undo bench: %s. %s." % (ub_overall, ub_restored.rstrip(".")),
-          "- Slowest of 270 pathological inputs: %.3f s against a 1 s bound." % patho[0],
+          "- Slowest of 270 pathological inputs: %.3f s on Python %s against a 1 s bound."
+          % (patho[0], platform.python_version()),
           "", "Every number: [NUMBERS.md](NUMBERS.md) and [NUMBERS.json](NUMBERS.json). Full report: [RESULTS.md](RESULTS.md). "
           "Method and scoring: [../docs/METHOD.md](../docs/METHOD.md). Version history: [../CHANGELOG.md](../CHANGELOG.md).", ""]
     with open(os.path.join(HERE, "results", "SUMMARY.md"), "w", encoding="utf-8") as fh:

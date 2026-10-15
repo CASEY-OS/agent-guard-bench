@@ -14,7 +14,9 @@ A key is a dotted path into NUMBERS.json; a node that carries "value" gives its 
 denominator. Types: number (commas and a trailing % are dropped; a claim with k decimals is compared with the NUMBERS
 value rounded to k decimals; "scale" multiplies the NUMBERS value first), ids (the claim's ids as a set against the
 NUMBERS list), text (exact). Paths may be absolute, ~ or relative to the root. Every match of a pattern is checked,
-not only the first. A claim with "scope": [start, end] reads only the text from the first start marker to the next
+not only the first. A claim with "when": {"python": "3.14"} is checked only when NUMBERS.json's own python field is that version
+(whole version parts: 3.14 matches 3.14.5, 3.1 does not); otherwise each match prints SKIPPED and is counted in the
+summary, never failed, and a missing phrase is still MISSING. A claim with "scope": [start, end] reads only the text from the first start marker to the next
 end marker (a changelog's newest section, say); a number outside that section is not checked, by design.
 
 Exit 1 on any mismatch, on a mapped pattern with no match, on a key NUMBERS does not have, on a surface file that is
@@ -30,7 +32,8 @@ import sys
 import tempfile
 
 BLIND_TO = ("Blind to: a number on a surface that no pattern in the map names, a number written in words, a number "
-            "outside a claim's scoped section, a surface file the map does not list, what the sentence around a number means (it compares the digits a pattern "
+            "outside a claim's scoped section, a claim whose \"when\" condition does not hold for the interpreter that made "
+            "NUMBERS (SKIPPED and counted, not checked), a surface file the map does not list, what the sentence around a number means (it compares the digits a pattern "
             "captures, nothing else), and whether NUMBERS.json itself is right (bench.py makes it; this only checks "
             "that surfaces agree with it).")
 
@@ -113,7 +116,7 @@ def run(numbers_path, map_path, max_age_hours, now=None):
         else:
             bad += 1
             out.append("NOFILE   %s (%s)" % (f, p))
-    n_claims = n_ok = n_mis = n_missing = 0
+    n_claims = n_ok = n_mis = n_missing = n_skip = 0
     for c in smap.get("claims", []):
         f = c["file"]
         if f not in surfaces:
@@ -139,9 +142,28 @@ def run(numbers_path, map_path, max_age_hours, now=None):
             n_missing += 1
             out.append("MISSING  %s: no match for /%s/ (keys %s)" % (f, c["pattern"], ", ".join(c["keys"])))
             continue
+        unmet = []                         # "when": {key: version}: the claim holds only where NUMBERS was made there
+        for wk, wv in sorted((c.get("when") or {}).items()):
+            found, have = lookup(numbers, wk)
+            if not found:
+                bad += 1
+                n_mis += 1
+                out.append("NOKEY    %s  condition %s=%s  NUMBERS has no %s, so the claim cannot be placed"
+                           % (f, wk, wv, wk))
+                unmet = None
+                break
+            if not (str(have) == str(wv) or str(have).startswith(str(wv) + ".")):
+                unmet.append("%s %s != %s" % (wk, have, wv))
+        if unmet is None:
+            continue
         for m in matches:
             line = full_text.count("\n", 0, base + m.start()) + 1
             groups = m.groups() or (m.group(0),)
+            if unmet:
+                for key, claim in zip(c["keys"], groups):
+                    n_skip += 1
+                    out.append("SKIPPED  %s:%d  %s  claim %s  (%s)" % (f, line, key, claim.strip(), "; ".join(unmet)))
+                continue
             for key, claim in zip(c["keys"], groups):
                 n_claims += 1
                 found, value = lookup(numbers, key)
@@ -158,8 +180,8 @@ def run(numbers_path, map_path, max_age_hours, now=None):
                     bad += 1
                     n_mis += 1
                     out.append("MISMATCH %s:%d  %s  claim %s  NUMBERS %s" % (f, line, key, claim.strip(), shown))
-    out.append("SURFACES: %d files, %d claims checked, %d agree, %d disagree, %d patterns missing"
-               % (len(texts), n_claims, n_ok, n_mis, n_missing))
+    out.append("SURFACES: %d files, %d claims checked, %d agree, %d disagree, %d SKIPPED, %d patterns missing"
+               % (len(texts), n_claims, n_ok, n_mis, n_skip, n_missing))
     out.append("VERDICT: %s" % ("PASS" if bad == 0 else "FAIL (%d problems)" % bad))
     out.append(BLIND_TO)
     return (0 if bad == 0 else 1), out
@@ -233,6 +255,29 @@ def self_test():
              surface=sec.replace("374 of 391", "200 of 391"), mp={"root": ".", "surfaces": {"S.md": {}}, "claims": scoped})
         case("scope marker missing", 1, "scope marker not found", surface=sec.replace("## New", "## Fresh"),
              mp={"root": ".", "surfaces": {"S.md": {}}, "claims": scoped})
+        # "when": a claim measured on one interpreter is checked only against NUMBERS made on that interpreter
+        def py(v):
+            d = numbers()
+            d["python"] = v
+            return d
+        cond = [{"file": "S.md", "pattern": r"Slowest ([0-9.]+) s on Python 3\.14", "keys": ["blind.secs"],
+                 "when": {"python": "3.14"}}]
+        csurf = "# S\n\nSlowest 0.014 s on Python 3.14.\n"
+        cmap = {"root": ".", "surfaces": {"S.md": {}}, "claims": cond}
+        case("condition met, clean control: the claim is checked and agrees", 0, "0 SKIPPED", surface=csurf,
+             nums=py("3.14.5"), mp=cmap)
+        case("condition met, planted mismatch: the condition hides nothing where it applies", 1, "MISMATCH",
+             surface=csurf.replace("0.014", "0.029"), nums=py("3.14.5"), mp=cmap)
+        case("condition unmet: the same wrong number is SKIPPED, counted, not failed", 0,
+             "SKIPPED  S.md:3  blind.secs  claim 0.029  (python 3.9.6 != 3.14)", surface=csurf.replace("0.014", "0.029"),
+             nums=py("3.9.6"), mp=cmap)
+        case("condition boundary: 3.1 does not match 3.14.5 (whole version parts, not a string prefix)", 0, "1 SKIPPED",
+             surface=csurf.replace("Python 3.14", "Python 3.1"), nums=py("3.14.5"),
+             mp={"root": ".", "surfaces": {"S.md": {}},
+                 "claims": [dict(cond[0], pattern=r"Slowest ([0-9.]+) s on Python 3\.1\b", when={"python": "3.1"})]})
+        case("condition unmet but the phrase is gone: still MISSING", 1, "MISSING", surface="# S\n\nFast.\n",
+             nums=py("3.9.6"), mp=cmap)
+        case("a condition NUMBERS cannot answer", 1, "cannot be placed", surface=csurf, nums=numbers(), mp=cmap)
         case("a key NUMBERS does not have", 1, "NOKEY",
              mp={"root": ".", "surfaces": {"S.md": {}},
                  "claims": claims + [{"file": "S.md", "pattern": r"denied (\d+)", "keys": ["blind.nope"]}]})

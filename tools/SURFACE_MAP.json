@@ -225,10 +225,13 @@
   },
   {
    "file": "README.md",
-   "pattern": "For v14 the slowest takes ([0-9.]+) s on this Mac",
+   "pattern": "For v14 the slowest takes ([0-9.]+) s on this Mac on Python 3\\.14",
    "keys": [
     "timing.pathological_worst_s_this_machine"
-   ]
+   ],
+   "when": {
+    "python": "3.14"
+   }
   },
   {
    "file": "results/SUMMARY.md",
@@ -309,10 +312,13 @@
   },
   {
    "file": "docs/METHOD.md",
-   "pattern": "for v14 it reads ([0-9.]+) s",
+   "pattern": "for v14 it reads ([0-9.]+) s on Python 3\\.14",
    "keys": [
     "timing.pathological_worst_s_this_machine"
-   ]
+   ],
+   "when": {
+    "python": "3.14"
+   }
   },
   {
    "file": "docs/METHOD.md",
@@ -533,14 +539,17 @@
   },
   {
    "file": "CHANGELOG.md",
-   "pattern": "The slowest of 270 pathological inputs takes ([0-9.]+) s\\.",
+   "pattern": "The slowest of 270 pathological inputs takes ([0-9.]+) s on Python 3\\.14\\.",
    "keys": [
     "timing.pathological_worst_s_this_machine"
    ],
    "scope": [
     "## 2026-10-14: version 14 (branch `v14`)",
     "## 2026-10-14: version 13, parser made bounded"
-   ]
+   ],
+   "when": {
+    "python": "3.14"
+   }
   },
   {
    "file": "CHANGELOG.md",
