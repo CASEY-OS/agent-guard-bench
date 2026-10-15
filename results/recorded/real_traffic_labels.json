@@ -1,0 +1,264 @@
+{
+ "buckets": {
+  "ALLOW": {
+   "both_safe": {
+    "denominator": 200,
+    "value": 200
+   },
+   "cohens_kappa": {
+    "expected_agreement": 1.0,
+    "kappa": null,
+    "n": 200,
+    "observed_agreement": 1.0
+   },
+   "either_dangerous": {
+    "denominator": 200,
+    "value": 0
+   },
+   "n": {
+    "source": {
+     "field": "bucket",
+     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
+    },
+    "value": 200
+   },
+   "rater1": {
+    "DANGEROUS": {
+     "denominator": 200,
+     "value": 0
+    },
+    "SAFE": {
+     "denominator": 200,
+     "value": 200
+    },
+    "UNSURE": {
+     "denominator": 200,
+     "value": 0
+    }
+   },
+   "rater2": {
+    "DANGEROUS": {
+     "denominator": 200,
+     "value": 0
+    },
+    "SAFE": {
+     "denominator": 200,
+     "value": 200
+    },
+    "UNSURE": {
+     "denominator": 200,
+     "value": 0
+    }
+   }
+  },
+  "DENY": {
+   "both_safe": {
+    "denominator": 200,
+    "value": 127
+   },
+   "cohens_kappa": {
+    "expected_agreement": 0.5982,
+    "kappa": 0.477352,
+    "n": 200,
+    "observed_agreement": 0.79
+   },
+   "either_dangerous": {
+    "denominator": 200,
+    "value": 72
+   },
+   "n": {
+    "source": {
+     "field": "bucket",
+     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
+    },
+    "value": 200
+   },
+   "rater1": {
+    "DANGEROUS": {
+     "denominator": 200,
+     "value": 68
+    },
+    "SAFE": {
+     "denominator": 200,
+     "value": 131
+    },
+    "UNSURE": {
+     "denominator": 200,
+     "value": 1
+    }
+   },
+   "rater2": {
+    "DANGEROUS": {
+     "denominator": 200,
+     "value": 34
+    },
+    "SAFE": {
+     "denominator": 200,
+     "value": 165
+    },
+    "UNSURE": {
+     "denominator": 200,
+     "value": 1
+    }
+   }
+  },
+  "UNDO": {
+   "both_safe": {
+    "denominator": 100,
+    "value": 99
+   },
+   "cohens_kappa": {
+    "expected_agreement": 0.99,
+    "kappa": 0.0,
+    "n": 100,
+    "observed_agreement": 0.99
+   },
+   "either_dangerous": {
+    "denominator": 100,
+    "value": 0
+   },
+   "n": {
+    "source": {
+     "field": "bucket",
+     "file": "~/agent-guard-bench-dev6/labels_2026-10-14/sample.jsonl",
+     "sha256": "2db773bf4bf6e72ec0eb1af31ef25a630e72273a9cec0b326460da82f6245994"
+    },
+    "value": 100
+   },
+   "rater1": {
+    "DANGEROUS": {
+     "denominator": 100,
+     "value": 0
+    },
+    "SAFE": {
+     "denominator": 100,
+     "value": 99
+    },
+    "UNSURE": {
+     "denominator": 100,
+     "value": 1
+    }
+   },
+   "rater2": {
+    "DANGEROUS": {
+     "denominator": 100,
+     "value": 0
+    },
+    "SAFE": {
+     "denominator": 100,
+     "value": 100
+    },
+    "UNSURE": {
+     "denominator": 100,
+     "value": 0
+    }
+   }
+  }
+ },
+ "calls": {
+  "source": {
+   "field": "calls_total",
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
+  },
+  "value": 68636
+ },
+ "cohens_kappa_all_500": {
+  "expected_agreement": 0.809056,
+  "kappa": 0.549606,
+  "n": 500,
+  "observed_agreement": 0.914
+ },
+ "distinct_commands": {
+  "source": {
+   "field": "distinct_total",
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
+  },
+  "value": 67242
+ },
+ "false_block_share_of_deny": {
+  "rater1": {
+   "denominator": 199,
+   "note": "SAFE over SAFE + DANGEROUS; UNSURE left out",
+   "share_and_wilson95": [
+    0.658291,
+    0.589955,
+    0.720633
+   ],
+   "value": 131
+  },
+  "rater2": {
+   "denominator": 199,
+   "note": "SAFE over SAFE + DANGEROUS; UNSURE left out",
+   "share_and_wilson95": [
+    0.829146,
+    0.770741,
+    0.875083
+   ],
+   "value": 165
+  }
+ },
+ "method": "bucket from sample.jsonl's bucket field; rater 2 ids mapped through rater2_key.json; Wilson 95% interval z=1.96 (the formula in scripts/score.py); Cohen's kappa over SAFE / DANGEROUS / UNSURE; computed by the build script of the numbers branch, 2026-10-14",
+ "misses_in_allow_sample": {
+  "rater1": {
+   "denominator": 200,
+   "share_and_wilson95": [
+    0.0,
+    0,
+    0.018846
+   ],
+   "value": 0
+  },
+  "rater2": {
+   "denominator": 200,
+   "share_and_wilson95": [
+    0.0,
+    0,
+    0.018846
+   ],
+   "value": 0
+  }
+ },
+ "scratch_repo_rule_split": {
+  "note": "rater 1 judged a destructive command as written even inside a throwaway repo (its sandbox flag); rater 2 kept no such flag, so its split is not recorded",
+  "of_those_only_inside_a_scratch_repo": {
+   "denominator": 68,
+   "source": {
+    "field": "sandbox",
+    "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1_context.jsonl",
+    "sha256": "7ddb4ebc04c12b35fab15a9b227b3cf592da1c3481897833e7b45d4290ed8d54"
+   },
+   "value": 41
+  },
+  "rater1_dangerous_in_deny": {
+   "denominator": 200,
+   "value": 68
+  }
+ },
+ "sources": [
+  {
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/counts.json",
+   "sha256": "f684c204c61eb1273279e43680390f9cde99009bcd710300bdaa23feff984b96"
+  },
+  {
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1.jsonl",
+   "sha256": "ab1140a1c58f398924ad08fed88484144f0b15c93af1767011efb5df0d21b4d4"
+  },
+  {
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater2.jsonl",
+   "sha256": "c90faf92a9cd84f832e44eabbe8bcc7c329bef64a9b0ad6032329bf8c5bf7777"
+  },
+  {
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/rater2_key.json",
+   "sha256": "c4245377ce311f875d5617e066e93b93f9439a72c1393e74a5219f4d6f9b72d7"
+  },
+  {
+   "file": "~/agent-guard-bench-dev6/labels_2026-10-14/labels_rater1_context.jsonl",
+   "sha256": "7ddb4ebc04c12b35fab15a9b227b3cf592da1c3481897833e7b45d4290ed8d54"
+  }
+ ],
+ "what": "Two blind raters labeled a sample of v13's decisions on real agent traffic (500 distinct commands: 200 DENY, 200 ALLOW, 100 UNDO). Aggregates only. The commands are private and are not in this repo."
+}

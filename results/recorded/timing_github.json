@@ -1,0 +1,30 @@
+{
+ "before_the_fix_s": {
+  "note": "issue #1, before the parser bound",
+  "source": {
+   "file": "README.md at commit e88a7d8 (git show e88a7d8:README.md)",
+   "line": 26,
+   "sha256": "d73a743f32a251cced5eb9663ecb4caf632512ae7018f90b1322cdd37105fa6b"
+  },
+  "value": 1.42
+ },
+ "github_run": "38631156709",
+ "guard_version_measured": "not named in the source line",
+ "python_3_12_s": {
+  "source": {
+   "file": "README.md at commit e88a7d8 (git show e88a7d8:README.md)",
+   "line": 26,
+   "sha256": "d73a743f32a251cced5eb9663ecb4caf632512ae7018f90b1322cdd37105fa6b"
+  },
+  "value": 0.035
+ },
+ "python_3_9_s": {
+  "source": {
+   "file": "README.md at commit e88a7d8 (git show e88a7d8:README.md)",
+   "line": 26,
+   "sha256": "d73a743f32a251cced5eb9663ecb4caf632512ae7018f90b1322cdd37105fa6b"
+  },
+  "value": 0.052
+ },
+ "what": "Slowest of 270 pathological inputs on GitHub's macOS runner, as the README at the v14 freeze records it. The source line does not name the commit that run checked out; the parser bound landed in ff898ed (v13). The run log itself was not re-read here (no network), so a v14 timing on GitHub's runner is not claimed."
+}
