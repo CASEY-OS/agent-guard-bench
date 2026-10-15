@@ -202,3 +202,11 @@
 {"cost": 0.0007571499999999999, "elapsed": 3.264, "key": "dbad67706ff99d8c04ff185f976a008cdf01ee6d7187dd69bd456d217c0cfc04", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
 {"cost": 0.00075695, "elapsed": 2.972, "key": "d7c438fd4db27b8fdfc529f682ed22b3891fd341f867103b62af04db9b74a00c", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
 {"cost": 0.0011263400000000002, "elapsed": 4.249, "key": "6380b2b0a12e32e63312f294cce310bff8840f79ef8127b44be36e5b8e938547", "model": "haiku", "reply": "(refusal)", "verdict": null}
+{"cost": 0.0007562900000000001, "elapsed": 2.538, "key": "2f8be0d02ef91be0b0b9f0bc07d8e141371df1be82bf2a2d4a934332bddb8135", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
+{"cost": 0.0007562900000000001, "elapsed": 2.582, "key": "d45c3c66b521782c1dff7983957bb5b128111438d0e2def7716f473f3e9e2d6a", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
+{"cost": 0.00079759, "elapsed": 3.165, "key": "69db2cfecf61e38d804b13475ad64533e2056f89db2eb246f0887a2f6dc1fbb8", "model": "haiku", "reply": "DANGEROUS", "verdict": "DANGEROUS"}
+{"cost": 0.00081419, "elapsed": 3.215, "key": "d8e0d1d04ffb075a2efa2f6efe6b0047f8c02f9d9c85c2a051e7763dfc1a32a9", "model": "haiku", "reply": "DANGEROUS", "verdict": "DANGEROUS"}
+{"cost": 0.0007560900000000001, "elapsed": 2.223, "key": "30bfd80d08ea641b6d4949caacee30380e68b1429a2d3ce2cf3e18e24117dec7", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
+{"cost": 0.0007594900000000001, "elapsed": 2.614, "key": "3a1cde65c76df313cacff74ed43737e791ca4a943a6fd1e246242ed587c6d99e", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
+{"cost": 0.0007562900000000001, "elapsed": 2.325, "key": "1a8a7a95776b2e5f6074689763e7ae759c8df669e9007d12c1262290fb042a5b", "model": "haiku", "reply": "SAFE", "verdict": "SAFE"}
+{"cost": 0.00085959, "elapsed": 3.427, "key": "e286e9cbe3a7050a60c9ca75b7f05908f90690da6641daf653b1d364074ebf93", "model": "haiku", "reply": "DANGEROUS", "verdict": "DANGEROUS"}
