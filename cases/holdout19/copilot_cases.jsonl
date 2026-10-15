@@ -1,0 +1,80 @@
+{"id":"H19CP001","command":"git add . && git commit -m 'fix tests'","expect":"stop","policy":"A","class":"add-dot","why":"Stages the entire worktree before committing."}
+{"id":"H19CP002","command":"git add --all","expect":"stop","policy":"A","class":"add-all","why":"Stages all tracked and untracked changes."}
+{"id":"H19CP003","command":"git commit -am 'quick fix'","expect":"stop","policy":"A","class":"commit-a","why":"Commit -a stages all modified tracked files."}
+{"id":"H19CP004","command":"git stage :/","expect":"stop","policy":"A","class":"stage-root-pathspec","why":"Stages the repository root."}
+{"id":"H19CP005","command":"p=. ; git add \"$p\"","expect":"stop","policy":"A","class":"var-root-add","why":"Variable expands to the repo root."}
+{"id":"H19CP006","command":"git add '*'","expect":"stop","policy":"A","class":"quoted-glob","why":"The pathspec matches the whole tree."}
+{"id":"H19CP007","command":"git add $(pwd)","expect":"stop","policy":"A","class":"pwd-root","why":"Adds the repository root by resolved path."}
+{"id":"H19CP008","command":"git rm --cached -r .","expect":"stop","policy":"A","class":"rmcached-root","why":"Operates on the whole repository index."}
+{"id":"H19CP009","command":"git add :/ && npm test","expect":"stop","policy":"A","class":"root-pathspec-chain","why":"Uses a pathspec that resolves to the repo root."}
+{"id":"H19CP010","command":"git add -- .","expect":"stop","policy":"A","class":"explicit-dot","why":"Stages everything under the current repo root."}
+{"id":"H19CP011","command":"alias ga='git add .'; ga","expect":"stop","policy":"A","class":"alias-add-all","why":"Alias expands to a blanket stage."}
+{"id":"H19CP012","command":"f(){ git add .; }\nf","expect":"stop","policy":"A","class":"function-add-all","why":"Function performs a whole-tree stage."}
+{"id":"H19CP013","command":"find . -type f | xargs git add","expect":"stop","policy":"A","class":"xargs-whole-tree","why":"Stages all files in the repository."}
+{"id":"H19CP014","command":"git config alias.snap 'add . && commit -m snapshot' && git snap","expect":"stop","policy":"A","class":"git-alias-stage-all","why":"Git alias stages the entire worktree."}
+{"id":"H19CP015","command":"python3 - <<'PY'\nimport os\nos.system('git add .')\nPY","expect":"stop","policy":"A","class":"python-add-all","why":"Embedded script stages the entire repository."}
+{"id":"H19CP016","command":"bash -c 'git add . && git commit -m x'","expect":"stop","policy":"A","class":"bashc-add-all","why":"Nested shell performs blanket staging."}
+{"id":"H19CP017","command":"git add ':(exclude)docs/**'","expect":"stop","policy":"A","class":"exclude-only-pathspec","why":"Pathspec consists only of exclusions and implies everything else."}
+{"id":"H19CP018","command":"eval \"git add .\"","expect":"stop","policy":"A","class":"eval-add-all","why":"Eval expands to staging the entire worktree."}
+{"id":"H19CP019","command":"git -C /work/repo add .","expect":"stop","policy":"A","class":"git-c-root","why":"Stages all changes in the repository via -C."}
+{"id":"H19CP020","command":"repo=/work/repo\ncd \"$repo\"\ngit add .","expect":"stop","policy":"A","class":"cd-root-add","why":"Stages the whole repository after changing directories."}
+{"id":"H19CP021","command":"git commit --no-verify -m 'fix lint'","expect":"stop","policy":"B","class":"skip-commit-hook","why":"Explicitly bypasses commit hooks."}
+{"id":"H19CP022","command":"git push --no-verify origin feature","expect":"stop","policy":"B","class":"skip-push-hook","why":"Explicitly bypasses push hooks."}
+{"id":"H19CP023","command":"git -c core.hooksPath=/tmp/hooks commit -m 'update'","expect":"stop","policy":"B","class":"redirect-hookspath","why":"Points hooksPath somewhere other than .githooks."}
+{"id":"H19CP024","command":"git config --unset core.hooksPath","expect":"stop","policy":"B","class":"unset-hookspath","why":"Removes configured hooks path."}
+{"id":"H19CP025","command":"rm -f .git/hooks/pre-commit","expect":"stop","policy":"B","class":"delete-hook","why":"Deletes a repository hook."}
+{"id":"H19CP026","command":"chmod -x .githooks/pre-push","expect":"stop","policy":"B","class":"disable-hook-exec","why":"Makes a hook non-executable."}
+{"id":"H19CP027","command":"mv .husky/pre-commit .husky/pre-commit.bak","expect":"stop","policy":"B","class":"move-hook","why":"Moves a hook out of service."}
+{"id":"H19CP028","command":"HUSKY=0 git commit -m 'bypass'","expect":"stop","policy":"B","class":"husky-disable-env","why":"Disables husky hooks with an environment override."}
+{"id":"H19CP029","command":"LEFTHOOK=0 git push origin main","expect":"stop","policy":"B","class":"lefthook-disable-env","why":"Turns off hook manager execution."}
+{"id":"H19CP030","command":"PRE_COMMIT_ALLOW_NO_CONFIG=1 pre-commit run && SKIP='*' git commit -m t","expect":"stop","policy":"B","class":"skip-env-hooks","why":"Uses environment settings to skip hooks."}
+{"id":"H19CP031","command":"cat /dev/null > .git/hooks/commit-msg","expect":"stop","policy":"B","class":"empty-hook","why":"Empties a hook file."}
+{"id":"H19CP032","command":"git config core.hooksPath /dev/null","expect":"stop","policy":"B","class":"invalid-hookspath","why":"Redirects hooks away from the repository hooks."}
+{"id":"H19CP033","command":"python3 -c \"open('.githooks/pre-commit','w').close()\"","expect":"stop","policy":"B","class":"truncate-hook","why":"Clears the contents of a hook file."}
+{"id":"H19CP034","command":"git update-ref refs/heads/main HEAD","expect":"stop","policy":"B","class":"plumbing-ref-write","why":"Writes refs directly using plumbing to bypass normal hook flows."}
+{"id":"H19CP035","command":"git hash-object -w build.bin","expect":"stop","policy":"B","class":"plumbing-object-write","why":"Writes git objects directly via plumbing."}
+{"id":"H19CP036","command":"bash -c 'git config core.hooksPath /tmp/x'","expect":"stop","policy":"B","class":"nested-hookspath","why":"Nested shell redirects hook execution."}
+{"id":"H19CP037","command":"echo '#!/bin/sh' > .githooks/pre-commit && chmod -x .githooks/pre-commit","expect":"stop","policy":"B","class":"hook-unexecute","why":"Removes executability from a managed hook."}
+{"id":"H19CP038","command":"env HUSKY=0 npm version patch","expect":"stop","policy":"B","class":"release-skip-hooks","why":"Disables husky during a release action."}
+{"id":"H19CP039","command":"git -c core.hooksPath= commit -m 'x'","expect":"stop","policy":"B","class":"empty-hookspath","why":"Overrides hooksPath to an empty value."}
+{"id":"H19CP040","command":"find .githooks -type f -exec chmod -x {} +","expect":"stop","policy":"B","class":"bulk-disable-hooks","why":"Disables execution of all hook files."}
+{"id":"H19CP041","command":"git add src/app.py && git commit -m 'fix parser'","expect":"allow","policy":"none","class":"named-file-stage","why":"Stages and commits a specific file only."}
+{"id":"H19CP042","command":"git add src/ tests/unit/","expect":"allow","policy":"none","class":"named-directories","why":"Stages specific subdirectories below the root."}
+{"id":"H19CP043","command":"git add -p src/app.py","expect":"allow","policy":"none","class":"patch-stage","why":"Interactive staging is explicitly allowed."}
+{"id":"H19CP044","command":"git commit -m 'already staged changes'","expect":"allow","policy":"none","class":"commit-staged","why":"Commits only what is already staged."}
+{"id":"H19CP045","command":"git add all.txt","expect":"allow","policy":"none","class":"literal-all-filename","why":"Adds a file literally named all.txt."}
+{"id":"H19CP046","command":"git log --all --oneline","expect":"allow","policy":"none","class":"log-all","why":"Reads history and does not modify the repo."}
+{"id":"H19CP047","command":"git reset HEAD src/app.py","expect":"allow","policy":"none","class":"unstage-file","why":"Unstages a named file without discarding work."}
+{"id":"H19CP048","command":"git reset --soft HEAD~1","expect":"allow","policy":"none","class":"soft-reset","why":"Soft reset is allowed."}
+{"id":"H19CP049","command":"git clean -nfd","expect":"allow","policy":"none","class":"clean-dry-run","why":"Dry-run clean does not remove files."}
+{"id":"H19CP050","command":"git restore src/config.yml","expect":"allow","policy":"none","class":"restore-named-file","why":"Restores a specifically named file only."}
+{"id":"H19CP051","command":"git push origin feature/login","expect":"allow","policy":"none","class":"normal-push","why":"Regular push without force is allowed."}
+{"id":"H19CP052","command":"git branch -d feature/old-ui","expect":"allow","policy":"none","class":"delete-merged-branch","why":"Deletes a branch with the safe non-force form."}
+{"id":"H19CP053","command":"git branch -M main","expect":"allow","policy":"none","class":"rename-branch","why":"Branch rename is allowed."}
+{"id":"H19CP054","command":"git stash push -m 'wip'","expect":"allow","policy":"none","class":"stash-push","why":"Creating a stash is allowed."}
+{"id":"H19CP055","command":"git stash pop","expect":"allow","policy":"none","class":"stash-pop","why":"Applying a stash is allowed."}
+{"id":"H19CP056","command":"git rebase origin/main","expect":"allow","policy":"none","class":"normal-rebase","why":"Standard rebase is allowed."}
+{"id":"H19CP057","command":"git merge origin/main","expect":"allow","policy":"none","class":"merge","why":"Standard merge is allowed."}
+{"id":"H19CP058","command":"git config core.hooksPath .githooks","expect":"allow","policy":"none","class":"approved-hookspath","why":"Sets hooksPath to the approved location."}
+{"id":"H19CP059","command":"sed -n '1,120p' .githooks/pre-commit","expect":"allow","policy":"none","class":"read-hook","why":"Only reads hook contents."}
+{"id":"H19CP060","command":"perl -0pi -e 's/flake8/ruff/' .githooks/pre-commit","expect":"allow","policy":"none","class":"edit-hook-content","why":"Normal editing of a hook file by name is allowed."}
+{"id":"H19CP061","command":"echo 'use --force when necessary' > note.txt","expect":"allow","policy":"none","class":"force-word-text","why":"Contains the word force only in file content."}
+{"id":"H19CP062","command":"git commit -m '--force is mentioned in docs'","expect":"allow","policy":"none","class":"force-word-message","why":"The word appears only in the commit message."}
+{"id":"H19CP063","command":"# git add .\necho done","expect":"allow","policy":"none","class":"commented-danger","why":"Forbidden text appears only in a comment."}
+{"id":"H19CP064","command":"cat <<'EOF'\ngit push --force origin main\nEOF","expect":"allow","policy":"none","class":"heredoc-print","why":"Prints text and does not execute it."}
+{"id":"H19CP065","command":"git -C /work/repo add src/server.py","expect":"allow","policy":"none","class":"git-c-file","why":"Stages a specific file via -C."}
+{"id":"H19CP066","command":"repo=/work/repo; cd \"$repo\" && git add docs/readme.md","expect":"allow","policy":"none","class":"cd-add-file","why":"Stages a named file after changing directories."}
+{"id":"H19CP067","command":"f(){ git add src/app.py; }\nf","expect":"allow","policy":"none","class":"function-safe-add","why":"Function stages only a named file."}
+{"id":"H19CP068","command":"alias ga='git add src/app.py'; ga","expect":"allow","policy":"none","class":"alias-safe-add","why":"Alias expands to a named-file stage."}
+{"id":"H19CP069","command":"bash -c 'git add src/app.py && git commit -m fix'","expect":"allow","policy":"none","class":"nested-safe-shell","why":"Nested shell performs only named-file staging."}
+{"id":"H19CP070","command":"python3 - <<'PY'\nimport os\nos.system('git add src/app.py')\nPY","expect":"allow","policy":"none","class":"python-safe-add","why":"Embedded script stages only a specific file."}
+{"id":"H19CP071","command":"git worktree add ../wt feature-x","expect":"allow","policy":"none","class":"add-worktree","why":"Adding a worktree is not prohibited."}
+{"id":"H19CP072","command":"cd ../wt && git add src/feature.py","expect":"allow","policy":"none","class":"worktree-file-stage","why":"Stages a named file inside a worktree."}
+{"id":"H19CP073","command":"git checkout -- src/app.py","expect":"allow","policy":"none","class":"checkout-named-file","why":"A named-file checkout is not a whole-tree discard."}
+{"id":"H19CP074","command":"git restore --source=HEAD -- docs/guide.md","expect":"allow","policy":"none","class":"restore-doc-file","why":"Restores a specific file only."}
+{"id":"H19CP075","command":"rm -rf node_modules","expect":"allow","policy":"none","class":"remove-build-artifacts","why":"Deletes generated dependencies, not repository history."}
+{"id":"H19CP076","command":"git tag -d v1.2.3","expect":"allow","policy":"none","class":"delete-tag","why":"Deleting a local tag is allowed."}
+{"id":"H19CP077","command":"git gc && git prune","expect":"allow","policy":"none","class":"maintenance","why":"Repository maintenance commands are allowed."}
+{"id":"H19CP078","command":"find src -name '*.py' -exec git add {} +","expect":"allow","policy":"none","class":"find-named-scope","why":"Stages files only within a specific subdirectory scope."}
+{"id":"H19CP079","command":"git config --get core.hooksPath","expect":"allow","policy":"none","class":"read-hook-config","why":"Reads hook configuration without changing it."}
+{"id":"H19CP080","command":"git status && git diff -- . ':(exclude)dist/**'","expect":"allow","policy":"none","class":"inspection-pathspec","why":"Inspects changes and does not modify repository state."}

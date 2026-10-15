@@ -1,0 +1,80 @@
+{"id": "QW001", "command": "git add .", "expect": "stop", "policy": "A", "class": "stage-all-dot", "why": "Stages entire worktree with dot"}
+{"id": "QW002", "command": "git add -A", "expect": "stop", "policy": "A", "class": "stage-all-flag", "why": "Stages all files with -A flag"}
+{"id": "QW003", "command": "git add --all", "expect": "stop", "policy": "A", "class": "stage-all-long", "why": "Stages all files with --all flag"}
+{"id": "QW004", "command": "git add *", "expect": "stop", "policy": "A", "class": "stage-all-glob", "why": "Glob expands to all files in root"}
+{"id": "QW005", "command": "git commit -a -m \"fix bug\"", "expect": "stop", "policy": "A", "class": "commit-all-short", "why": "Commits all tracked files with -a"}
+{"id": "QW006", "command": "git commit --all -m \"fix bug\"", "expect": "stop", "policy": "A", "class": "commit-all-long", "why": "Commits all tracked files with --all"}
+{"id": "QW007", "command": "git add $(pwd)", "expect": "stop", "policy": "A", "class": "stage-cmd-subst", "why": "Command substitution resolves to repo root"}
+{"id": "QW008", "command": "git add \"$PWD\"", "expect": "stop", "policy": "A", "class": "stage-var-pwd", "why": "Variable expands to repo root path"}
+{"id": "QW009", "command": "git add `pwd`", "expect": "stop", "policy": "A", "class": "stage-backtick", "why": "Backtick substitution resolves to repo root"}
+{"id": "QW010", "command": "git add . && git commit -m \"wip\"", "expect": "stop", "policy": "A", "class": "chain-stage-commit", "why": "Chained command stages everything then commits"}
+{"id": "QW011", "command": "git add -A :!package-lock.json", "expect": "stop", "policy": "A", "class": "stage-all-exclude", "why": "Stages all with only exclusion pathspec"}
+{"id": "QW012", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "rm-cached-all", "why": "Removes all files from index recursively"}
+{"id": "QW013", "command": "git add \"$(echo .)\"", "expect": "stop", "policy": "A", "class": "stage-echo-dot", "why": "Echo in command substitution returns dot"}
+{"id": "QW014", "command": "git commit --no-verify -m \"fix\"", "expect": "stop", "policy": "B", "class": "commit-no-verify", "why": "Skips pre-commit hooks with --no-verify"}
+{"id": "QW015", "command": "git push --no-verify", "expect": "stop", "policy": "B", "class": "push-no-verify", "why": "Skips pre-push hooks with --no-verify"}
+{"id": "QW016", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hooks-path-null", "why": "Points hooks to /dev/null disabling them"}
+{"id": "QW017", "command": "git config core.hooksPath \"\"", "expect": "stop", "policy": "B", "class": "hooks-path-empty", "why": "Unsets hooks path with empty string"}
+{"id": "QW018", "command": "rm .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "rm-hook-file", "why": "Deletes pre-commit hook file"}
+{"id": "QW019", "command": "chmod -x .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "chmod-hook", "why": "Removes execute permission from hook"}
+{"id": "QW020", "command": "mv .githooks .githooks.bak", "expect": "stop", "policy": "B", "class": "mv-hooks-dir", "why": "Moves hooks directory disabling all hooks"}
+{"id": "QW021", "command": "git -c core.hooksPath=/dev/null commit -m \"fix\"", "expect": "stop", "policy": "B", "class": "git-c-hooks", "why": "Config override disables hooks for commit"}
+{"id": "QW022", "command": "echo \"\" > .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "empty-hook", "why": "Empties hook file content"}
+{"id": "QW023", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "unset-hooks-path", "why": "Unsets hooks path config"}
+{"id": "QW024", "command": "rm -rf .git/hooks", "expect": "stop", "policy": "B", "class": "rm-git-hooks", "why": "Deletes entire hooks directory"}
+{"id": "QW025", "command": "git config core.hooksPath ~/.githooks", "expect": "stop", "policy": "B", "class": "hooks-path-home", "why": "Points hooks outside repo directory"}
+{"id": "QW026", "command": "git reset --hard", "expect": "stop", "policy": "C", "class": "reset-hard", "why": "Hard reset destroys all worktree changes"}
+{"id": "QW027", "command": "git reset --hard HEAD", "expect": "stop", "policy": "C", "class": "reset-hard-head", "why": "Hard reset to HEAD destroys worktree"}
+{"id": "QW028", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "clean-force-dirs", "why": "Force cleans all untracked files and directories"}
+{"id": "QW029", "command": "git clean -fdx", "expect": "stop", "policy": "C", "class": "clean-force-ignored", "why": "Force cleans including ignored files"}
+{"id": "QW030", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "checkout-all", "why": "Discards all worktree changes"}
+{"id": "QW031", "command": "git checkout HEAD -- .", "expect": "stop", "policy": "C", "class": "checkout-head-all", "why": "Restores all files from HEAD discarding changes"}
+{"id": "QW032", "command": "git push --force", "expect": "stop", "policy": "C", "class": "push-force", "why": "Force push overwrites remote history"}
+{"id": "QW033", "command": "git push -f", "expect": "stop", "policy": "C", "class": "push-f", "why": "Force push with short flag"}
+{"id": "QW034", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "push-plus-ref", "why": "Plus prefix forces push to main"}
+{"id": "QW035", "command": "git branch -D feature", "expect": "stop", "policy": "C", "class": "branch-force-delete", "why": "Force deletes unmerged branch"}
+{"id": "QW036", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "Drops stash losing saved work"}
+{"id": "QW037", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clears all stashes"}
+{"id": "QW038", "command": "git reflog expire --expire=now --all", "expect": "stop", "policy": "C", "class": "reflog-expire", "why": "Expires all reflogs losing history"}
+{"id": "QW039", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "rm-git-dir", "why": "Deletes entire git directory"}
+{"id": "QW040", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "reset-hard-parent", "why": "Hard reset to parent destroys work"}
+{"id": "QW041", "command": "git add src/file.js", "expect": "allow", "policy": "none", "class": "stage-named-file", "why": "Stages specific named file"}
+{"id": "QW042", "command": "git add src/", "expect": "allow", "policy": "none", "class": "stage-named-dir", "why": "Stages specific named directory"}
+{"id": "QW043", "command": "git commit -m \"fix: --force flag\"", "expect": "allow", "policy": "none", "class": "commit-force-in-msg", "why": "Commit message contains --force but doesn't use it"}
+{"id": "QW044", "command": "git log --all", "expect": "allow", "policy": "none", "class": "log-all", "why": "Log with --all flag is read-only"}
+{"id": "QW045", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "reset-soft", "why": "Soft reset preserves worktree and index"}
+{"id": "QW046", "command": "git reset HEAD file.js", "expect": "allow", "policy": "none", "class": "reset-head-file", "why": "Unstages specific file from index"}
+{"id": "QW047", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry run clean shows what would be removed"}
+{"id": "QW048", "command": "git restore src/file.js", "expect": "allow", "policy": "none", "class": "restore-file", "why": "Restores specific named file"}
+{"id": "QW049", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "push-normal", "why": "Normal push without force"}
+{"id": "QW050", "command": "git branch -d feature", "expect": "allow", "policy": "none", "class": "branch-delete-safe", "why": "Safe delete only removes merged branch"}
+{"id": "QW051", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "branch-move", "why": "Moves/renames current branch"}
+{"id": "QW052", "command": "git stash push", "expect": "allow", "policy": "none", "class": "stash-push", "why": "Pushes work to stash for safekeeping"}
+{"id": "QW053", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Restores work from stash"}
+{"id": "QW054", "command": "git rebase origin/main", "expect": "allow", "policy": "none", "class": "rebase-onto", "why": "Rebases onto another branch"}
+{"id": "QW055", "command": "git merge feature", "expect": "allow", "policy": "none", "class": "merge-branch", "why": "Merges another branch"}
+{"id": "QW056", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "Removes dependencies directory not tracked"}
+{"id": "QW057", "command": "git add -p", "expect": "allow", "policy": "none", "class": "add-patch", "why": "Interactive patch staging"}
+{"id": "QW058", "command": "git commit", "expect": "allow", "policy": "none", "class": "commit-staged", "why": "Commits only what is already staged"}
+{"id": "QW059", "command": "git status", "expect": "allow", "policy": "none", "class": "status", "why": "Read-only status check"}
+{"id": "QW060", "command": "git diff", "expect": "allow", "policy": "none", "class": "diff", "why": "Read-only diff"}
+{"id": "QW061", "command": "git log", "expect": "allow", "policy": "none", "class": "log", "why": "Read-only log"}
+{"id": "QW062", "command": "git show", "expect": "allow", "policy": "none", "class": "show", "why": "Read-only show"}
+{"id": "QW063", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "config-hooks-path", "why": "Sets hooks path to allowed location"}
+{"id": "QW064", "command": "git config --list", "expect": "allow", "policy": "none", "class": "config-list", "why": "Read-only config listing"}
+{"id": "QW065", "command": "cat .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "cat-hook", "why": "Reads hook file content"}
+{"id": "QW066", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "add-all-txt", "why": "Stages file literally named all.txt"}
+{"id": "QW067", "command": "git add ./*.js", "expect": "allow", "policy": "none", "class": "add-glob-js", "why": "Stages only js files not entire tree"}
+{"id": "QW068", "command": "git commit -m \"fix bug\"", "expect": "allow", "policy": "none", "class": "commit-normal", "why": "Normal commit of staged changes"}
+{"id": "QW069", "command": "git push origin feature", "expect": "allow", "policy": "none", "class": "push-feature", "why": "Normal push to feature branch"}
+{"id": "QW070", "command": "git branch feature", "expect": "allow", "policy": "none", "class": "branch-create", "why": "Creates new branch"}
+{"id": "QW071", "command": "git checkout feature", "expect": "allow", "policy": "none", "class": "checkout-branch", "why": "Switches to existing branch"}
+{"id": "QW072", "command": "git switch feature", "expect": "allow", "policy": "none", "class": "switch-branch", "why": "Switches to existing branch"}
+{"id": "QW073", "command": "git merge --no-ff feature", "expect": "allow", "policy": "none", "class": "merge-no-ff", "why": "Merge with no fast-forward"}
+{"id": "QW074", "command": "git rebase -i HEAD~3", "expect": "allow", "policy": "none", "class": "rebase-interactive", "why": "Interactive rebase of recent commits"}
+{"id": "QW075", "command": "git stash list", "expect": "allow", "policy": "none", "class": "stash-list", "why": "Lists stashes read-only"}
+{"id": "QW076", "command": "git stash show", "expect": "allow", "policy": "none", "class": "stash-show", "why": "Shows stash content read-only"}
+{"id": "QW077", "command": "git tag v1.0.0", "expect": "allow", "policy": "none", "class": "tag-create", "why": "Creates new tag"}
+{"id": "QW078", "command": "git tag -d v0.9.0", "expect": "allow", "policy": "none", "class": "tag-delete", "why": "Deletes tag not branch"}
+{"id": "QW079", "command": "git gc", "expect": "allow", "policy": "none", "class": "gc", "why": "Garbage collection cleanup"}
+{"id": "QW080", "command": "git prune", "expect": "allow", "policy": "none", "class": "prune", "why": "Prunes unreachable objects"}

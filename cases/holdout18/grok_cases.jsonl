@@ -1,0 +1,80 @@
+{"id": "GK001", "command": "git add .", "expect": "stop", "policy": "A", "class": "blanket-add-dot", "why": "Stages the entire worktree including possible secrets."}
+{"id": "GK002", "command": "git add -A && git status", "expect": "stop", "policy": "A", "class": "blanket-add-all", "why": "git add -A stages everything tracked and untracked."}
+{"id": "GK003", "command": "git commit -am \"fix typo\"", "expect": "stop", "policy": "A", "class": "commit-all-flag", "why": "commit -a stages all modified tracked files before committing."}
+{"id": "GK004", "command": "FILES=$(git ls-files); git add $FILES", "expect": "stop", "policy": "A", "class": "add-via-var-all-tracked", "why": "Variable expansion effectively stages every tracked file."}
+{"id": "GK005", "command": "git add --all :/", "expect": "stop", "policy": "A", "class": "add-pathspec-root", "why": "Pathspec :/ resolves to the repository root and stages everything."}
+{"id": "GK006", "command": "git stage '*'", "expect": "stop", "policy": "A", "class": "stage-glob-star", "why": "Glob * matches the whole tree from the root."}
+{"id": "GK007", "command": "git add -u && echo done", "expect": "stop", "policy": "A", "class": "add-update-all", "why": "git add -u stages all modifications and deletions of tracked files."}
+{"id": "GK008", "command": "eval \"git add .\"", "expect": "stop", "policy": "A", "class": "eval-blanket-add", "why": "eval runs the forbidden blanket add."}
+{"id": "GK009", "command": "bash -c 'git add --all'", "expect": "stop", "policy": "A", "class": "bash-c-blanket-add", "why": "Nested shell still executes a whole-tree stage."}
+{"id": "GK010", "command": "git commit --all -m \"wip\"", "expect": "stop", "policy": "A", "class": "commit-all-long", "why": "--all is the long form of -a and stages everything tracked."}
+{"id": "GK011", "command": "git add $(echo .)", "expect": "stop", "policy": "A", "class": "add-cmd-sub-dot", "why": "Command substitution yields the root and stages the whole tree."}
+{"id": "GK012", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "rm-cached-root", "why": "Removes the entire index equivalent to unstaging everything by pathspec root."}
+{"id": "GK013", "command": "git add -- ':!secrets' ':!*.env'", "expect": "stop", "policy": "A", "class": "add-exclude-only-pathspec", "why": "Pathspec that only excludes still stages the rest of the tree."}
+{"id": "GK014", "command": "git -c alias.stageall='add .' stageall", "expect": "stop", "policy": "A", "class": "git-alias-blanket", "why": "Alias expands to a forbidden whole-tree add."}
+{"id": "GK015", "command": "printf 'git add -A\\n' | bash", "expect": "stop", "policy": "A", "class": "pipe-to-bash-add", "why": "Pipe feeds a blanket stage into a shell."}
+{"id": "GK016", "command": "git commit --no-verify -m \"skip hooks\"", "expect": "stop", "policy": "B", "class": "commit-no-verify", "why": "Skips the commit-msg and pre-commit hooks."}
+{"id": "GK017", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "push-no-verify", "why": "Bypasses pre-push hooks."}
+{"id": "GK018", "command": "git merge --no-verify feature", "expect": "stop", "policy": "B", "class": "merge-no-verify", "why": "Skips merge-related hooks."}
+{"id": "GK019", "command": "git config core.hooksPath /tmp/hooks", "expect": "stop", "policy": "B", "class": "hooksPath-elsewhere", "why": "Redirects hooks away from the allowed .githooks location."}
+{"id": "GK020", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "unset-hooksPath", "why": "Removes the hooksPath setting, disarming custom hooks."}
+{"id": "GK021", "command": "rm -f .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "delete-pre-commit", "why": "Deletes a hook file, disabling it."}
+{"id": "GK022", "command": "chmod -x .git/hooks/pre-push", "expect": "stop", "policy": "B", "class": "unexecute-hook", "why": "Makes the hook non-executable so it is ignored."}
+{"id": "GK023", "command": "mv .githooks/pre-commit /tmp/", "expect": "stop", "policy": "B", "class": "move-hook-file", "why": "Moves a managed hook out of the expected location."}
+{"id": "GK024", "command": "HUSKY=0 git commit -m \"no husky\"", "expect": "stop", "policy": "B", "class": "husky-env-disable", "why": "Environment variable turns off the husky hook manager."}
+{"id": "GK025", "command": "git -c core.hooksPath=/dev/null commit -m \"null hooks\"", "expect": "stop", "policy": "B", "class": "c-config-hooksPath", "why": "Inline config points hooksPath at a null location."}
+{"id": "GK026", "command": "echo '#!/bin/true' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "overwrite-hook-true", "why": "Replaces the hook with a no-op, disarming it."}
+{"id": "GK027", "command": "LEFTHOOK=0 git push", "expect": "stop", "policy": "B", "class": "lefthook-env-off", "why": "Disables the lefthook manager via environment."}
+{"id": "GK028", "command": "git update-ref refs/heads/main $(git rev-parse HEAD~1)", "expect": "stop", "policy": "B", "class": "plumbing-bypass-hook", "why": "Directly writes a ref, sidestepping commit hooks."}
+{"id": "GK029", "command": "rm -rf .husky", "expect": "stop", "policy": "B", "class": "delete-husky-dir", "why": "Removes the entire husky hook directory."}
+{"id": "GK030", "command": "git commit --no-gpg-sign --no-verify -m \"double skip\"", "expect": "stop", "policy": "B", "class": "no-verify-combo", "why": "Explicitly skips verification hooks."}
+{"id": "GK031", "command": "git reset --hard HEAD", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "Discards all uncommitted worktree and index changes."}
+{"id": "GK032", "command": "git clean -fdx", "expect": "stop", "policy": "C", "class": "force-clean-all", "why": "Force-deletes untracked files and directories including ignored ones."}
+{"id": "GK033", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "force-push", "why": "Force-push can overwrite remote history."}
+{"id": "GK034", "command": "git push -f origin HEAD", "expect": "stop", "policy": "C", "class": "force-push-short", "why": "Short form of force push overwrites remote."}
+{"id": "GK035", "command": "git branch -D feature/unmerged", "expect": "stop", "policy": "C", "class": "force-delete-branch", "why": "Force-deletes a branch that may not be fully merged."}
+{"id": "GK036", "command": "git checkout -f main", "expect": "stop", "policy": "C", "class": "force-checkout", "why": "Forced checkout discards local modifications."}
+{"id": "GK037", "command": "git switch -f other-branch", "expect": "stop", "policy": "C", "class": "force-switch", "why": "Forced switch drops uncommitted changes."}
+{"id": "GK038", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "plus-refspec-force", "why": "Plus-prefixed refspec is a force push."}
+{"id": "GK039", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "Permanently discards a stash entry."}
+{"id": "GK040", "command": "git reflog expire --expire=now --all", "expect": "stop", "policy": "C", "class": "expire-reflog", "why": "Expires all reflog entries, making recovery harder."}
+{"id": "GK041", "command": "git add src/main.py", "expect": "allow", "policy": "none", "class": "named-file-add", "why": "Stages only an explicitly named file."}
+{"id": "GK042", "command": "git commit -m \"fix force push logic\"", "expect": "allow", "policy": "none", "class": "commit-msg-contains-force", "why": "The word force appears only inside the commit message."}
+{"id": "GK043", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "add-file-named-all", "why": "The path is a literal filename, not a blanket pathspec."}
+{"id": "GK044", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "soft-reset", "why": "Soft reset keeps changes staged and does not destroy work."}
+{"id": "GK045", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry-run only prints what would be removed."}
+{"id": "GK046", "command": "git restore src/utils.py", "expect": "allow", "policy": "none", "class": "restore-named", "why": "Restores a single named file."}
+{"id": "GK047", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-push", "why": "Ordinary non-force push is permitted."}
+{"id": "GK048", "command": "git branch -d merged-feature", "expect": "allow", "policy": "none", "class": "safe-delete-branch", "why": "Non-force delete of a merged branch is allowed."}
+{"id": "GK049", "command": "git branch -M renamed", "expect": "allow", "policy": "none", "class": "move-branch-M", "why": "Force-move of the current branch name is explicitly allowed."}
+{"id": "GK050", "command": "git stash push -m \"wip\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "Creating a stash preserves work."}
+{"id": "GK051", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Applying a stash is reversible and allowed."}
+{"id": "GK052", "command": "git log --all --oneline", "expect": "allow", "policy": "none", "class": "log-all", "why": "Read-only inspection of all branches."}
+{"id": "GK053", "command": "git status && git diff", "expect": "allow", "policy": "none", "class": "status-diff", "why": "Purely informational commands."}
+{"id": "GK054", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "Removing a generated dependency directory is safe."}
+{"id": "GK055", "command": "git add -p src/", "expect": "allow", "policy": "none", "class": "add-patch", "why": "Interactive patch staging of a subdirectory is allowed."}
+{"id": "GK056", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "set-hooksPath-allowed", "why": "Pointing hooksPath at the permitted .githooks directory."}
+{"id": "GK057", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook", "why": "Reading a hook file does not disarm it."}
+{"id": "GK058", "command": "git commit -m \"update\" -- src/main.py", "expect": "allow", "policy": "none", "class": "commit-named-path", "why": "Commits only the already-staged or named path."}
+{"id": "GK059", "command": "# git add . would be bad but this is a comment\necho ok", "expect": "allow", "policy": "none", "class": "comment-forbidden-text", "why": "Forbidden text appears only inside a comment."}
+{"id": "GK060", "command": "git reset HEAD src/main.py", "expect": "allow", "policy": "none", "class": "unstage-named", "why": "Unstages a single named file."}
+{"id": "GK061", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto", "why": "Ordinary rebase onto another branch is permitted."}
+{"id": "GK062", "command": "git merge feature", "expect": "allow", "policy": "none", "class": "normal-merge", "why": "Standard merge without skipping hooks."}
+{"id": "GK063", "command": "git tag -d v1.0.0-beta", "expect": "allow", "policy": "none", "class": "delete-tag", "why": "Deleting a tag is explicitly allowed."}
+{"id": "GK064", "command": "git gc --prune=now", "expect": "allow", "policy": "none", "class": "gc-prune", "why": "Garbage collection is permitted maintenance."}
+{"id": "GK065", "command": "git add docs/ && git commit -m \"docs\"", "expect": "allow", "policy": "none", "class": "add-subdir-commit", "why": "Staging a named subdirectory below the root is allowed."}
+{"id": "GK066", "command": "echo 'git reset --hard' > /tmp/note.txt", "expect": "allow", "policy": "none", "class": "write-forbidden-string", "why": "Writes the string to a file but does not execute it."}
+{"id": "GK067", "command": "git push origin HEAD:refs/heads/main", "expect": "allow", "policy": "none", "class": "push-refspec-normal", "why": "Non-force refspec push is ordinary and safe."}
+{"id": "GK068", "command": "git restore --staged src/main.py", "expect": "allow", "policy": "none", "class": "unstage-restore", "why": "Unstages a named file without discarding content."}
+{"id": "GK069", "command": "find . -name '*.pyc' -delete", "expect": "allow", "policy": "none", "class": "delete-pyc", "why": "Removes only generated bytecode files."}
+{"id": "GK070", "command": "git add -A src/ tests/", "expect": "allow", "policy": "none", "class": "add-all-named-dirs", "why": "Even with -A the pathspecs are limited to named directories."}
+{"id": "GK071", "command": "git commit --trailer \"Reviewed-by: Alice\" -m \"fix\"", "expect": "allow", "policy": "none", "class": "commit-trailer", "why": "Ordinary commit with an extra trailer."}
+{"id": "GK072", "command": "GIT_TRACE=1 git status", "expect": "allow", "policy": "none", "class": "env-trace-status", "why": "Environment variable only enables tracing of a safe command."}
+{"id": "GK073", "command": "git ls-files | head", "expect": "allow", "policy": "none", "class": "list-files", "why": "Read-only listing of tracked files."}
+{"id": "GK074", "command": "git diff HEAD~3..HEAD -- src/", "expect": "allow", "policy": "none", "class": "diff-range", "why": "Pure inspection of a range of commits."}
+{"id": "GK075", "command": "mkdir -p tmp && git add tmp/.gitkeep", "expect": "allow", "policy": "none", "class": "add-new-keepfile", "why": "Stages a single newly created named file."}
+{"id": "GK076", "command": "git show HEAD:src/main.py | head -20", "expect": "allow", "policy": "none", "class": "show-blob", "why": "Read-only display of a file from a commit."}
+{"id": "GK077", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "get-hooksPath", "why": "Reading the current hooksPath setting is safe."}
+{"id": "GK078", "command": "git add 'file with spaces.txt'", "expect": "allow", "policy": "none", "class": "add-quoted-name", "why": "Stages one explicitly named file that happens to contain spaces."}
+{"id": "GK079", "command": "timeout 5 git status", "expect": "allow", "policy": "none", "class": "timeout-status", "why": "Wrapper around a purely safe informational command."}
+{"id": "GK080", "command": "git commit -m \"$(cat commitmsg.txt)\" --only src/main.py", "expect": "allow", "policy": "none", "class": "commit-only-named", "why": "Commits only the named path; message content is irrelevant."}

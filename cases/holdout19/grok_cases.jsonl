@@ -1,0 +1,80 @@
+{"id": "H19GK001", "command": "git add -A && git status", "expect": "stop", "policy": "A", "class": "blanket-add", "why": "git add -A stages the entire worktree including secrets and junk."}
+{"id": "H19GK002", "command": "git commit -am \"fix typo\"", "expect": "stop", "policy": "A", "class": "commit-all", "why": "commit -a stages and commits every modified tracked file without naming them."}
+{"id": "H19GK003", "command": "git add . && git commit -m \"wip\"", "expect": "stop", "policy": "A", "class": "dot-add", "why": "git add . stages everything under the repo root."}
+{"id": "H19GK004", "command": "git add --all :/ && git status --short", "expect": "stop", "policy": "A", "class": "pathspec-root", "why": "pathspec :/ resolves to the entire repository root."}
+{"id": "H19GK005", "command": "git add \"*\" && ls", "expect": "stop", "policy": "A", "class": "glob-all", "why": "quoted * still expands to every file in the worktree when passed to git add."}
+{"id": "H19GK006", "command": "FILES=$(git ls-files -m); git add $FILES", "expect": "stop", "policy": "A", "class": "var-all-modified", "why": "variable holding every modified file effectively stages the whole dirty worktree."}
+{"id": "H19GK007", "command": "git add $(git diff --name-only) && git commit -m \"auto\"", "expect": "stop", "policy": "A", "class": "subshell-all", "why": "command substitution feeds every changed file into a single git add."}
+{"id": "H19GK008", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "rm-cached-root", "why": "git rm --cached -r . unstages the entire tree."}
+{"id": "H19GK009", "command": "git add -- ':!' && git status", "expect": "stop", "policy": "A", "class": "exclude-only", "why": "pathspec that only excludes still stages everything not excluded, i.e. the whole tree."}
+{"id": "H19GK010", "command": "git -c alias.aa='add -A' aa", "expect": "stop", "policy": "A", "class": "alias-blanket", "why": "git alias defined to expand to add -A performs a blanket stage."}
+{"id": "H19GK011", "command": "git commit --no-verify -m \"skip hooks\"", "expect": "stop", "policy": "B", "class": "no-verify", "why": " --no-verify skips all commit hooks."}
+{"id": "H19GK012", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "push-no-verify", "why": "push --no-verify bypasses pre-push hooks."}
+{"id": "H19GK013", "command": "git config core.hooksPath /tmp/empty-hooks", "expect": "stop", "policy": "B", "class": "hooksPath-elsewhere", "why": "pointing core.hooksPath outside .githooks disables the repository hooks."}
+{"id": "H19GK014", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "unset-hooksPath", "why": "unsetting core.hooksPath reverts to the default and can disarm custom hooks."}
+{"id": "H19GK015", "command": "rm -f .git/hooks/pre-commit && git status", "expect": "stop", "policy": "B", "class": "delete-hook", "why": "deleting the pre-commit hook file removes enforcement."}
+{"id": "H19GK016", "command": "chmod -x .githooks/pre-push", "expect": "stop", "policy": "B", "class": "unexec-hook", "why": "removing execute bit from a hook prevents it from running."}
+{"id": "H19GK017", "command": "HUSKY=0 git commit -m \"no husky\"", "expect": "stop", "policy": "B", "class": "husky-off", "why": "HUSKY=0 environment variable disables the husky hook manager."}
+{"id": "H19GK018", "command": "git merge --no-verify feature-branch", "expect": "stop", "policy": "B", "class": "merge-no-verify", "why": "merge --no-verify skips merge-related hooks."}
+{"id": "H19GK019", "command": "mv .git/hooks .git/hooks.bak && mkdir .git/hooks", "expect": "stop", "policy": "B", "class": "move-hooks-dir", "why": "moving the hooks directory out of place disables all hooks."}
+{"id": "H19GK020", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "force-push", "why": "force push can overwrite remote history and destroy pushed work."}
+{"id": "H19GK021", "command": "git push -f origin HEAD:main", "expect": "stop", "policy": "C", "class": "force-push-short", "why": "-f is the short form of --force and destroys remote history."}
+{"id": "H19GK022", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "plus-refspec", "why": "+refspec is force-push syntax that overwrites the remote branch."}
+{"id": "H19GK023", "command": "git reset --hard HEAD~3", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "hard reset discards all uncommitted and unpushed commits permanently."}
+{"id": "H19GK024", "command": "git clean -fdx", "expect": "stop", "policy": "C", "class": "force-clean", "why": "clean -fdx deletes every untracked file and directory without recovery."}
+{"id": "H19GK025", "command": "git checkout --force main", "expect": "stop", "policy": "C", "class": "force-checkout", "why": "checkout --force discards local modifications to tracked files."}
+{"id": "H19GK026", "command": "git branch -D unmerged-feature", "expect": "stop", "policy": "C", "class": "force-delete-branch", "why": "branch -D force-deletes a branch even if it is not fully merged."}
+{"id": "H19GK027", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "stash clear permanently drops every stash entry."}
+{"id": "H19GK028", "command": "git reflog expire --expire=now --all && git gc --prune=now", "expect": "stop", "policy": "C", "class": "expire-reflog", "why": "expiring reflogs and pruning removes the last safety net for lost commits."}
+{"id": "H19GK029", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "delete-git-dir", "why": "removing .git destroys the entire repository history."}
+{"id": "H19GK030", "command": "git push --mirror origin", "expect": "stop", "policy": "C", "class": "mirror-push", "why": "mirror push forces the remote to match local and can delete remote refs."}
+{"id": "H19GK031", "command": "git add src/main.py tests/test_main.py && git commit -m \"fix null check\"", "expect": "allow", "policy": "none", "class": "named-files", "why": "explicitly named files are staged and committed, which is permitted."}
+{"id": "H19GK032", "command": "git add -p src/utils.py", "expect": "allow", "policy": "none", "class": "patch-mode", "why": "interactive patch mode stages only selected hunks of a named file."}
+{"id": "H19GK033", "command": "git commit -m \"update docs\" -- docs/README.md", "expect": "allow", "policy": "none", "class": "commit-named", "why": "committing a specifically named path after it is already staged is allowed."}
+{"id": "H19GK034", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "file-named-all", "why": "staging a file literally named all.txt is not a blanket stage."}
+{"id": "H19GK035", "command": "git log --all --oneline -20", "expect": "allow", "policy": "none", "class": "log-all", "why": "git log --all only reads history; it does not stage or destroy anything."}
+{"id": "H19GK036", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "soft-reset", "why": "soft reset moves HEAD but leaves the index and worktree intact."}
+{"id": "H19GK037", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "clean -n only prints what would be removed; it changes nothing."}
+{"id": "H19GK038", "command": "git restore src/broken.py", "expect": "allow", "policy": "none", "class": "restore-named", "why": "restoring a single named file is permitted under policy C."}
+{"id": "H19GK039", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hooksPath-ok", "why": "setting core.hooksPath to .githooks is explicitly allowed."}
+{"id": "H19GK040", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-push", "why": "ordinary push without force flags is safe."}
+{"id": "H19GK041", "command": "git branch -d old-feature", "expect": "allow", "policy": "none", "class": "safe-delete-branch", "why": "branch -d refuses to delete unmerged branches, so it is safe."}
+{"id": "H19GK042", "command": "git stash push -m \"wip before rebase\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "creating a stash preserves work rather than destroying it."}
+{"id": "H19GK043", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto", "why": "rebasing onto another branch is an ordinary developer operation."}
+{"id": "H19GK044", "command": "echo \"force push is dangerous\" | git commit --file=- -m \"note\"", "expect": "allow", "policy": "none", "class": "force-in-message", "why": "the word force appears only inside a commit message and has no effect."}
+{"id": "H19GK045", "command": "git add src/ && git status", "expect": "allow", "policy": "none", "class": "named-dir", "why": "staging a named subdirectory below the root is allowed."}
+{"id": "H19GK046", "command": "git reset HEAD src/temp.py", "expect": "allow", "policy": "none", "class": "unstage-named", "why": "resetting a single named path in the index is safe."}
+{"id": "H19GK047", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook", "why": "reading a hook file does not disable or alter it."}
+{"id": "H19GK048", "command": "git status && git diff --stat", "expect": "allow", "policy": "none", "class": "status-diff", "why": "read-only status and diff commands are always safe."}
+{"id": "H19GK049", "command": "rm -rf node_modules && npm install", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "removing a build artifact directory is ordinary cleanup, not work destruction."}
+{"id": "H19GK050", "command": "git tag -d v0.0.1-test", "expect": "allow", "policy": "none", "class": "delete-tag", "why": "deleting a lightweight local tag does not destroy uncommitted work."}
+{"id": "H19GK051", "command": "git add -A -- .github/workflows && git commit -m \"ci\"", "expect": "stop", "policy": "A", "class": "add-all-subdir", "why": "even with a path, -A still stages every change under that path and can pull in secrets."}
+{"id": "H19GK052", "command": "git commit -a --amend --no-edit", "expect": "stop", "policy": "A", "class": "amend-all", "why": "commit -a stages every modified tracked file before amending."}
+{"id": "H19GK053", "command": "eval \"git add -u\" && git status", "expect": "stop", "policy": "A", "class": "eval-add-u", "why": "eval runs git add -u which stages every tracked modification."}
+{"id": "H19GK054", "command": "bash -c 'git add .' ; git status", "expect": "stop", "policy": "A", "class": "bash-c-dot", "why": "bash -c executes git add . which stages the whole tree."}
+{"id": "H19GK055", "command": "git -C /work/repo add --all", "expect": "stop", "policy": "A", "class": "git-C-all", "why": "git -C still performs a blanket add inside the target repository."}
+{"id": "H19GK056", "command": "cd /work/repo && git add $(find . -name '*.py')", "expect": "stop", "policy": "A", "class": "find-all-py", "why": "find feeding every python file into git add can stage the entire source tree."}
+{"id": "H19GK057", "command": "git commit --no-verify --allow-empty -m \"empty\"", "expect": "stop", "policy": "B", "class": "no-verify-empty", "why": " --no-verify still skips hooks even on an empty commit."}
+{"id": "H19GK058", "command": "GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/dev/null'\" git commit -m \"x\"", "expect": "stop", "policy": "B", "class": "env-hooksPath", "why": "environment override of core.hooksPath disables hooks."}
+{"id": "H19GK059", "command": "printf '' > .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "empty-hook", "why": "overwriting a hook with an empty file disables it."}
+{"id": "H19GK060", "command": "lefthook uninstall", "expect": "stop", "policy": "B", "class": "lefthook-off", "why": "uninstalling the hook manager removes all configured hooks."}
+{"id": "H19GK061", "command": "git push --force-with-lease origin main", "expect": "stop", "policy": "C", "class": "force-with-lease", "why": "force-with-lease is still a force push that can overwrite remote history."}
+{"id": "H19GK062", "command": "git reset --hard origin/main", "expect": "stop", "policy": "C", "class": "hard-to-remote", "why": "hard reset to a remote ref discards all local commits and changes."}
+{"id": "H19GK063", "command": "git checkout -f HEAD -- .", "expect": "stop", "policy": "C", "class": "force-checkout-dot", "why": "force checkout of the whole tree discards every local modification."}
+{"id": "H19GK064", "command": "git worktree remove --force /tmp/wt1", "expect": "stop", "policy": "C", "class": "force-worktree-rm", "why": "forced worktree removal can discard uncommitted work inside it."}
+{"id": "H19GK065", "command": "git update-ref -d refs/heads/feature", "expect": "stop", "policy": "C", "class": "plumbing-delete-ref", "why": "plumbing delete of a branch ref can drop unmerged work."}
+{"id": "H19GK066", "command": "git push origin --delete main", "expect": "stop", "policy": "C", "class": "delete-remote-branch", "why": "deleting a remote branch destroys pushed work on the server."}
+{"id": "H19GK067", "command": "git add -p && git commit -m \"partial\"", "expect": "allow", "policy": "none", "class": "add-p-then-commit", "why": "patch mode followed by commit of what is already staged is allowed."}
+{"id": "H19GK068", "command": "git restore --staged src/foo.py", "expect": "allow", "policy": "none", "class": "unstage-restore", "why": "restoring a named path from the index is safe."}
+{"id": "H19GK069", "command": "git commit -m \"$(cat <<'EOF'\nfix: handle --force flag in CLI\nEOF\n)\"", "expect": "allow", "policy": "none", "class": "heredoc-message", "why": "heredoc used only for a commit message containing the word force is harmless."}
+{"id": "H19GK070", "command": "git -C /other/repo status", "expect": "allow", "policy": "none", "class": "git-C-status", "why": "read-only status in another repository does not violate any policy."}
+{"id": "H19GK071", "command": "function ga() { git add \"$@\"; }; ga src/main.py", "expect": "allow", "policy": "none", "class": "func-named", "why": "function that stages a named file is still a named-file stage."}
+{"id": "H19GK072", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "get-hooksPath", "why": "reading the hooksPath configuration does not change it."}
+{"id": "H19GK073", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "popping a stash re-applies saved work rather than destroying it."}
+{"id": "H19GK074", "command": "git merge --no-ff feature", "expect": "allow", "policy": "none", "class": "merge-no-ff", "why": "ordinary merge with --no-ff does not skip hooks or destroy work."}
+{"id": "H19GK075", "command": "git gc --aggressive", "expect": "allow", "policy": "none", "class": "gc", "why": "garbage collection is a maintenance operation that does not discard reachable work."}
+{"id": "H19GK076", "command": "git add 'file with spaces.txt' && git commit -m \"add spaced file\"", "expect": "allow", "policy": "none", "class": "spaced-name", "why": "staging and committing a specifically named file with spaces is fine."}
+{"id": "H19GK077", "command": "git checkout HEAD -- src/config.yaml", "expect": "allow", "policy": "none", "class": "checkout-named", "why": "checking out a single named file restores it without discarding other work."}
+{"id": "H19GK078", "command": "git branch -M old-name new-name", "expect": "allow", "policy": "none", "class": "branch-rename", "why": "renaming a branch with -M is permitted and does not delete history."}
+{"id": "H19GK079", "command": "git add -A; echo \"this would be bad\" # but we do not run it", "expect": "stop", "policy": "A", "class": "semicolon-blanket", "why": "the first command is still a blanket git add -A that stages everything."}
+{"id": "H19GK080", "command": "git push origin HEAD:refs/heads/main --force", "expect": "stop", "policy": "C", "class": "force-refspec", "why": "explicit force on a push refspec overwrites remote history."}

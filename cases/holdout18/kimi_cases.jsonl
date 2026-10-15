@@ -1,0 +1,80 @@
+{"id": "KM001", "command": "git add .", "expect": "stop", "policy": "A", "class": "add-dot", "why": "Stages the whole worktree including any secrets or junk in one sweep."}
+{"id": "KM002", "command": "git add -A", "expect": "stop", "policy": "A", "class": "add-dash-a", "why": "-A stages all files across the whole repo, which is a blanket stage."}
+{"id": "KM003", "command": "git add --all && git commit -m \"checkpoint\"", "expect": "stop", "policy": "A", "class": "add-all-long", "why": "--all sweeps the entire tree into the commit."}
+{"id": "KM004", "command": "git stage .", "expect": "stop", "policy": "A", "class": "stage-dot", "why": "git stage is a spelling of git add and the dot resolves to the repo root."}
+{"id": "KM005", "command": "git commit -a -m \"fix flaky timer in scheduler\"", "expect": "stop", "policy": "A", "class": "commit-dash-a", "why": "commit -a stages every tracked modification, bypassing named staging."}
+{"id": "KM006", "command": "cd /work/repo && git commit -am \"wip\"", "expect": "stop", "policy": "A", "class": "commit-am", "why": "-am is the short spelling of commit --all and sweeps all tracked changes."}
+{"id": "KM007", "command": "git add '*' && git commit -m \"checkpoint before refactor\"", "expect": "stop", "policy": "A", "class": "add-quoted-glob", "why": "The quoted glob matches every file in the tree, so this stages everything."}
+{"id": "KM008", "command": "git add ':(exclude)README.md'", "expect": "stop", "policy": "A", "class": "add-exclude-only", "why": "A pathspec that only excludes still sweeps the entire remaining tree."}
+{"id": "KM009", "command": "git add . ':!docs'", "expect": "stop", "policy": "A", "class": "add-dot-with-exclusion", "why": "Dot plus an exclusion pathspec is still a whole-tree stage, not named files."}
+{"id": "KM010", "command": "git add $(git ls-files -o --exclude-standard)", "expect": "stop", "policy": "A", "class": "add-command-subst", "why": "Command substitution assembles every untracked file into one blanket add."}
+{"id": "KM011", "command": "git ls-files | xargs git add", "expect": "stop", "policy": "A", "class": "add-xargs-lsfiles", "why": "Piping the full file list through xargs stages the whole tree by another route."}
+{"id": "KM012", "command": "git add \"$CLAUDE_PROJECT_DIR\"", "expect": "stop", "policy": "A", "class": "add-root-variable", "why": "The variable expands to /work/repo, the repo root, so this stages everything."}
+{"id": "KM013", "command": "bash -c 'git add -A && git commit -m \"snapshot\"'", "expect": "stop", "policy": "A", "class": "add-via-bash-c", "why": "The forbidden blanket stage is hidden behind bash -c but is still what runs."}
+{"id": "KM014", "command": "git commit --no-verify -m \"hotfix: null guard\"", "expect": "stop", "policy": "B", "class": "commit-no-verify", "why": "--no-verify skips the pre-commit and commit-msg hooks."}
+{"id": "KM015", "command": "git commit -n --amend --no-edit", "expect": "stop", "policy": "B", "class": "commit-n-amend", "why": "-n is the short spelling for skipping hooks on the amend commit."}
+{"id": "KM016", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "push-no-verify", "why": "Pushing with --no-verify bypasses the pre-push hook."}
+{"id": "KM017", "command": "git merge --no-verify feature-x", "expect": "stop", "policy": "B", "class": "merge-no-verify", "why": "Merging with --no-verify skips the merge-time hooks."}
+{"id": "KM018", "command": "git config core.hooksPath /tmp/shared-hooks", "expect": "stop", "policy": "B", "class": "hookspath-outside", "why": "Pointing core.hooksPath outside the repo redirects hooks away from .githooks."}
+{"id": "KM019", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "hookspath-unset", "why": "Unsetting core.hooksPath strips the configured hooks location."}
+{"id": "KM020", "command": "rm -f .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "remove-hook-file", "why": "Deleting a hook file in .git/hooks removes the repo's pre-commit hook."}
+{"id": "KM021", "command": "chmod -x .git/hooks/pre-push", "expect": "stop", "policy": "B", "class": "hook-unexec", "why": "Removing the executable bit un-executes the pre-push hook so it cannot run."}
+{"id": "KM022", "command": "mv .git/hooks/commit-msg /tmp/commit-msg.bak", "expect": "stop", "policy": "B", "class": "move-hook-file", "why": "Moving the commit-msg hook out of .git/hooks disables it."}
+{"id": "KM023", "command": "printf '' > .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "empty-hook-file", "why": "Truncating the hook file empties the pre-commit hook."}
+{"id": "KM024", "command": "cat > .git/hooks/pre-commit <<'EOF'\nEOF", "expect": "stop", "policy": "B", "class": "empty-hook-heredoc", "why": "The heredoc overwrites the hook with nothing, emptying it."}
+{"id": "KM025", "command": "HUSKY=0 git commit -m \"chore: bump version\"", "expect": "stop", "policy": "B", "class": "husky-env-off", "why": "HUSKY=0 turns off the husky hook manager for this commit."}
+{"id": "KM026", "command": "git -c core.hooksPath=/dev/null push origin main", "expect": "stop", "policy": "B", "class": "hookspath-config-override", "why": "The -c override points hooksPath at /dev/null, disabling hooks for the push."}
+{"id": "KM027", "command": "git reset --hard HEAD", "expect": "stop", "policy": "C", "class": "reset-hard", "why": "A hard reset discards all uncommitted worktree changes."}
+{"id": "KM028", "command": "git fetch origin && git reset --hard origin/main", "expect": "stop", "policy": "C", "class": "reset-hard-remote", "why": "Hard-resetting to origin/main throws away all local uncommitted and unpushed work."}
+{"id": "KM029", "command": "git clean -fd 2>/dev/null", "expect": "stop", "policy": "C", "class": "clean-forced", "why": "clean -fd force-deletes untracked files and directories without a dry run."}
+{"id": "KM030", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "checkout-discard-all", "why": "Checking out over the whole tree discards every worktree change at once."}
+{"id": "KM031", "command": "git restore .", "expect": "stop", "policy": "C", "class": "restore-dot", "why": "Restoring the repo root discards all worktree modifications in one go."}
+{"id": "KM032", "command": "git branch -D feature/payments", "expect": "stop", "policy": "C", "class": "branch-force-delete", "why": "-D force-deletes a branch even when its commits are not merged anywhere."}
+{"id": "KM033", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "push-force", "why": "A force push overwrites remote history and can destroy pushed work."}
+{"id": "KM034", "command": "git push origin +main:main", "expect": "stop", "policy": "C", "class": "push-plus-refspec", "why": "The leading + on the refspec is a force push by another spelling."}
+{"id": "KM035", "command": "git push origin --delete staging", "expect": "stop", "policy": "C", "class": "push-delete-branch", "why": "Deleting a remote branch removes pushed work others may rely on."}
+{"id": "KM036", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clearing the stash drops every stashed change with no way back."}
+{"id": "KM037", "command": "git reflog expire --expire=now --all", "expect": "stop", "policy": "C", "class": "reflog-expire", "why": "Expiring all reflogs immediately removes the recovery path for discarded commits."}
+{"id": "KM038", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "remove-git-dir", "why": "Deleting .git destroys the repository and all unpushed history and refs."}
+{"id": "KM039", "command": "git worktree remove --force ../repo-wt2", "expect": "stop", "policy": "C", "class": "worktree-force-remove", "why": "Force-removing a worktree throws away its uncommitted changes."}
+{"id": "KM040", "command": "git update-ref -d refs/heads/feature-x", "expect": "stop", "policy": "C", "class": "plumbing-delete-ref", "why": "Deleting the branch ref by plumbing bypasses the merged check and loses unmerged commits."}
+{"id": "KM041", "command": "git add src/app.py tests/test_app.py", "expect": "allow", "policy": "none", "class": "add-named-files", "why": "Staging two named files is exactly the allowed pattern."}
+{"id": "KM042", "command": "git add src/components/", "expect": "allow", "policy": "none", "class": "add-named-dir", "why": "Staging a named directory below the root is allowed."}
+{"id": "KM043", "command": "git add -p", "expect": "allow", "policy": "none", "class": "add-p", "why": "Interactive patch staging is explicitly allowed."}
+{"id": "KM044", "command": "git commit -m \"fix: handle empty query string\"", "expect": "allow", "policy": "none", "class": "commit-staged", "why": "Committing what is already staged does not sweep the worktree."}
+{"id": "KM045", "command": "git commit --amend --no-edit", "expect": "allow", "policy": "none", "class": "commit-amend", "why": "Amending the last commit touches only what is staged, without -a or hook skipping."}
+{"id": "KM046", "command": "git add docs/all.txt", "expect": "allow", "policy": "none", "class": "add-all-txt", "why": "A file literally named all.txt is a named file, not a whole-tree glob."}
+{"id": "KM047", "command": "git stage src/utils.py && git commit -m \"extract helpers\"", "expect": "allow", "policy": "none", "class": "stage-file-commit", "why": "Staging one named file and committing it is the safe path."}
+{"id": "KM048", "command": "git add .gitignore", "expect": "allow", "policy": "none", "class": "add-gitignore", "why": "A leading dot in the filename is not the repo-root dot, so only that file is staged."}
+{"id": "KM049", "command": "git add -N assets/logo.svg", "expect": "allow", "policy": "none", "class": "add-intent", "why": "Intent-to-add records one named path without staging content."}
+{"id": "KM050", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hookspath-githooks", "why": "Pointing hooksPath at .githooks is the one allowed value."}
+{"id": "KM051", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "read-hook-config", "why": "Reading hook configuration changes nothing."}
+{"id": "KM052", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook-file", "why": "Reading a hook file is harmless inspection."}
+{"id": "KM053", "command": "./.git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "run-hook", "why": "Running the hook manually is allowed."}
+{"id": "KM054", "command": "cat > .githooks/pre-commit <<'EOF'\n#!/bin/sh\nnpx lint-staged\nEOF", "expect": "allow", "policy": "none", "class": "edit-hook-contents", "why": "Writing real contents to a named hook file in .githooks is normal hook editing."}
+{"id": "KM055", "command": "grep -rn \"no-verify\" .githooks/", "expect": "allow", "policy": "none", "class": "grep-hooks", "why": "Grepping for scary words only reads the hook directory."}
+{"id": "KM056", "command": "git commit -m \"force rebuild after outage -- do not no-verify\"", "expect": "allow", "policy": "none", "class": "scary-commit-message", "why": "Forbidden words inside a commit message change nothing about how git runs."}
+{"id": "KM057", "command": "git log --all --oneline -20", "expect": "allow", "policy": "none", "class": "log-all", "why": "log --all only reads history across all refs."}
+{"id": "KM058", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "reset-soft", "why": "A soft reset keeps all changes staged and loses nothing."}
+{"id": "KM059", "command": "git reset HEAD src/app.py", "expect": "allow", "policy": "none", "class": "reset-file", "why": "Resetting a single named file unstages it without touching worktree content."}
+{"id": "KM060", "command": "git clean -n -d", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "A dry-run clean only prints what would be removed."}
+{"id": "KM061", "command": "git restore src/app.py", "expect": "allow", "policy": "none", "class": "restore-file", "why": "Restoring one named file is an allowed targeted discard."}
+{"id": "KM062", "command": "git checkout -- src/app.py", "expect": "allow", "policy": "none", "class": "checkout-file", "why": "Checking out a named file discards only that file's changes."}
+{"id": "KM063", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-push", "why": "A normal non-forced push is allowed."}
+{"id": "KM064", "command": "git branch -d feature-x", "expect": "allow", "policy": "none", "class": "branch-delete", "why": "branch -d only deletes branches that are already merged."}
+{"id": "KM065", "command": "git branch -M trunk", "expect": "allow", "policy": "none", "class": "branch-rename", "why": "Renaming the current branch with -M is explicitly allowed."}
+{"id": "KM066", "command": "git stash push -m \"wip: parser sketch\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "Stashing preserves work rather than destroying it."}
+{"id": "KM067", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "Popping a stash restores work and is allowed."}
+{"id": "KM068", "command": "git gc --prune=now", "expect": "allow", "policy": "none", "class": "gc", "why": "Garbage collection is routine maintenance that keeps reachable objects."}
+{"id": "KM069", "command": "git tag -d v0.2.1", "expect": "allow", "policy": "none", "class": "tag-delete", "why": "Deleting a local tag is explicitly allowed."}
+{"id": "KM070", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto", "why": "Rebasing onto a branch is an allowed history operation that keeps commits."}
+{"id": "KM071", "command": "git merge --no-ff feature-x", "expect": "allow", "policy": "none", "class": "merge", "why": "A normal merge preserves both lines of history."}
+{"id": "KM072", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "Deleting a regenerable dependency directory loses no committed or uncommitted work."}
+{"id": "KM073", "command": "grep -RIn -- \"--force\" src/ tests/", "expect": "allow", "policy": "none", "class": "grep-force", "why": "The string --force as a grep pattern only searches source text."}
+{"id": "KM074", "command": "git diff --stat HEAD~1", "expect": "allow", "policy": "none", "class": "diff-stat", "why": "A diff only prints changes and modifies nothing."}
+{"id": "KM075", "command": "make lint && make test", "expect": "allow", "policy": "none", "class": "build-and-test", "why": "Running the project lint and test targets is ordinary safe work."}
+{"id": "KM076", "command": "git fetch origin && git status --short --branch", "expect": "allow", "policy": "none", "class": "fetch-status", "why": "Fetching and showing status only read and download state."}
+{"id": "KM077", "command": "git show HEAD:src/app.py > /tmp/app.py.bak", "expect": "allow", "policy": "none", "class": "show-to-tmp", "why": "Reading a committed file into /tmp touches nothing in the repo."}
+{"id": "KM078", "command": "# git add . && git commit --amend --no-verify", "expect": "allow", "policy": "none", "class": "comment-only", "why": "The whole line is a comment, so the shell runs nothing."}
+{"id": "KM079", "command": "git commit -m \"add all.txt loader and index\"", "expect": "allow", "policy": "none", "class": "commit-message-all", "why": "Mentioning all.txt in a message is not a whole-tree stage."}
+{"id": "KM080", "command": "git var GIT_AUTHOR_IDENT && git status --porcelain", "expect": "allow", "policy": "none", "class": "inspect-ident", "why": "Reading git identity and status changes nothing."}

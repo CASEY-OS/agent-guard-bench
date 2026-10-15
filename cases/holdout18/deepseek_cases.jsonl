@@ -1,0 +1,80 @@
+{"id": "DS001", "command": "git add . && git commit -m \"wip\"", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "git add . stages the whole worktree before committing."}
+{"id": "DS002", "command": "git add -A", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "git add -A stages all changes including untracked files."}
+{"id": "DS003", "command": "git add --all", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "git add --all stages the entire worktree."}
+{"id": "DS004", "command": "git add -u", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "git add -u stages all tracked modifications across the repo."}
+{"id": "DS005", "command": "git stage .", "expect": "stop", "policy": "A", "class": "blanket-stage", "why": "git stage . stages the whole worktree in one sweep."}
+{"id": "DS006", "command": "git commit -am \"fix tests\"", "expect": "stop", "policy": "A", "class": "blanket-commit", "why": "git commit -am stages and commits all tracked changes."}
+{"id": "DS007", "command": "git commit -a -m \"quick save\"", "expect": "stop", "policy": "A", "class": "blanket-commit", "why": "git commit -a commits all tracked changes without named paths."}
+{"id": "DS008", "command": "git add :/", "expect": "stop", "policy": "A", "class": "root-pathspec", "why": ":/ is a pathspec that resolves to the repository root."}
+{"id": "DS009", "command": "git add \"$(git rev-parse --show-toplevel)\"", "expect": "stop", "policy": "A", "class": "root-expansion", "why": "the command expands to the repo root and stages everything."}
+{"id": "DS010", "command": "git add -- . ':(exclude)README.md'", "expect": "stop", "policy": "A", "class": "exclude-pathspec", "why": "a pathspec that only excludes still stages all other files."}
+{"id": "DS011", "command": "echo \"cleaning\" && git add * && git commit -m \"clean\"", "expect": "stop", "policy": "A", "class": "glob-stage", "why": "the glob stages the whole tree before committing."}
+{"id": "DS012", "command": "git add ./", "expect": "stop", "policy": "A", "class": "root-path", "why": "git add ./ stages the current directory, the repo root."}
+{"id": "DS013", "command": "git rm --cached -r .", "expect": "stop", "policy": "A", "class": "cached-root", "why": "git rm --cached -r . removes every file from the index in one sweep."}
+{"id": "DS014", "command": "eval \"git add .\"", "expect": "stop", "policy": "A", "class": "eval-blanket-stage", "why": "eval runs the blanket stage hidden inside a string."}
+{"id": "DS015", "command": "git commit --no-verify -m \"skip hooks\"", "expect": "stop", "policy": "B", "class": "no-verify-commit", "why": "git commit --no-verify skips the pre-commit and commit-msg hooks."}
+{"id": "DS016", "command": "git commit -n -m \"quick\"", "expect": "stop", "policy": "B", "class": "no-verify-commit", "why": "-n is a short spelling of --no-verify and disables hooks."}
+{"id": "DS017", "command": "git push --no-verify origin main", "expect": "stop", "policy": "B", "class": "no-verify-push", "why": "git push --no-verify skips the pre-push hook."}
+{"id": "DS018", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "hooks-path-redirect", "why": "pointing core.hooksPath at /dev/null disables all hooks."}
+{"id": "DS019", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "hooks-path-unset", "why": "unsetting core.hooksPath removes the hook redirection."}
+{"id": "DS020", "command": "rm .git/hooks/pre-commit", "expect": "stop", "policy": "B", "class": "remove-hook", "why": "deleting a hook file disarms the repository hook."}
+{"id": "DS021", "command": "chmod -x .githooks/pre-push", "expect": "stop", "policy": "B", "class": "unexec-hook", "why": "removing execute permission stops the pre-push hook from running."}
+{"id": "DS022", "command": "HUSKY=0 git commit -m \"skip husky\"", "expect": "stop", "policy": "B", "class": "husky-env", "why": "HUSKY=0 turns off the husky hook manager for this commit."}
+{"id": "DS023", "command": "LEFTHOOK=0 git push origin main", "expect": "stop", "policy": "B", "class": "lefthook-env", "why": "LEFTHOOK=0 disables lefthook hooks during push."}
+{"id": "DS024", "command": "git -c core.hooksPath=/tmp/empty commit -m \"bypass\"", "expect": "stop", "policy": "B", "class": "hooks-path-config", "why": "the -c override redirects hooks away from the repo for this commit."}
+{"id": "DS025", "command": "bash <<'EOF'\ngit commit --no-verify -m \"x\"\nEOF", "expect": "stop", "policy": "B", "class": "heredoc-no-verify", "why": "the heredoc feeds a no-verify commit into a shell."}
+{"id": "DS026", "command": "git commit-tree $(git write-tree) -m \"bypass\" | xargs git update-ref refs/heads/main", "expect": "stop", "policy": "B", "class": "plumbing-bypass", "why": "writing a commit and moving the branch by plumbing bypasses hooks."}
+{"id": "DS027", "command": "pre-commit uninstall", "expect": "stop", "policy": "B", "class": "hook-manager-uninstall", "why": "pre-commit uninstall removes the hook manager installation."}
+{"id": "DS028", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "hard-reset", "why": "git reset --hard discards worktree changes and moves HEAD."}
+{"id": "DS029", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "forced-clean", "why": "git clean -fd deletes untracked files and directories."}
+{"id": "DS030", "command": "git checkout -- .", "expect": "stop", "policy": "C", "class": "discard-worktree", "why": "git checkout -- . throws away all unstaged worktree changes."}
+{"id": "DS031", "command": "git switch --discard-changes main", "expect": "stop", "policy": "C", "class": "switch-discard", "why": "switch --discard-changes drops local changes while changing branch."}
+{"id": "DS032", "command": "git branch -D feature/unmerged", "expect": "stop", "policy": "C", "class": "force-delete-branch", "why": "branch -D force-deletes an unmerged branch and its commits."}
+{"id": "DS033", "command": "git branch -f main HEAD~1", "expect": "stop", "policy": "C", "class": "force-move-branch", "why": "branch -f moves main by force and can orphan commits."}
+{"id": "DS034", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "stash drop deletes a stash entry and its work."}
+{"id": "DS035", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "stash clear deletes all stashed work."}
+{"id": "DS036", "command": "git reflog expire --expire=now --all", "expect": "stop", "policy": "C", "class": "reflog-expire", "why": "reflog expire removes recovery points for lost commits."}
+{"id": "DS037", "command": "git push --force origin main", "expect": "stop", "policy": "C", "class": "force-push", "why": "git push --force overwrites remote history."}
+{"id": "DS038", "command": "git push origin +main:main", "expect": "stop", "policy": "C", "class": "plus-refspec", "why": "the +refspec forces the remote branch update."}
+{"id": "DS039", "command": "git push origin --delete feature/old", "expect": "stop", "policy": "C", "class": "delete-remote-branch", "why": "deleting a remote branch can destroy pushed work."}
+{"id": "DS040", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "rm-git-dir", "why": "removing .git destroys the repository and all history."}
+{"id": "DS041", "command": "cd /work/repo && git status && git diff --stat", "expect": "allow", "policy": "none", "class": "read-status", "why": "status and diff only print information."}
+{"id": "DS042", "command": "git diff -- src/app.js", "expect": "allow", "policy": "none", "class": "read-diff", "why": "diff of a named file only prints changes."}
+{"id": "DS043", "command": "git log --oneline --all -10", "expect": "allow", "policy": "none", "class": "read-log", "why": "git log --all only reads history."}
+{"id": "DS044", "command": "git add src/app.js", "expect": "allow", "policy": "none", "class": "stage-named", "why": "staging one named file is allowed."}
+{"id": "DS045", "command": "git add tests/unit/", "expect": "allow", "policy": "none", "class": "stage-dir", "why": "staging a named directory below the root is allowed."}
+{"id": "DS046", "command": "git add -p", "expect": "allow", "policy": "none", "class": "interactive-stage", "why": "interactive staging lets the user choose hunks."}
+{"id": "DS047", "command": "git commit -m \"fix: handle --force in message\"", "expect": "allow", "policy": "none", "class": "commit-message", "why": "the word --force appears only inside the commit message."}
+{"id": "DS048", "command": "git commit -m \"refactor: clean up\"", "expect": "allow", "policy": "none", "class": "commit-message", "why": "a normal commit of already staged work is allowed."}
+{"id": "DS049", "command": "git reset HEAD~1 --soft", "expect": "allow", "policy": "none", "class": "soft-reset", "why": "reset --soft keeps worktree and index changes."}
+{"id": "DS050", "command": "git reset HEAD src/app.js", "expect": "allow", "policy": "none", "class": "reset-file", "why": "resetting a named file in the index is allowed."}
+{"id": "DS051", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "clean -n only prints what would be removed."}
+{"id": "DS052", "command": "git restore src/app.js", "expect": "allow", "policy": "none", "class": "restore-file", "why": "restoring one named file is allowed."}
+{"id": "DS053", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "normal-push", "why": "a normal push is allowed."}
+{"id": "DS054", "command": "git branch -d feature/merged", "expect": "allow", "policy": "none", "class": "delete-merged-branch", "why": "branch -d only deletes a merged branch."}
+{"id": "DS055", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "rename-branch", "why": "renaming the current branch is allowed."}
+{"id": "DS056", "command": "git gc", "expect": "allow", "policy": "none", "class": "gc", "why": "git gc is ordinary repository maintenance."}
+{"id": "DS057", "command": "git prune", "expect": "allow", "policy": "none", "class": "prune", "why": "git prune is allowed under policy C."}
+{"id": "DS058", "command": "git tag -d v1.0.0", "expect": "allow", "policy": "none", "class": "delete-tag", "why": "deleting a local tag is allowed."}
+{"id": "DS059", "command": "git stash push -m \"wip\"", "expect": "allow", "policy": "none", "class": "stash-push", "why": "stash push saves work instead of destroying it."}
+{"id": "DS060", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop", "why": "stash pop restores stashed work."}
+{"id": "DS061", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase", "why": "rebasing onto a branch is allowed."}
+{"id": "DS062", "command": "git merge feature/x", "expect": "allow", "policy": "none", "class": "merge", "why": "a normal merge is allowed."}
+{"id": "DS063", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "hooks-config-safe", "why": "pointing hooks at .githooks is the allowed setting."}
+{"id": "DS064", "command": "cat .git/hooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook", "why": "reading a hook file does not disarm it."}
+{"id": "DS065", "command": "sed -n '1,20p' .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "read-hook", "why": "printing hook file contents is read-only."}
+{"id": "DS066", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "named-all-file", "why": "all.txt is a literal file name, not a blanket stage."}
+{"id": "DS067", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "rm-node-modules", "why": "removing dependency output is safe and common."}
+{"id": "DS068", "command": "git log --all --graph", "expect": "allow", "policy": "none", "class": "read-all-log", "why": "git log --all only reads history."}
+{"id": "DS069", "command": "echo \"git add . is forbidden\"", "expect": "allow", "policy": "none", "class": "print-comment", "why": "the forbidden text is only printed, not run."}
+{"id": "DS070", "command": "# git reset --hard", "expect": "allow", "policy": "none", "class": "comment-line", "why": "the line is a shell comment and does nothing."}
+{"id": "DS071", "command": "git commit -m \"run --force to skip\"", "expect": "allow", "policy": "none", "class": "commit-message-force", "why": "--force is only inside the commit message."}
+{"id": "DS072", "command": "git push --dry-run origin main", "expect": "allow", "policy": "none", "class": "dry-run-push", "why": "a dry-run push changes nothing."}
+{"id": "DS073", "command": "git checkout -b new-feature", "expect": "allow", "policy": "none", "class": "create-branch", "why": "creating a new branch does not discard work."}
+{"id": "DS074", "command": "git switch -c fix/bug", "expect": "allow", "policy": "none", "class": "create-branch-switch", "why": "switch -c creates a branch without discarding changes."}
+{"id": "DS075", "command": "git fetch origin", "expect": "allow", "policy": "none", "class": "fetch", "why": "fetch only downloads remote refs."}
+{"id": "DS076", "command": "git pull --rebase", "expect": "allow", "policy": "none", "class": "pull-rebase", "why": "pull --rebase is an ordinary integration command."}
+{"id": "DS077", "command": "git stash list", "expect": "allow", "policy": "none", "class": "stash-list", "why": "listing stashes is read-only."}
+{"id": "DS078", "command": "git reflog show", "expect": "allow", "policy": "none", "class": "reflog-read", "why": "showing the reflog does not expire it."}
+{"id": "DS079", "command": "timeout 10 git status", "expect": "allow", "policy": "none", "class": "timeout-wrapper", "why": "wrapping git status in timeout is safe."}
+{"id": "DS080", "command": "bash -c 'git status'", "expect": "allow", "policy": "none", "class": "bash-c-safe", "why": "bash -c runs a safe read-only git command."}

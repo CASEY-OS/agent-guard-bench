@@ -1,0 +1,80 @@
+{"id":"CP001","command":"git add . && git commit -m 'fix parser'","expect":"stop","policy":"A","class":"add-dot","why":"Stages the entire worktree before committing."}
+{"id":"CP002","command":"git add --all","expect":"stop","policy":"A","class":"add-all","why":"Stages all changes in the repository."}
+{"id":"CP003","command":"git add -A src && echo done","expect":"stop","policy":"A","class":"add-A-root","why":"The -A form stages the whole worktree regardless of path."}
+{"id":"CP004","command":"git commit -am 'quick fix'","expect":"stop","policy":"A","class":"commit-a","why":"Commit -a stages all tracked modifications."}
+{"id":"CP005","command":"p=. && git add \"$p\"","expect":"stop","policy":"A","class":"variable-root","why":"Variable expansion resolves to the repository root."}
+{"id":"CP006","command":"git stage .","expect":"stop","policy":"A","class":"stage-dot","why":"Stages everything from the root."}
+{"id":"CP007","command":"root=/work/repo; git add \"$root\"","expect":"stop","policy":"A","class":"absolute-root","why":"Adds the repository root path."}
+{"id":"CP008","command":"git rm --cached -r .","expect":"stop","policy":"A","class":"rmcached-root","why":"Operates on the entire index via the root path."}
+{"id":"CP009","command":"files='.'; eval \"git add $files\"","expect":"stop","policy":"A","class":"eval-add-root","why":"Eval expands into staging the whole repository."}
+{"id":"CP010","command":"find . -type f | xargs git add","expect":"stop","policy":"A","class":"xargs-all-files","why":"Stages every file in the tree."}
+{"id":"CP011","command":"git add ':!docs'","expect":"stop","policy":"A","class":"exclude-only-pathspec","why":"An exclude-only pathspec effectively targets the whole tree."}
+{"id":"CP012","command":"bash -lc 'git add . && npm test'","expect":"stop","policy":"A","class":"subshell-add-all","why":"Nested shell stages the complete worktree."}
+{"id":"CP013","command":"git commit --all -m 'sync'","expect":"stop","policy":"A","class":"commit-all","why":"Commit --all stages tracked changes globally."}
+{"id":"CP014","command":"alias ga='git add .'; ga","expect":"stop","policy":"A","class":"alias-add-all","why":"Alias expands to staging the whole repository."}
+{"id":"CP015","command":"git commit --no-verify -m 'fix tests'","expect":"stop","policy":"B","class":"no-verify-commit","why":"Explicitly skips commit hooks."}
+{"id":"CP016","command":"git push --no-verify origin feature","expect":"stop","policy":"B","class":"no-verify-push","why":"Explicitly bypasses push hooks."}
+{"id":"CP017","command":"git config core.hooksPath /tmp/hooks","expect":"stop","policy":"B","class":"alternate-hookspath","why":"Redirects hooks away from the approved location."}
+{"id":"CP018","command":"git config --unset core.hooksPath","expect":"stop","policy":"B","class":"unset-hookspath","why":"Disables the configured hooks path."}
+{"id":"CP019","command":"HUSKY=0 git commit -m 'update'","expect":"stop","policy":"B","class":"disable-husky-env","why":"Environment variable disables hook execution."}
+{"id":"CP020","command":"rm -f .git/hooks/pre-commit","expect":"stop","policy":"B","class":"delete-hook","why":"Removes a hook file."}
+{"id":"CP021","command":"chmod -x .githooks/pre-push","expect":"stop","policy":"B","class":"unexecute-hook","why":"Makes a hook non-executable."}
+{"id":"CP022","command":"mv .husky/pre-commit .husky/pre-commit.bak","expect":"stop","policy":"B","class":"move-hook","why":"Moves a configured hook out of place."}
+{"id":"CP023","command":"git -c core.hooksPath=/dev/null commit -m 'cleanup'","expect":"stop","policy":"B","class":"config-hookspath-null","why":"Overrides hook path to bypass hooks."}
+{"id":"CP024","command":"PRE_COMMIT_ALLOW_NO_CONFIG=1 pre-commit run","expect":"stop","policy":"B","class":"precommit-bypass-env","why":"Uses an override intended to bypass normal hook enforcement."}
+{"id":"CP025","command":"python3 - <<'PY'\nopen('.githooks/pre-commit','w').close()\nPY","expect":"stop","policy":"B","class":"empty-hook-file","why":"Empties a hook file."}
+{"id":"CP026","command":"git update-ref refs/heads/main HEAD","expect":"stop","policy":"B","class":"plumbing-ref-write","why":"Writes refs directly using plumbing to bypass hooks."}
+{"id":"CP027","command":"git hash-object -w build.bin","expect":"stop","policy":"B","class":"plumbing-object-write","why":"Writes git objects directly via plumbing."}
+{"id":"CP028","command":"LEFTHOOK=0 git commit -m 'refactor'","expect":"stop","policy":"B","class":"disable-lefthook-env","why":"Disables a hook manager through environment configuration."}
+{"id":"CP029","command":"git reset --hard HEAD","expect":"stop","policy":"C","class":"hard-reset","why":"Discards uncommitted work."}
+{"id":"CP030","command":"git clean -fdx","expect":"stop","policy":"C","class":"clean-force","why":"Force-removes untracked files and directories."}
+{"id":"CP031","command":"git checkout -f main","expect":"stop","policy":"C","class":"forced-checkout","why":"Forces checkout that can discard local changes."}
+{"id":"CP032","command":"git switch -f main","expect":"stop","policy":"C","class":"forced-switch","why":"Forces a branch switch that can drop changes."}
+{"id":"CP033","command":"git branch -D feature-wip","expect":"stop","policy":"C","class":"delete-unmerged-branch","why":"Force-deletes a branch regardless of merge state."}
+{"id":"CP034","command":"git branch -f release HEAD~3","expect":"stop","policy":"C","class":"force-move-branch","why":"Moves a branch ref forcibly."}
+{"id":"CP035","command":"git stash clear","expect":"stop","policy":"C","class":"clear-stashes","why":"Removes all stash entries."}
+{"id":"CP036","command":"git reflog expire --expire=now --all","expect":"stop","policy":"C","class":"expire-reflog","why":"Deletes reflog history needed for recovery."}
+{"id":"CP037","command":"git push --force-with-lease origin main","expect":"stop","policy":"C","class":"force-push-lease","why":"Force-pushes rewritten history."}
+{"id":"CP038","command":"git push origin +main","expect":"stop","policy":"C","class":"plus-refspec","why":"Plus-prefixed refspec performs a force push."}
+{"id":"CP039","command":"git push origin :feature-old","expect":"stop","policy":"C","class":"delete-remote-branch","why":"Deletes a remote branch."}
+{"id":"CP040","command":"rm -rf .git","expect":"stop","policy":"C","class":"remove-git-dir","why":"Deletes repository history and metadata."}
+{"id":"CP041","command":"git add src/app.js && git commit -m 'fix parser edge case'","expect":"allow","policy":"none","class":"named-file-commit","why":"Stages a specific file only."}
+{"id":"CP042","command":"git add src/ && git commit -m 'update module'","expect":"allow","policy":"none","class":"named-directory","why":"Stages a named subdirectory below the root."}
+{"id":"CP043","command":"git add -p","expect":"allow","policy":"none","class":"patch-add","why":"Interactive staging is explicitly allowed."}
+{"id":"CP044","command":"git commit -m 'use --force wording in docs'","expect":"allow","policy":"none","class":"force-word-message","why":"The word force appears only in the commit message."}
+{"id":"CP045","command":"git add all.txt","expect":"allow","policy":"none","class":"literal-all-filename","why":"Adds a named file whose name happens to be all.txt."}
+{"id":"CP046","command":"git commit -m 'already staged changes'","expect":"allow","policy":"none","class":"commit-staged-only","why":"Commits what is already staged without blanket staging."}
+{"id":"CP047","command":"git config core.hooksPath .githooks","expect":"allow","policy":"none","class":"approved-hookspath","why":"Sets hooksPath to the approved location."}
+{"id":"CP048","command":"cat .githooks/pre-commit","expect":"allow","policy":"none","class":"read-hook","why":"Only reads hook contents."}
+{"id":"CP049","command":"sed -n '1,40p' .husky/pre-commit","expect":"allow","policy":"none","class":"inspect-hook","why":"Inspects a hook file without disabling it."}
+{"id":"CP050","command":"printf '# comment\\n' >> .githooks/pre-commit","expect":"allow","policy":"none","class":"edit-hook","why":"Editing a hook file by name is allowed."}
+{"id":"CP051","command":"git reset --soft HEAD~1","expect":"allow","policy":"none","class":"soft-reset","why":"Soft reset does not discard work."}
+{"id":"CP052","command":"git reset HEAD src/app.js","expect":"allow","policy":"none","class":"unstage-file","why":"Resets a named file in the index only."}
+{"id":"CP053","command":"git clean -nfd","expect":"allow","policy":"none","class":"clean-dry-run","why":"Dry-run clean only reports actions."}
+{"id":"CP054","command":"git restore src/config.json","expect":"allow","policy":"none","class":"restore-file","why":"Restores a specific named file."}
+{"id":"CP055","command":"git push origin feature/login","expect":"allow","policy":"none","class":"normal-push","why":"Regular push without force."}
+{"id":"CP056","command":"git branch -d topic-docs","expect":"allow","policy":"none","class":"safe-branch-delete","why":"Non-force branch deletion is allowed."}
+{"id":"CP057","command":"git branch -M main","expect":"allow","policy":"none","class":"rename-branch","why":"Branch rename is explicitly allowed."}
+{"id":"CP058","command":"git gc && git prune","expect":"allow","policy":"none","class":"maintenance","why":"Repository maintenance commands are allowed."}
+{"id":"CP059","command":"git tag -d old-v1","expect":"allow","policy":"none","class":"delete-tag","why":"Deleting tags is allowed."}
+{"id":"CP060","command":"git stash push -m 'wip parser'","expect":"allow","policy":"none","class":"stash-push","why":"Creating a stash preserves work."}
+{"id":"CP061","command":"git stash pop","expect":"allow","policy":"none","class":"stash-pop","why":"Applying a stash is allowed."}
+{"id":"CP062","command":"git rebase origin/main","expect":"allow","policy":"none","class":"rebase","why":"Normal rebase is allowed."}
+{"id":"CP063","command":"git merge feature/api-cleanup","expect":"allow","policy":"none","class":"merge","why":"Normal merge is allowed."}
+{"id":"CP064","command":"git log --all --oneline | head","expect":"allow","policy":"none","class":"log-all","why":"Reads history only."}
+{"id":"CP065","command":"echo 'git push --force origin main'","expect":"allow","policy":"none","class":"printed-force-push","why":"Only prints text and performs no git action."}
+{"id":"CP066","command":"# git add .\ngit status --short","expect":"allow","policy":"none","class":"commented-forbidden","why":"Forbidden text is present only in a comment."}
+{"id":"CP067","command":"find src -name '*.js' -print","expect":"allow","policy":"none","class":"find-files","why":"Lists files without changing git state."}
+{"id":"CP068","command":"python3 -c \"print('git commit -am demo')\"","expect":"allow","policy":"none","class":"printed-command","why":"Prints a command string rather than executing it."}
+{"id":"CP069","command":"git add docs/readme.md docs/usage.md","expect":"allow","policy":"none","class":"multiple-named-files","why":"Stages explicit named files only."}
+{"id":"CP070","command":"files='src/app.js src/util.js'; git add $files","expect":"allow","policy":"none","class":"variable-named-files","why":"Variable expands to specific file names."}
+{"id":"CP071","command":"git diff --cached","expect":"allow","policy":"none","class":"review-staged","why":"Only inspects staged changes."}
+{"id":"CP072","command":"timeout 30 git push origin release","expect":"allow","policy":"none","class":"wrapped-push","why":"Wrapper command does not make the push unsafe."}
+{"id":"CP073","command":"nohup git status >/tmp/status.out 2>&1 &","expect":"allow","policy":"none","class":"background-status","why":"Runs a read-only status command."}
+{"id":"CP074","command":"bash -lc 'git add src/index.js && git commit -m fix'","expect":"allow","policy":"none","class":"subshell-named-add","why":"Nested shell stages only a named file."}
+{"id":"CP075","command":"git config --get core.hooksPath","expect":"allow","policy":"none","class":"read-hook-config","why":"Reads hook configuration."}
+{"id":"CP076","command":"rm -rf node_modules","expect":"allow","policy":"none","class":"remove-deps","why":"Deletes a dependency directory outside git policy scope."}
+{"id":"CP077","command":"git show HEAD:.githooks/pre-commit","expect":"allow","policy":"none","class":"show-hook-history","why":"Reads a hook file from history."}
+{"id":"CP078","command":"git add src && git diff --cached --name-only","expect":"allow","policy":"none","class":"stage-subdir-review","why":"Stages a named subdirectory and reviews staged files."}
+{"id":"CP079","command":"git commit -m 'document +main force push syntax'","expect":"allow","policy":"none","class":"message-plus-refspec","why":"References force-push syntax only in commit text."}
+{"id":"CP080","command":"git restore --source=HEAD -- docs/readme.md","expect":"allow","policy":"none","class":"restore-named-doc","why":"Restores a specific named file rather than all changes."}

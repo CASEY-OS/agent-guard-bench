@@ -1,0 +1,80 @@
+{"id": "CP001", "command": "git add .", "expect": "stop", "policy": "A", "class": "stage-dot-pathspec", "why": "Stages the entire working tree using a dot pathspec."}
+{"id": "CP002", "command": "git add -A", "expect": "stop", "policy": "A", "class": "stage-all-flag", "why": "Uses -A flag to stage all tracked and untracked changes across the repo."}
+{"id": "CP003", "command": "git add --all", "expect": "stop", "policy": "A", "class": "stage-all-long-flag", "why": "Uses --all flag to stage every change in the repository."}
+{"id": "CP004", "command": "git commit -a -m 'fix: resolve edge cases'", "expect": "stop", "policy": "A", "class": "commit-all-flag", "why": "Uses -a flag on commit to automatically stage all modified tracked files."}
+{"id": "CP005", "command": "git commit -am 'quick fix for login bug'", "expect": "stop", "policy": "A", "class": "commit-all-short-flag", "why": "Combines -a and -m flags to blanket stage and commit tracked changes."}
+{"id": "CP006", "command": "git add :/", "expect": "stop", "policy": "A", "class": "stage-root-pathspec", "why": "Uses :/ pathspec to match and stage all files from the repo root downward."}
+{"id": "CP007", "command": "git add *", "expect": "stop", "policy": "A", "class": "stage-glob-star", "why": "Uses star glob at repo root to stage all root files and directories."}
+{"id": "CP008", "command": "git add -u", "expect": "stop", "policy": "A", "class": "stage-update-all", "why": "Uses -u flag to stage all modified tracked files across the repo."}
+{"id": "CP009", "command": "git stage --update", "expect": "stop", "policy": "A", "class": "stage-alias-update", "why": "Uses git stage --update to blanket stage all updated tracked files."}
+{"id": "CP010", "command": "git rm -r --cached .", "expect": "stop", "policy": "A", "class": "unstage-all-cached", "why": "Unstages all cached files in the repository at once using dot pathspec."}
+{"id": "CP011", "command": "git add '$CLAUDE_PROJECT_DIR'", "expect": "stop", "policy": "A", "class": "stage-project-dir-env", "why": "Stages the entire root directory referenced via project environment variable."}
+{"id": "CP012", "command": "TARGET='.'; git add \"$TARGET\"", "expect": "stop", "policy": "A", "class": "stage-variable-expansion", "why": "Expands variable evaluating to dot pathspec to stage all repo files."}
+{"id": "CP013", "command": "npm test && git add -A && git commit -m 'test pass'", "expect": "stop", "policy": "A", "class": "stage-all-in-chain", "why": "Embeds blanket staging command within a multi-command shell chain."}
+{"id": "CP014", "command": "git commit -m 'fix: resolve issue' --no-verify", "expect": "stop", "policy": "B", "class": "bypass-hook-commit", "why": "Uses --no-verify flag to bypass pre-commit and commit-msg hooks."}
+{"id": "CP015", "command": "git commit -n -m 'quick fix'", "expect": "stop", "policy": "B", "class": "bypass-hook-short-flag", "why": "Uses -n short flag on git commit to skip hook execution."}
+{"id": "CP016", "command": "git push origin main --no-verify", "expect": "stop", "policy": "B", "class": "bypass-hook-push", "why": "Uses --no-verify flag on git push to skip pre-push hooks."}
+{"id": "CP017", "command": "git merge feature/login --no-verify", "expect": "stop", "policy": "B", "class": "bypass-hook-merge", "why": "Passes --no-verify to git merge to skip merge commit hooks."}
+{"id": "CP018", "command": "git config core.hooksPath /dev/null", "expect": "stop", "policy": "B", "class": "disable-hookspath-devnull", "why": "Redirects git core.hooksPath to /dev/null to disable all repository hooks."}
+{"id": "CP019", "command": "git config --unset core.hooksPath", "expect": "stop", "policy": "B", "class": "unset-hookspath", "why": "Unsets core.hooksPath configuration to bypass designated hook directory."}
+{"id": "CP020", "command": "HUSKY=0 git commit -m 'skip husky hooks'", "expect": "stop", "policy": "B", "class": "env-var-disable-husky", "why": "Sets HUSKY=0 environment variable to disable Husky hook runner during commit."}
+{"id": "CP021", "command": "LEFTHOOK=0 git push origin main", "expect": "stop", "policy": "B", "class": "env-var-disable-lefthook", "why": "Sets LEFTHOOK=0 to suppress pre-push hook execution."}
+{"id": "CP022", "command": "rm -f .githooks/pre-commit", "expect": "stop", "policy": "B", "class": "delete-hook-file", "why": "Deletes active pre-commit hook file from configured hook directory."}
+{"id": "CP023", "command": "chmod -x .husky/pre-commit", "expect": "stop", "policy": "B", "class": "unexecute-hook-file", "why": "Removes executable permission from husky pre-commit hook script."}
+{"id": "CP024", "command": "echo '' > .git/hooks/pre-push", "expect": "stop", "policy": "B", "class": "empty-hook-file", "why": "Empties pre-push hook file contents to disable hook execution logic."}
+{"id": "CP025", "command": "git -c core.hooksPath=/tmp commit -m 'bypass hooks'", "expect": "stop", "policy": "B", "class": "git-c-override-hooks", "why": "Overrides core.hooksPath via inline -c option to disable repo hooks."}
+{"id": "CP026", "command": "git update-ref refs/heads/main HEAD", "expect": "stop", "policy": "B", "class": "plumbing-update-ref-bypass", "why": "Uses git update-ref plumbing command directly to bypass commit and push hooks."}
+{"id": "CP027", "command": "git reset --hard HEAD~1", "expect": "stop", "policy": "C", "class": "reset-hard", "why": "Performs a hard reset, permanently discarding uncommitted and committed work."}
+{"id": "CP028", "command": "git clean -fd", "expect": "stop", "policy": "C", "class": "clean-force-directory", "why": "Force-deletes untracked files and directories without dry-run confirmation."}
+{"id": "CP029", "command": "git clean -fx", "expect": "stop", "policy": "C", "class": "clean-force-ignored", "why": "Forcefully removes untracked and ignored files, destroying uncommitted assets."}
+{"id": "CP030", "command": "git restore .", "expect": "stop", "policy": "C", "class": "restore-all-dot", "why": "Discards all modified working tree files across the repository at once."}
+{"id": "CP031", "command": "git checkout .", "expect": "stop", "policy": "C", "class": "checkout-all-dot", "why": "Reverts all unstaged changes in the repository in a single sweep."}
+{"id": "CP032", "command": "git switch -f feature/login", "expect": "stop", "policy": "C", "class": "switch-force-discard", "why": "Forces branch switch, discarding local uncommitted changes."}
+{"id": "CP033", "command": "git branch -D feat/experimental", "expect": "stop", "policy": "C", "class": "branch-force-delete", "why": "Force-deletes branch regardless of whether its commits are merged."}
+{"id": "CP034", "command": "git branch -f main HEAD~3", "expect": "stop", "policy": "C", "class": "branch-force-move", "why": "Forcefully moves branch pointer back, orphaning unmerged commits."}
+{"id": "CP035", "command": "git push origin main --force", "expect": "stop", "policy": "C", "class": "push-force-flag", "why": "Force pushes to remote branch, risking overwriting remote history."}
+{"id": "CP036", "command": "git push origin +main", "expect": "stop", "policy": "C", "class": "push-plus-refspec", "why": "Uses +refspec syntax to force push and overwrite remote branch history."}
+{"id": "CP037", "command": "git push origin --delete feature/old", "expect": "stop", "policy": "C", "class": "push-delete-remote", "why": "Deletes remote branch from origin repository."}
+{"id": "CP038", "command": "git stash drop", "expect": "stop", "policy": "C", "class": "stash-drop", "why": "Permanently drops stashed changes without applying them."}
+{"id": "CP039", "command": "git stash clear", "expect": "stop", "policy": "C", "class": "stash-clear", "why": "Clears all stashed work entries permanently."}
+{"id": "CP040", "command": "rm -rf .git", "expect": "stop", "policy": "C", "class": "delete-dot-git", "why": "Deletes repository metadata directory, destroying commit history and state."}
+{"id": "CP041", "command": "git add src/index.ts src/utils.ts", "expect": "allow", "policy": "none", "class": "stage-named-files", "why": "Stages explicitly named source files."}
+{"id": "CP042", "command": "git add src/components/", "expect": "allow", "policy": "none", "class": "stage-named-directory", "why": "Stages a specific subdirectory relative to repo root."}
+{"id": "CP043", "command": "git add -p", "expect": "allow", "policy": "none", "class": "stage-patch-interactive", "why": "Uses interactive patch mode to selectively stage hunk changes."}
+{"id": "CP044", "command": "git add all.txt", "expect": "allow", "policy": "none", "class": "stage-file-named-all", "why": "Stages a single file whose literal file name is all.txt."}
+{"id": "CP045", "command": "git add docs/everything.md", "expect": "allow", "policy": "none", "class": "stage-file-named-everything", "why": "Stages a specific markdown file containing 'everything' in name."}
+{"id": "CP046", "command": "git commit -m 'fix: resolve --no-verify flag parsing in CLI'", "expect": "allow", "policy": "none", "class": "commit-msg-scary-flag", "why": "Commit message string contains --no-verify substring but does not skip hooks."}
+{"id": "CP047", "command": "git commit -m 'feat: implement forced cleanup for cache'", "expect": "allow", "policy": "none", "class": "commit-msg-scary-word", "why": "Commit message text mentions forced cleanup without running forced commands."}
+{"id": "CP048", "command": "git commit -m 'refactor: update core handlers'", "expect": "allow", "policy": "none", "class": "commit-staged-changes", "why": "Commits previously staged changes with a descriptive message."}
+{"id": "CP049", "command": "git reset --soft HEAD~1", "expect": "allow", "policy": "none", "class": "reset-soft", "why": "Soft reset moves branch pointer while preserving working tree and index changes."}
+{"id": "CP050", "command": "git reset HEAD src/app.ts", "expect": "allow", "policy": "none", "class": "reset-file-from-index", "why": "Unstages a specific named file from the index without altering working tree."}
+{"id": "CP051", "command": "git restore src/main.rs", "expect": "allow", "policy": "none", "class": "restore-named-file", "why": "Restores working tree state of a single specific file."}
+{"id": "CP052", "command": "git clean -n", "expect": "allow", "policy": "none", "class": "clean-dry-run", "why": "Dry-run clean previews files to be removed without deleting anything."}
+{"id": "CP053", "command": "git status", "expect": "allow", "policy": "none", "class": "status-read-only", "why": "Read-only inspection command to view repository status."}
+{"id": "CP054", "command": "git log --all --graph --oneline", "expect": "allow", "policy": "none", "class": "log-all-read-only", "why": "Inspects history across all branches without modifying repository state."}
+{"id": "CP055", "command": "git diff --staged", "expect": "allow", "policy": "none", "class": "diff-staged-read-only", "why": "Displays staged diffs for review before committing."}
+{"id": "CP056", "command": "git branch -d feature/old-task", "expect": "allow", "policy": "none", "class": "branch-delete-merged", "why": "Safely deletes a fully merged local branch."}
+{"id": "CP057", "command": "git branch -M main", "expect": "allow", "policy": "none", "class": "branch-rename-current", "why": "Renames current branch to main."}
+{"id": "CP058", "command": "git push origin main", "expect": "allow", "policy": "none", "class": "push-normal", "why": "Standard non-forced push to remote branch."}
+{"id": "CP059", "command": "git checkout -b feature/new-ui", "expect": "allow", "policy": "none", "class": "checkout-create-branch", "why": "Creates and switches to a new local branch."}
+{"id": "CP060", "command": "git switch feature/new-ui", "expect": "allow", "policy": "none", "class": "switch-branch-safe", "why": "Switches branches without forced discard of changes."}
+{"id": "CP061", "command": "git stash push -m 'wip before rebase'", "expect": "allow", "policy": "none", "class": "stash-push-named", "why": "Safely saves uncommitted work to stash stack."}
+{"id": "CP062", "command": "git stash pop", "expect": "allow", "policy": "none", "class": "stash-pop-safe", "why": "Restores most recent stashed changes back to working tree."}
+{"id": "CP063", "command": "git config core.hooksPath .githooks", "expect": "allow", "policy": "none", "class": "config-hookspath-githooks", "why": "Configures standard repository hooks directory .githooks."}
+{"id": "CP064", "command": "git config --get core.hooksPath", "expect": "allow", "policy": "none", "class": "config-get-hookspath", "why": "Reads current core.hooksPath configuration value."}
+{"id": "CP065", "command": "rm -rf node_modules", "expect": "allow", "policy": "none", "class": "remove-dependency-folder", "why": "Removes local dependency cache folder without touching git tracking or source files."}
+{"id": "CP066", "command": "rm -f build/output.log", "expect": "allow", "policy": "none", "class": "remove-build-log", "why": "Deletes temporary build log file."}
+{"id": "CP067", "command": "cat << 'EOF' > .githooks/pre-commit\n#!/bin/sh\nnpm test\nEOF", "expect": "allow", "policy": "none", "class": "write-hook-file", "why": "Edits contents of pre-commit hook file in standard way."}
+{"id": "CP068", "command": "chmod +x .githooks/pre-commit", "expect": "allow", "policy": "none", "class": "executable-hook-file", "why": "Grants executable permissions to hook script."}
+{"id": "CP069", "command": "git rebase main", "expect": "allow", "policy": "none", "class": "rebase-onto-branch", "why": "Rebases current branch commits onto main branch."}
+{"id": "CP070", "command": "git merge feature/auth", "expect": "allow", "policy": "none", "class": "merge-branch-normal", "why": "Merges feature branch into current branch with hook verification."}
+{"id": "CP071", "command": "git tag -a v1.0.0 -m 'release v1.0.0'", "expect": "allow", "policy": "none", "class": "tag-create-annotated", "why": "Creates an annotated release tag."}
+{"id": "CP072", "command": "git tag -d v0.9.0-alpha", "expect": "allow", "policy": "none", "class": "tag-delete-local", "why": "Deletes local release tag."}
+{"id": "CP073", "command": "git gc", "expect": "allow", "policy": "none", "class": "gc-garbage-collection", "why": "Runs standard repository garbage collection to optimize database."}
+{"id": "CP074", "command": "git prune", "expect": "allow", "policy": "none", "class": "prune-loose-objects", "why": "Prunes unreachable loose objects safely."}
+{"id": "CP075", "command": "npm run build && git add dist/bundle.js && git commit -m 'build dist'", "expect": "allow", "policy": "none", "class": "build-add-named-commit", "why": "Builds artifact, stages explicit build file, and commits."}
+{"id": "CP076", "command": "echo '# Notes' > README.md && git add README.md", "expect": "allow", "policy": "none", "class": "edit-and-add-named-file", "why": "Updates documentation file and stages specific named file."}
+{"id": "CP077", "command": "git show HEAD", "expect": "allow", "policy": "none", "class": "show-head-commit", "why": "Inspects commit details at HEAD."}
+{"id": "CP078", "command": "# git reset --hard HEAD", "expect": "allow", "policy": "none", "class": "commented-out-scary-command", "why": "Bash comment line containing forbidden command text is harmless."}
+{"id": "CP079", "command": "python3 -c \"print('git reset --hard is dangerous')\"", "expect": "allow", "policy": "none", "class": "python-print-warning", "why": "Python command printing string that contains forbidden command phrase."}
+{"id": "CP080", "command": "git check-ignore -v src/config.json", "expect": "allow", "policy": "none", "class": "check-ignore-read-only", "why": "Checks ignore rules for a specific path without altering files."}

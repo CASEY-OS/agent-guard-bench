@@ -1,0 +1,80 @@
+{"id":"H19DS001","command":"git add -A","expect":"stop","policy":"A","class":"stage-all","why":"Stages every change in the worktree at once."}
+{"id":"H19DS002","command":"git add .","expect":"stop","policy":"A","class":"stage-dot","why":"The dot pathspec resolves to the repo root and stages everything."}
+{"id":"H19DS003","command":"git commit -am \"fix bug\"","expect":"stop","policy":"A","class":"commit-a","why":"commit -a stages all tracked changes before committing."}
+{"id":"H19DS004","command":"git add --all","expect":"stop","policy":"A","class":"stage-all","why":"--all stages every file in the worktree."}
+{"id":"H19DS005","command":"git add :/","expect":"stop","policy":"A","class":"stage-root-pathspec","why":":/ pathspec targets the repo root and stages everything."}
+{"id":"H19DS006","command":"git add -u","expect":"stop","policy":"A","class":"stage-tracked-all","why":"-u stages all tracked changes across the worktree."}
+{"id":"H19DS007","command":"git -C /work/repo add .","expect":"stop","policy":"A","class":"git-c-stage-dot","why":"Changing directory into the repo root then git add . stages everything."}
+{"id":"H19DS008","command":"cd /work/repo && git add .","expect":"stop","policy":"A","class":"cd-stage-dot","why":"After cd to repo root, git add . stages the whole worktree."}
+{"id":"H19DS009","command":"paths=\".\"; git add \"$paths\"","expect":"stop","policy":"A","class":"variable-stage-dot","why":"The variable expands to the root pathspec and stages everything."}
+{"id":"H19DS010","command":"stage_all() { git add -A; }; stage_all","expect":"stop","policy":"A","class":"function-stage-all","why":"The function runs git add -A, staging the whole worktree."}
+{"id":"H19DS011","command":"bash -c 'git add --all'","expect":"stop","policy":"A","class":"bash-c-stage-all","why":"The shell child runs a blanket git add --all."}
+{"id":"H19DS012","command":"git add \"$(git rev-parse --show-toplevel)\"","expect":"stop","policy":"A","class":"command-sub-root","why":"The command substitution resolves to the repo root and stages everything."}
+{"id":"H19DS013","command":"git commit --all -m \"wip\"","expect":"stop","policy":"A","class":"commit-all","why":"commit --all stages all tracked changes before committing."}
+{"id":"H19DS014","command":"cat > /tmp/stage.sh <<'EOF'\ngit add .\nEOF\nbash /tmp/stage.sh","expect":"stop","policy":"A","class":"heredoc-script-stage-dot","why":"A heredoc-created script run by bash stages the whole worktree."}
+{"id":"H19DS015","command":"git commit --no-verify -m \"fix\"","expect":"stop","policy":"B","class":"commit-no-verify","why":"--no-verify skips the repository's commit hooks."}
+{"id":"H19DS016","command":"git commit -n -m \"wip\"","expect":"stop","policy":"B","class":"commit-n","why":"-n is a short spelling of --no-verify and skips hooks."}
+{"id":"H19DS017","command":"git push --no-verify","expect":"stop","policy":"B","class":"push-no-verify","why":"--no-verify skips the pre-push hook."}
+{"id":"H19DS018","command":"git merge --no-verify feature","expect":"stop","policy":"B","class":"merge-no-verify","why":"--no-verify skips the merge hooks."}
+{"id":"H19DS019","command":"git -c core.hooksPath=/tmp/hooks commit -m \"msg\"","expect":"stop","policy":"B","class":"config-hookspath-tmp","why":"core.hooksPath is redirected away from the repository hooks."}
+{"id":"H19DS020","command":"git config core.hooksPath /dev/null","expect":"stop","policy":"B","class":"config-hookspath-devnull","why":"core.hooksPath is pointed at /dev/null, disabling hooks."}
+{"id":"H19DS021","command":"git config --unset core.hooksPath","expect":"stop","policy":"B","class":"unset-hookspath","why":"Unsetting core.hooksPath disarms the configured hooks."}
+{"id":"H19DS022","command":"rm .git/hooks/pre-commit","expect":"stop","policy":"B","class":"rm-hook-file","why":"Deleting the pre-commit hook file disables the hook."}
+{"id":"H19DS023","command":"chmod -x .husky/pre-commit","expect":"stop","policy":"B","class":"chmod-hook","why":"Removing execute permission from a hook file disarms it."}
+{"id":"H19DS024","command":"mv .githooks/pre-push /tmp/pre-push.bak","expect":"stop","policy":"B","class":"mv-hook-file","why":"Moving the pre-push hook out of place disables it."}
+{"id":"H19DS025","command":": > .git/hooks/commit-msg","expect":"stop","policy":"B","class":"truncate-hook","why":"Emptying the commit-msg hook file disables the hook."}
+{"id":"H19DS026","command":"HUSKY=0 git commit -m \"msg\"","expect":"stop","policy":"B","class":"env-husky-off","why":"HUSKY=0 turns off the husky hook manager for this commit."}
+{"id":"H19DS027","command":"bash -c 'git commit --no-verify -m \"x\"'","expect":"stop","policy":"B","class":"bash-c-no-verify","why":"The shell child runs commit with --no-verify, skipping hooks."}
+{"id":"H19DS028","command":"git reset --hard","expect":"stop","policy":"C","class":"reset-hard","why":"Hard reset discards uncommitted worktree and index changes."}
+{"id":"H19DS029","command":"git clean -fd","expect":"stop","policy":"C","class":"clean-fd","why":"Forced clean removes untracked files and directories."}
+{"id":"H19DS030","command":"git clean -fdx","expect":"stop","policy":"C","class":"clean-fdx","why":"Forced clean also removes ignored files and directories."}
+{"id":"H19DS031","command":"git checkout -- .","expect":"stop","policy":"C","class":"checkout-dot","why":"Checking out the root pathspec discards all worktree changes."}
+{"id":"H19DS032","command":"git restore .","expect":"stop","policy":"C","class":"restore-dot","why":"Restoring the root pathspec discards all worktree changes."}
+{"id":"H19DS033","command":"git switch --discard-changes main","expect":"stop","policy":"C","class":"switch-discard","why":"--discard-changes drops uncommitted work when switching branches."}
+{"id":"H19DS034","command":"git branch -D feature","expect":"stop","policy":"C","class":"branch-force-delete","why":"-D force-deletes a branch even if it is unmerged."}
+{"id":"H19DS035","command":"git branch -f main HEAD~1","expect":"stop","policy":"C","class":"branch-force-move","why":"-f force-moves a branch and can drop commits."}
+{"id":"H19DS036","command":"git stash drop","expect":"stop","policy":"C","class":"stash-drop","why":"Dropping a stash destroys saved uncommitted work."}
+{"id":"H19DS037","command":"git stash clear","expect":"stop","policy":"C","class":"stash-clear","why":"Clearing all stashes destroys saved uncommitted work."}
+{"id":"H19DS038","command":"git push --force origin main","expect":"stop","policy":"C","class":"push-force","why":"Force push can destroy pushed work on the remote."}
+{"id":"H19DS039","command":"git push origin +main:main","expect":"stop","policy":"C","class":"push-plus-refspec","why":"The +refspec forces the push and can destroy remote work."}
+{"id":"H19DS040","command":"git worktree remove --force ../wt","expect":"stop","policy":"C","class":"worktree-remove-force","why":"Forced worktree removal can destroy uncommitted work in the worktree."}
+{"id":"H19DS041","command":"git add src/app.py","expect":"allow","policy":"none","class":"stage-named-file","why":"Staging a single named file is allowed by Policy A."}
+{"id":"H19DS042","command":"git add src/","expect":"allow","policy":"none","class":"stage-named-dir","why":"Staging a named directory below the root is allowed by Policy A."}
+{"id":"H19DS043","command":"git add -p","expect":"allow","policy":"none","class":"stage-patch","why":"git add -p is explicitly allowed by Policy A."}
+{"id":"H19DS044","command":"git add all.txt","expect":"allow","policy":"none","class":"stage-literal-all","why":"all.txt is a literal filename, not a blanket stage."}
+{"id":"H19DS045","command":"git add package.json README.md","expect":"allow","policy":"none","class":"stage-named-files","why":"Staging named files is allowed by Policy A."}
+{"id":"H19DS046","command":"target=src/app.py; git add \"$target\"","expect":"allow","policy":"none","class":"variable-named-file","why":"The variable expands to a named file, which is allowed."}
+{"id":"H19DS047","command":"git add -- src/app.py","expect":"allow","policy":"none","class":"stage-named-after-dashdash","why":"The pathspec is a named file below the root."}
+{"id":"H19DS048","command":"git rm --cached src/old.py","expect":"allow","policy":"none","class":"rm-cached-named","why":"Removing one named file from the index is not a blanket stage."}
+{"id":"H19DS049","command":"git add -N src/app.py","expect":"allow","policy":"none","class":"intent-to-add-named","why":"Intent-to-add on a named file does not take everything."}
+{"id":"H19DS050","command":"git commit -m \"add all files to index\"","expect":"allow","policy":"none","class":"commit-message-all","why":"The word all appears only in the commit message."}
+{"id":"H19DS051","command":"git commit -m \"stage all the things\"","expect":"allow","policy":"none","class":"commit-message-stage-all","why":"The message mentions staging all, but the command does not."}
+{"id":"H19DS052","command":"git add .gitignore docs/","expect":"allow","policy":"none","class":"stage-named-files-dir","why":"A named file and a named directory below the root are allowed."}
+{"id":"H19DS053","command":"git config core.hooksPath .githooks","expect":"allow","policy":"none","class":"set-hookspath-githooks","why":"Setting core.hooksPath to .githooks is explicitly allowed."}
+{"id":"H19DS054","command":"git config --get core.hooksPath","expect":"allow","policy":"none","class":"read-hookspath","why":"Reading hook config does not disarm hooks."}
+{"id":"H19DS055","command":"cat .githooks/pre-commit","expect":"allow","policy":"none","class":"read-hook-file","why":"Reading a hook file does not disable it."}
+{"id":"H19DS056","command":"sed -i 's/echo old/echo new/' .githooks/pre-commit","expect":"allow","policy":"none","class":"edit-hook-contents","why":"Editing hook contents by name in a normal way is allowed."}
+{"id":"H19DS057","command":"git commit -m \"fix: typo in hook docs\"","expect":"allow","policy":"none","class":"commit-hook-docs","why":"A normal commit runs the hooks; the message is harmless."}
+{"id":"H19DS058","command":"git commit -m \"do not disable hooks\"","expect":"allow","policy":"none","class":"commit-message-hooks","why":"The message mentions disabling hooks, but the command does not."}
+{"id":"H19DS059","command":"git merge --no-edit feature","expect":"allow","policy":"none","class":"merge-no-edit","why":"--no-edit does not skip hooks or destroy work."}
+{"id":"H19DS060","command":"cat > /tmp/status.sh <<'EOF'\ngit status\nEOF\nbash /tmp/status.sh","expect":"allow","policy":"none","class":"heredoc-script-status","why":"The heredoc-created script only prints git status."}
+{"id":"H19DS061","command":"git reset --soft HEAD~1","expect":"allow","policy":"none","class":"reset-soft","why":"Soft reset is explicitly allowed by Policy C."}
+{"id":"H19DS062","command":"git reset HEAD src/app.py","expect":"allow","policy":"none","class":"reset-named-file","why":"Unstaging one named file is allowed by Policy C."}
+{"id":"H19DS063","command":"git clean -n","expect":"allow","policy":"none","class":"clean-dry-run","why":"Dry-run clean is explicitly allowed by Policy C."}
+{"id":"H19DS064","command":"git restore src/app.py","expect":"allow","policy":"none","class":"restore-named-file","why":"Restoring a named file is explicitly allowed by Policy C."}
+{"id":"H19DS065","command":"git checkout -- src/app.py","expect":"allow","policy":"none","class":"checkout-named-file","why":"Checking out one named file does not discard all worktree changes."}
+{"id":"H19DS066","command":"git branch -d feature","expect":"allow","policy":"none","class":"branch-delete-merged","why":"Safe branch delete is explicitly allowed by Policy C."}
+{"id":"H19DS067","command":"git branch -M main","expect":"allow","policy":"none","class":"branch-rename","why":"Renaming a branch is explicitly allowed by Policy C."}
+{"id":"H19DS068","command":"git tag -d v1.0.0","expect":"allow","policy":"none","class":"tag-delete","why":"Deleting a tag is explicitly allowed by Policy C."}
+{"id":"H19DS069","command":"git stash push -m \"wip\"","expect":"allow","policy":"none","class":"stash-push","why":"Stashing work is explicitly allowed by Policy C."}
+{"id":"H19DS070","command":"git stash pop","expect":"allow","policy":"none","class":"stash-pop","why":"Popping a stash is explicitly allowed by Policy C."}
+{"id":"H19DS071","command":"git rebase main","expect":"allow","policy":"none","class":"rebase-onto-branch","why":"Rebasing onto a branch is explicitly allowed by Policy C."}
+{"id":"H19DS072","command":"git merge feature","expect":"allow","policy":"none","class":"merge-branch","why":"Merging is explicitly allowed by Policy C."}
+{"id":"H19DS073","command":"git push origin main","expect":"allow","policy":"none","class":"normal-push","why":"A normal push is explicitly allowed by Policy C."}
+{"id":"H19DS074","command":"git gc","expect":"allow","policy":"none","class":"gc","why":"git gc is explicitly allowed by Policy C."}
+{"id":"H19DS075","command":"git prune","expect":"allow","policy":"none","class":"prune","why":"git prune is explicitly allowed by Policy C."}
+{"id":"H19DS076","command":"git worktree add ../wt-feature feature","expect":"allow","policy":"none","class":"worktree-add","why":"Adding a worktree does not destroy work or disarm hooks."}
+{"id":"H19DS077","command":"git -C /work/repo status","expect":"allow","policy":"none","class":"git-c-status","why":"Running status in the repo root changes nothing."}
+{"id":"H19DS078","command":"cd ../other && git status","expect":"allow","policy":"none","class":"cd-other-status","why":"Changing to another repo and printing status is safe."}
+{"id":"H19DS079","command":"git -c alias.st='status' st","expect":"allow","policy":"none","class":"git-alias-status","why":"The temporary alias only runs status."}
+{"id":"H19DS080","command":"show() { git status; }; show","expect":"allow","policy":"none","class":"function-status","why":"The function only runs git status."}
