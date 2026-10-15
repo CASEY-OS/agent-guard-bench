@@ -1041,6 +1041,6 @@
    "sha256": "b603d71b1544683b696047659802289862fde97978043581e99c065c743d3844"
   }
  },
- "measured_at": "2026-10-14T19:24:46-0500",
+ "measured_at": "2026-10-14T20:15:14-0500",
  "what": "The live PreToolUse hook of the system this guard was ported into, scored on the same sets: each command sent as a Bash payload on stdin whose cwd is the bench's pinned root /work/repo (the process runs in an empty temp directory), judge off, no undo layer in that hook (an allow there is a plain allow). Deny or allow only. That hook acts only on the vendored guard's named-rule denies: a deny the guard gives because it could not read the command falls through to an allow there, by its own design."
 }
