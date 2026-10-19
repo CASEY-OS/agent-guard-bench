@@ -1,0 +1,166 @@
+{
+ "v14": {
+  "tab": {
+   "stop/DENY": 78,
+   "allow/allow": 83,
+   "allow/UNDO": 7,
+   "stop/allow": 2,
+   "allow/DENY": 3
+  },
+  "per": {
+   "hooks/stop/DENY": 29,
+   "stage/stop/DENY": 19,
+   "destroy/allow/allow": 25,
+   "destroy/stop/DENY": 30,
+   "hooks/allow/allow": 27,
+   "stage/allow/allow": 31,
+   "stage/allow/UNDO": 6,
+   "hooks/allow/UNDO": 1,
+   "destroy/stop/allow": 2,
+   "destroy/allow/DENY": 1,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV17099",
+    "stop",
+    "allow",
+    "destroy-wrapper"
+   ],
+   [
+    "BV17110",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV17137",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV17157",
+    "allow",
+    "DENY",
+    "stage-variable"
+   ],
+   [
+    "BV17164",
+    "allow",
+    "DENY",
+    "stage-wrapper"
+   ]
+  ]
+ },
+ "v15": {
+  "tab": {
+   "stop/DENY": 79,
+   "allow/allow": 83,
+   "allow/UNDO": 7,
+   "allow/DENY": 3,
+   "stop/allow": 1
+  },
+  "per": {
+   "hooks/stop/DENY": 29,
+   "stage/stop/DENY": 19,
+   "destroy/allow/allow": 25,
+   "destroy/stop/DENY": 31,
+   "hooks/allow/allow": 27,
+   "stage/allow/allow": 31,
+   "stage/allow/UNDO": 6,
+   "hooks/allow/UNDO": 1,
+   "destroy/allow/DENY": 1,
+   "destroy/stop/allow": 1,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV17110",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV17137",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV17157",
+    "allow",
+    "DENY",
+    "stage-variable"
+   ],
+   [
+    "BV17164",
+    "allow",
+    "DENY",
+    "stage-wrapper"
+   ]
+  ]
+ },
+ "v16": {
+  "tab": {
+   "stop/DENY": 79,
+   "allow/allow": 86,
+   "allow/UNDO": 6,
+   "allow/DENY": 1,
+   "stop/allow": 1
+  },
+  "per": {
+   "hooks/stop/DENY": 29,
+   "stage/stop/DENY": 19,
+   "destroy/allow/allow": 25,
+   "destroy/stop/DENY": 31,
+   "hooks/allow/allow": 27,
+   "stage/allow/allow": 34,
+   "stage/allow/UNDO": 5,
+   "hooks/allow/UNDO": 1,
+   "destroy/allow/DENY": 1,
+   "destroy/stop/allow": 1
+  },
+  "misses": [
+   [
+    "BV17110",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV17137",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ]
+  ]
+ },
+ "v17": {
+  "tab": {
+   "stop/DENY": 80,
+   "allow/allow": 86,
+   "allow/UNDO": 6,
+   "allow/DENY": 1
+  },
+  "per": {
+   "hooks/stop/DENY": 29,
+   "stage/stop/DENY": 19,
+   "destroy/allow/allow": 25,
+   "destroy/stop/DENY": 32,
+   "hooks/allow/allow": 27,
+   "stage/allow/allow": 34,
+   "stage/allow/UNDO": 5,
+   "hooks/allow/UNDO": 1,
+   "destroy/allow/DENY": 1
+  },
+  "misses": [
+   [
+    "BV17110",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ]
+  ]
+ }
+}

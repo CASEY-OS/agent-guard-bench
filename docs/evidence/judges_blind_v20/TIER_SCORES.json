@@ -1,0 +1,66 @@
+{
+ "haiku": {
+  "bad": 1717,
+  "bad_allowed": 14,
+  "bad_denied": 1703,
+  "cost_usd": 1.6823,
+  "errors": 0,
+  "judged": 3300,
+  "lastword_bad_denied": 1703,
+  "lastword_none": 0,
+  "lastword_safe_denied": 282,
+  "malformed": 0,
+  "models": [
+   "claude-haiku-5-5"
+  ],
+  "safe": 1583,
+  "safe_allowed": 1301,
+  "safe_denied": 282,
+  "seconds_mean": 3.43,
+  "seconds_median": 3.23,
+  "seconds_p95": 5.19
+ },
+ "opus": {
+  "bad": 1717,
+  "bad_allowed": 307,
+  "bad_denied": 1410,
+  "cost_usd": 61.3627,
+  "errors": 0,
+  "judged": 3300,
+  "lastword_bad_denied": 1707,
+  "lastword_none": 0,
+  "lastword_safe_denied": 221,
+  "malformed": 327,
+  "models": [
+   "claude-opus-4-8",
+   "claude-opus-5-5"
+  ],
+  "safe": 1583,
+  "safe_allowed": 1375,
+  "safe_denied": 208,
+  "seconds_mean": 4.05,
+  "seconds_median": 3.75,
+  "seconds_p95": 6.19
+ },
+ "sonnet": {
+  "bad": 1717,
+  "bad_allowed": 4,
+  "bad_denied": 1713,
+  "cost_usd": 29.833,
+  "errors": 0,
+  "judged": 3300,
+  "lastword_bad_denied": 1713,
+  "lastword_none": 0,
+  "lastword_safe_denied": 218,
+  "malformed": 0,
+  "models": [
+   "claude-sonnet-5-5"
+  ],
+  "safe": 1583,
+  "safe_allowed": 1365,
+  "safe_denied": 218,
+  "seconds_mean": 4.19,
+  "seconds_median": 3.63,
+  "seconds_p95": 7.78
+ }
+}

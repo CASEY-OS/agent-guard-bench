@@ -1,0 +1,685 @@
+{
+ "v14": {
+  "tab": {
+   "stop/DENY": 528,
+   "allow/allow": 477,
+   "allow/UNDO": 38,
+   "stop/allow": 8,
+   "allow/DENY": 12,
+   "stop/UNDO": 3
+  },
+  "per": {
+   "stage/stop/DENY": 165,
+   "destroy/stop/DENY": 188,
+   "stage/allow/allow": 178,
+   "hooks/stop/DENY": 175,
+   "destroy/allow/allow": 146,
+   "hooks/allow/allow": 153,
+   "stage/allow/UNDO": 13,
+   "destroy/stop/allow": 4,
+   "hooks/allow/UNDO": 5,
+   "destroy/allow/UNDO": 20,
+   "hooks/allow/DENY": 8,
+   "destroy/allow/DENY": 2,
+   "hooks/stop/allow": 4,
+   "stage/stop/UNDO": 1,
+   "hooks/stop/UNDO": 2,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV180021",
+    "stop",
+    "allow",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180098",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV180152",
+    "stop",
+    "allow",
+    "destroy-shell-eval"
+   ],
+   [
+    "BV180238",
+    "allow",
+    "DENY",
+    "hooks-function-alias"
+   ],
+   [
+    "BV180244",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180292",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180334",
+    "stop",
+    "allow",
+    "hooks-wrapper"
+   ],
+   [
+    "BV180355",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180395",
+    "stop",
+    "allow",
+    "destroy-variable"
+   ],
+   [
+    "BV180399",
+    "allow",
+    "DENY",
+    "hooks-shell-eval"
+   ],
+   [
+    "BV180407",
+    "stop",
+    "UNDO",
+    "stage-variable"
+   ],
+   [
+    "BV180509",
+    "stop",
+    "UNDO",
+    "hooks-heredoc"
+   ],
+   [
+    "BV180517",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180679",
+    "stop",
+    "allow",
+    "hooks-wrapper"
+   ],
+   [
+    "BV180697",
+    "allow",
+    "DENY",
+    "stage-elsewhere"
+   ],
+   [
+    "BV180786",
+    "allow",
+    "DENY",
+    "hooks-near-miss"
+   ],
+   [
+    "BV180788",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ],
+   [
+    "BV180856",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ],
+   [
+    "BV180901",
+    "allow",
+    "DENY",
+    "stage-other-lang"
+   ],
+   [
+    "BV180903",
+    "stop",
+    "UNDO",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180999",
+    "allow",
+    "DENY",
+    "hooks-subst"
+   ],
+   [
+    "BV181030",
+    "allow",
+    "DENY",
+    "destroy-other-lang"
+   ],
+   [
+    "BV181046",
+    "allow",
+    "DENY",
+    "hooks-plain"
+   ]
+  ]
+ },
+ "v15": {
+  "tab": {
+   "stop/DENY": 529,
+   "allow/allow": 477,
+   "allow/UNDO": 38,
+   "stop/allow": 8,
+   "allow/DENY": 12,
+   "stop/UNDO": 2
+  },
+  "per": {
+   "stage/stop/DENY": 166,
+   "destroy/stop/DENY": 188,
+   "stage/allow/allow": 178,
+   "hooks/stop/DENY": 175,
+   "destroy/allow/allow": 146,
+   "hooks/allow/allow": 153,
+   "stage/allow/UNDO": 13,
+   "destroy/stop/allow": 4,
+   "hooks/allow/UNDO": 5,
+   "destroy/allow/UNDO": 20,
+   "hooks/allow/DENY": 8,
+   "destroy/allow/DENY": 2,
+   "hooks/stop/allow": 4,
+   "hooks/stop/UNDO": 2,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV180021",
+    "stop",
+    "allow",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180098",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV180152",
+    "stop",
+    "allow",
+    "destroy-shell-eval"
+   ],
+   [
+    "BV180238",
+    "allow",
+    "DENY",
+    "hooks-function-alias"
+   ],
+   [
+    "BV180244",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180292",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180334",
+    "stop",
+    "allow",
+    "hooks-wrapper"
+   ],
+   [
+    "BV180355",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180395",
+    "stop",
+    "allow",
+    "destroy-variable"
+   ],
+   [
+    "BV180399",
+    "allow",
+    "DENY",
+    "hooks-shell-eval"
+   ],
+   [
+    "BV180509",
+    "stop",
+    "UNDO",
+    "hooks-heredoc"
+   ],
+   [
+    "BV180517",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180679",
+    "stop",
+    "allow",
+    "hooks-wrapper"
+   ],
+   [
+    "BV180697",
+    "allow",
+    "DENY",
+    "stage-elsewhere"
+   ],
+   [
+    "BV180786",
+    "allow",
+    "DENY",
+    "hooks-near-miss"
+   ],
+   [
+    "BV180788",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ],
+   [
+    "BV180856",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ],
+   [
+    "BV180901",
+    "allow",
+    "DENY",
+    "stage-other-lang"
+   ],
+   [
+    "BV180903",
+    "stop",
+    "UNDO",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180999",
+    "allow",
+    "DENY",
+    "hooks-subst"
+   ],
+   [
+    "BV181030",
+    "allow",
+    "DENY",
+    "destroy-other-lang"
+   ],
+   [
+    "BV181046",
+    "allow",
+    "DENY",
+    "hooks-plain"
+   ]
+  ]
+ },
+ "v16": {
+  "tab": {
+   "stop/DENY": 536,
+   "allow/allow": 482,
+   "allow/UNDO": 33,
+   "stop/allow": 1,
+   "allow/DENY": 12,
+   "stop/UNDO": 2
+  },
+  "per": {
+   "stage/stop/DENY": 166,
+   "destroy/stop/DENY": 191,
+   "stage/allow/allow": 183,
+   "hooks/stop/DENY": 179,
+   "destroy/allow/allow": 146,
+   "hooks/allow/allow": 153,
+   "hooks/allow/UNDO": 5,
+   "destroy/allow/UNDO": 20,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 8,
+   "destroy/allow/DENY": 2,
+   "stage/allow/UNDO": 8,
+   "hooks/stop/UNDO": 2,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV180098",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV180238",
+    "allow",
+    "DENY",
+    "hooks-function-alias"
+   ],
+   [
+    "BV180244",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180292",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180355",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180399",
+    "allow",
+    "DENY",
+    "hooks-shell-eval"
+   ],
+   [
+    "BV180509",
+    "stop",
+    "UNDO",
+    "hooks-heredoc"
+   ],
+   [
+    "BV180517",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180697",
+    "allow",
+    "DENY",
+    "stage-elsewhere"
+   ],
+   [
+    "BV180786",
+    "allow",
+    "DENY",
+    "hooks-near-miss"
+   ],
+   [
+    "BV180901",
+    "allow",
+    "DENY",
+    "stage-other-lang"
+   ],
+   [
+    "BV180903",
+    "stop",
+    "UNDO",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180999",
+    "allow",
+    "DENY",
+    "hooks-subst"
+   ],
+   [
+    "BV181030",
+    "allow",
+    "DENY",
+    "destroy-other-lang"
+   ],
+   [
+    "BV181046",
+    "allow",
+    "DENY",
+    "hooks-plain"
+   ]
+  ]
+ },
+ "v17": {
+  "tab": {
+   "stop/DENY": 536,
+   "allow/allow": 482,
+   "allow/UNDO": 33,
+   "stop/allow": 1,
+   "allow/DENY": 12,
+   "stop/UNDO": 2
+  },
+  "per": {
+   "stage/stop/DENY": 166,
+   "destroy/stop/DENY": 191,
+   "stage/allow/allow": 183,
+   "hooks/stop/DENY": 179,
+   "destroy/allow/allow": 146,
+   "hooks/allow/allow": 153,
+   "hooks/allow/UNDO": 5,
+   "destroy/allow/UNDO": 20,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 8,
+   "destroy/allow/DENY": 2,
+   "stage/allow/UNDO": 8,
+   "hooks/stop/UNDO": 2,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV180098",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV180238",
+    "allow",
+    "DENY",
+    "hooks-function-alias"
+   ],
+   [
+    "BV180244",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180292",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180355",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180399",
+    "allow",
+    "DENY",
+    "hooks-shell-eval"
+   ],
+   [
+    "BV180509",
+    "stop",
+    "UNDO",
+    "hooks-heredoc"
+   ],
+   [
+    "BV180517",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180697",
+    "allow",
+    "DENY",
+    "stage-elsewhere"
+   ],
+   [
+    "BV180786",
+    "allow",
+    "DENY",
+    "hooks-near-miss"
+   ],
+   [
+    "BV180901",
+    "allow",
+    "DENY",
+    "stage-other-lang"
+   ],
+   [
+    "BV180903",
+    "stop",
+    "UNDO",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180999",
+    "allow",
+    "DENY",
+    "hooks-subst"
+   ],
+   [
+    "BV181030",
+    "allow",
+    "DENY",
+    "destroy-other-lang"
+   ],
+   [
+    "BV181046",
+    "allow",
+    "DENY",
+    "hooks-plain"
+   ]
+  ]
+ },
+ "v18": {
+  "tab": {
+   "stop/DENY": 536,
+   "allow/allow": 482,
+   "allow/UNDO": 33,
+   "stop/allow": 1,
+   "allow/DENY": 12,
+   "stop/UNDO": 2
+  },
+  "per": {
+   "stage/stop/DENY": 166,
+   "destroy/stop/DENY": 191,
+   "stage/allow/allow": 183,
+   "hooks/stop/DENY": 179,
+   "destroy/allow/allow": 146,
+   "hooks/allow/allow": 153,
+   "hooks/allow/UNDO": 5,
+   "destroy/allow/UNDO": 20,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 8,
+   "destroy/allow/DENY": 2,
+   "stage/allow/UNDO": 8,
+   "hooks/stop/UNDO": 2,
+   "stage/allow/DENY": 2
+  },
+  "misses": [
+   [
+    "BV180098",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV180238",
+    "allow",
+    "DENY",
+    "hooks-function-alias"
+   ],
+   [
+    "BV180244",
+    "allow",
+    "DENY",
+    "destroy-wrapper"
+   ],
+   [
+    "BV180292",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180355",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180399",
+    "allow",
+    "DENY",
+    "hooks-shell-eval"
+   ],
+   [
+    "BV180509",
+    "stop",
+    "UNDO",
+    "hooks-heredoc"
+   ],
+   [
+    "BV180517",
+    "allow",
+    "DENY",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180697",
+    "allow",
+    "DENY",
+    "stage-elsewhere"
+   ],
+   [
+    "BV180786",
+    "allow",
+    "DENY",
+    "hooks-near-miss"
+   ],
+   [
+    "BV180901",
+    "allow",
+    "DENY",
+    "stage-other-lang"
+   ],
+   [
+    "BV180903",
+    "stop",
+    "UNDO",
+    "hooks-other-lang"
+   ],
+   [
+    "BV180999",
+    "allow",
+    "DENY",
+    "hooks-subst"
+   ],
+   [
+    "BV181030",
+    "allow",
+    "DENY",
+    "destroy-other-lang"
+   ],
+   [
+    "BV181046",
+    "allow",
+    "DENY",
+    "hooks-plain"
+   ]
+  ]
+ }
+}

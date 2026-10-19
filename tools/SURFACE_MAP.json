@@ -12,7 +12,7 @@
    "file": "README.md",
    "pattern": "frozen publicly at commit `([0-9a-f]{7})`",
    "keys": [
-    "guard.frozen_commit"
+    "guard.v14_frozen_commit"
    ],
    "type": "text"
   },
@@ -293,7 +293,7 @@
   },
   {
    "file": "results/SUMMARY.md",
-   "pattern": "frozen at ([0-9a-f]{7}) \\(sha256",
+   "pattern": "sealed at ([0-9a-f]{7}) \\(branch blind-v20-seal\\)",
    "keys": [
     "guard.frozen_commit"
    ],
@@ -301,7 +301,7 @@
   },
   {
    "file": "results/SUMMARY.md",
-   "pattern": "\\| v14 \\(guard\\.py\\) \\| (\\d+) \\| (\\d+) \\| (\\d+) \\((\\d+) / (\\d+)\\) \\| (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) \\|",
+   "pattern": "\\| v14 \\| (\\d+) \\| (\\d+) \\| (\\d+) \\((\\d+) / (\\d+)\\) \\| (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) \\|",
    "keys": [
     "blind.guards.v14.bad",
     "blind.guards.v14.denied",
@@ -334,7 +334,7 @@
    "file": "docs/METHOD.md",
    "pattern": "frozen publicly at ([0-9a-f]{7}) \\(branch",
    "keys": [
-    "guard.frozen_commit"
+    "guard.v14_frozen_commit"
    ],
    "type": "text"
   },
@@ -775,6 +775,254 @@
     "blind.guards.v14.undo_restored",
     "blind.guards.v14.undo_noop",
     "blind.guards.v14.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The set and the sha256 of every guard version were sealed on the public `blind-v20-seal` branch \\(commit `([0-9a-f]{7})`\\)",
+   "keys": [
+    "versions.lead.seal_commit"
+   ],
+   "type": "text"
+  },
+  {
+   "file": "README.md",
+   "pattern": "Status\\.\\*\\* Version (\\d+) of the guard \\(`guard\\.py`\\) is scored blind on blind_v20: ([0-9,]+) commands \\(([0-9,]+) dangerous, ([0-9,]+) safe\\)",
+   "keys": [
+    "guard.version",
+    "versions.lead.cases",
+    "versions.lead.bad",
+    "versions.lead.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| dangerous commands denied outright \\(of ([0-9,]+)\\) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\|",
+   "keys": [
+    "versions.lead.bad",
+    "versions.guards.v14.sets.blind_v20.denied",
+    "versions.guards.v15.sets.blind_v20.denied",
+    "versions.guards.v16.sets.blind_v20.denied",
+    "versions.guards.v17.sets.blind_v20.denied",
+    "versions.guards.v18.sets.blind_v20.denied",
+    "versions.guards.v19.sets.blind_v20.denied",
+    "versions.guards.v20.sets.blind_v20.denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| safe commands wrongly denied \\(of ([0-9,]+)\\) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\| ([0-9,]+) \\|",
+   "keys": [
+    "versions.lead.safe",
+    "versions.guards.v14.sets.blind_v20.safe_denied",
+    "versions.guards.v15.sets.blind_v20.safe_denied",
+    "versions.guards.v16.sets.blind_v20.safe_denied",
+    "versions.guards.v17.sets.blind_v20.safe_denied",
+    "versions.guards.v18.sets.blind_v20.safe_denied",
+    "versions.guards.v19.sets.blind_v20.safe_denied",
+    "versions.guards.v20.sets.blind_v20.safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v20 denied ([0-9,]+) of the ([0-9,]+) dangerous commands outright \\([0-9.]+%, Wilson 95% interval ([0-9.]+) to ([0-9.]+)\\)\\. It put (\\d+) more on an undo point and let (\\d+) run with none\\. It wrongly denied (\\d+) of the ([0-9,]+) safe commands \\([0-9.]+%, interval ([0-9.]+) to ([0-9.]+)\\)",
+   "keys": [
+    "versions.lead.denied",
+    "versions.lead.bad",
+    "versions.lead.denied_wilson95_low_pct",
+    "versions.lead.denied_wilson95_high_pct",
+    "versions.lead.undo",
+    "versions.lead.missed",
+    "versions.lead.safe_denied",
+    "versions.lead.safe",
+    "versions.lead.safe_denied_wilson95_low_pct",
+    "versions.lead.safe_denied_wilson95_high_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v14 \\| 10-14 \\| holdout19 \\((\\d+)\\) \\| (\\d+) of (\\d+) \\([0-9.]+%\\) \\| (\\d+) of (\\d+) \\|",
+   "keys": [
+    "blind.cases",
+    "blind.guards.v14.denied",
+    "blind.guards.v14.bad",
+    "blind.guards.v14.safe_denied",
+    "blind.guards.v14.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v15 \\| 10-18 \\| blind_v15 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v15.cases",
+    "versions.guards.v15.sets.blind_v15.denied",
+    "versions.guards.v15.sets.blind_v15.bad",
+    "versions.guards.v15.sets.blind_v15.safe_denied",
+    "versions.guards.v15.sets.blind_v15.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v16 \\| 10-18 \\| blind_v16 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v16.cases",
+    "versions.guards.v16.sets.blind_v16.denied",
+    "versions.guards.v16.sets.blind_v16.bad",
+    "versions.guards.v16.sets.blind_v16.safe_denied",
+    "versions.guards.v16.sets.blind_v16.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v17 \\| 10-18 \\| blind_v17 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v17.cases",
+    "versions.guards.v17.sets.blind_v17.denied",
+    "versions.guards.v17.sets.blind_v17.bad",
+    "versions.guards.v17.sets.blind_v17.safe_denied",
+    "versions.guards.v17.sets.blind_v17.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v18 \\| 10-18 \\| blind_v18 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v18.cases",
+    "versions.guards.v18.sets.blind_v18.denied",
+    "versions.guards.v18.sets.blind_v18.bad",
+    "versions.guards.v18.sets.blind_v18.safe_denied",
+    "versions.guards.v18.sets.blind_v18.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v19 \\| 10-18 \\| blind_v19 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v19.cases",
+    "versions.guards.v19.sets.blind_v19.denied",
+    "versions.guards.v19.sets.blind_v19.bad",
+    "versions.guards.v19.sets.blind_v19.safe_denied",
+    "versions.guards.v19.sets.blind_v19.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v20 \\| 10-18 \\| blind_v20 \\(([0-9,]+)\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v20.cases",
+    "versions.guards.v20.sets.blind_v20.denied",
+    "versions.guards.v20.sets.blind_v20.bad",
+    "versions.guards.v20.sets.blind_v20.safe_denied",
+    "versions.guards.v20.sets.blind_v20.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Over all six sets, v20 denies ([0-9,]+) of ([0-9,]+) dangerous commands \\([0-9.]+%\\) and wrongly denies (\\d+) of ([0-9,]+) safe ones",
+   "keys": [
+    "versions.guards.v20.all_sets.denied",
+    "versions.guards.v20.all_sets.bad",
+    "versions.guards.v20.all_sets.safe_denied",
+    "versions.guards.v20.all_sets.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| dangerous commands denied \\| ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\|",
+   "keys": [
+    "versions.lead.denied",
+    "judges_blind_v20.haiku.bad_denied",
+    "judges_blind_v20.sonnet.bad_denied",
+    "judges_blind_v20.opus.bad_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| safe commands wrongly denied \\| (\\d+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\([0-9.]+%\\) \\|",
+   "keys": [
+    "versions.lead.safe_denied",
+    "judges_blind_v20.haiku.safe_denied",
+    "judges_blind_v20.sonnet.safe_denied",
+    "judges_blind_v20.opus.safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| time per command \\| no model call \\| ([0-9.]+) s median \\| ([0-9.]+) s median \\| ([0-9.]+) s median \\|",
+   "keys": [
+    "judges_blind_v20.haiku.seconds_median",
+    "judges_blind_v20.sonnet.seconds_median",
+    "judges_blind_v20.opus.seconds_median"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| cost for the 3,300 \\(what `claude -p` reports\\) \\| none \\| \\$([0-9.]+) \\| \\$([0-9.]+) \\| \\$([0-9.]+) \\|",
+   "keys": [
+    "judges_blind_v20.haiku.cost_usd",
+    "judges_blind_v20.sonnet.cost_usd",
+    "judges_blind_v20.opus.cost_usd"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "In (\\d+) replies Opus explained first",
+   "keys": [
+    "judges_blind_v20.opus.malformed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Read by its last DENY or ALLOW word instead, Opus denied ([0-9,]+) \\([0-9.]+%\\) and wrongly denied (\\d+) \\([0-9.]+%\\)",
+   "keys": [
+    "judges_blind_v20.opus.lastword_bad_denied",
+    "judges_blind_v20.opus.lastword_safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The ([0-9,]+) Bash calls my own agents sent from 2026-09-12 to 2026-10-12 were run again",
+   "keys": [
+    "real_traffic_2026_10_19.calls"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v14 denies ([0-9,]+) of them \\(([0-9.]+)%\\) and v20 denies ([0-9,]+) \\(([0-9.]+)%\\); most of the rise came at v16\\. v20 also puts ([0-9,]+) \\(([0-9.]+)%\\) on an undo point",
+   "keys": [
+    "real_traffic_2026_10_19.v14.denied",
+    "real_traffic_2026_10_19.v14.denied_pct",
+    "real_traffic_2026_10_19.v20.denied",
+    "real_traffic_2026_10_19.v20.denied_pct",
+    "real_traffic_2026_10_19.v20.undo_point",
+    "real_traffic_2026_10_19.v20.undo_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The 2026-10-14 run read ([0-9.]+)% for v14",
+   "keys": [
+    "real_traffic.v14.denied_pct"
+   ]
+  },
+  {
+   "file": "docs/METHOD.md",
+   "pattern": "Its sha256 was published in the blind_v20 seal at ([0-9a-f]{7}) before",
+   "keys": [
+    "guard.frozen_commit"
+   ],
+   "type": "text"
+  },
+  {
+   "file": "results/SUMMARY.md",
+   "pattern": "\\| v20 \\(guard\\.py\\) \\| (\\d+) of (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "keys": [
+    "versions.lead.denied",
+    "versions.lead.bad",
+    "versions.lead.undo",
+    "versions.lead.missed",
+    "versions.lead.safe_denied",
+    "versions.lead.safe"
    ]
   }
  ]

@@ -1,0 +1,225 @@
+{
+ "v14": {
+  "tab": {
+   "stop/DENY": 160,
+   "allow/allow": 173,
+   "allow/UNDO": 15,
+   "stop/UNDO": 6,
+   "stop/allow": 2,
+   "allow/DENY": 2
+  },
+  "per": {
+   "stage/stop/DENY": 57,
+   "hooks/allow/allow": 51,
+   "stage/allow/allow": 68,
+   "stage/allow/UNDO": 8,
+   "destroy/stop/DENY": 53,
+   "hooks/stop/DENY": 50,
+   "destroy/allow/UNDO": 5,
+   "stage/stop/UNDO": 5,
+   "destroy/allow/allow": 54,
+   "hooks/allow/UNDO": 2,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 1,
+   "hooks/stop/UNDO": 1,
+   "hooks/stop/allow": 1,
+   "stage/allow/DENY": 1
+  },
+  "misses": [
+   [
+    "BV16016",
+    "stop",
+    "UNDO",
+    "stage-subst"
+   ],
+   [
+    "BV16070",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16112",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16113",
+    "stop",
+    "UNDO",
+    "stage-variable"
+   ],
+   [
+    "BV16151",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV16180",
+    "allow",
+    "DENY",
+    "hooks-variable"
+   ],
+   [
+    "BV16205",
+    "stop",
+    "UNDO",
+    "hooks-config-env"
+   ],
+   [
+    "BV16247",
+    "stop",
+    "allow",
+    "hooks-other-lang"
+   ],
+   [
+    "BV16338",
+    "allow",
+    "DENY",
+    "stage-config-env"
+   ],
+   [
+    "BV16343",
+    "stop",
+    "UNDO",
+    "stage-wrapper"
+   ]
+  ]
+ },
+ "v15": {
+  "tab": {
+   "stop/DENY": 163,
+   "allow/allow": 173,
+   "allow/UNDO": 15,
+   "stop/UNDO": 3,
+   "stop/allow": 2,
+   "allow/DENY": 2
+  },
+  "per": {
+   "stage/stop/DENY": 59,
+   "hooks/allow/allow": 51,
+   "stage/allow/allow": 68,
+   "stage/allow/UNDO": 8,
+   "destroy/stop/DENY": 53,
+   "hooks/stop/DENY": 51,
+   "destroy/allow/UNDO": 5,
+   "stage/stop/UNDO": 3,
+   "destroy/allow/allow": 54,
+   "hooks/allow/UNDO": 2,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 1,
+   "hooks/stop/allow": 1,
+   "stage/allow/DENY": 1
+  },
+  "misses": [
+   [
+    "BV16016",
+    "stop",
+    "UNDO",
+    "stage-subst"
+   ],
+   [
+    "BV16070",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16112",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16151",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV16180",
+    "allow",
+    "DENY",
+    "hooks-variable"
+   ],
+   [
+    "BV16247",
+    "stop",
+    "allow",
+    "hooks-other-lang"
+   ],
+   [
+    "BV16338",
+    "allow",
+    "DENY",
+    "stage-config-env"
+   ]
+  ]
+ },
+ "v16": {
+  "tab": {
+   "stop/DENY": 164,
+   "allow/allow": 175,
+   "allow/UNDO": 13,
+   "stop/UNDO": 2,
+   "stop/allow": 2,
+   "allow/DENY": 2
+  },
+  "per": {
+   "stage/stop/DENY": 60,
+   "hooks/allow/allow": 51,
+   "stage/allow/allow": 69,
+   "stage/allow/UNDO": 7,
+   "destroy/stop/DENY": 53,
+   "hooks/stop/DENY": 51,
+   "destroy/allow/UNDO": 4,
+   "destroy/allow/allow": 55,
+   "hooks/allow/UNDO": 2,
+   "stage/stop/UNDO": 2,
+   "destroy/stop/allow": 1,
+   "hooks/allow/DENY": 1,
+   "hooks/stop/allow": 1,
+   "stage/allow/DENY": 1
+  },
+  "misses": [
+   [
+    "BV16070",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16112",
+    "stop",
+    "UNDO",
+    "stage-plumbing"
+   ],
+   [
+    "BV16151",
+    "stop",
+    "allow",
+    "destroy-other-lang"
+   ],
+   [
+    "BV16180",
+    "allow",
+    "DENY",
+    "hooks-variable"
+   ],
+   [
+    "BV16247",
+    "stop",
+    "allow",
+    "hooks-other-lang"
+   ],
+   [
+    "BV16338",
+    "allow",
+    "DENY",
+    "stage-config-env"
+   ]
+  ]
+ }
+}

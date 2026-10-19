@@ -1,0 +1,3 @@
+n	before	after	why
+1624	stop	allow	cold review RULES_ALLOW: alias defined and used on one line is not expanded, plain commit (rule d)
+2862	stop	allow	cold review RULES_ALLOW: update-ref creates a new branch; the stop covers moving or deleting one (rule d)

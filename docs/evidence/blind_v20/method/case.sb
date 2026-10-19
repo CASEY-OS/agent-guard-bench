@@ -1,0 +1,48 @@
+(version 1)
+; CASE PROFILE (bv19 exec harness). Parameter RUN = the per-case run folder (real path, no symlink).
+(allow default)
+; 1. no network of any kind (inet, unix sockets, outbound and inbound)
+(deny network*)
+; 2. no writes anywhere except the run folder and three device nodes
+(deny file-write*)
+(allow file-write*
+  (subpath (param "RUN"))
+  (literal "/dev/null") (literal "/dev/tty") (literal "/dev/dtracehelper"))
+; 3. no Apple Events, no LaunchServices (blocks open-by-copy), no pasteboard
+(deny appleevent-send)
+(deny mach-lookup
+  (global-name "com.apple.coreservices.launchservicesd")
+  (global-name-prefix "com.apple.lsd.")
+  (global-name "com.apple.pasteboard.1"))
+; 4. no signals to anything outside this sandbox (blocks bash builtin kill, os.kill)
+(deny signal)
+(allow signal (target same-sandbox))
+; 5. exec allowlist: only the allowlisted programs' real binaries, git's own tree, and files in RUN
+(deny process-exec*)
+(allow process-exec*
+  (subpath (param "RUN"))
+  (subpath "/opt/homebrew/Cellar/git")
+  (literal "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/bin/python3.14")
+  (literal "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python")
+  (literal "/opt/homebrew/Cellar/node/26.3.0/bin/node")
+  (literal "/bin/sh") (literal "/bin/bash") (literal "/bin/zsh")
+  (literal "/bin/cat") (literal "/bin/rm") (literal "/bin/mv") (literal "/bin/cp") (literal "/bin/chmod")
+  (literal "/bin/ln") (literal "/bin/mkdir") (literal "/bin/ls") (literal "/bin/date") (literal "/bin/sleep")
+  (literal "/bin/echo") (literal "/bin/test") (literal "/bin/[")
+  (literal "/usr/bin/sed") (literal "/usr/bin/awk") (literal "/usr/bin/grep") (literal "/usr/bin/find")
+  (literal "/usr/bin/xargs") (literal "/usr/bin/touch") (literal "/usr/bin/env") (literal "/usr/bin/tr")
+  (literal "/usr/bin/base64") (literal "/usr/bin/xxd") (literal "/usr/bin/rev") (literal "/usr/bin/cut")
+  (literal "/usr/bin/head") (literal "/usr/bin/tail") (literal "/usr/bin/sort") (literal "/usr/bin/perl")
+  (regex #"^/usr/bin/perl5\.[0-9]+$") (literal "/usr/bin/ruby") (literal "/usr/bin/wc") (literal "/usr/bin/tee")
+  (literal "/usr/bin/nohup") (literal "/usr/bin/nice") (literal "/usr/bin/true") (literal "/usr/bin/false")
+  (literal "/usr/bin/printf") (literal "/usr/bin/basename") (literal "/usr/bin/dirname") (literal "/usr/bin/uname"))
+; 6. the named dangerous programs, denied by name as well (belt and braces), and unreadable so they cannot be copied into RUN
+(deny process-exec* (literal "/usr/bin/osascript") (literal "/usr/bin/open") (literal "/bin/launchctl")
+  (literal "/usr/bin/sudo") (literal "/usr/bin/su") (subpath "/usr/sbin") (literal "/usr/bin/defaults")
+  (literal "/usr/bin/security") (literal "/usr/bin/tccutil") (literal "/usr/bin/pkill") (literal "/usr/bin/killall")
+  (literal "/bin/kill"))
+(deny file-read-data (literal "/usr/bin/osascript") (literal "/usr/bin/open") (literal "/bin/launchctl")
+  (literal "/usr/bin/sudo") (literal "/usr/bin/su") (literal "/usr/bin/defaults") (literal "/usr/bin/security")
+  (literal "/usr/bin/tccutil") (literal "/usr/bin/pkill") (literal "/usr/bin/killall") (literal "/bin/kill"))
+; 7. his home is not readable from inside a case (the fixture needs none of it)
+(deny file-read-data (subpath (param "REALHOME")))

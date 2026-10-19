@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v13 (frozen copies in variants/), guard_v14
+Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v19 (frozen copies in variants/), guard_v20
 (guard.py, the real one), broken_guard (negative control for guard.py).
 Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"),
 v8_dev ("v8-"), v9_dev ("v9-"), v10_dev ("v10-"), v11_dev ("v11-"), v12_dev ("v12-"),
@@ -121,11 +121,22 @@ VARIANTS = [
     ("guard_v11", os.path.join(HERE, "variants", "guard_v11.py")),
     ("guard_v12", os.path.join(HERE, "variants", "guard_v12.py")),
     ("guard_v13", os.path.join(HERE, "variants", "guard_v13.py")),
-    ("guard_v14", os.path.join(HERE, "guard.py")),
+    ("guard_v14", os.path.join(HERE, "variants", "guard_v14.py")),
+    ("guard_v15", os.path.join(HERE, "variants", "guard_v15.py")),
+    ("guard_v16", os.path.join(HERE, "variants", "guard_v16.py")),
+    ("guard_v17", os.path.join(HERE, "variants", "guard_v17.py")),
+    ("guard_v18", os.path.join(HERE, "variants", "guard_v18.py")),
+    ("guard_v19", os.path.join(HERE, "variants", "guard_v19.py")),
+    ("guard_v20", os.path.join(HERE, "guard.py")),
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
 GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8", "guard_v9",
-          "guard_v10", "guard_v11", "guard_v12", "guard_v13", "guard_v14")
+          "guard_v10", "guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17",
+          "guard_v18", "guard_v19", "guard_v20")
+CUR = "guard_v20"            # guard.py. The sections and numbers labelled v14 (v13 to v14 changes, the judge replay, the
+                             # holdout19 label audit, the pooled holdout table) stay on the frozen variants/guard_v14.py
+CWD_GUARDS = ("guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17", "guard_v18",
+              "guard_v19", "guard_v20", "broken_guard")   # version 11 on: a fixture case's directory is the cwd
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -157,8 +168,14 @@ HOLDOUTS = ("holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6
             "incidents", "holdout19")
 BLIND = "holdout19"          # the newest set written after the current guard froze: the one blind result for v14
 OUTSIDE_DEV = "holdout18"    # outside models, development data for v14, blind for v13
-FROZEN_COMMIT = "e88a7d8"    # v14 frozen publicly (branch v14)
-FROZEN_SHA256 = "9f5d9f0b6c222d19268376bbb043e6dc7f312e8e735efd3a73b6031de8120b45"   # guard.py at e88a7d8
+FROZEN_COMMIT = "f4dccd0"    # v20: its sha256 sealed publicly on branch blind-v20-seal before blind_v20 was scored
+FROZEN_SHA256 = "1f16f4606e53999958f99f807946b60a1ba7806193bbe94e59ddce8f784dbbad"   # guard.py (v20) in that seal
+V14_FROZEN_COMMIT = "e88a7d8"   # v14 frozen publicly (branch v14); now variants/guard_v14.py, byte for byte
+V14_SHA256 = "9f5d9f0b6c222d19268376bbb043e6dc7f312e8e735efd3a73b6031de8120b45"
+# the locked blind sets of versions 15 to 20 (D505): each set's sha256 is checked against its LOCK.txt before scoring
+VERSION_SETS = tuple(("blind_v%d" % n, n) for n in range(15, 21))
+VERSION_GUARDS = tuple(("v%d" % k, "guard_v%d" % k, k) for k in range(14, 21))
+LEAD_SEAL = {"branch": "blind-v20-seal", "commit": "f4dccd0"}
 # holdout18's round 3 file (Gemini) was written from the Copilot copy of the prompt, so its ids are CP001 to CP080, the
 # same ids as round 2's copilot_cases.jsonl (SEAL_ROUND3.md on branch holdout18-seal says so). The case file is never
 # edited: the loader names those rows gemini:CP001 and so on. Any other id that two files of one set share stops the run.
@@ -969,19 +986,41 @@ def numbers_md_sections(N):
     L = []
     hdr = ("| guard | bad | denied | on an undo point (restored / changed nothing) | missed | safe | safe denied | "
            "safe on an undo point |", "|---|---:|---:|---|---:|---:|---:|---:|")
-    names = {"v14": "v14 (guard.py)", "v13": "v13", "v7": "v7", "naive_regex": "plain regex"}
+    names = {"v20": "v20 (guard.py; seen, not blind)", "v14": "v14", "v13": "v13", "v7": "v7", "naive_regex": "plain regex"}
+    vb = N.get("versions")
+    if vb and "lead" in vb:
+        ld = vb["lead"]
+        L += ["## The blind result: %s (from NUMBERS.json)" % _v(ld, "set"), "",
+              "Blind for every version v14 to v20: no writer saw a guard and no builder saw the set (v20 was finished while the "
+              "first rounds were written; README, \"A correction to the seal\"); sealed with every guard's sha256 on branch "
+              "%s (%s) before scoring. %s cases, %s dangerous and %s safe. Judge off. The sealed labels are the score of "
+              "record." % (_v(ld, "seal_branch"), _v(ld, "seal_commit"), _v(ld, "cases"), _v(ld, "bad"), _v(ld, "safe")), "",
+              "| guard | denied outright | on an undo point | missed | safe denied |", "|---|---:|---:|---:|---:|"]
+        for k in sorted(vb["guards"], key=lambda x: -int(x[1:])):
+            c = vb["guards"][k]["sets"].get(_v(ld, "set"))
+            if c:
+                L.append("| %s%s | %s of %s | %s | %s | %s of %s |" % (
+                    k, " (guard.py)" if k == "v20" else "", _v(c, "denied"), _v(c, "bad"), _v(c, "undo"), _v(c, "missed"),
+                    _v(c, "safe_denied"), _v(c, "safe")))
+        L.append("")
     if "blind" in N:
         b = N["blind"]
-        L += ["## The blind result: %s (from NUMBERS.json)" % b["set"], "",
-              "%s. %s cases. Judge off. The sealed labels are the score of record." % (b["status"], _v(b, "cases")), ""]
+        L += ["## The earlier blind result: %s, blind for v14 only (from NUMBERS.json)" % b["set"], "",
+              "%s. %s cases. Judge off. The sealed labels are the score of record. v15 to v20 were built after this set "
+              "was read, so their rows here are seen, not blind." % (b["status"], _v(b, "cases")), ""]
         L += list(hdr)
-        for k in ("v14", "v13", "v7", "naive_regex"):
-            L.append("| %s | %s |" % (names[k], _gcells(b["guards"][k])))
-        g = b["guards"]["v14"]
-        L += ["", "- v14 misses: %s." % (", ".join(_v(g, "missed_ids")) or "none"),
-              "- v14 safe commands denied: %s." % (", ".join(_v(g, "safe_denied_ids")) or "none"),
-              "- v14 bad commands on an undo point, each played in the write jail: %s." % (", ".join(_v(g, "undo_ids")) or "none"),
-              ""]
+        for k in ("v20", "v14", "v13", "v7", "naive_regex"):
+            if k in b["guards"]:
+                L.append("| %s | %s |" % (names[k], _gcells(b["guards"][k])))
+        L.append("")
+        for gk in ("v20", "v14"):
+            g = b["guards"].get(gk)
+            if g:
+                L += ["- %s misses: %s." % (gk, ", ".join(_v(g, "missed_ids")) or "none"),
+                      "- %s safe commands denied: %s." % (gk, ", ".join(_v(g, "safe_denied_ids")) or "none"),
+                      "- %s bad commands on an undo point, each played in the write jail: %s." % (
+                          gk, ", ".join(_v(g, "undo_ids")) or "none")]
+        L.append("")
     if "outside_dev" in N or "incidents" in N:
         L += ["## Development data for v14: holdout18 and the public incidents (from NUMBERS.json)", "",
               "| set | guard | bad | denied | on an undo point (restored / changed nothing) | missed | safe | safe denied | "
@@ -1089,13 +1128,157 @@ def write_numbers(N):
         fh.write("\n".join(M))
 
 
+def replay_v14_holdouts(rows):
+    """The holdout bad cases v14 allows on an undo point, played in the write jail through v14's own hook: a byte copy
+    of variants/guard_v14.py written as guard.py beside byte copies of undo.py and judge.py under mktemp, so it runs
+    exactly as it ran when it was guard.py. -> {set: [row, ...]} in the shape of the guard.py replay."""
+    import shutil
+    import tempfile
+    tmp = os.path.realpath(tempfile.mkdtemp(prefix="agb-v14-hook-"))
+    try:
+        hook_dir = os.path.join(tmp, "hook")
+        os.makedirs(hook_dir)
+        shutil.copyfile(os.path.join(HERE, "variants", "guard_v14.py"), os.path.join(hook_dir, "guard.py"))
+        for f in ("undo.py", "judge.py"):
+            shutil.copyfile(os.path.join(HERE, f), os.path.join(hook_dir, f))
+        import hashlib
+        assert hashlib.sha256(open(os.path.join(hook_dir, "guard.py"), "rb").read()).hexdigest() == V14_SHA256
+        rin, rout = os.path.join(tmp, "in.jsonl"), os.path.join(tmp, "out.json")
+        with open(rin, "w", encoding="utf-8") as fh:
+            for h, row in rows:
+                fh.write(json.dumps({"id": row["id"], "command": row["command"], "set": h}) + "\n")
+        subprocess.run([sys.executable, os.path.join(HERE, "undo_bench.py"), "--recoverable", rin, rout],
+                       capture_output=True, text=True, env=dict(os.environ, AGENT_GUARD_BENCH_HOOK=os.path.join(hook_dir, "guard.py")))
+        try:
+            raw = open(rout, encoding="utf-8").read().replace(hook_dir + os.sep, "")   # no path of this machine is kept
+            out = json.loads(raw)
+        except Exception:
+            out = {"rows": []}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    got = {(r.get("set"), r["id"]): r for r in out.get("rows", [])}
+    res = {}
+    for h, row in rows:
+        res.setdefault(h, []).append(got.get((h, row["id"]), {"id": row["id"], "verdict": "missing"}))
+    return res
+
+
+def wilson(k, n, z=1.96):
+    """95% Wilson score interval for k of n, in percent. -> (low, high)."""
+    import math
+    if not n:
+        return None, None
+    p = k / float(n)
+    d = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4.0 * n * n))
+    return round((c - h) / d * 100, 4), round((c + h) / d * 100, 4)
+
+
+def versions_block(mods):
+    """Every guard version v14 to v20 on every locked blind set blind_v15 to blind_v20 (D505), the verdict read from
+    decide_full(command, None)["verdict"] with AGENT_GUARD_ROOT pinned, AGENT_GUARD_UNDO=0, the judge and
+    CLAUDE_PROJECT_DIR unset. A set whose sha256 differs from its LOCK.txt stops the run. A cell is blind when the guard
+    was frozen before the set was written (vK on blind_vN with K <= N; v14 is blind on every one); blind false means the
+    guard was built after seeing that set."""
+    import hashlib
+    ev = os.path.join(HERE, "docs", "evidence")
+    sets, out = [], {"what": "every guard version on every locked blind set of versions 15 to 20; denied = a bad case "
+                             "blocked outright, undo = a bad case allowed on an undo point (origin recoverable or "
+                             "judged), missed = a bad case allowed plainly, safe_denied = a safe case denied",
+                     "sets": {}, "guards": {}}
+    for sn, n in VERSION_SETS:
+        rel = "docs/evidence/%s/%s_set.jsonl" % (sn, sn)
+        path = os.path.join(HERE, rel)
+        lock = open(os.path.join(ev, sn, "LOCK.txt"), encoding="utf-8").read().split()
+        want = lock[2] if len(lock) > 2 and lock[1] == "sha256" else None
+        raw = open(path, "rb").read()
+        got = hashlib.sha256(raw).hexdigest()
+        if got != want:
+            raise SystemExit("%s: sha256 %s does not match its LOCK.txt (%s); not scored" % (rel, got, want))
+        rows = [json.loads(l) for l in raw.decode("utf-8").splitlines() if l.strip()]
+        for r in rows:
+            if r["expect"] not in ("stop", "allow"):
+                raise SystemExit("%s: %s expect must be stop or allow, got %r" % (rel, r["id"], r["expect"]))
+        src = "%s (sha256 %s, its LOCK.txt)" % (rel, got)
+        bad = sum(1 for r in rows if r["expect"] == "stop")
+        out["sets"][sn] = {"sha256": num(got, None, src), "cases": num(len(rows), None, src),
+                           "bad": num(bad, None, src), "safe": num(len(rows) - bad, None, src)}
+        sets.append((sn, n, rows, src))
+    cells = {}
+    with _Env(AGENT_GUARD_ROOT=PINNED_ROOT, AGENT_GUARD_UNDO="0", AGENT_GUARD_JUDGE=None, CLAUDE_PROJECT_DIR=None):
+        for key, name, k in VERSION_GUARDS:
+            m = mods[name]
+            assert m._root() == PINNED_ROOT
+            for sn, n, rows, src in sets:
+                t = {"bad": 0, "safe": 0, "denied": 0, "undo": 0, "missed": 0, "safe_denied": 0}
+                for r in rows:
+                    d = m.decide_full(r["command"], None)
+                    if r["expect"] == "stop":
+                        t["bad"] += 1
+                        t["denied" if d["verdict"] == "deny" else "undo" if is_undo(d) else "missed"] += 1
+                    else:
+                        t["safe"] += 1
+                        t["safe_denied"] += d["verdict"] == "deny"
+                cells[(key, sn)] = (t, k <= n or k == 14)
+    for key, name, k in VERSION_GUARDS:
+        path = os.path.relpath(dict(VARIANTS)[name], HERE)
+        gsrc = "bench.py versions_block: %s decide_full(command, None)" % path
+        g = {"file": num(path, None, "bench.py VARIANTS"),
+             "sha256": num(hashlib.sha256(open(dict(VARIANTS)[name], "rb").read()).hexdigest(), None,
+                           "sha256 of %s read at generation" % path), "sets": {}}
+        for sn, n, rows, src in sets:
+            t, bl = cells[(key, sn)]
+            s = "%s over %s" % (gsrc, src)
+            g["sets"][sn] = {"bad": num(t["bad"], None, s), "safe": num(t["safe"], None, s),
+                             "denied": num(t["denied"], t["bad"], s), "undo": num(t["undo"], t["bad"], s),
+                             "missed": num(t["missed"], t["bad"], s), "safe_denied": num(t["safe_denied"], t["safe"], s),
+                             "blind": num(bl, None, "bench.py: v%d on %s is blind when %d <= %d or the guard is v14"
+                                          % (k, sn, k, n))}
+        for part, keep in (("all_sets", lambda b: True), ("blind_only", lambda b: b)):
+            pick = [sn for sn, _, _, _ in sets if keep(cells[(key, sn)][1])]
+            tot = {f: sum(cells[(key, sn)][0][f] for sn in pick) for f in ("bad", "safe", "denied", "undo", "missed",
+                                                                            "safe_denied")}
+            s = "bench.py: the sum of %s over %s" % (key, ", ".join(pick) or "no set")
+            lo, hi = wilson(tot["denied"], tot["bad"])
+            flo, fhi = wilson(tot["safe_denied"], tot["safe"])
+            g[part] = {"sets": num(pick, None, s), "bad": num(tot["bad"], None, s), "safe": num(tot["safe"], None, s),
+                       "denied": num(tot["denied"], tot["bad"], s), "undo": num(tot["undo"], tot["bad"], s),
+                       "missed": num(tot["missed"], tot["bad"], s),
+                       "safe_denied": num(tot["safe_denied"], tot["safe"], s),
+                       "denied_wilson95_low_pct": num(lo, None, s + "; 95% Wilson interval of denied/bad"),
+                       "denied_wilson95_high_pct": num(hi, None, s + "; 95% Wilson interval of denied/bad"),
+                       "safe_denied_wilson95_low_pct": num(flo, None, s + "; 95% Wilson interval of safe_denied/safe"),
+                       "safe_denied_wilson95_high_pct": num(fhi, None, s + "; 95% Wilson interval of safe_denied/safe")}
+        out["guards"][key] = g
+    lk, ls = "v20", "blind_v20"
+    t, bl = cells[(lk, ls)]
+    s = "bench.py versions_block: guard.py (v20) decide_full(command, None) over %s" % dict((x[0], x[3]) for x in sets)[ls]
+    lo, hi = wilson(t["denied"], t["bad"])
+    flo, fhi = wilson(t["safe_denied"], t["safe"])
+    out["lead"] = {"guard": num(lk, None, "bench.py: the current guard, guard.py"), "set": num(ls, None, s),
+                   "set_sha256": out["sets"][ls]["sha256"], "cases": out["sets"][ls]["cases"],
+                   "blind": num(bl, None, s), "bad": num(t["bad"], None, s), "safe": num(t["safe"], None, s),
+                   "denied": num(t["denied"], t["bad"], s), "undo": num(t["undo"], t["bad"], s),
+                   "missed": num(t["missed"], t["bad"], s), "safe_denied": num(t["safe_denied"], t["safe"], s),
+                   "denied_wilson95_low_pct": num(lo, None, s + "; 95% Wilson interval of denied/bad"),
+                   "denied_wilson95_high_pct": num(hi, None, s + "; 95% Wilson interval of denied/bad"),
+                   "safe_denied_wilson95_low_pct": num(flo, None, s + "; 95% Wilson interval of safe_denied/safe"),
+                   "safe_denied_wilson95_high_pct": num(fhi, None, s + "; 95% Wilson interval of safe_denied/safe"),
+                   "seal_branch": num(LEAD_SEAL["branch"], None, "bench.py LEAD_SEAL: the set and the guard hashes, "
+                                                                 "pushed before scoring"),
+                   "seal_commit": num(LEAD_SEAL["commit"], None, "bench.py LEAD_SEAL")}
+    return out
+
+
 def main():
     mods = {name: load_module(name, path) for name, path in VARIANTS}
     for name in GUARDS + ("broken_guard",):
         assert mods[name]._root() == PINNED_ROOT, "root pin failed for " + name
     names = [v for v, _ in VARIANTS]
     path_of = dict(VARIANTS)
-    g5 = mods["guard_v14"]
+    g5 = mods[CUR]                       # guard.py
+    g14 = mods["guard_v14"]              # variants/guard_v14.py: every section and number labelled v14
     refs_before = git_snapshot_refs(HERE)
     print("Python %s on %s. Root pinned: %s (measured, not the live cwd %s)"
           % (platform.python_version(), platform.system(), PINNED_ROOT, os.getcwd()))
@@ -1143,17 +1326,19 @@ def main():
         for r in sets[s]:
             all_rows[r["id"] + "@" + s] = r
     verdicts = {v: {} for v in names}
-    reasons, reasons3, full, full7, full8 = {}, {}, {}, {}, {}
+    reasons, reasons3, full, full7, full8, full14 = {}, {}, {}, {}, {}, {}
     for v in names:
         for s in order:
             for r in sets[s]:
                 if r["id"] not in verdicts[v]:
-                    fx = fixture(r) if v in ("guard_v11", "guard_v12", "guard_v13", "guard_v14", "broken_guard") else None
+                    fx = fixture(r) if v in CWD_GUARDS else None
                     out = mods[v].decide(r["command"], fx) if fx else mods[v].decide(r["command"])
                     verdicts[v][r["id"]] = out[0]
-                    if v == "guard_v14":
+                    if v == CUR:
                         reasons[r["id"]] = out[1]
                         full[r["id"]] = g5.decide_full(r["command"], fx)
+                    if v == "guard_v14":
+                        full14[r["id"]] = g14.decide_full(r["command"], fx)
                     if v == "guard_v7":
                         full7[r["id"]] = mods["guard_v7"].decide_full(r["command"])
                     if v == "guard_v13":
@@ -1187,9 +1372,15 @@ def main():
     # version 8: "block" wants a hard block; "ask" (a v3 fail-closed stop) wants irreversible, recoverable, or a
     # block found inside the text it could not resolve; a case naming v8_origin wants exactly that origin
     want_origin = {"block": ("block",), "ask": ("irreversible", "recoverable", "block")}
+    # A v8_origin a later version deliberately raised to a rule block (still a deny). Listed by id with its reason;
+    # every other v8_origin case must still match exactly.
+    ORIGIN_RAISED = {"v8-ask-006": ("block", "v19 reads a Node fs delete as its shell form (cases/dev_v19.jsonl "
+                                             "V19-005 copies this row with expect ask), so the hook delete is found "
+                                             "in code and blocked instead of denied as unreadable")}
     inexact = [r["id"] for r in own if r["expect"] in ("block", "ask")
                and (full[r["id"]]["origin"] not in want_origin[r["expect"]]
-                    or (r.get("v8_origin") and full[r["id"]]["origin"] != r["v8_origin"]))]
+                    or (r.get("v8_origin") and full[r["id"]]["origin"] != r["v8_origin"]
+                        and full[r["id"]]["origin"] != ORIGIN_RAISED.get(r["id"], (None,))[0]))]
     named_v8 = [r["id"] for r in own if r.get("v8_origin")]
     ask_to_block = [r["id"] for r in own if r["expect"] == "ask" and full[r["id"]]["origin"] == "block"]
     all_ids = sorted({r["id"] for s in order for r in sets[s]})
@@ -1215,7 +1406,7 @@ def main():
     # no v1 or v2 block turned soft, unless it is such a listed good case
     soft12 = sorted({i for i in all_ids
                      if (verdicts["guard_v1"][i] == "block" or verdicts["guard_v2"][i] == "block")
-                     and verdicts["guard_v14"][i] != "block"})
+                     and verdicts[CUR][i] != "block"})
     softened = [i for i in own_only(soft12) if cmd_of[i] not in excuse]
     soft12_listed = listed(soft12)
     # version 8: every v7 HARD block is a v8 hard block, except such listed good cases (on holdouts: reported as
@@ -1228,14 +1419,14 @@ def main():
     hold_fixed, hold_regressed = hold_split([i for i in soft4 if cmd_of[i] not in excuse])
     soft4_listed = listed(soft4)
     # version 9: no v8 deny becomes a v9 allow, and no v8 allow on an undo point becomes a plain allow
-    soft8 = [i for i in all_ids if (full8[i]["verdict"] == "deny" and full[i]["verdict"] != "deny") or
-             (full8[i]["origin"] == "recoverable" and full[i]["verdict"] == "allow" and full[i]["origin"] != "recoverable")]
+    soft8 = [i for i in all_ids if (full8[i]["verdict"] == "deny" and full14[i]["verdict"] != "deny") or
+             (full8[i]["origin"] == "recoverable" and full14[i]["verdict"] == "allow" and full14[i]["origin"] != "recoverable")]
     v8_softened = [i for i in own_only(soft8) if cmd_of[i] not in excuse]
     hold8_fixed, hold8_regressed = hold_split([i for i in soft8 if cmd_of[i] not in excuse])
-    v9_hardened = [i for i in all_ids if full8[i]["verdict"] == "allow" and full[i]["verdict"] == "deny"]
-    v5_hardened = [i for i in all_ids if verdicts["guard_v7"][i] == "allow" and verdicts["guard_v14"][i] != "allow"]
-    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts["guard_v14"][i] != "block"]
-    v5_asks = [i for i in all_ids if verdicts["guard_v14"][i] == "ask"]
+    v9_hardened = [i for i in all_ids if full8[i]["verdict"] == "allow" and full14[i]["verdict"] == "deny"]
+    v5_hardened = [i for i in all_ids if verdicts["guard_v7"][i] == "allow" and verdicts[CUR][i] != "allow"]
+    v3_softened = [i for i in all_ids if verdicts["guard_v3"][i] in ("block", "ask") and verdicts[CUR][i] != "block"]
+    v5_asks = [i for i in all_ids if verdicts[CUR][i] == "ask"]
     v3_asks = [i for i in all_ids if verdicts["guard_v3"][i] == "ask"]
     # every deny carries a specific redirect that names a safe alternative
     allow_cache = {}
@@ -1244,7 +1435,7 @@ def main():
         if c not in allow_cache:
             allow_cache[c] = g5.decide(c)[0] == "allow"
         return allow_cache[c]
-    denies = [i for i in all_ids if verdicts["guard_v14"][i] == "block"]
+    denies = [i for i in all_ids if verdicts[CUR][i] == "block"]
     redirect_bad = {i: redirect_problems(cmd_of[i], full[i], allows) for i in denies}
     # version 8: a recoverable allow carries v7's deny for when no undo point can be taken; it must be as good
     recov = [i for i in all_ids if full[i]["origin"] == "recoverable"]
@@ -1275,7 +1466,7 @@ def main():
             continue
         for row in sets[s]:
             if should_stop(s, row) and row.get("policy") in GUARD_BY_POLICY \
-                    and verdicts["guard_v14"][row["id"]] == "block" and full[row["id"]]["origin"] == "block" \
+                    and verdicts[CUR][row["id"]] == "block" and full[row["id"]]["origin"] == "block" \
                     and full[row["id"]]["v3"] == "block":
                 named_total += 1
                 if reasons[row["id"]].startswith(GUARD_BY_POLICY[row["policy"]]):
@@ -1296,10 +1487,10 @@ def main():
             cli_total += 1
             fx_ = fixture(row)
             t_hook = time.perf_counter()
-            cli, rc, why = cli_verdict(path_of["guard_v14"], row["command"], fx_)
+            cli, rc, why = cli_verdict(path_of[CUR], row["command"], fx_)
             hook_secs.append(time.perf_counter() - t_hook)
             rec = full[row["id"]]["origin"] == "recoverable"
-            want = "block" if rec else verdicts["guard_v14"][row["id"]]
+            want = "block" if rec else verdicts[CUR][row["id"]]
             if cli != want or rc != 0:
                 cli_diffs.append(row["id"])
             if cli == "ask":
@@ -1356,12 +1547,14 @@ def main():
     control = rec_out.get("control") or {}
     control_ok = bool(control) and control.get("still_lost") and control.get("guard_direct") == "deny" \
         and not control.get("snapshots_taken")
-    hold_rec = {}
+    hold_rec20 = {}
     for h, row in rec_hold:
-        hold_rec.setdefault(h, []).append(rec_rows.get((h, row["id"]), {"id": row["id"], "verdict": "missing"}))
+        hold_rec20.setdefault(h, []).append(rec_rows.get((h, row["id"]), {"id": row["id"], "verdict": "missing"}))
+    hold_rec = replay_v14_holdouts([(h, row) for h in HOLDOUTS if present[h] for row in sets[h]
+                                    if should_stop(h, row) and full14[row["id"]]["origin"] == "recoverable"])
 
-    flips = [r["id"] for r in sets["residual"] if verdicts["guard_v14"][r["id"]] != "allow"]
-    patho = pathological_timing(mods["guard_v14"])
+    flips = [r["id"] for r in sets["residual"] if verdicts[CUR][r["id"]] != "allow"]
+    patho = pathological_timing(mods[CUR])
 
     # verdict changes v2 -> v3, judged as stopped / allowed
     changes, regressions = {}, []
@@ -1391,12 +1584,12 @@ def main():
                 (fixed if a5 == should_stop(s, row) else worse).append(row["id"])
         changes45[s] = {"fixed": fixed, "worse": worse}
 
-    a = open(path_of["guard_v14"], encoding="utf-8").read().splitlines()
+    a = open(path_of[CUR], encoding="utf-8").read().splitlines()
     b = open(path_of["broken_guard"], encoding="utf-8").read().splitlines()
     changed = [l for l in difflib.unified_diff(a, b, lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
     one_line = len(changed) == 2
 
-    own3, ownb = results["guard_v14"]["own_all"], results["broken_guard"]["own_all"]
+    own3, ownb = results[CUR]["own_all"], results["broken_guard"]["own_all"]
     g_errs = [r["id"] for r in own if (should_stop("own_all", r) and full[r["id"]]["verdict"] == "allow"
                                        and full[r["id"]]["origin"] != "recoverable")
               or (not should_stop("own_all", r) and full[r["id"]]["verdict"] == "deny")]
@@ -1411,7 +1604,7 @@ def main():
              "v8_TP": 0, "v8_FN": 0, "v8_FP": 0, "v8_TN": 0, "v8_unplayed": []}
         for row in sets[h]:
             i, bad = row["id"], should_stop(h, row)
-            d8, d7, p8 = full[i], full7[i], full8[i]
+            d8, d7, p8 = full14[i], full7[i], full8[i]
             if bad:
                 c["v7_TP" if d7["verdict"] == "deny" else "v7_FN"] += 1
                 # v8 (the previous version) by the same rule; its undo-point cases use this run's jail result
@@ -1450,7 +1643,7 @@ def main():
     row_of = {r["id"]: (r, sn) for sn in order for r in sets[sn]}
     changed14 = []                            # every command whose v13 and v14 decisions differ, with why it is listed
     for i in all_ids:
-        a, b = full8[i], full[i]
+        a, b = full8[i], full14[i]
         if (a["verdict"], a["origin"]) == (b["verdict"], b["origin"]):
             continue
         cmd = cmd_of[i]
@@ -1473,13 +1666,13 @@ def main():
     for i, why in changed14:
         why_count14[why or "UNEXPLAINED"] = why_count14.get(why or "UNEXPLAINED", 0) + 1
     live14 = "--judge-live" in sys.argv
-    jm = g5._judge_module()
-    cand = [i for i in all_ids if full[i].get("unsure")]
+    jm = g14._judge_module()
+    cand = [i for i in all_ids if full14[i].get("unsure")]
 
     def judged(i, T, live="0"):
         r, _ = row_of[i]
         with _Env(**judge_env(T, live=live)):
-            return g5.decide_full(r["command"], fixture(r))
+            return g14.decide_full(r["command"], fixture(r))
     if live14:                                # fill the cache for every miss, 4 calls at a time, never twice
         from concurrent.futures import ThreadPoolExecutor
         miss = [i for i in cand if judged(i, 30.0)["origin"] == "judge_error"]
@@ -1490,14 +1683,14 @@ def main():
               flush=True)
         with _Env(**judge_env(30.0, live="1")):      # set once: the threads share one environment
             with ThreadPoolExecutor(max_workers=4) as ex:
-                list(ex.map(lambda i: g5.decide_full(row_of[i][0]["command"], fixture(row_of[i][0])),
+                list(ex.map(lambda i: g14.decide_full(row_of[i][0]["command"], fixture(row_of[i][0])),
                             list(seen_cmd.values())))
-    jfull = {T: {i: (judged(i, T) if i in set(cand) else full[i]) for i in all_ids} for T in JUDGE_TIMEOUTS}
+    jfull = {T: {i: (judged(i, T) if i in set(cand) else full14[i]) for i in all_ids} for T in JUDGE_TIMEOUTS}
     # NUMBERS: the guard plus the judge at the limit judge.py ships with (DEFAULT_TIMEOUT), replayed from the same cache,
     # on the sets NUMBERS reports; a command not in the cache is a judge_error deny and is counted as a cache miss
     judge_default = float(getattr(jm, "DEFAULT_TIMEOUT", 10.0))
     num_ids = {r["id"] for sn in (BLIND, OUTSIDE_DEV, "incidents") if sn in sets for r in sets[sn]}
-    jdef = {i: (judged(i, judge_default) if i in set(cand) else full[i]) for i in num_ids}
+    jdef = {i: (judged(i, judge_default) if i in set(cand) else full14[i]) for i in num_ids}
     jdef_miss = sorted(i for i in num_ids if i in set(cand) and jdef[i]["origin"] == "judge_error"
                        and "judge cache" in jdef[i]["reason"])
     judge_miss = [i for i in cand if jfull[30.0][i]["origin"] == "judge_error" and "judge cache" in jfull[30.0][i]["reason"]]
@@ -1509,21 +1702,21 @@ def main():
     judge_bad_allow = []                      # a judge-mode allow that is not a SAFE judgement of a judgeable command
     for T in JUDGE_TIMEOUTS:
         for i in cand:
-            d, p = jfull[T][i], full[i]
+            d, p = jfull[T][i], full14[i]
             if d["verdict"] == "allow" and (d["origin"] != "judged" or d.get("judge") != "SAFE" or p["origin"] == "block"
-                                            or (p["origin"] == "irreversible" and not g5._UNREADABLE.search(p["irreversible"]))):
+                                            or (p["origin"] == "irreversible" and not g14._UNREADABLE.search(p["irreversible"]))):
                 judge_bad_allow.append("%s@%ss" % (i, T))
         for i in all_ids:
-            if full[i]["origin"] == "block" and jfull[T][i]["verdict"] != "deny":
+            if full14[i]["origin"] == "block" and jfull[T][i]["verdict"] != "deny":
                 judge_bad_allow.append("%s@%ss(block)" % (i, T))
     import shutil as _shutil
     for d in FIXTURES.values():
         _shutil.rmtree(d, ignore_errors=True)
     FIXTURES.clear()
-    plumb_fails, plumb_n = judge_plumbing(g5, path_of["guard_v14"])
+    plumb_fails, plumb_n = judge_plumbing(g5, path_of[CUR])
     mut_missed, mut_n = judge_mutants()
     jsets = [h for h in HOLDOUTS if present[h]]
-    JV = [("v13", full8), ("v14", full), ("v14 + judge, 2 s", jfull[2.0]), ("v14 + judge, 30 s", jfull[30.0])]
+    JV = [("v13", full8), ("v14", full14), ("v14 + judge, 2 s", jfull[2.0]), ("v14 + judge, 30 s", jfull[30.0])]
     jtab = {}
     for sn in ["own_all"] + jsets:
         jtab[sn] = {name: tally(sets[sn], sn, fl) for name, fl in JV}
@@ -1622,14 +1815,16 @@ def main():
     # ---- NUMBERS: every number a surface states, with its route; written on every run, never by hand -----------------
     import hashlib
     import datetime
-    gsha = hashlib.sha256(open(path_of["guard_v14"], "rb").read()).hexdigest()
+    gsha = hashlib.sha256(open(path_of[CUR], "rb").read()).hexdigest()
     jail_of = {h: {r["id"]: r["verdict"] for r in rows_} for h, rows_ in hold_rec.items()}
+    jail_of20 = {h: {r["id"]: r["verdict"] for r in rows_} for h, rows_ in hold_rec20.items()}
 
     def set_block(sn, rows, label):
-        s14 = "bench.py tally() of guard.py decide_full, judge off, over %s" % label
-        return {"v14": guard_cols(rows, sn, full, s14, jail_of.get(sn, {})),
-                "v13": guard_cols(rows, sn, full8, s14.replace("guard.py", "variants/guard_v13.py")),
-                "v7": guard_cols(rows, sn, full7, s14.replace("guard.py", "variants/guard_v7.py")),
+        s20 = "bench.py tally() of guard.py decide_full, judge off, over %s" % label
+        return {"v20": guard_cols(rows, sn, full, s20, jail_of20.get(sn, {})),
+                "v14": guard_cols(rows, sn, full14, s20.replace("guard.py", "variants/guard_v14.py"), jail_of.get(sn, {})),
+                "v13": guard_cols(rows, sn, full8, s20.replace("guard.py", "variants/guard_v13.py")),
+                "v7": guard_cols(rows, sn, full7, s20.replace("guard.py", "variants/guard_v7.py")),
                 "naive_regex": regex_cols(rows, sn, verdicts["naive_regex"],
                                           "bench.py: variants/naive_regex.py decide over %s" % label)}
 
@@ -1650,8 +1845,9 @@ def main():
                   "residual": num(len(sets["residual"]), None, "cases/residual.jsonl")}
     N["checks"] = {"negative_control_errors": num(b_err, len(own), "broken_guard.py on own cases (exit condition 3)"),
                    "own_errors": num(g_err, len(own), "guard.py on own cases (exit condition 1)")}
-    N["guard"] = {"version": num(14, None, "bench.py VARIANTS: guard_v14 is guard.py"),
+    N["guard"] = {"version": num(int(CUR.rsplit("_v", 1)[1]), None, "bench.py VARIANTS: %s is guard.py" % CUR),
                   "frozen_commit": num(FROZEN_COMMIT, None, "bench.py FROZEN_COMMIT"),
+                  "v14_frozen_commit": num(V14_FROZEN_COMMIT, None, "bench.py V14_FROZEN_COMMIT (branch v14; variants/guard_v14.py)"),
                   "sha256": num(gsha, None, "sha256 of guard.py read at generation"),
                   "matches_frozen_sha256": num(gsha == FROZEN_SHA256, None, "guard.py sha256 against FROZEN_SHA256")}
     if BLIND in sets:
@@ -1679,11 +1875,15 @@ def main():
                                              "bench.py: one %s command labeled both stop and allow" % BLIND)}
         N["blind"]["new_rows"] = {
             "cases": num(len(new), len(rows), osrc.replace("found", "NOT found")),
-            "guards": {"v14": guard_cols(new, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
+            "guards": {"v14": guard_cols(new, BLIND, full14, "bench.py tally() of variants/guard_v14.py decide_full, judge "
+                                         "off, over the %s rows not found in any other file under cases/" % BLIND),
+                       "v20": guard_cols(new, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
                                          "the %s rows not found in any other file under cases/" % BLIND)}}
         N["blind"]["repeated_rows"] = {
             "cases": num(len(rep), len(rows), osrc),
-            "guards": {"v14": guard_cols(rep, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
+            "guards": {"v14": guard_cols(rep, BLIND, full14, "bench.py tally() of variants/guard_v14.py decide_full, judge "
+                                         "off, over the %s rows found word for word in another file under cases/" % BLIND),
+                       "v20": guard_cols(rep, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
                                          "the %s rows found word for word in another file under cases/" % BLIND)}}
         # the 2026-10-15 baselines on the same split, read from their published verdicts: does the guard's lead over
         # a small model hold on the rows no earlier set contains?
@@ -1775,7 +1975,7 @@ def main():
     rtv = {"calls": num(real["calls"], None, "results/real_traffic.json: calls") if real else None,
            "distinct_commands": num(real["unique_commands"], None, "results/real_traffic.json: unique_commands") if real else None}
     if real:
-        for vn in ("v7", "v13", "v14"):      # v7: the last version before real traffic shaped the rules; no undo layer
+        for vn in ("v7", "v13", "v14", "v20"):      # v7: the last version before real traffic shaped the rules; no undo layer
             if vn in real:
                 rtv[vn] = {"denied": num(real[vn]["denied"], real["calls"], "results/real_traffic.json: %s.denied" % vn),
                            "denied_pct": num(real[vn]["denied_pct"], None, "results/real_traffic.json: %s.denied_pct" % vn)}
@@ -1786,6 +1986,36 @@ def main():
                                                     "results/real_traffic.json: %s.recoverable_pct" % vn)
     rtv["labeled_sample"] = rtl if rtl else {"skipped": "results/recorded/real_traffic_labels.json not present"}
     N["real_traffic"] = rtv
+    # 6b. the same calls re-run on 2026-10-19 for every version against that day's disk. The recorded file above was
+    # measured on 2026-10-14; v13 on read the scripts it names by absolute path as they are on disk, so the two runs differ
+    # for v13 and later (v7 to v12 reproduce exactly). Aggregate only, as above.
+    rt2_path = os.path.join(HERE, "results", "real_traffic_2026-10-19.json")
+    rt2 = json.load(open(rt2_path, encoding="utf-8")) if os.path.exists(rt2_path) else None
+    if rt2:
+        src = "results/real_traffic_2026-10-19.json: "
+        rtv2 = {"calls": num(rt2["calls"], None, src + "calls")}
+        for k in range(7, 21):
+            vn = "v%d" % k
+            if vn in rt2:
+                rtv2[vn] = {"denied": num(rt2[vn]["denied"], rt2["calls"], src + vn + ".denied"),
+                            "denied_pct": num(rt2[vn]["denied_pct"], None, src + vn + ".denied_pct")}
+                if "recoverable_allowed" in rt2[vn]:
+                    rtv2[vn]["undo_point"] = num(rt2[vn]["recoverable_allowed"], rt2["calls"], src + vn + ".recoverable_allowed")
+                    rtv2[vn]["undo_pct"] = num(rt2[vn]["recoverable_pct"], None, src + vn + ".recoverable_pct")
+        N["real_traffic_2026_10_19"] = rtv2
+    # 6c. three Claude tiers as judges on blind_v20 (docs/evidence/judges_blind_v20/: judge_tiers.py, one raw file per
+    # tier, TIER_SCORES.json written by its score step). Read here, never recomputed: the calls are not rerun.
+    tj_path = os.path.join(HERE, "docs", "evidence", "judges_blind_v20", "TIER_SCORES.json")
+    if os.path.exists(tj_path):
+        tj = json.load(open(tj_path, encoding="utf-8"))
+        src = "docs/evidence/judges_blind_v20/TIER_SCORES.json: "
+        N["judges_blind_v20"] = {t: {k: num(v[k], v["bad"] if k in ("bad_denied", "lastword_bad_denied") else
+                                          (v["safe"] if k in ("safe_denied", "lastword_safe_denied") else None),
+                                          src + t + "." + k)
+                                     for k in ("judged", "bad", "safe", "bad_denied", "safe_denied", "malformed", "errors",
+                                               "cost_usd", "seconds_median", "seconds_p95", "lastword_bad_denied",
+                                               "lastword_safe_denied")}
+                                 for t, v in tj.items()}
     # 7. undo
     ur_json = os.path.join(HERE, "results", "undo_results.json")
     ujs = json.load(open(ur_json, encoding="utf-8")) if os.path.exists(ur_json) else {}
@@ -1815,9 +2045,11 @@ def main():
                                          runs=len(hs)),
                    "hook_p95_ms": num(round(1000 * hs[min(len(hs) - 1, int(len(hs) * 0.95))], 1) if hs else None, None,
                                       "same runs, 95th percentile", runs=len(hs)),
-                   "decide_median_us": num(round(timing["guard_v14"][1], 1), None,
+                   "decide_median_us": num(round(timing[CUR][1], 1), None,
                                            "timing_us(guard.py decide), in-process, median per command, run 1"),
-                   "decide_max_us": num(round(timing["guard_v14"][2]), None, "timing_us(guard.py decide), slowest command")}
+                   "decide_max_us": num(round(timing[CUR][2]), None, "timing_us(guard.py decide), slowest command")}
+    # 10. every version on every locked blind set of versions 15 to 20 (D505), and the lead number
+    N["versions"] = versions_block(mods)
     # 9. live system
     live_sets = {sn: sets[sn] for sn in (BLIND, OUTSIDE_DEV, "incidents") if sn in sets}
     N["live_system"] = score_live_system(live_sets)
@@ -1827,7 +2059,7 @@ def main():
         err_now = {}
         for sn in (BLIND, OUTSIDE_DEV):
             for r in sets.get(sn, []):
-                d = full[r["id"]]
+                d = full14[r["id"]]
                 if should_stop(sn, r) and d["verdict"] != "deny" and not is_undo(d):
                     err_now[r["id"]] = "missed"
                 elif not should_stop(sn, r) and d["verdict"] == "deny":
@@ -1945,11 +2177,11 @@ def main():
         L.append("| guard | denied | denied % | allowed on an undo point | % |")
         L.append("|---|---:|---:|---:|---:|")
         L.append("| v7 | %d | %.2f%% | | |" % (real["v7"]["denied"], real["v7"]["denied_pct"]))
-        for vn in ("v8", "v9", "v10", "v11", "v13", "v14"):
+        for vn in ("v8", "v9", "v10", "v11", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20"):
             if vn in real:
                 L.append("| %s | %d | %.2f%% | %d | %.2f%% |" % (vn, real[vn]["denied"], real[vn]["denied_pct"],
                                                                real[vn]["recoverable_allowed"], real[vn]["recoverable_pct"]))
-        cur = next(vn for vn in ("v14", "v13", "v11", "v10", "v9", "v8") if vn in real)
+        cur = next(vn for vn in ("v20", "v14", "v13", "v11", "v10", "v9", "v8") if vn in real)
         L.append("")
         for k in sorted(k for k in real if k.startswith("transitions_")):
             L.append(k.split("_", 1)[1].replace("_", " ") + ", by origin: " +
@@ -2087,9 +2319,9 @@ def main():
     for sh, n in sorted(shape_count.items(), key=lambda x: (-x[1], x[0])):
         L.append("| %s | %d | `%s` |" % (sh, n, first_alt[sh].replace("|", "\\|")))
     L.append("")
-    L.append("## guard_v14 wrong verdicts with their commands")
+    L.append("## %s wrong verdicts with their commands" % CUR)
     L.append("")
-    L.append("guard_v14 is guard.py. A miss is a bad case it allows with no undo point; a bad case it allows on an undo "
+    L.append(CUR + " is guard.py. A miss is a bad case it allows with no undo point; a bad case it allows on an undo "
              "point is not listed here (the undo sections score it). A false positive is a safe case it denies.")
     for s in order:
         if s == "own_all":
@@ -2199,13 +2431,14 @@ def main():
     b14 = N.get("blind", {}).get("guards", {}).get("v14", {})
     S = ["# Summary", "",
          "Generated by `bench.py` from `NUMBERS.json`, the same run as `RESULTS.md` (the full report, an appendix). Guard: "
-         "`guard.py`, version 14, frozen at %s (sha256 %s). Python %s on %s. Root pinned to `%s`."
-         % (FROZEN_COMMIT, N["guard_sha256"][:16], platform.python_version(), platform.system(), PINNED_ROOT), "",
+         "`guard.py`, version %s, its sha256 %s sealed at %s (branch %s) before blind_v20 was scored. Python %s on %s. "
+         "Root pinned to `%s`." % (_v(N, "guard", "version"), N["guard_sha256"][:16], FROZEN_COMMIT, LEAD_SEAL["branch"],
+                                   platform.python_version(), platform.system(), PINNED_ROOT), "",
          "**OVERALL: %s** (%d of %d exit conditions pass)." % ("PASS" if ok else "FAIL", sum(1 for c in conds if c[1]), len(conds))]
     if not ok:
         S += ["", "Failing: " + "; ".join(c[0] for c in conds if not c[1]) + "."]
     S += [""]
-    S += numbers_md_sections({k: N[k] for k in ("blind",) if k in N})
+    S += numbers_md_sections({k: N[k] for k in ("versions", "blind") if k in N})
     S += ["## Every holdout, pooled", "",
           "A bad case counts as handled when v14 denies it, or allows it on an undo point that fully restored it in the "
           "write jail. A case on an undo point that changed nothing is counted neither way. Only %s is blind for v14: "

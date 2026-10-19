@@ -1,0 +1,3 @@
+blind_v19_set.jsonl sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf
+rows 2266 (stop 1200, allow 1066)
+locked before any guard was loaded; dropped by the outside tiebreak: 7

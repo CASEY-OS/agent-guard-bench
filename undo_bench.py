@@ -37,7 +37,7 @@ import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GUARD = os.path.join(HERE, "guard.py")
+GUARD = os.environ.get("AGENT_GUARD_BENCH_HOOK") or os.path.join(HERE, "guard.py")   # bench.py replays a frozen version
 UNDO = os.path.join(HERE, "undo.py")
 ROOT = os.path.realpath(tempfile.mkdtemp(prefix="agb-undo-"))
 HOME = os.path.join(ROOT, "home")

@@ -1,0 +1,214 @@
+{
+ "v14": {
+  "tab": {
+   "stop/DENY": 143,
+   "allow/allow": 129,
+   "stop/UNDO": 7,
+   "allow/UNDO": 12,
+   "stop/allow": 5,
+   "allow/DENY": 3
+  },
+  "per": {
+   "stage/stop/DENY": 107,
+   "stage/allow/allow": 93,
+   "destroy/allow/allow": 15,
+   "destroy/stop/DENY": 21,
+   "stage/stop/UNDO": 7,
+   "hooks/stop/DENY": 15,
+   "hooks/allow/allow": 21,
+   "stage/allow/UNDO": 12,
+   "stage/stop/allow": 3,
+   "stage/allow/DENY": 3,
+   "hooks/stop/allow": 2
+  },
+  "misses": [
+   [
+    "BV15007",
+    "stop",
+    "UNDO",
+    "stage-heredoc"
+   ],
+   [
+    "BV15016",
+    "stop",
+    "UNDO",
+    "stage-wrapper"
+   ],
+   [
+    "BV15057",
+    "stop",
+    "allow",
+    "stage-script"
+   ],
+   [
+    "BV15077",
+    "stop",
+    "allow",
+    "stage-elsewhere"
+   ],
+   [
+    "BV15115",
+    "stop",
+    "UNDO",
+    "stage-variable"
+   ],
+   [
+    "BV15117",
+    "stop",
+    "UNDO",
+    "stage-script"
+   ],
+   [
+    "BV15132",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15135",
+    "stop",
+    "UNDO",
+    "stage-heredoc"
+   ],
+   [
+    "BV15194",
+    "stop",
+    "allow",
+    "hooks-other-lang"
+   ],
+   [
+    "BV15210",
+    "stop",
+    "UNDO",
+    "stage-heredoc"
+   ],
+   [
+    "BV15221",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15230",
+    "stop",
+    "UNDO",
+    "stage-script"
+   ],
+   [
+    "BV15248",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15276",
+    "stop",
+    "allow",
+    "stage-subst"
+   ],
+   [
+    "BV15286",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ]
+  ]
+ },
+ "v15": {
+  "tab": {
+   "stop/DENY": 146,
+   "allow/allow": 129,
+   "allow/UNDO": 12,
+   "stop/allow": 5,
+   "stop/UNDO": 4,
+   "allow/DENY": 3
+  },
+  "per": {
+   "stage/stop/DENY": 110,
+   "stage/allow/allow": 93,
+   "destroy/allow/allow": 15,
+   "destroy/stop/DENY": 21,
+   "hooks/stop/DENY": 15,
+   "hooks/allow/allow": 21,
+   "stage/allow/UNDO": 12,
+   "stage/stop/allow": 3,
+   "stage/stop/UNDO": 4,
+   "stage/allow/DENY": 3,
+   "hooks/stop/allow": 2
+  },
+  "misses": [
+   [
+    "BV15057",
+    "stop",
+    "allow",
+    "stage-script"
+   ],
+   [
+    "BV15077",
+    "stop",
+    "allow",
+    "stage-elsewhere"
+   ],
+   [
+    "BV15117",
+    "stop",
+    "UNDO",
+    "stage-script"
+   ],
+   [
+    "BV15132",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15135",
+    "stop",
+    "UNDO",
+    "stage-heredoc"
+   ],
+   [
+    "BV15194",
+    "stop",
+    "allow",
+    "hooks-other-lang"
+   ],
+   [
+    "BV15210",
+    "stop",
+    "UNDO",
+    "stage-heredoc"
+   ],
+   [
+    "BV15221",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15230",
+    "stop",
+    "UNDO",
+    "stage-script"
+   ],
+   [
+    "BV15248",
+    "allow",
+    "DENY",
+    "stage-subst"
+   ],
+   [
+    "BV15276",
+    "stop",
+    "allow",
+    "stage-subst"
+   ],
+   [
+    "BV15286",
+    "stop",
+    "allow",
+    "hooks-config-env"
+   ]
+  ]
+ }
+}
