@@ -257,7 +257,7 @@ MUTATIONS = [
 
 
 def guard_path():
-    return os.path.abspath(GUARD_ARG) if GUARD_ARG else os.path.join(HERE, "guard.py")
+    return os.path.abspath(GUARD_ARG) if GUARD_ARG else os.path.join(HERE, "variants", "guard_v20.py")   # v20, frozen when v22 became guard.py
 
 
 def _safe_path(rel):

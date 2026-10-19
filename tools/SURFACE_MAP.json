@@ -787,8 +787,9 @@
   },
   {
    "file": "README.md",
-   "pattern": "Status\\.\\*\\* Version (\\d+) of the guard \\(`guard\\.py`\\) is scored blind on blind_v20: ([0-9,]+) commands \\(([0-9,]+) dangerous, ([0-9,]+) safe\\)",
+   "pattern": "Status\\.\\*\\* Version (\\d+) of the guard \\(now `variants/guard_v20\\.py`; `guard\\.py` is v(\\d+), built after this set was scored, below\\) is scored blind on blind_v20: ([0-9,]+) commands \\(([0-9,]+) dangerous, ([0-9,]+) safe\\)",
    "keys": [
+    "versions.lead.version",
     "guard.version",
     "versions.lead.cases",
     "versions.lead.bad",
@@ -1015,7 +1016,7 @@
   },
   {
    "file": "results/SUMMARY.md",
-   "pattern": "\\| v20 \\(guard\\.py\\) \\| (\\d+) of (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) of (\\d+) \\|",
+   "pattern": "\\| v20 \\| (\\d+) of (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) of (\\d+) \\|",
    "keys": [
     "versions.lead.denied",
     "versions.lead.bad",
@@ -1023,6 +1024,117 @@
     "versions.lead.missed",
     "versions.lead.safe_denied",
     "versions.lead.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v21 \\| built 10-19 from real-traffic errors, no blind set yet \\| blind_v20 \\(([0-9,]+)\\), SEEN \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v20.cases",
+    "versions.guards.v21.sets.blind_v20.denied",
+    "versions.guards.v21.sets.blind_v20.bad",
+    "versions.guards.v21.sets.blind_v20.safe_denied",
+    "versions.guards.v21.sets.blind_v20.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v22 \\| built 10-19 from real-traffic errors, no blind set yet \\| blind_v20 \\(([0-9,]+)\\), SEEN \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v20.cases",
+    "versions.guards.v22.sets.blind_v20.denied",
+    "versions.guards.v22.sets.blind_v20.bad",
+    "versions.guards.v22.sets.blind_v20.safe_denied",
+    "versions.guards.v22.sets.blind_v20.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\*\\*v21 and v22 take real-work denies down to ([0-9.]+)%\\.\\*\\*",
+   "keys": [
+    "real_traffic_2026_10_19.v22.denied_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "up to (\\d+) KB of text \\(v20 stopped at (\\d+) KB",
+   "keys": [
+    "guard.max_script_bytes",
+    "guard.max_literal_bytes"
+   ],
+   "scale": 0.0009765625
+  },
+  {
+   "file": "README.md",
+   "pattern": "On the same ([0-9,]+) calls, denies went from ([0-9,]+) \\(([0-9.]+)%\\) at v20 to ([0-9,]+) \\(([0-9.]+)%\\) at v21 and ([0-9,]+) \\(([0-9.]+)%\\) at v22, against v14's ([0-9,]+) \\(([0-9.]+)%\\)\\. Undo points went from ([0-9,]+) \\(([0-9.]+)%\\) to ([0-9,]+) \\(([0-9.]+)%\\)\\.",
+   "keys": [
+    "real_traffic_2026_10_19.calls",
+    "real_traffic_2026_10_19.v20.denied",
+    "real_traffic_2026_10_19.v20.denied_pct",
+    "real_traffic_2026_10_19.v21.denied",
+    "real_traffic_2026_10_19.v21.denied_pct",
+    "real_traffic_2026_10_19.v22.denied",
+    "real_traffic_2026_10_19.v22.denied_pct",
+    "real_traffic_2026_10_19.v14.denied",
+    "real_traffic_2026_10_19.v14.denied_pct",
+    "real_traffic_2026_10_19.v20.undo_point",
+    "real_traffic_2026_10_19.v20.undo_pct",
+    "real_traffic_2026_10_19.v22.undo_point",
+    "real_traffic_2026_10_19.v22.undo_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "`guard\\.py` \\(v(\\d+)\\) is ([0-9,]+) lines, built across (\\d+) versions starting 2026-10-12",
+   "keys": [
+    "guard.version",
+    "guard.lines",
+    "guard.version"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-10-19: versions 21 and 22, from the real-agent traffic",
+    "## 2026-10-18 to 2026-10-19: versions 15 to 20"
+   ],
+   "pattern": "\\*\\*v21: a script the command writes is read up to (\\d+) KB\\.\\*\\*",
+   "keys": [
+    "guard.max_script_bytes"
+   ],
+   "scale": 0.0009765625
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-10-19: versions 21 and 22, from the real-agent traffic",
+    "## 2026-10-18 to 2026-10-19: versions 15 to 20"
+   ],
+   "pattern": "but the written text was held to (\\d+) KB",
+   "keys": [
+    "guard.max_literal_bytes"
+   ],
+   "scale": 0.0009765625
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-10-19: versions 21 and 22, from the real-agent traffic",
+    "## 2026-10-18 to 2026-10-19: versions 15 to 20"
+   ],
+   "pattern": "the same ([0-9,]+) calls: denies ([0-9,]+) \\(([0-9.]+)%\\) at v20, ([0-9,]+) \\(([0-9.]+)%\\) at v21 and ([0-9,]+) \\(([0-9.]+)%\\) at v22; undo points ([0-9,]+) \\(([0-9.]+)%\\) at v20 and ([0-9,]+) \\(([0-9.]+)%\\) at v22\\.",
+   "keys": [
+    "real_traffic_2026_10_19.calls",
+    "real_traffic_2026_10_19.v20.denied",
+    "real_traffic_2026_10_19.v20.denied_pct",
+    "real_traffic_2026_10_19.v21.denied",
+    "real_traffic_2026_10_19.v21.denied_pct",
+    "real_traffic_2026_10_19.v22.denied",
+    "real_traffic_2026_10_19.v22.denied_pct",
+    "real_traffic_2026_10_19.v20.undo_point",
+    "real_traffic_2026_10_19.v20.undo_pct",
+    "real_traffic_2026_10_19.v22.undo_point",
+    "real_traffic_2026_10_19.v22.undo_pct"
    ]
   }
  ]

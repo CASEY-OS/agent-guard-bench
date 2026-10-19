@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v19 (frozen copies in variants/), guard_v20
+Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v21 (frozen copies in variants/), guard_v22
 (guard.py, the real one), broken_guard (negative control for guard.py).
 Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"),
 v8_dev ("v8-"), v9_dev ("v9-"), v10_dev ("v10-"), v11_dev ("v11-"), v12_dev ("v12-"),
@@ -127,16 +127,18 @@ VARIANTS = [
     ("guard_v17", os.path.join(HERE, "variants", "guard_v17.py")),
     ("guard_v18", os.path.join(HERE, "variants", "guard_v18.py")),
     ("guard_v19", os.path.join(HERE, "variants", "guard_v19.py")),
-    ("guard_v20", os.path.join(HERE, "guard.py")),
+    ("guard_v20", os.path.join(HERE, "variants", "guard_v20.py")),   # sealed at f4dccd0 before blind_v20 was scored
+    ("guard_v21", os.path.join(HERE, "variants", "guard_v21.py")),   # built 2026-10-19 from real-traffic errors
+    ("guard_v22", os.path.join(HERE, "guard.py")),
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
 GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8", "guard_v9",
           "guard_v10", "guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17",
-          "guard_v18", "guard_v19", "guard_v20")
-CUR = "guard_v20"            # guard.py. The sections and numbers labelled v14 (v13 to v14 changes, the judge replay, the
+          "guard_v18", "guard_v19", "guard_v20", "guard_v21", "guard_v22")
+CUR = "guard_v22"            # guard.py. The sections and numbers labelled v14 (v13 to v14 changes, the judge replay, the
                              # holdout19 label audit, the pooled holdout table) stay on the frozen variants/guard_v14.py
 CWD_GUARDS = ("guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17", "guard_v18",
-              "guard_v19", "guard_v20", "broken_guard")   # version 11 on: a fixture case's directory is the cwd
+              "guard_v19", "guard_v20", "guard_v21", "guard_v22", "broken_guard")   # version 11 on: a fixture case's directory is the cwd
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -170,11 +172,15 @@ BLIND = "holdout19"          # the newest set written after the current guard fr
 OUTSIDE_DEV = "holdout18"    # outside models, development data for v14, blind for v13
 FROZEN_COMMIT = "f4dccd0"    # v20: its sha256 sealed publicly on branch blind-v20-seal before blind_v20 was scored
 FROZEN_SHA256 = "1f16f4606e53999958f99f807946b60a1ba7806193bbe94e59ddce8f784dbbad"   # guard.py (v20) in that seal
+# v21 and v22 were built on 2026-10-19 from real-traffic errors, after every blind set was scored: no freeze commit before
+# a blind set holds them, so every cell of theirs is seen, not blind, until a fresh set is written and scored
+CURRENT_FROZEN = None
+CURRENT_FROZEN_WHY = "v21 and v22 have no freeze commit before a blind set: both were built after blind_v20 was scored"
 V14_FROZEN_COMMIT = "e88a7d8"   # v14 frozen publicly (branch v14); now variants/guard_v14.py, byte for byte
 V14_SHA256 = "9f5d9f0b6c222d19268376bbb043e6dc7f312e8e735efd3a73b6031de8120b45"
 # the locked blind sets of versions 15 to 20 (D505): each set's sha256 is checked against its LOCK.txt before scoring
 VERSION_SETS = tuple(("blind_v%d" % n, n) for n in range(15, 21))
-VERSION_GUARDS = tuple(("v%d" % k, "guard_v%d" % k, k) for k in range(14, 21))
+VERSION_GUARDS = tuple(("v%d" % k, "guard_v%d" % k, k) for k in range(14, 23))
 LEAD_SEAL = {"branch": "blind-v20-seal", "commit": "f4dccd0"}
 # holdout18's round 3 file (Gemini) was written from the Copilot copy of the prompt, so its ids are CP001 to CP080, the
 # same ids as round 2's copilot_cases.jsonl (SEAL_ROUND3.md on branch holdout18-seal says so). The case file is never
@@ -986,12 +992,13 @@ def numbers_md_sections(N):
     L = []
     hdr = ("| guard | bad | denied | on an undo point (restored / changed nothing) | missed | safe | safe denied | "
            "safe on an undo point |", "|---|---:|---:|---|---:|---:|---:|---:|")
-    names = {"v20": "v20 (guard.py; seen, not blind)", "v14": "v14", "v13": "v13", "v7": "v7", "naive_regex": "plain regex"}
+    names = {"v20": "v20 (variants/guard_v20.py; seen, not blind)", "v14": "v14", "v13": "v13", "v7": "v7", "naive_regex": "plain regex"}
     vb = N.get("versions")
     if vb and "lead" in vb:
         ld = vb["lead"]
         L += ["## The blind result: %s (from NUMBERS.json)" % _v(ld, "set"), "",
-              "Blind for every version v14 to v20: no writer saw a guard and no builder saw the set (v20 was finished while the "
+              "Blind for every version v14 to v20 (v21 and v22 were built after it was scored: seen, not blind): no "
+              "writer saw a guard and no builder saw the set (v20 was finished while the "
               "first rounds were written; README, \"A correction to the seal\"); sealed with every guard's sha256 on branch "
               "%s (%s) before scoring. %s cases, %s dangerous and %s safe. Judge off. The sealed labels are the score of "
               "record." % (_v(ld, "seal_branch"), _v(ld, "seal_commit"), _v(ld, "cases"), _v(ld, "bad"), _v(ld, "safe")), "",
@@ -999,9 +1006,12 @@ def numbers_md_sections(N):
         for k in sorted(vb["guards"], key=lambda x: -int(x[1:])):
             c = vb["guards"][k]["sets"].get(_v(ld, "set"))
             if c:
+                ck = "v%s" % CUR.rsplit("_v", 1)[1]
+                tags = (["guard.py"] if k == ck else []) + (
+                    [] if _v(c, "blind") else ["seen, not blind: built after this set was scored"])
                 L.append("| %s%s | %s of %s | %s | %s | %s of %s |" % (
-                    k, " (guard.py)" if k == "v20" else "", _v(c, "denied"), _v(c, "bad"), _v(c, "undo"), _v(c, "missed"),
-                    _v(c, "safe_denied"), _v(c, "safe")))
+                    k, " (" + "; ".join(tags) + ")" if tags else "", _v(c, "denied"), _v(c, "bad"), _v(c, "undo"),
+                    _v(c, "missed"), _v(c, "safe_denied"), _v(c, "safe")))
         L.append("")
     if "blind" in N:
         b = N["blind"]
@@ -1109,7 +1119,8 @@ def write_numbers(N):
         fh.write("\n")
     M = ["# NUMBERS", "",
          "Generated by `bench.py` on every run, never by hand, from the same run as RESULTS.md. Generated at %s. "
-         "guard.py sha256 %s (frozen commit %s). Every surface in this repo states its numbers from this file, and "
+         "guard.py sha256 %s (frozen commit %s is v20's, variants/guard_v20.py; v21 and v22 have none before a blind "
+         "set). Every surface in this repo states its numbers from this file, and "
          "`tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks them."
          % (N["generated_at"], N["guard_sha256"], N["frozen_commit"]), "",
          "**OVERALL: %s** (%s of %s exit conditions pass)." % (_v(N, "overall"), _v(N, "exit_conditions_passed"),
@@ -1176,7 +1187,7 @@ def wilson(k, n, z=1.96):
 
 
 def versions_block(mods):
-    """Every guard version v14 to v20 on every locked blind set blind_v15 to blind_v20 (D505), the verdict read from
+    """Every guard version v14 to v22 on every locked blind set blind_v15 to blind_v20 (D505), the verdict read from
     decide_full(command, None)["verdict"] with AGENT_GUARD_ROOT pinned, AGENT_GUARD_UNDO=0, the judge and
     CLAUDE_PROJECT_DIR unset. A set whose sha256 differs from its LOCK.txt stops the run. A cell is blind when the guard
     was frozen before the set was written (vK on blind_vN with K <= N; v14 is blind on every one); blind false means the
@@ -1253,10 +1264,13 @@ def versions_block(mods):
         out["guards"][key] = g
     lk, ls = "v20", "blind_v20"
     t, bl = cells[(lk, ls)]
-    s = "bench.py versions_block: guard.py (v20) decide_full(command, None) over %s" % dict((x[0], x[3]) for x in sets)[ls]
+    s = ("bench.py versions_block: variants/guard_v20.py (v20) decide_full(command, None) over %s"
+         % dict((x[0], x[3]) for x in sets)[ls])
     lo, hi = wilson(t["denied"], t["bad"])
     flo, fhi = wilson(t["safe_denied"], t["safe"])
-    out["lead"] = {"guard": num(lk, None, "bench.py: the current guard, guard.py"), "set": num(ls, None, s),
+    out["lead"] = {"guard": num(lk, None, "bench.py: the last version scored blind, variants/guard_v20.py"),
+                   "version": num(int(lk[1:]), None, "bench.py: the lead's version number"),
+                   "set": num(ls, None, s),
                    "set_sha256": out["sets"][ls]["sha256"], "cases": out["sets"][ls]["cases"],
                    "blind": num(bl, None, s), "bad": num(t["bad"], None, s), "safe": num(t["safe"], None, s),
                    "denied": num(t["denied"], t["bad"], s), "undo": num(t["undo"], t["bad"], s),
@@ -1268,6 +1282,20 @@ def versions_block(mods):
                    "seal_branch": num(LEAD_SEAL["branch"], None, "bench.py LEAD_SEAL: the set and the guard hashes, "
                                                                  "pushed before scoring"),
                    "seal_commit": num(LEAD_SEAL["commit"], None, "bench.py LEAD_SEAL")}
+    ck = "v%s" % CUR.rsplit("_v", 1)[1]
+    t, bl = cells[(ck, ls)]
+    s = ("bench.py versions_block: guard.py (%s) decide_full(command, None) over %s"
+         % (ck, dict((x[0], x[3]) for x in sets)[ls]))
+    out["current"] = {"guard": num(ck, None, "bench.py CUR: the current guard, guard.py"),
+                      "version": num(int(ck[1:]), None, "bench.py CUR: the current guard's version number"),
+                      "set": num(ls, None, s),
+                      "blind": num(bl, None, s + "; " + CURRENT_FROZEN_WHY),
+                      "frozen_commit": num(CURRENT_FROZEN, None, "bench.py CURRENT_FROZEN: " + CURRENT_FROZEN_WHY),
+                      "bad": num(t["bad"], None, s), "safe": num(t["safe"], None, s),
+                      "denied": num(t["denied"], t["bad"], s), "undo": num(t["undo"], t["bad"], s),
+                      "missed": num(t["missed"], t["bad"], s), "safe_denied": num(t["safe_denied"], t["safe"], s),
+                      "same_cells_as_lead": num(all(cells[(ck, ls)][0][f] == cells[(lk, ls)][0][f] for f in t), None,
+                                                s + "; every count against the lead's")}
     return out
 
 
@@ -1326,7 +1354,7 @@ def main():
         for r in sets[s]:
             all_rows[r["id"] + "@" + s] = r
     verdicts = {v: {} for v in names}
-    reasons, reasons3, full, full7, full8, full14 = {}, {}, {}, {}, {}, {}
+    reasons, reasons3, full, full7, full8, full14, full20 = {}, {}, {}, {}, {}, {}, {}
     for v in names:
         for s in order:
             for r in sets[s]:
@@ -1339,6 +1367,8 @@ def main():
                         full[r["id"]] = g5.decide_full(r["command"], fx)
                     if v == "guard_v14":
                         full14[r["id"]] = g14.decide_full(r["command"], fx)
+                    if v == "guard_v20":
+                        full20[r["id"]] = mods["guard_v20"].decide_full(r["command"], fx)
                     if v == "guard_v7":
                         full7[r["id"]] = mods["guard_v7"].decide_full(r["command"])
                     if v == "guard_v13":
@@ -1820,11 +1850,11 @@ def main():
     jail_of20 = {h: {r["id"]: r["verdict"] for r in rows_} for h, rows_ in hold_rec20.items()}
 
     def set_block(sn, rows, label):
-        s20 = "bench.py tally() of guard.py decide_full, judge off, over %s" % label
-        return {"v20": guard_cols(rows, sn, full, s20, jail_of20.get(sn, {})),
-                "v14": guard_cols(rows, sn, full14, s20.replace("guard.py", "variants/guard_v14.py"), jail_of.get(sn, {})),
-                "v13": guard_cols(rows, sn, full8, s20.replace("guard.py", "variants/guard_v13.py")),
-                "v7": guard_cols(rows, sn, full7, s20.replace("guard.py", "variants/guard_v7.py")),
+        s20 = "bench.py tally() of variants/guard_v20.py decide_full, judge off, over %s" % label
+        return {"v20": guard_cols(rows, sn, full20, s20, jail_of20.get(sn, {})),
+                "v14": guard_cols(rows, sn, full14, s20.replace("guard_v20", "guard_v14"), jail_of.get(sn, {})),
+                "v13": guard_cols(rows, sn, full8, s20.replace("guard_v20", "guard_v13")),
+                "v7": guard_cols(rows, sn, full7, s20.replace("guard_v20", "guard_v7")),
                 "naive_regex": regex_cols(rows, sn, verdicts["naive_regex"],
                                           "bench.py: variants/naive_regex.py decide over %s" % label)}
 
@@ -1849,7 +1879,15 @@ def main():
                   "frozen_commit": num(FROZEN_COMMIT, None, "bench.py FROZEN_COMMIT"),
                   "v14_frozen_commit": num(V14_FROZEN_COMMIT, None, "bench.py V14_FROZEN_COMMIT (branch v14; variants/guard_v14.py)"),
                   "sha256": num(gsha, None, "sha256 of guard.py read at generation"),
-                  "matches_frozen_sha256": num(gsha == FROZEN_SHA256, None, "guard.py sha256 against FROZEN_SHA256")}
+                  "matches_frozen_sha256": num(hashlib.sha256(open(path_of["guard_v20"], "rb").read()).hexdigest()
+                                               == FROZEN_SHA256, None,
+                                               "variants/guard_v20.py sha256 against FROZEN_SHA256 (v20's seal)"),
+                  "current_frozen_commit": num(CURRENT_FROZEN, None, "bench.py CURRENT_FROZEN: " + CURRENT_FROZEN_WHY),
+                  "lines": num(len(open(path_of[CUR], encoding="utf-8").read().splitlines()), None,
+                               "guard.py line count read at generation"),
+                  "max_script_bytes": num(getattr(g5, "MAX_SCRIPT", None), None,
+                                          "guard.py MAX_SCRIPT (version 21: text a command writes to a file it reads)"),
+                  "max_literal_bytes": num(g5.MAX_LITERAL, None, "guard.py MAX_LITERAL")}
     if BLIND in sets:
         rows = sets[BLIND]
         N["blind"] = {"set": BLIND, "status": HOLDOUT_STATUS[BLIND],
@@ -1877,13 +1915,13 @@ def main():
             "cases": num(len(new), len(rows), osrc.replace("found", "NOT found")),
             "guards": {"v14": guard_cols(new, BLIND, full14, "bench.py tally() of variants/guard_v14.py decide_full, judge "
                                          "off, over the %s rows not found in any other file under cases/" % BLIND),
-                       "v20": guard_cols(new, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
+                       "v20": guard_cols(new, BLIND, full20, "bench.py tally() of variants/guard_v20.py decide_full, judge off, over "
                                          "the %s rows not found in any other file under cases/" % BLIND)}}
         N["blind"]["repeated_rows"] = {
             "cases": num(len(rep), len(rows), osrc),
             "guards": {"v14": guard_cols(rep, BLIND, full14, "bench.py tally() of variants/guard_v14.py decide_full, judge "
                                          "off, over the %s rows found word for word in another file under cases/" % BLIND),
-                       "v20": guard_cols(rep, BLIND, full, "bench.py tally() of guard.py decide_full, judge off, over "
+                       "v20": guard_cols(rep, BLIND, full20, "bench.py tally() of variants/guard_v20.py decide_full, judge off, over "
                                          "the %s rows found word for word in another file under cases/" % BLIND)}}
         # the 2026-10-15 baselines on the same split, read from their published verdicts: does the guard's lead over
         # a small model hold on the rows no earlier set contains?
@@ -1994,7 +2032,7 @@ def main():
     if rt2:
         src = "results/real_traffic_2026-10-19.json: "
         rtv2 = {"calls": num(rt2["calls"], None, src + "calls")}
-        for k in range(7, 21):
+        for k in range(7, 23):
             vn = "v%d" % k
             if vn in rt2:
                 rtv2[vn] = {"denied": num(rt2[vn]["denied"], rt2["calls"], src + vn + ".denied"),
@@ -2431,7 +2469,8 @@ def main():
     b14 = N.get("blind", {}).get("guards", {}).get("v14", {})
     S = ["# Summary", "",
          "Generated by `bench.py` from `NUMBERS.json`, the same run as `RESULTS.md` (the full report, an appendix). Guard: "
-         "`guard.py`, version %s, its sha256 %s sealed at %s (branch %s) before blind_v20 was scored. Python %s on %s. "
+         "`guard.py`, version %s, sha256 %s, built after blind_v20 was scored (no freeze commit before a blind set). "
+         "v20's sha256 was sealed at %s (branch %s) before blind_v20 was scored. Python %s on %s. "
          "Root pinned to `%s`." % (_v(N, "guard", "version"), N["guard_sha256"][:16], FROZEN_COMMIT, LEAD_SEAL["branch"],
                                    platform.python_version(), platform.system(), PINNED_ROOT), "",
          "**OVERALL: %s** (%d of %d exit conditions pass)." % ("PASS" if ok else "FAIL", sum(1 for c in conds if c[1]), len(conds))]

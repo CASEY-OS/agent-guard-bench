@@ -2,6 +2,15 @@
 
 Every version section that used to sit in the README, moved here unchanged. Newest first: version 14, the 2026-10-14 note, version 13, then the roll-up of results for versions 4 to 12 (2026-10-12), then version 12 back to version 3, then the design text as it stood at version 3. The current design is in [README.md](README.md). How the sets are built and scored is in [docs/METHOD.md](docs/METHOD.md).
 
+## 2026-10-19: versions 21 and 22, from the real-agent traffic
+
+Two versions, one class each, built from the commands v20 denied on my own agents' real traffic, not from a blind set. Neither has a blind score yet; the next fresh set scores them, and their blind_v20 numbers are seen, not blind. `variants/guard_v20.py` and `variants/guard_v21.py` are byte copies (v20's sha256 is still the one in the blind_v20 seal); `guard.py` is v22. The proofs are `tools/v21_check.py` and `tools/v22_check.py`; their planted rows are built in code and never written to a set.
+
+- **v21: a script the command writes is read up to 64 KB.** Since v16 a command that writes a script with a heredoc and then runs it is read whole, but the written text was held to 4 KB, so a longer script was unknown and denied. v21 reads text written through a bare `cat` (a heredoc, `tee`, `cat` of a file the command wrote) up to 64 KB; over that it stays unknown and denied. printf, echo and decoder output keep 4 KB.
+- **v22: a script written from disk edits runs on an undo point.** When an interpreter or `awk -f` runs a script this command wrote with text the guard cannot read (most often Python that reads a file, edits it and writes a `.js` or `.py` that a later step runs), it now runs on an undo point instead of being denied, unless the command's visible text shows a push or other remote write, a `.git` or hooks path, a hook skip, a whole-tree stage or a destroy. Every other rule still runs first. The cost, chosen: a script that pushes from a file the guard cannot read can run, and an undo point cannot take a push back.
+
+Real work, the same 68,636 calls: denies 2,466 (3.59%) at v20, 2,110 (3.07%) at v21 and 1,482 (2.16%) at v22; undo points 1,705 (2.48%) at v20 and 2,341 (3.41%) at v22. No row of `cases/` or blind_v15 to blind_v20 changed verdict or origin from v20 to v22.
+
 ## 2026-10-18 to 2026-10-19: versions 15 to 20, and blind_v20
 
 Six versions, each built from the wrong calls of the blind set before it, by class, and each scored on a new set its builder never saw. The README carries the scores; [docs/evidence/VERSION_TIMELINE.md](docs/evidence/VERSION_TIMELINE.md) carries each step and its set. Every frozen copy is under `variants/` (`guard_v14.py` to `guard_v19.py`, byte for byte); `guard.py` is v20. Each version's class rules and their proofs are in `tools/v15_check.py` to `tools/v20_check.py`; their development rows (`cases/dev_v15.jsonl` to `cases/dev_v20.jsonl`) are copies of rows already on disk, each naming its source.

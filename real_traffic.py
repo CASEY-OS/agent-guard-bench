@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""real_traffic.py: how often v7 to v19 (variants/) and v20 (guard.py) stop real agent Bash calls.
+"""real_traffic.py: how often v7 to v21 (variants/) and v22 (guard.py) stop real agent Bash calls.
 
     python3 real_traffic.py COMMANDS.json [ROOT]
 
 COMMANDS.json is a list of {"command": "..."} objects (one per real call, repeats kept), ROOT the repo root the
-guard compares paths to (default: the current directory). v11 to v20 also get ROOT as the hook's cwd, so it reads
+guard compares paths to (default: the current directory). v11 to v22 also get ROOT as the hook's cwd, so it reads
 the Makefiles, justfiles, Taskfiles and package.json files under ROOT as they are on disk today. Nothing is run:
 each command is only judged.
 Writes results/real_traffic.json with AGGREGATE numbers only. No command text, path or reason detail is
@@ -44,7 +44,7 @@ VERSIONS = (("v7", os.path.join(HERE, "variants", "guard_v7.py")), ("v8", os.pat
             ("v9", os.path.join(HERE, "variants", "guard_v9.py")), ("v10", os.path.join(HERE, "variants", "guard_v10.py")),
             ("v11", os.path.join(HERE, "variants", "guard_v11.py")), ("v12", os.path.join(HERE, "variants", "guard_v12.py")),
             ("v13", os.path.join(HERE, "variants", "guard_v13.py"))) + tuple(
-    ("v%d" % k, os.path.join(HERE, "variants", "guard_v%d.py" % k)) for k in range(14, 20)) + (("v20", os.path.join(HERE, "guard.py")),)
+    ("v%d" % k, os.path.join(HERE, "variants", "guard_v%d.py" % k)) for k in range(14, 22)) + (("v22", os.path.join(HERE, "guard.py")),)
 CURRENT = VERSIONS[-1][0]
 
 
@@ -53,7 +53,7 @@ def work(cmd):
     for name, path in VERSIONS:
         g = _load(name, path)
         t = time.perf_counter()
-        # versions 11 to 20 read recipe files (v13 onward also shell scripts) from the hook's cwd: ROOT as it is on disk today
+        # versions 11 to 22 read recipe files (v13 onward also shell scripts) from the hook's cwd: ROOT as it is on disk today
         d = g.decide_full(cmd, os.environ["AGENT_GUARD_ROOT"]) if int(name[1:]) >= 11 else g.decide_full(cmd)
         out["t_" + name] = time.perf_counter() - t
         out[name] = d["verdict"]
@@ -100,7 +100,7 @@ def main(argv):
         out["transitions_%s_to_%s" % (a[0], b[0])] = dict(collections.Counter(
             "%s -> %s" % (r[a[0] + "_origin"] or "allow", r[b[0] + "_origin"] or "allow") for r in calls).most_common())
     # how many calls changed verdict from the previous version to this one, by direction (counts only)
-    # (v13 to v14 is kept beside the newest pair: it was the stored change before v15 to v20 joined)
+    # (v13 to v14 is kept beside the newest pair: it was the stored change before v15 to v22 joined)
     for prev, cur in (("v13", "v14"), (VERSIONS[-2][0], CURRENT)):
         out["changed_%s_to_%s" % (prev, cur)] = {
             "newly_denied": sum(1 for r in calls if r[prev] != "deny" and r[cur] == "deny"),

@@ -315,6 +315,37 @@ labelled stop that way: BV190737); a glob after cd with git -C (BV191592: the to
 shell glob from a pathspec); a plain worktree remove beside an unread script (version 14: BV191390); update-ref of a branch
 that may or may not exist (BV191933, BV192071); a JS loop that builds command strings (BV192146).
 
+VERSION 21. ONE CLASS, A SCRIPT WRITTEN WHOLE AND THEN RUN, OVER 4 KB (the founder's box, 2026-10-19, "Build v21 now
+(Recommended)": "Main finds the command type behind the 1,100, fixes that one rule, and proves no loss on all six test
+sets."). guard.py (v20) byte for byte plus one bound. Since version 16 a command that writes a script with a heredoc
+(cat > /p/x.py <<'PYEOF' ... PYEOF, tee, or cat of a file it wrote) and then runs it (python3 /p/x.py, sh, bash, source,
+awk -f) is read whole, but the written text was held to MAX_LITERAL (4,096 bytes, the bound for decoded output), so a
+longer script was unknown and its run denied fail closed ("an interpreter runs a script this command wrote with text the
+guard cannot compute"). On the founder's real agent traffic v21 plain-allows 340 of the 1,100 distinct commands v15
+allowed and v16 newly denied (11 more move to an undo point). Most of the rest give the same reason but are under 4 KB:
+Python code that reads a file, edits it with .replace and writes it out as a script that is then run, whose text is on
+disk and not in the command; this version does not change them. (1) TEXT WRITTEN TO A FILE THROUGH A BARE CAT may be up to MAX_SCRIPT = 65,536 bytes before it is
+unknown (_eval_stages' limit, reached only from _written_eval, and _written_eval's own bound); the reader then judges
+the whole text as it does a short one, so a violation anywhere in it is still found. Text over 65,536 bytes stays
+unknown and still fails closed. Every other use of MAX_LITERAL is unchanged: printf, echo and decoder output (base64,
+xxd, rev, tr) even inside a written file, substitutions, payload lists and the version 2 views. A heredoc read
+directly as stdin code (python3 - <<'EOF') never had the bound; cat FILE | python3 - of a file this command wrote now
+shares MAX_SCRIPT. Proofs: tools/v21_check.py (planted rows built in code, never written to a set).
+
+VERSION 22. SNAPSHOT, NOT BLOCK, FOR A SCRIPT THIS COMMAND WROTE WITH TEXT IT CANNOT READ (the founder's box,
+2026-10-19, "Snapshot, not block (Recommended)": "Run on an undo point unless the code visibly touches .git, hooks or a
+push; that stays blocked. ... Cost: a script that pushes to a remote from a file the guard cannot read could run.").
+guard_v21.py byte for byte plus one class change in version 8's sort (_irreversible). When an interpreter (python, node,
+ruby ...) or awk -f runs a script this command wrote whose text the guard cannot compute (real traffic: Python code that
+reads a file, edits it with .replace and writes a .js, .mjs or .py that a later step runs; a redirect of a program's
+output; a copy or tee of such a file), that fail-closed stop is an undo point (origin recoverable), as a script a shell
+runs already was, PROVIDED the command's own visible text shows no reach an undo point cannot take back
+(_visible_reach: a push or remote write, remote-capable code, a script named for a remote, a .git or hooks path, a hook
+skip, a whole-tree stage, a destroy). Every rule before the sort still runs and still denies, every other part of the sort
+still applies (a remote write, a write under $HOME, .git, an unnamed program), and the hook still denies when no undo
+point can be taken (no cwd, not a repo, AGENT_GUARD_UNDO=0). Every other fail-closed kind keeps its sort. Text over
+MAX_SCRIPT and a pipe from an unreadable program into an interpreter are unchanged. Proofs: tools/v22_check.py.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -1390,6 +1421,7 @@ def hook_bypass_tokens(cmd_nohd):
 
 # ---- normalization and literal evaluation (version 2) ----
 MAX_LITERAL = 4096     # bytes of literal input or decoded output the guard will evaluate
+MAX_SCRIPT = 65536     # version 21: bytes of text a command writes to a file (a heredoc through cat or tee) it reads
 MAX_DEPTH = 3          # how many times decoded or wrapped text goes back through the guard
 MAX_PAYLOADS = 24      # per level
 MAX_SUBST = 64         # most $(..) and backtick pairs one command may have and still be evaluated
@@ -1975,16 +2007,22 @@ def _producer(head, rest):
     return "\n".join(outl) + "\n" if outl else None
 
 
-def _eval_stages(stages, raw=False):
+def _eval_stages(stages, raw=False, limit=MAX_LITERAL):
     data = None
     for s in stages:
         if s["out"] or s["file_in"]:
             return None
         inp = (s["here"] + "\n") if s["here"] is not None else data
         data = _stage(s["argv"], inp, raw)
-        if data is None or len(data) > MAX_LITERAL:
+        if data is None or len(data) > (limit if _passes_text(s["argv"]) else MAX_LITERAL):
             return None
     return data
+
+
+def _passes_text(argv):
+    """Version 21: a bare cat, which hands on the heredoc or the text it reads unchanged (it decodes and prints nothing
+    new), so only text written to a file through it gets MAX_SCRIPT; every producer and decoder keeps MAX_LITERAL."""
+    return len(argv) == 1 and posixpath.basename(argv[0]) == "cat"
 
 
 def _eval_pipeline(inner):
@@ -8102,14 +8140,16 @@ def _written_eval(stages, st):
                 return None
             parts.append(st.files[a])
         data = "".join(parts)
+        if len(data) > MAX_SCRIPT:
+            return None                 # version 21: more than MAX_SCRIPT bytes stays unknown
         for sg in stages[1:]:
             if sg["out"] or sg["file_in"] or sg.get("here") is not None:
                 return None
             data = _stage(sg["argv"], data, True)
-            if data is None or len(data) > MAX_LITERAL:
+            if data is None or len(data) > (MAX_SCRIPT if _passes_text(sg["argv"]) else MAX_LITERAL):
                 return None
         return data
-    return _eval_stages(stages, raw=True)
+    return _eval_stages(stages, raw=True, limit=MAX_SCRIPT)   # version 21: a script written whole, up to MAX_SCRIPT
 
 
 def _copy_written(b, args, st):
@@ -9040,6 +9080,57 @@ _RECOVERABLE_ASK = re.compile(
     r"(?:a shell runs|this runs|source runs) a script this command wrote|"
     r"(?:a recipe file|a script file) the guard cannot read(?!, and its name says it reaches a remote)|"
     r"a script file on disk can run a violation in a branch or function the guard cannot evaluate(?!, and))")
+# version 22: a script this command wrote with text the guard cannot compute, run by an interpreter or awk, goes on an
+# undo point as version 8 puts a script a shell runs, unless the visible text shows a reach an undo point cannot take back
+_WRITTEN_RUN_ASK = re.compile(r"^fail_closed: (?:an interpreter runs (?:a script|a file) this command wrote|"
+                              r"awk runs a program file this command wrote)")
+_ARGSEP = r"['\"]?\s*,?\s*['\"]?"           # a word boundary in a shell line or an argv list: add -A, "add", "-A"
+_SCRIPT_WORD = re.compile(r"(?<![\w./-])[\w./-]+\.(?:js|mjs|cjs|ts|py|sh|rb|pl|awk)\b")
+_VISIBLE_REACH = (
+    ("a push or remote write", re.compile(
+        r"(?<![.\w$])push\b(?!\s*\()|\b(?:send-pack|http-push|send-email|imap-send|dcommit)\b|"
+        r"\b(?:npm|pnpm|yarn|bun|twine|cargo|gem|poetry)\s+(?:[\w-]+\s+)*publish\b|"
+        r"\bgh\s+(?:pr|release|repo|api|gist|workflow|secret)\b|\b(?:scp|sftp|rsync|ssh)\s|"
+        r"\bcurl\b[^\n]*?\s(?:-d|--data\S*|-F|--form|-T|--upload-file|-X\s*(?:POST|PUT|PATCH|DELETE))\b|"
+        r"\bwget\b[^\n]*?--(?:post|method)|method\s*:\s*['\"](?:POST|PUT|PATCH|DELETE)['\"]")),
+    ("remote-capable code", None),           # version 8's _NET_CODE
+    ("a script whose name says it reaches a remote", "name"),     # version 13's REMOTE_NAME_RE, per word
+    ("a .git or hooks path", re.compile(
+        r"(?:^|[/'\"\s])\.git(?:/|['\"\s]|$)|\.githooks|\.husky|\.lefthook|\.git-hooks|hooksPath|core\.hooks|"
+        r"(?:^|[/'\"\s])hooks/|\bpre-(?:commit|push)\b")),
+    ("a hook skip", re.compile(r"--no-verify|\bno-?verify\b|\bcommit" + _ARGSEP + r"(?:[^\n;&|]*\s)?-n\b|"
+                               r"\b(?:HUSKY|LEFTHOOK|SKIP_SIMPLE_GIT_HOOKS)\b", re.I)),
+    ("a whole-tree stage", re.compile(
+        r"\badd" + _ARGSEP + r"(?:-A|--all|-u|--update|\.|\./|:/|\*)(?=['\"\s,;)\]]|$)|"
+        r"\bcommit" + _ARGSEP + r"(?:-[b-zB-Z]*a\w*|--all)(?=['\"\s,;)\]]|$)")),
+    ("a destroy", re.compile(
+        r"rmtree|\brm\s+(?:-\w+\s+)*-\w*[rR]|rmSync|rmdirSync|\bfs(?:\.promises)?\.rm\b|rimraf|remove_tree|rm_rf|"
+        r"\breset" + _ARGSEP + r"(?:[^\n;&|]*?\s)?--hard|\bclean" + _ARGSEP + r"-\w*f|\bbranch" + _ARGSEP + r"-\w*D|"
+        r"\bstash\s+(?:drop|clear)|reflog\s+expire|update-ref\s+-d|filter-(?:branch|repo)|"
+        r"\b(?:checkout|restore)" + _ARGSEP + r"(?:--" + _ARGSEP + r")?(?:\.|\./|:/)(?=['\"\s,;)\]]|$)|"
+        r"push" + _ARGSEP + r"(?:-\w*f|--force)")),
+)
+
+
+def _visible_reach(command):
+    """Version 22: the first reach an undo point cannot take back that the command's own text shows anywhere, in a
+    command, a string, a comment or code: a push or remote write, remote-capable code, a script named for a remote,
+    a .git or hooks path, a hook skip (also any environment name of version 15's hook-switch family), a whole-tree
+    stage, a destroy. -> its label, or None. It reads text only: a hit keeps the version 21 deny."""
+    if len(command) > MAX_SCRIPT:
+        return "text over MAX_SCRIPT"           # a script too long to read stays as version 21 has it
+    for label, rx in _VISIBLE_REACH:
+        if rx == "name":
+            if any(_remote_name([w]) for w in _SCRIPT_WORD.findall(command)):
+                return label
+        elif (rx or _NET_CODE).search(command):
+            return label
+    for name in set(re.findall(r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|\b[A-Z]{4,}\b", command)):
+        if _hook_switch_kind(name):
+            return "a hook skip"
+    return None
+
+
 GIT_REMOTE_WRITE = {"push", "send-pack", "http-push", "svn", "p4", "send-email", "imap-send", "cvsexportcommit"}
 NET_ALWAYS = {"ssh", "scp", "sftp", "ftp", "lftp", "telnet", "nc", "ncat", "netcat", "socat", "mail", "mailx",
               "sendmail", "mutt", "msmtp", "osascript", "at", "batch", "kill", "pkill", "killall", "shutdown",
@@ -10011,7 +10102,8 @@ def _irreversible(command, trace, root, collect=None):
     for item in trace:
         kind, got = item[0], None
         if kind == "ask":
-            if not _RECOVERABLE_ASK.match(item[1]):
+            if not _RECOVERABLE_ASK.match(item[1]) and not (_WRITTEN_RUN_ASK.match(item[1]) and
+                                                            _visible_reach(command) is None):     # version 22
                 got = hit("the part it could not read is not a kind an undo point covers (" +
                           item[1][len(FAIL):].split(". ")[0][:160] + ")")
         elif kind == "opaque":

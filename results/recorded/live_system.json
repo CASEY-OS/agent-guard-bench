@@ -612,7 +612,7 @@
    "sha256": "3b41eee635c6c081503be2a4e71e102658335fbf343f2171a92b932d9b914848"
   },
   "current": {
-   "measured_at": "2026-10-19T10:12:28-0500",
+   "measured_at": "2026-10-19T13:20:17-0500",
    "path": "private, not in this repo: guard_pretooluse.py",
    "sets": {
     "holdout18": {
@@ -1046,6 +1046,6 @@
    "sha256": "b603d71b1544683b696047659802289862fde97978043581e99c065c743d3844"
   }
  },
- "measured_at": "2026-10-19T10:12:28-0500",
+ "measured_at": "2026-10-19T13:20:17-0500",
  "what": "The live PreToolUse hook of the system this guard was ported into, scored on the same sets: each command sent as a Bash payload on stdin whose cwd is the bench's pinned root /work/repo (the process runs in an empty temp directory), judge off, no undo layer in that hook (an allow there is a plain allow). Deny or allow only. That hook acts only on the vendored guard's named-rule denies: a deny the guard gives because it could not read the command falls through to an allow there, by its own design."
 }
