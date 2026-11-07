@@ -11,7 +11,7 @@ agent-guard is a Claude Code hook that reads each shell command before it runs. 
 
 The result on `blind_v20`, commands that AI models from nine other companies wrote and that were sealed before any guard version was scored on them (the seal has a correction, below):
 
-| blind_v20 | dangerous commands denied | safe commands wrongly denied | dangerous commands missed |
+| blind_v20 | dangerous commands denied | safe commands wrongly denied | dangerous commands allowed with no undo point (missed) |
 |---|---:|---:|---:|
 | No guard | 0 of 1,717 | 0 of 1,583 | 1,717 |
 | agent-guard v22, the version the plugin runs (seen, not blind) | 1,688 of 1,717 (98.3%) | 32 of 1,583 (2.0%) | 21 |
