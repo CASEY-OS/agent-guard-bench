@@ -7,6 +7,10 @@ claude plugin marketplace add CASEY-OS/agent-guard-bench
 claude plugin install agent-guard@agent-guard-bench
 ```
 
+![The guard denying git reset --hard, git add -A and git commit --no-verify over uncommitted work, each with a DO THIS INSTEAD, then allowing git status. The uncommitted work is still there.](docs/hero.svg)
+
+That picture is a real run, not a mock-up. [tools/render_hero.py](tools/render_hero.py) builds a throwaway repo, feeds each command to `python3 guard.py` the way the hook does, and draws what the guard printed. The commands are not run.
+
 agent-guard is a Claude Code hook that reads each shell command before it runs. It covers one class of harm: staging the whole tree, turning off git hooks, and destroying work. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
 
 The result on `blind_v20`, commands that AI models from nine other companies wrote and that were sealed before any guard version was scored on them (the seal has a correction, below):

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="841" height="755" viewBox="0 0 841 755" role="img" aria-labelledby="t d">
+<title id="t">agent-guard denying git reset --hard, git add -A and git commit --no-verify</title>
+<desc id="d">A terminal. Over a repo with uncommitted work, the guard denies three commands, each with a DO THIS INSTEAD, allows git status, and the uncommitted work is still there.</desc>
+<rect width="841" height="755" rx="10" fill="#0d1117"/>
+<rect width="841" height="38" rx="10" fill="#161b22"/>
+<rect y="28" width="841" height="10" fill="#161b22"/>
+<circle cx="22" cy="19" r="6" fill="#ff5f56"/>
+<circle cx="42" cy="19" r="6" fill="#ffbd2e"/>
+<circle cx="62" cy="19" r="6" fill="#27c93f"/>
+<text x="420" y="23" fill="#8b949e" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace" font-size="12" text-anchor="middle">agent-guard</text>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace" font-size="13">
+<text x="26" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">a throwaway repo with work that is not committed:</tspan></text>
+<text x="26" y="83" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">   M app.py</tspan></text>
+<text x="26" y="102" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  ?? notes.txt</tspan></text>
+<text x="26" y="140" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">agent runs  </tspan><tspan fill="#ffffff" font-weight="bold">$ git reset --hard</tspan></text>
+<text x="26" y="159" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">guard says  </tspan><tspan fill="#ff7b72">permissionDecision: deny</tspan></text>
+<text x="26" y="178" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  data_loss_guard: git reset --hard throws away every uncommitted change in the worktree and</tspan></text>
+<text x="26" y="197" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  index. That destroys uncommitted or pushed work that the repo may not be able to give back.</tspan></text>
+<text x="26" y="216" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  </tspan><tspan fill="#7ee787" font-weight="bold">DO THIS INSTEAD:</tspan><tspan fill="#c9d1d9"> Keep the work. Set it aside with `git stash push -m "before reset"`, or keep</tspan></text>
+<text x="26" y="235" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  it on a new branch with `git switch -c backup-branch`. To move the branch back but keep the</tspan></text>
+<text x="26" y="254" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  changes, use `git reset --soft HEAD~1`. To unstage one file, use `git restore --staged</tspan></text>
+<text x="26" y="273" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  path/to/file`.</tspan></text>
+<text x="26" y="311" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">agent runs  </tspan><tspan fill="#ffffff" font-weight="bold">$ git add -A</tspan></text>
+<text x="26" y="330" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">guard says  </tspan><tspan fill="#ff7b72">permissionDecision: deny</tspan></text>
+<text x="26" y="349" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  blanket_stage_guard: this stages by SCOPE, not by NAME. Whole-worktree staging is denied as a</tspan></text>
+<text x="26" y="368" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  class, not only the two literal spellings. Name every path: `git add &lt;path&gt; &lt;path&gt;`. Form seen:</tspan></text>
+<text x="26" y="387" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  git add -A</tspan></text>
+<text x="26" y="406" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  </tspan><tspan fill="#7ee787" font-weight="bold">DO THIS INSTEAD:</tspan><tspan fill="#c9d1d9"> Stage the files you changed by name. Run `git status --short` to list them,</tspan></text>
+<text x="26" y="425" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  then `git add path/to/file1 path/to/file2`.</tspan></text>
+<text x="26" y="463" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">agent runs  </tspan><tspan fill="#ffffff" font-weight="bold">$ git commit --no-verify -m x</tspan></text>
+<text x="26" y="482" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">guard says  </tspan><tspan fill="#ff7b72">permissionDecision: deny</tspan></text>
+<text x="26" y="501" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  hook_bypass_guard: --no-verify on a hook-carrying git command. Git's own hooks are the safety</tspan></text>
+<text x="26" y="520" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  checks that run before a commit or push.</tspan></text>
+<text x="26" y="539" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  </tspan><tspan fill="#7ee787" font-weight="bold">DO THIS INSTEAD:</tspan><tspan fill="#c9d1d9"> Run the same command without --no-verify, for example `git commit -m</tspan></text>
+<text x="26" y="558" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  "message"` or `git push origin branch-name`. If a hook fails, read its output, fix what it</tspan></text>
+<text x="26" y="577" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  names, and run it again.</tspan></text>
+<text x="26" y="615" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">agent runs  </tspan><tspan fill="#ffffff" font-weight="bold">$ git status</tspan></text>
+<text x="26" y="634" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">guard says  </tspan><tspan fill="#7ee787">(nothing printed, exit 0: the command runs)</tspan></text>
+<text x="26" y="672" xml:space="preserve" style="white-space:pre"><tspan fill="#8b949e">after all of that, the same work is still there:</tspan></text>
+<text x="26" y="691" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">   M app.py</tspan></text>
+<text x="26" y="710" xml:space="preserve" style="white-space:pre"><tspan fill="#c9d1d9">  ?? notes.txt</tspan></text>
+</g>
+</svg>
