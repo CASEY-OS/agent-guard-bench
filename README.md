@@ -11,6 +11,8 @@ claude plugin install agent-guard@agent-guard-bench
 
 That picture is a real run, not a mock-up. [tools/render_hero.py](tools/render_hero.py) builds a throwaway repo, feeds each command to `python3 guard.py` the way the hook does, and draws what the guard printed. The commands are not run.
 
+**Try it without installing.** `git clone https://github.com/CASEY-OS/agent-guard-bench && cd agent-guard-bench && python3 demo.py` puts five planted bad commands and one clean one to the real `guard.py` in a throwaway repo, and runs none of them. It ends with 5 of 5 planted commands BLOCKED and 1 of 1 clean command ALLOWED, or it prints DEMO FAILED and exits 1.
+
 agent-guard is a Claude Code hook that reads each shell command before it runs. It covers one class of harm: staging the whole tree, turning off git hooks, and destroying work. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
 
 The result on `blind_v20`, commands that AI models from nine other companies wrote and that were sealed before any guard version was scored on them (the seal has a correction, below):

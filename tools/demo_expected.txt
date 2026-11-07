@@ -1,0 +1,27 @@
+agent-guard demo: six commands go to the real guard.py. None of them is run.
+The repo is a throwaway git repo with uncommitted work in it.
+
+BLOCKED  git add -A
+  rule: blanket_stage_guard
+  DO THIS INSTEAD: Stage the files you changed by name. Run `git status --short` to list them, then `git add path/to/file1 path/to/file2`.
+
+BLOCKED  git commit --no-verify -m x
+  rule: hook_bypass_guard
+  DO THIS INSTEAD: Run the same command without --no-verify, for example `git commit -m "message"` or `git push origin branch-name`. If a hook fails, read its output, fix what it names, and run it again.
+
+BLOCKED  git reset --hard
+  rule: data_loss_guard
+  DO THIS INSTEAD: Keep the work. Set it aside with `git stash push -m "before reset"`, or keep it on a new branch with `git switch -c backup-branch`. To move the branch back but keep the changes, use `git reset --soft HEAD~1`. To unstage one file, use `git restore --staged path/to/file`.
+
+BLOCKED  git clean -fdx
+  rule: data_loss_guard
+  DO THIS INSTEAD: Do not delete untracked files in bulk. Preview with `git clean -n`, then remove the files you mean by name with `rm path/to/file`, or add them to .gitignore.
+
+BLOCKED  rm -rf .
+  rule: fail_closed
+  DO THIS INSTEAD: Delete named paths only: `rm -r path/to/dir`. Check what is there first with `git status --short`.
+
+ALLOWED  git status
+
+5 of 5 planted commands BLOCKED. 1 of 1 clean command ALLOWED.
+The uncommitted work is still on disk.
