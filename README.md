@@ -1,6 +1,6 @@
 # agent-guard-bench
 
-Your coding agent can wipe your uncommitted work or switch off your git hooks. agent-guard stops it before it runs.
+Your coding agent can wipe your uncommitted work or switch off your git hooks. agent-guard blocks 98.3% of those commands before they run.
 
 ```
 claude plugin marketplace add CASEY-OS/agent-guard-bench
