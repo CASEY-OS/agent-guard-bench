@@ -1,0 +1,17 @@
+{
+  "name": "agent-guard-bench",
+  "description": "agent-guard, a Claude Code hook that denies blanket staging, switched-off git hooks and destroyed work.",
+  "owner": {
+    "name": "Casey Rose",
+    "url": "https://github.com/CASEY-OS"
+  },
+  "plugins": [
+    {
+      "name": "agent-guard",
+      "source": "./",
+      "description": "A PreToolUse hook that reads each Bash command and denies git commands that stage the whole tree, switch off git hooks or destroy work.",
+      "category": "safety",
+      "tags": ["git", "hooks", "pretooluse", "safety"]
+    }
+  ]
+}

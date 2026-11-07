@@ -1,0 +1,18 @@
+{
+  "description": "agent-guard: reads each Bash command before it runs and denies blanket staging, switched-off git hooks and destroyed work.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/guard.py"],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "agent-guard",
+  "version": "0.1.0",
+  "description": "Reads each Bash command before Claude Code runs it and denies blanket staging, switched-off git hooks and destroyed work, with a safe command to run instead. Takes an undo point before risky commands it allows.",
+  "author": {
+    "name": "Casey Rose",
+    "url": "https://github.com/CASEY-OS"
+  },
+  "homepage": "https://github.com/CASEY-OS/agent-guard-bench",
+  "repository": "https://github.com/CASEY-OS/agent-guard-bench",
+  "license": "MIT",
+  "keywords": ["git", "hooks", "pretooluse", "safety", "guard"]
+}
