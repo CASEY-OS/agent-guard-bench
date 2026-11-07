@@ -5,7 +5,9 @@
   "README.md": {},
   "results/SUMMARY.md": {},
   "docs/METHOD.md": {},
-  "CHANGELOG.md": {}
+  "CHANGELOG.md": {},
+  "llms.txt": {},
+  "docs/install.md": {}
  },
  "claims": [
   {
@@ -1246,6 +1248,131 @@
     "versions.lead.missed"
    ],
    "type": "sum"
+  },
+  {
+   "file": "README.md",
+   "pattern": "agent-guard blocks ([0-9.]+)% of those commands before they run",
+   "keys": [
+    "versions.lead.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "(\\d+) of (\\d+) planted commands BLOCKED and (\\d+) of (\\d+) clean command ALLOWED",
+   "keys": [
+    "demo planted commands blocked: asserted by tools/demo_check.py against tools/demo_expected.txt",
+    "demo planted commands put to the guard: demo.py PLANTED, five by construction",
+    "demo clean commands allowed: asserted by tools/demo_check.py against tools/demo_expected.txt",
+    "demo clean commands put to the guard: demo.py CLEAN, one by construction"
+   ],
+   "type": "const",
+   "expect": [
+    "5",
+    "5",
+    "1",
+    "1"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "on blind_v20, ([0-9,]+) commands that AI models",
+   "keys": [
+    "versions.lead.cases"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "version (\\d+) of the guard denied",
+   "keys": [
+    "versions.lead.version"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "denied ([0-9,]+) of ([0-9,]+) dangerous commands \\([0-9.]+%\\)",
+   "keys": [
+    "versions.lead.denied",
+    "versions.lead.denied@denominator"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "dangerous commands \\(([0-9.]+)%\\)",
+   "keys": [
+    "versions.lead.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "wrongly denied ([0-9,]+) of ([0-9,]+) safe ones \\([0-9.]+%\\)",
+   "keys": [
+    "versions.lead.safe_denied",
+    "versions.lead.safe_denied@denominator"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "safe ones \\(([0-9.]+)%\\)",
+   "keys": [
+    "versions.lead.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "The plugin runs version (\\d+)",
+   "keys": [
+    "guard.version"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "(\\d+) of (\\d+) planted commands BLOCKED and (\\d+) of (\\d+) clean command ALLOWED",
+   "keys": [
+    "demo planted commands blocked: asserted by tools/demo_check.py against tools/demo_expected.txt",
+    "demo planted commands put to the guard: demo.py PLANTED, five by construction",
+    "demo clean commands allowed: asserted by tools/demo_check.py against tools/demo_expected.txt",
+    "demo clean commands put to the guard: demo.py CLEAN, one by construction"
+   ],
+   "type": "const",
+   "expect": [
+    "5",
+    "5",
+    "1",
+    "1"
+   ]
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "denied ([0-9.]+)% of [0-9,]+ dangerous commands",
+   "keys": [
+    "versions.lead.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "denied [0-9.]+% of ([0-9,]+) dangerous commands",
+   "keys": [
+    "versions.lead.bad"
+   ]
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "wrongly denied ([0-9.]+)% of [0-9,]+ safe ones",
+   "keys": [
+    "versions.lead.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "wrongly denied [0-9.]+% of ([0-9,]+) safe ones",
+   "keys": [
+    "versions.lead.safe"
+   ]
   }
  ]
 }

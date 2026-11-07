@@ -401,7 +401,7 @@ def self_test():
         here = os.path.dirname(os.path.abspath(__file__))
         repo = os.path.realpath(os.path.join(here, ".."))
         live = ["tools/SURFACE_MAP.json", "results/NUMBERS.json", "README.md", "results/SUMMARY.md", "docs/METHOD.md",
-                "CHANGELOG.md"]
+                "CHANGELOG.md", "llms.txt", "docs/install.md"]
         if not all(os.path.isfile(os.path.join(repo, f)) for f in live):
             lines.append("SKIPPED ON THIS HOST: the live table cases need %s under %s" % (", ".join(live), repo))
         else:

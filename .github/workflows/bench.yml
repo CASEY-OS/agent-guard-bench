@@ -16,6 +16,13 @@ jobs:
       # The checker first proves it catches a planted wrong number and passes a clean one.
       - name: The surface checker's self-test
         run: python3 tools/check_surfaces.py --self-test
+      # The demo, the install page, the hero picture and the verdict table: each proves it can fail before it passes.
+      - name: The demo and install-page self-test
+        run: python3 tools/demo_check.py --self-test
+      - name: The verdict-table self-test
+        run: python3 tools/verdict_check.py --self-test
+      - name: The hero picture self-test
+        run: python3 tools/render_hero.py --self-test
       - name: Run the benchmark
         run: python3 bench.py
       # The exit code is not the verdict: read the OVERALL line, then check every mapped number on the surfaces.
