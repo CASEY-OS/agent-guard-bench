@@ -136,7 +136,7 @@ python3 bench.py
 python3 undo_bench.py
 ```
 
-It needs Python 3.9 or newer, git, and npm on the PATH. One undo scenario runs `npm run`; without npm it exits 127 and the OVERALL line reads FAIL. A run takes about 15 minutes on an Apple M5 Pro and about 26 minutes on GitHub's macOS runner, and it prints about 9,000 lines; the verdict is the OVERALL line near the end. A run on a machine that has the live hook named under "Live system" in bench.py re-scores that hook and keeps the earlier hooks it did not re-measure. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`, and bench.py writes `results/NUMBERS.json`, `results/NUMBERS.md` and `results/SUMMARY.md`. A run rewrites those tracked files with its own timings and timestamps; `git checkout results/` puts back the committed copies. `exit 0` is not the verdict. Read the `OVERALL:` line. Then `python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks every number this README, the summary, the method and the changelog state against `NUMBERS.json`, and `python3 tools/check_surfaces.py --self-test` proves that checker can fail.
+It needs Python 3.9 or newer, git, and npm on the PATH. One undo scenario runs `npm run`; without npm it exits 127 and the OVERALL line reads FAIL. A run takes about 15 minutes on an Apple M5 Pro and about 26 minutes on GitHub's macOS runner, and it prints about 9,000 lines; the verdict is the OVERALL line near the end. A run on a machine that has the live hook named under "Live system" in bench.py re-scores that hook and keeps the earlier hooks it did not re-measure. bench.py also runs undo_bench.py and counts it. I ran both on 3.9.6 and 3.14.5. bench.py's whole output matched outside the timing section. undo_bench.py passed on both; its costs vary by run. They write `results/RESULTS.md`, `results/results.json`, `results/UNDO_RESULTS.md` and `results/undo_results.json`, and bench.py writes `results/NUMBERS.json`, `results/NUMBERS.md` and `results/SUMMARY.md`. A run rewrites those tracked files with its own timings and timestamps; `git checkout results/` puts back the committed copies. `exit 0` is not the verdict. Read the `OVERALL:` line. Then `python3 tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks every number this README, the summary, the method and the changelog state against `NUMBERS.json`, and `python3 tools/check_surfaces.py --self-test` proves that checker can fail. `python3 tools/demo_check.py --self-test`, `python3 tools/verdict_check.py --self-test` and `python3 tools/render_hero.py --self-test` do the same for the demo, the verdict table and the hero picture.
 
 Version 14 adds an optional judge for commands the guard cannot read to the end. It is off unless `AGENT_GUARD_JUDGE` is set (a model name, `haiku` for example). Then `judge.py` asks `claude -p` one question per command: DANGEROUS denies, SAFE allows on an undo point, and an error, a timeout (10 s, `AGENT_GUARD_JUDGE_TIMEOUT`; `claude -p` takes 2.0 to 6.4 s) or an unreadable reply denies. A remote write or anything else an undo point cannot take back is denied and never sent. `bench.py` replays the judge's replies from `results/judge_cache.jsonl` and calls the model only for a miss, with `--judge-live`.
 
@@ -162,6 +162,16 @@ As a hook, `guard.py` reads `{"tool_name":"Bash","tool_input":{"command":"..."},
 - Denied: `git reset --hard` and `git clean -fd`.
 - Denied: `git push --force origin main`, `git push --force-with-lease`, and `git branch -D feature`. The lease form is denied too: it still overwrites remote history when the lease holds.
 - Allowed: `git reset --soft HEAD~1`, `git clean -n`, `git push origin main`.
+
+**Three kinds of verdict.** There is no strictness dial to turn. This is why a command got the answer it got, and `guard.decide_full(command)` returns it as `origin`.
+
+| Kind | `origin` | What the guard does | Example |
+|---|---|---|---|
+| Floor | `block` | A policy rule matched. The command is denied, every time, and the deny ends with `DO THIS INSTEAD:`. | `git reset --hard` |
+| Reflex | `irreversible` | The guard could not read all of the command, and part of it is something an undo point cannot take back. It denies. | `rm -rf .` |
+| Finish | `recoverable` | The guard could not read all of the command, or the command discards named files, and an undo point can take it back. It takes the undo point, then allows the command. If none can be taken, it denies. | `git checkout -- app.py` |
+
+A command that matches no rule and hides nothing is a plain allow, with no `origin`. With `AGENT_GUARD_JUDGE` set (below), three more origins appear: `judged`, `judge_dangerous` and `judge_error`. [docs/PROFILE_DESIGN.md](docs/PROFILE_DESIGN.md) says why a minimal, standard and strict setting is not built.
 
 ## Six terms
 
