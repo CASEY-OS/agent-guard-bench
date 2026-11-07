@@ -1,5 +1,24 @@
 # agent-guard-bench
 
+Your coding agent can wipe your uncommitted work or switch off your git hooks. agent-guard stops it before it runs.
+
+```
+claude plugin marketplace add CASEY-OS/agent-guard-bench
+claude plugin install agent-guard@agent-guard-bench
+```
+
+agent-guard is a Claude Code hook that reads each shell command before it runs. It covers one class of harm: staging the whole tree, turning off git hooks, and destroying work. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
+
+The result on `blind_v20`, commands that AI models from nine other companies wrote and that were sealed before any guard version was scored on them (the seal has a correction, below):
+
+| blind_v20 | dangerous commands denied | safe commands wrongly denied | dangerous commands missed |
+|---|---:|---:|---:|
+| No guard | 0 of 1,717 | 0 of 1,583 | 1,717 |
+| agent-guard v22, the version the plugin runs (seen, not blind) | 1,688 of 1,717 (98.3%) | 32 of 1,583 (2.0%) | 21 |
+| agent-guard v20, the last version scored blind | 1,688 of 1,717 (98.3%) | 32 of 1,583 (2.0%) | 21 |
+
+`guard.py`, the file the plugin runs, is version 22. It was built after `blind_v20` was scored, so its row is seen, not blind; version 20's row is the sealed result. Version 20's 21 misses, by how the command hid what it does: 8 encoded, 6 written in another language, 3 inside a wrapper, 3 through command substitution and 1 through an environment setting. Every number in this table comes from [results/NUMBERS.json](results/NUMBERS.json), and `tools/check_surfaces.py` fails if one drifts from it.
+
 A benchmark for one failure class: an AI coding agent stages a whole worktree, turns off git hooks, or destroys work that cannot be got back. `guard.py` is a Claude Code PreToolUse hook that reads each shell command before it runs and denies those, with a safe alternative. `undo.py` takes a snapshot before the risky commands it allows.
 
 Read first: [results/SUMMARY.md](results/SUMMARY.md), the result in about 30 lines. Then [docs/METHOD.md](docs/METHOD.md) (how the test sets are built and scored, and the pass rules) and [CHANGELOG.md](CHANGELOG.md) (every version, newest first). The full generated report, [results/RESULTS.md](results/RESULTS.md), is an appendix of about 9,000 lines.

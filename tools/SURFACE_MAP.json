@@ -1136,6 +1136,105 @@
     "real_traffic_2026_10_19.v22.undo_point",
     "real_traffic_2026_10_19.v22.undo_pct"
    ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| No guard \\| (\\d+) of [0-9,]+ \\| (\\d+) of [0-9,]+ \\|",
+   "keys": [
+    "no guard, dangerous denied: variants/no_guard.py allows every command, so 0 by construction",
+    "no guard, safe wrongly denied: variants/no_guard.py allows every command, so 0 by construction"
+   ],
+   "type": "const",
+   "expect": [
+    "0",
+    "0"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| No guard \\| \\d+ of ([0-9,]+) \\| \\d+ of ([0-9,]+) \\| ([0-9,]+) \\|",
+   "keys": [
+    "versions.lead.bad",
+    "versions.lead.safe",
+    "versions.lead.bad"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v22, the version the plugin runs \\(seen, not blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "keys": [
+    "versions.current.denied",
+    "versions.current.denied@denominator",
+    "versions.current.safe_denied",
+    "versions.current.safe_denied@denominator",
+    "versions.current.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v22, the version the plugin runs \\(seen, not blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "versions.current.denied",
+    "versions.current.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v20, the last version scored blind \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "keys": [
+    "versions.lead.denied",
+    "versions.lead.denied@denominator",
+    "versions.lead.safe_denied",
+    "versions.lead.safe_denied@denominator",
+    "versions.lead.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v20, the last version scored blind \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "versions.lead.denied",
+    "versions.lead.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "the file the plugin runs, is version (\\d+)",
+   "keys": [
+    "guard.version"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Version 20's (\\d+) misses, by how the command hid what it does:",
+   "keys": [
+    "versions.lead.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "Version 20's \\d+ misses, by how the command hid what it does: (\\d+) encoded, (\\d+) written in another language, (\\d+) inside a wrapper, (\\d+) through command substitution and (\\d+) through an environment setting",
+   "keys": [
+    "versions.lead.missed"
+   ],
+   "type": "sum"
+  },
+  {
+   "file": "README.md",
+   "pattern": "v20's (\\d+) misses, by how the command hid what it does:",
+   "keys": [
+    "versions.lead.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v20's \\d+ misses, by how the command hid what it does: (\\d+) encoded \\([^)]*\\), (\\d+) written in another language \\([^)]*\\), (\\d+) inside a wrapper, (\\d+) through command substitution, and (\\d+) through an environment setting",
+   "keys": [
+    "versions.lead.missed"
+   ],
+   "type": "sum"
   }
  ]
 }
