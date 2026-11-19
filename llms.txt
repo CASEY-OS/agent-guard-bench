@@ -4,7 +4,7 @@
 
 Scope, so you do not claim more for it: it covers one class of harm, git safety. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It reads the command text only and runs nothing. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
 
-Result: on blind_v20, 3,300 commands that AI models from nine other companies wrote, sealed before any guard version was scored, version 20 of the guard denied 1,688 of 1,717 dangerous commands (98.3%) and wrongly denied 32 of 1,583 safe ones (2.0%). The plugin runs version 22, whose numbers on that set are the same but seen, not blind. Method and every miss: https://github.com/CASEY-OS/agent-guard-bench/blob/master/README.md
+Result: on blind_v20, 3,300 commands that AI models from nine other companies wrote, sealed before any guard version was scored, version 20 of the guard denied 1,688 of 1,717 dangerous commands (98.3%) and wrongly denied 32 of 1,583 safe ones (2.0%). The plugin runs version 24, whose numbers on that set are the same but seen, not blind. Method and every miss: https://github.com/CASEY-OS/agent-guard-bench/blob/master/README.md
 
 ## Install, for the agent reading this
 
