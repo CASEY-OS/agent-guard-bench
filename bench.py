@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """bench.py: run every variant against every case set. One command: python3 bench.py
 
-Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v21 (frozen copies in variants/), guard_v22
-(guard.py, the real one), broken_guard (negative control for guard.py).
+Variants: no_guard (baseline), naive_regex, guard_v1 to guard_v22 (frozen copies in variants/), guard_v24
+(guard.py, the real one; there is no v23 here), broken_guard (negative control for guard.py).
 Sets: own cases, split by id: v1_era (no prefix), v2_dev ("v2-"), v3_dev ("v3-"), v5_dev ("v5-"), v6_dev ("v6-"),
 v8_dev ("v8-"), v9_dev ("v9-"), v10_dev ("v10-"), v11_dev ("v11-"), v12_dev ("v12-"),
 v13_dev ("v13-"); residual;
@@ -129,16 +129,17 @@ VARIANTS = [
     ("guard_v19", os.path.join(HERE, "variants", "guard_v19.py")),
     ("guard_v20", os.path.join(HERE, "variants", "guard_v20.py")),   # sealed at f4dccd0 before blind_v20 was scored
     ("guard_v21", os.path.join(HERE, "variants", "guard_v21.py")),   # built 2026-10-19 from real-traffic errors
-    ("guard_v22", os.path.join(HERE, "guard.py")),
+    ("guard_v22", os.path.join(HERE, "variants", "guard_v22.py")),   # built 2026-10-19 from real-traffic errors; guard.py until v24
+    ("guard_v24", os.path.join(HERE, "guard.py")),   # v22 plus two fixes for 204 force-push shapes; built 2026-11-19
     ("broken_guard", os.path.join(HERE, "variants", "broken_guard.py")),
 ]
 GUARDS = ("guard_v1", "guard_v2", "guard_v3", "guard_v4", "guard_v5", "guard_v6", "guard_v7", "guard_v8", "guard_v9",
           "guard_v10", "guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17",
-          "guard_v18", "guard_v19", "guard_v20", "guard_v21", "guard_v22")
-CUR = "guard_v22"            # guard.py. The sections and numbers labelled v14 (v13 to v14 changes, the judge replay, the
+          "guard_v18", "guard_v19", "guard_v20", "guard_v21", "guard_v22", "guard_v24")
+CUR = "guard_v24"            # guard.py. The sections and numbers labelled v14 (v13 to v14 changes, the judge replay, the
                              # holdout19 label audit, the pooled holdout table) stay on the frozen variants/guard_v14.py
 CWD_GUARDS = ("guard_v11", "guard_v12", "guard_v13", "guard_v14", "guard_v15", "guard_v16", "guard_v17", "guard_v18",
-              "guard_v19", "guard_v20", "guard_v21", "guard_v22", "broken_guard")   # version 11 on: a fixture case's directory is the cwd
+              "guard_v19", "guard_v20", "guard_v21", "guard_v22", "guard_v24", "broken_guard")   # version 11 on: a fixture case's directory is the cwd
 CASE_FILES = [
     ("known_bad", os.path.join(HERE, "cases", "known_bad.jsonl")),
     ("known_good", os.path.join(HERE, "cases", "known_good.jsonl")),
@@ -172,15 +173,16 @@ BLIND = "holdout19"          # the newest set written after the current guard fr
 OUTSIDE_DEV = "holdout18"    # outside models, development data for v14, blind for v13
 FROZEN_COMMIT = "f4dccd0"    # v20: its sha256 sealed publicly on branch blind-v20-seal before blind_v20 was scored
 FROZEN_SHA256 = "1f16f4606e53999958f99f807946b60a1ba7806193bbe94e59ddce8f784dbbad"   # guard.py (v20) in that seal
-# v21 and v22 were built on 2026-10-19 from real-traffic errors, after every blind set was scored: no freeze commit before
-# a blind set holds them, so every cell of theirs is seen, not blind, until a fresh set is written and scored
+# v21 and v22 were built on 2026-10-19 from real-traffic errors, and v24 on 2026-11-19 from a real-shell check, all after
+# every blind set was scored: no freeze commit before a blind set holds them, so every cell of theirs is seen, not blind,
+# until a fresh set is written and scored
 CURRENT_FROZEN = None
-CURRENT_FROZEN_WHY = "v21 and v22 have no freeze commit before a blind set: both were built after blind_v20 was scored"
+CURRENT_FROZEN_WHY = "v21, v22 and v24 have no freeze commit before a blind set: all were built after blind_v20 was scored"
 V14_FROZEN_COMMIT = "e88a7d8"   # v14 frozen publicly (branch v14); now variants/guard_v14.py, byte for byte
 V14_SHA256 = "9f5d9f0b6c222d19268376bbb043e6dc7f312e8e735efd3a73b6031de8120b45"
 # the locked blind sets of versions 15 to 20 (D505): each set's sha256 is checked against its LOCK.txt before scoring
 VERSION_SETS = tuple(("blind_v%d" % n, n) for n in range(15, 21))
-VERSION_GUARDS = tuple(("v%d" % k, "guard_v%d" % k, k) for k in range(14, 23))
+VERSION_GUARDS = tuple(("v%d" % k, "guard_v%d" % k, k) for k in tuple(range(14, 23)) + (24,))
 LEAD_SEAL = {"branch": "blind-v20-seal", "commit": "f4dccd0"}
 # holdout18's round 3 file (Gemini) was written from the Copilot copy of the prompt, so its ids are CP001 to CP080, the
 # same ids as round 2's copilot_cases.jsonl (SEAL_ROUND3.md on branch holdout18-seal says so). The case file is never
@@ -997,7 +999,7 @@ def numbers_md_sections(N):
     if vb and "lead" in vb:
         ld = vb["lead"]
         L += ["## The blind result: %s (from NUMBERS.json)" % _v(ld, "set"), "",
-              "Blind for every version v14 to v20 (v21 and v22 were built after it was scored: seen, not blind): no "
+              "Blind for every version v14 to v20 (v21, v22 and v24 were built after it was scored: seen, not blind): no "
               "writer saw a guard and no builder saw the set (v20 was finished while the "
               "first rounds were written; README, \"A correction to the seal\"); sealed with every guard's sha256 on branch "
               "%s (%s) before scoring. %s cases, %s dangerous and %s safe. Judge off. The sealed labels are the score of "
@@ -1119,7 +1121,7 @@ def write_numbers(N):
         fh.write("\n")
     M = ["# NUMBERS", "",
          "Generated by `bench.py` on every run, never by hand, from the same run as RESULTS.md. Generated at %s. "
-         "guard.py sha256 %s (frozen commit %s is v20's, variants/guard_v20.py; v21 and v22 have none before a blind "
+         "guard.py sha256 %s (frozen commit %s is v20's, variants/guard_v20.py; v21, v22 and v24 have none before a blind "
          "set). Every surface in this repo states its numbers from this file, and "
          "`tools/check_surfaces.py results/NUMBERS.json tools/SURFACE_MAP.json` checks them."
          % (N["generated_at"], N["guard_sha256"], N["frozen_commit"]), "",
@@ -1187,7 +1189,7 @@ def wilson(k, n, z=1.96):
 
 
 def versions_block(mods):
-    """Every guard version v14 to v22 on every locked blind set blind_v15 to blind_v20 (D505), the verdict read from
+    """Every guard version v14 to v22, and v24, on every locked blind set blind_v15 to blind_v20 (D505), the verdict read from
     decide_full(command, None)["verdict"] with AGENT_GUARD_ROOT pinned, AGENT_GUARD_UNDO=0, the judge and
     CLAUDE_PROJECT_DIR unset. A set whose sha256 differs from its LOCK.txt stops the run. A cell is blind when the guard
     was frozen before the set was written (vK on blind_vN with K <= N; v14 is blind on every one); blind false means the

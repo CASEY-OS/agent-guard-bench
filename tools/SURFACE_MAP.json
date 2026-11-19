@@ -1050,6 +1050,17 @@
   },
   {
    "file": "README.md",
+   "pattern": "\\| v24 \\| built 11-19 from a real-shell check, no blind set yet \\| blind_v20 \\(([0-9,]+)\\), SEEN \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "versions.sets.blind_v20.cases",
+    "versions.guards.v24.sets.blind_v20.denied",
+    "versions.guards.v24.sets.blind_v20.bad",
+    "versions.guards.v24.sets.blind_v20.safe_denied",
+    "versions.guards.v24.sets.blind_v20.safe"
+   ]
+  },
+  {
+   "file": "README.md",
    "pattern": "\\*\\*v21 and v22 take real-work denies down to ([0-9.]+)%\\.\\*\\*",
    "keys": [
     "real_traffic_2026_10_19.v22.denied_pct"
@@ -1161,7 +1172,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v22, the version the plugin runs \\(seen, not blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "pattern": "\\| agent-guard v24, the version the plugin runs \\(seen, not blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
    "keys": [
     "versions.current.denied",
     "versions.current.denied@denominator",
@@ -1172,7 +1183,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v22, the version the plugin runs \\(seen, not blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "pattern": "\\| agent-guard v24, the version the plugin runs \\(seen, not blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
    "keys": [
     "versions.current.denied",
     "versions.current.safe_denied"

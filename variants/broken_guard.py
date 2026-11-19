@@ -346,6 +346,14 @@ still applies (a remote write, a write under $HOME, .git, an unnamed program), a
 point can be taken (no cwd, not a repo, AGENT_GUARD_UNDO=0). Every other fail-closed kind keeps its sort. Text over
 MAX_SCRIPT and a pipe from an unreadable program into an interpreter are unchanged. Proofs: tools/v22_check.py.
 
+VERSION 24 (CANDIDATE, never shipped; PREREG_V24.md). guard_v22.py plus two changes that only make it stricter, and nothing else:
+the top of a Bash call still reads $@ $* $1 as UNKNOWN, as v22 does. (A) A parameter operator on a NON-EMPTY list (the positional
+parameters or an array) no longer joins the list into one word: a default operator (:- := - = ? :?) returns the list as
+`$@` does, any other operator (slice, trim, replace, case) is unknown, so `"${@:-}"` after `set -- WORDS` is judged as WORDS.
+(B) When the positionals are a known list (a function body, a payload with arguments) and the text sets them in a way the
+resolver does not model (`set WORDS` without `--`, `builtin set`, `command set`, `eval`, `source`, `.`, `alias`, a zsh `argv=`,
+an unreadable set), they are unknown, v22's own reading. The `set --` that the resolver models is not touched.
+
 BOUND, named not closed: the guard sees the command text only. A value the shell fills in at run
 time is invisible: a variable set outside the command, `git add $TARGETS`, a `$(...)` that runs a
 program, a file or a network fetch piped into a shell, a git call inside a committed script,
@@ -2796,6 +2804,7 @@ class _R(object):
         self.exported = {}          # version 19: names this string exported (export, declare -x) with a literal value
         self.child_env = {}         # version 19: sh -c TEXT -> the exported names and values that child shell sees
         self.pwd = _root()          # version 20: the shell's working directory as far as a literal cd says (None: unknown)
+        self.pos_touched = False    # version 24: did a resolved segment hold a command that can set the positionals in a way effects() does not model?
 
     # ---- values ----
     def ifs(self):
@@ -2878,7 +2887,7 @@ class _R(object):
             return self.ins_list(v, q, which == "@")
         return self.ins(v, q)
 
-    def param(self, body, q):
+    def param(self, body, q, whole=True):
         if body.startswith("#") and len(body) > 1:
             return "0"
         indirect = body.startswith("!")
@@ -2908,6 +2917,10 @@ class _R(object):
         if isinstance(val, list):
             if op is None:
                 return self.ins_list(val, q, idx == "[@]" or name == "@")
+            if whole and val and op in (":-", ":=", "-", "=", "?", ":?"):        # version 24 A1: a non-empty list is returned as the list, not joined
+                return self.ins_list(val, q, idx == "[@]" or name == "@")
+            if whole and val and op not in (":+", "+"):        # version 24 A2: slice, trim, replace, case act on each word: unknown
+                return self.sentinel(q, multi)
             val = " ".join(val)
         if op is None:
             return self.ins(val, q)
@@ -2976,6 +2989,7 @@ class _R(object):
         inner_r = sub.resolve(inner)
         self.payloads.extend(sub.payloads)
         self.alt = self.alt or sub.alt
+        self.pos_touched = self.pos_touched or sub.pos_touched      # version 24
         lit = _eval_pipeline(inner_r) if _lit3(inner_r) else None
         if lit is not None:
             return self.ins(lit.rstrip("\n"), q)
@@ -3002,7 +3016,7 @@ class _R(object):
             return ("0", j + 1) if j > 0 else None
         if nxt == "{":
             j = _close_brace(text, i + 2)
-            return (self.param(text[i + 2:j], q), j + 1) if j > 0 else None
+            return (self.param(text[i + 2:j], q, _whole_word(text, i, j + 1, q)), j + 1) if j > 0 else None      # version 24: whole
         if nxt == '"' and q == 0:
             return "", i + 1
         m = re.match(r"[A-Za-z_][A-Za-z0-9_]*", text[i + 1:])
@@ -3072,6 +3086,7 @@ class _R(object):
                     sub.pwd = self.pwd              # version 20
                     inner = sub.resolve(text[i + 2:j])
                     self.payloads.extend(sub.payloads)
+                    self.pos_touched = self.pos_touched or sub.pos_touched      # version 24
                     self.payloads.append((inner, None, None))
                     self.psubs.append(inner)
                     out.append(PSUB + str(len(self.psubs) - 1) + PSUB)
@@ -3339,6 +3354,8 @@ class _R(object):
             prev_sep = sep
             self.piped_find = piped
             self.effects(r)
+            if not self.pos_touched and _sets_pos_unmodelled(r):
+                self.pos_touched = True             # version 24
             self.piped_find = None
             piped = None
             toks = _tokens(r) if sep == "|" else []
@@ -8487,6 +8504,81 @@ def _unroll_read_loops(text, bodies):
     return "".join(out), bodies
 
 
+_POS_SETTERS = {"eval", "source", "alias"}
+_SET_OPT = re.compile(r"^[-+][A-Za-z]+$")
+
+
+def _whole_word(text, a, b, q):
+    """Version 24. Is text[a:b], a ${...}, the whole of one shell word: bare, or the whole of a double-quoted word? Only there is
+    "${@:-}" the separate words of the list; inside a longer word or an assignment value (y="${@:-}") bash joins them, as v22 does."""
+    lo, hi = a, b
+    if q == 2:
+        if not (a >= 1 and text[a - 1] == '"' and b < len(text) and text[b] == '"'):
+            return False
+        lo, hi = a - 1, b + 1
+    before = text[lo - 1] if lo > 0 else " "
+    after = text[hi] if hi < len(text) else " "
+    return before in " \t\n;&|(){}" and after in " \t\n;&|(){}"
+
+
+def _sets_pos_unmodelled(seg):
+    """Version 24. Does this resolved segment hold a command that can set the positional parameters in a way _R.effects does not
+    model, or one this check cannot show does not? effects() models exactly `set` as the command word with a `--` among its words
+    (the words after it become the list): that case is NOT flagged. Flagged: any other token `set` whose words are not all flags
+    (a flag is -x, +x, a cluster such as -euo; -o and +o, and a cluster ending in o, take the next word as the option's name), a
+    `set` that is not the command word (after builtin or command), an unresolved word after set, `eval`, `source`, `alias`, a `.`
+    that starts a command (also after builtin or command), a zsh argv assignment, an unreadable segment. Over-reading is the safe
+    side: it only keeps v22's reading of the positionals as unknown."""
+    toks = _tokens(seg)
+    if toks is None:
+        return True
+    head = 0
+    while head < len(toks) and (toks[head] in KEYWORDS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*\+?=", toks[head])):
+        head += 1
+    for k, t in enumerate(toks):
+        if t in _POS_SETTERS or t.startswith(("argv=", "argv[")):
+            return True
+        if t == "." and (k == 0 or toks[k - 1] in KEYWORDS or toks[k - 1] in ("builtin", "command", ";", "&&", "||", "|", "&")):
+            return True
+        if t == "set":
+            rest = toks[k + 1:]
+            j = 0
+            while j < len(rest):
+                w = rest[j]
+                if not _lit3(w) or FOUND in w:
+                    return True
+                if _SET_OPT.match(w):        # version 24 flag
+                    j += 2 if w[-1] == "o" else 1
+                    continue
+                if re.match(r"^\d*[<>&]", w) or w in (";", "&", "|", "&&", "||", ")", "}"):
+                    break                           # a redirection or the end of this command
+                if w == "--" and k == head:        # version 24 modelled
+                    break                           # the case effects() models exactly
+                return True                         # `--` elsewhere, `-`, or a plain word: positionals are set in a way not modelled
+    return False
+
+
+def _pos_unmodelled(base, known, funcs):
+    """Version 24. Probe: does any view of this text set the positionals in a way _R.effects does not model? Every view
+    _check3_inner will build is probed (the text, every loop view, the default-mode view), with pos unknown so nothing hides."""
+    try:
+        probe = _R(known, None, "main", None, funcs)
+        probe.resolve(base)
+        touched = probe.pos_touched
+        for k, vals in probe.loops[:4]:
+            for vi in range(1, min(len(vals), 8)):
+                p2 = _R(known, None, "main", {k: vi}, funcs)
+                p2.resolve(base)
+                touched = touched or p2.pos_touched
+        if probe.alt:
+            p3 = _R(known, None, "default", None, funcs)
+            p3.resolve(base)
+            touched = touched or p3.pos_touched
+        return touched
+    except Exception:
+        return True
+
+
 def _check3(cmd, root, depth, known=None, pos=None, funcs=None):
     """-> ("block" | "ask" | "allow", reason). Blocks anywhere win over asks anywhere."""
     cmd = _strip_comments(cmd)
@@ -8507,6 +8599,8 @@ def _check3_inner(cmd, nohd, root, depth, known, pos, funcs):
     bodies = _heredoc_bodies(cmd)
     base = _ifs_pass(_ansi_pass(_join_pass(nohd)))
     base, bodies = _unroll_read_loops(base, bodies)     # version 16: a read loop over known lines
+    if pos is not None and _pos_unmodelled(base, known, funcs):
+        pos = None                                      # version 24: the list the resolver holds is not the list the shell holds
     r = _R(known, pos, "main", None, funcs)
     views = [(_brace_pass(r.resolve(base)), True, r)]
     for k, vals in r.loops[:4]:

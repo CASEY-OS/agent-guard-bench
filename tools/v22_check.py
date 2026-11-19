@@ -18,9 +18,9 @@ wrote with text the guard cannot compute (Python that reads a file, edits it and
 a redirect of a program's output; a copy or tee of such a file), version 8's sort now puts it on an undo point (origin
 recoverable) instead of a fail-closed deny, unless the command's visible text shows a reach an undo point cannot take
 back (_visible_reach). Every rule before the sort, every other part of the sort and the hook's no-undo-point deny are
-unchanged. guard.py (v22) = variants/guard_v21.py byte for byte plus that change (asserted below by reverting it).
+unchanged. variants/guard_v22.py (v22; guard.py until v24) = variants/guard_v21.py byte for byte plus that change (asserted below by reverting it).
 
-What it compares: variants/guard_v21.py (sha256 asserted) against guard.py (v22), with tools/v15_check.py's environment (undo off,
+What it compares: variants/guard_v21.py (sha256 asserted) against variants/guard_v22.py (v22), with tools/v15_check.py's environment (undo off,
 judge unset, root /work/repo), verdict and score method, imported. DENY is a deny; UNDO is an allow on an undo point
 (origin recoverable or judged); allow is a plain allow.
 
@@ -159,7 +159,7 @@ def tables(res):
 
 
 def guard_path():
-    return os.path.abspath(GUARD_ARG) if GUARD_ARG else os.path.join(HERE, "guard.py")
+    return os.path.abspath(GUARD_ARG) if GUARD_ARG else os.path.join(HERE, "variants", "guard_v22.py")   # v22, frozen when v24 became guard.py
 
 
 def _hook(gpath, cmd, cwd=None, env=None):
