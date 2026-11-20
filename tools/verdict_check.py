@@ -9,7 +9,7 @@ Two things are checked against `guard.decide_full`, the code that decides:
   1. each example command in the README's "Three kinds of verdict" table has the `origin` the table gives it;
   2. the table in docs/PROFILE_DESIGN.md (how many dangerous and safe commands of blind_v20 land in each kind) equals the
      count this run makes over docs/evidence/blind_v20/blind_v20_set.jsonl, and its deny rows add up to the figures in
-     results/NUMBERS.json (versions.lead.denied, safe_denied, missed).
+     results/NUMBERS.json (versions.current.denied, safe_denied, missed: the numbers of guard.py).
 The guard runs with the undo layer off, the judge unset and the root pinned to /work/repo (asserted below), as
 tools/v15_check.py and tools/v22_check.py run it, so nothing depends on the machine.
 
@@ -95,7 +95,7 @@ def counts_ok(text, sp, numbers):
     for k in have:
         if want[k] != have[k]:
             bad.append("%s: the page says %r, the guard gives %r" % (k, want[k], have[k]))
-    lead = numbers["versions"]["lead"]
+    lead = numbers["versions"]["current"]   # guard.py: the table above is its split (it was "lead", v20, while guard.py equalled v20 on this set)
 
     def val(key):
         v = lead[key]
@@ -136,7 +136,7 @@ def main(argv):
     problems = counts_ok(design, sp, numbers)
     case("design page: the table equals this run's split and its deny rows equal NUMBERS.json", not problems,
          "; ".join(problems))
-    off = design.replace("| 1,637 | 19 |", "| 1,638 | 19 |", 1)
+    off = design.replace("| 1,638 | 20 |", "| 1,639 | 20 |", 1)
     case("planted: one count changed on the design page reads red", bool(counts_ok(off, sp, numbers)) and off != design)
     # the sums against NUMBERS must stand on their own: a split that does not add up must read red even if the page matches
     broken = {k: list(v) for k, v in sp.items()}

@@ -444,9 +444,13 @@ def self_test():
                         out.append(ln)
                     return "\n".join(out)
                 return edit
-            v24 = "| agent-guard v24, the version the plugin runs"
+            v26d = "| agent-guard v26d, the version the plugin runs"
+            v24 = "| agent-guard v24, the version before v26d"
             v20 = "| agent-guard v20, the last version scored blind"
             live_case("clean control, the README as committed", 0, "VERDICT: PASS", problems_want=0)
+            live_case("planted drift: v26d row says 1,688 denied", 1, "MISMATCH", in_row(v26d, "1,689", "1,688"), problems_want=1)
+            live_case("planted drift: v26d row says 98.3% where 1,689 of 1,717 is 98.4%", 1, "MISMATCH",
+                      in_row(v26d, "98.4%", "98.3%"), problems_want=1)
             live_case("planted drift: v24 row says 1,687 denied", 1, "MISMATCH", in_row(v24, "1,688", "1,687"), problems_want=1)
             live_case("planted drift: v20 row says 33 safe wrongly denied", 1, "MISMATCH", in_row(v20, "32 of", "33 of"),
                       problems_want=1)
@@ -455,14 +459,17 @@ def self_test():
             live_case("planted drift: the no-guard row says 1 denied", 1, "MISMATCH", in_row("| No guard", "| 0 of", "| 1 of"),
                       problems_want=1)
             live_case("planted drift: the no-guard row says 1,716 missed", 1, "MISMATCH",
-                      lambda b: b.replace("| 1,717 |\n| agent-guard v24", "| 1,716 |\n| agent-guard v24", 1), problems_want=1)
+                      lambda b: b.replace("| 1,717 |\n| agent-guard v26d", "| 1,716 |\n| agent-guard v26d", 1), problems_want=1)
             live_case("planted drift: the by-type line says 9 encoded, so the parts no longer add to 21", 1, "MISMATCH",
                       lambda b: b.replace("21 misses, by how the command hid what it does: 8 encoded, 6", "21 misses, by how the command hid what it does: 9 encoded, 6", 1) if "Version 20's 21 misses" in b else b,
                       problems_want=1)
             live_case("planted drift: NUMBERS says 1,600 denied, the README says 1,688", 1, "MISMATCH",
                       nums_edit=lambda n: n["versions"]["lead"]["denied"].__setitem__("value", 1600))
-            live_case("outside the blind spots, caught: the guard version reads 23 where NUMBERS says 24", 1, "MISMATCH",
-                      lambda b: b.replace("the file the plugin runs, is version 24", "the file the plugin runs, is version 23", 1),
+            live_case("outside the blind spots, caught: the guard version reads 23 where NUMBERS says 26", 1, "MISMATCH",
+                      lambda b: b.replace("the file the plugin runs, is version 26d", "the file the plugin runs, is version 23d", 1),
+                      problems_want=2)
+            live_case("outside the blind spots, caught: the guard label reads 26c where NUMBERS says 26d", 1, "MISMATCH",
+                      lambda b: b.replace("the file the plugin runs, is version 26d", "the file the plugin runs, is version 26c", 1),
                       problems_want=1)
             live_case("inside the declared blind spot: a number written in words changes, it stays green", 0, "VERDICT: PASS",
                       lambda b: b.replace("nine other companies wrote and that were sealed", "ten other companies wrote and that were sealed", 1),

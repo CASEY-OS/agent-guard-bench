@@ -346,6 +346,20 @@ still applies (a remote write, a write under $HOME, .git, an unnamed program), a
 point can be taken (no cwd, not a repo, AGENT_GUARD_UNDO=0). Every other fail-closed kind keeps its sort. Text over
 MAX_SCRIPT and a pipe from an unreadable program into an interpreter are unchanged. Proofs: tools/v22_check.py.
 
+VERSION 25 (CANDIDATE, never shipped; PREREG_V25.md). guard_v24.py plus four changes that only make it stricter: (i) `"$@"` with a known EMPTY
+list of positionals is no word at all (a `set --`, or a function called with no words); the top of a Bash call still reads `$@ $* $1` as UNKNOWN. (ii) `shift` and
+`shift N` are modelled exactly on a known list; a shift that may not run (after && or ||, in an if, a pipe, a subshell, a case arm) or whose N is unreadable is judged
+in two views, one with the list kept and one with it shifted or unknown. (iii) A positionals setter (`set --`, `shift`, anything unmodelled) inside a loop makes the loop,
+in a second view, read the list as unknown. (iv) A list operator inside an assignment or a longer word: a literal slice is read exactly, a trim, replace or case change
+word by word, anything else is unknown. (v) Structure: a command that mentions a positional parameter is judged twice, once with these rules and once with
+them switched off (v24's own reading), and the stricter verdict is returned, so v25 can never be weaker than v24 and can never allow what v24 denies.
+
+VERSION 25s (CANDIDATE, never shipped; bf/v25s_build.py writes this file from guard_v25.py). Version 25 with PERFORMANCE changes only: no rule is edited and no
+verdict moves (tests/v25s_test.py compares decide_full of the two on every corpus the v25 round used). Results of pure functions of a text are remembered (the
+tokens, the quote map, the segments, the bracket tables); a `$( )` and the unmodelled-setter probe are remembered with everything they read, and replayed with
+everything they wrote; a script read from disk is judged once per decision per text; the second pass of v25's amendment (v) runs only when the first pass used
+a v25 rule. A memo is never read where it could hide a stack overflow the original would have hit (deeper than 40 levels of `$( )`).
+
 VERSION 24 (CANDIDATE, never shipped; PREREG_V24.md). guard_v22.py plus two changes that only make it stricter, and nothing else:
 the top of a Bash call still reads $@ $* $1 as UNKNOWN, as v22 does. (A) A parameter operator on a NON-EMPTY list (the positional
 parameters or an array) no longer joins the list into one word: a default operator (:- := - = ? :?) returns the list as
@@ -364,6 +378,9 @@ server-side hook or branch protection is the boundary.
 """
 import base64
 import binascii
+import bisect
+import itertools
+import copy as _copymod
 import json
 import os
 import posixpath
@@ -372,8 +389,64 @@ import shlex
 import sys
 
 
+_MISS = object()
+_NL_RUN = re.compile("[\r\n]+")
+_EXP_SPECIAL = re.compile("[\\\\'\"$~`<>]")      # version 25s: the characters _R.expand does something with
+
+
+class _Memo(object):
+    """Version 25s: a dict that forgets everything once the characters it holds pass a budget (an answer never depends on what was forgotten)."""
+
+    def __init__(self, budget=1 << 24):
+        self.d, self.n, self.budget = {}, 0, budget
+
+    def put(self, key, val, weight):
+        if weight > self.budget // 4:
+            return
+        if self.n + weight > self.budget:
+            self.d.clear()
+            self.n = 0
+        self.d[key] = val
+        self.n += weight
+
+
+_BIG = 20000                # version 25s: texts at least this long may take their beginning from a recent text that begins the same way
+_SEG_BIG, _CTX_BIG = [], []
+
+
+def _lcp(a, b):
+    """The length of the longest common prefix of two strings: whole 4,096-character blocks are compared, then the last one is walked."""
+    n = min(len(a), len(b))
+    lo = 0
+    while lo < n and a[lo:lo + 4096] == b[lo:lo + 4096]:
+        lo += 4096
+    lo = min(lo, n)
+    hi = min(n, lo + 4096)
+    while lo < hi and a[lo] == b[lo]:
+        lo += 1
+    return lo
+
+
+class _CountList(list):
+    """Version 25s: a one-item list that counts how often it was written, so a memoised call can say whether it wrote the global."""
+    sets = 0
+
+    def __setitem__(self, i, v):
+        self.sets += 1
+        list.__setitem__(self, i, v)
+
+
+_STRIP_MEMO = _Memo()
+_IN_DEC = [False]           # version 25s: is a decision running (set by _decide3)
+_DEC_MEMO = {}              # version 25s: answers that read disk, kept for one decision
+_ROOT_NOW = [None]          # version 25s: the root for the length of one decision (set by _decide3), else None
+
+
 def _root():
     """The repo root a bare `git add <root>` is compared against. Pin it with AGENT_GUARD_ROOT."""
+    r = _ROOT_NOW[0]
+    if r is not None:
+        return r
     return (os.environ.get("AGENT_GUARD_ROOT") or os.environ.get("CLAUDE_PROJECT_DIR")
             or os.getcwd())
 
@@ -392,7 +465,7 @@ SAY = ("blanket_stage_guard: this stages by SCOPE, not by NAME. Whole-worktree s
        "`git add <path> <path>`. Form seen: ")
 
 
-def _tokens(text):
+def _tokens_shlex(text):
     try:
         lx = shlex.shlex(text, posix=True, punctuation_chars=True)
         lx.whitespace_split = True
@@ -400,6 +473,84 @@ def _tokens(text):
         return list(lx)
     except Exception:
         return None
+
+
+_TOK_MEMO = _Memo()
+_TK_WS = re.compile(r"[ \t\r\n]+")
+_TK_PUNCT = re.compile(r"[();<>|&]+")
+_TK_PLAIN = re.compile(r"[^ \t\r\n();<>|&'\"\\]+")
+_TK_DQ = re.compile(r"[^\"\\]+")
+
+
+def _split_words(text):
+    """The tokens shlex gives for shlex.shlex(text, posix=True, punctuation_chars=True) with whitespace_split on and commenters empty, as a tuple; None
+    where shlex raises (an open quote, a backslash at the end). Same states, same breaks, read with regular expressions instead of one character at a
+    time: white space is ' \t\r\n' only; a run of ( ) ; < > | & is one token; a word ends at white space or at one of those; a single quote keeps
+    everything to the next one; inside double quotes a backslash before a quote or a backslash is dropped and before anything else is kept; outside
+    quotes a backslash keeps the next character; a quoted empty string is a token."""
+    out, n, i = [], len(text), 0
+    ws, punct, plain, dq = _TK_WS.match, _TK_PUNCT.match, _TK_PLAIN.match, _TK_DQ.match
+    while i < n:
+        c = text[i]
+        if c in " \t\r\n":
+            i = ws(text, i).end()
+            continue
+        if c in "();<>|&":
+            m = punct(text, i)
+            out.append(m.group())
+            i = m.end()
+            continue
+        parts = []
+        while i < n:
+            c = text[i]
+            if c in " \t\r\n();<>|&":
+                break
+            if c == "'":
+                j = text.find("'", i + 1)
+                if j < 0:
+                    return None
+                parts.append(text[i + 1:j])
+                i = j + 1
+            elif c == '"':
+                i += 1
+                while True:
+                    if i >= n:
+                        return None
+                    c = text[i]
+                    if c == '"':
+                        i += 1
+                        break
+                    if c == "\\":
+                        if i + 1 >= n:
+                            return None
+                        d = text[i + 1]
+                        parts.append(d if d in '"\\' else "\\" + d)
+                        i += 2
+                    else:
+                        m = dq(text, i)
+                        parts.append(m.group())
+                        i = m.end()
+            elif c == "\\":
+                if i + 1 >= n:
+                    return None
+                parts.append(text[i + 1])
+                i += 2
+            else:
+                m = plain(text, i)
+                parts.append(m.group())
+                i = m.end()
+        out.append("".join(parts))
+    return tuple(out)
+
+
+def _tokens(text):
+    if type(text) is not str:
+        return _tokens_shlex(text)          # version 25s: what v25 did, for anything that is not a string
+    v = _TOK_MEMO.d.get(text, _MISS)        # a pure function of the text; a caller gets its own list
+    if v is _MISS:
+        v = _split_words(text)              # shlex.shlex(text, posix=True, punctuation_chars=True) with whitespace_split and no commenters, read by hand
+        _TOK_MEMO.put(text, v, len(text) + 64)
+    return None if v is None else list(v)
 
 
 def _hd_end(line, d, dash):
@@ -1438,29 +1589,70 @@ _ANSI = {"n": "\n", "t": "\t", "r": "\r", "a": "\a", "b": "\b", "e": "\x1b", "E"
          "f": "\f", "v": "\v", "\\": "\\", "'": "'", '"': '"', "?": "?"}
 
 
+_CTX_MEMO = _Memo()
+_CTX_SPECIALS = (re.compile(r"[\\'\"]"), None, re.compile(r"[\\\"]"))
+
+
 def _ctx(text):
-    """For each character: 0 unquoted, 1 inside single quotes, 2 inside double quotes, 3 escaped."""
-    st, q, esc = [], 0, False
-    for c in text:
+    """For each character: 0 unquoted, 1 inside single quotes, 2 inside double quotes, 3 escaped. (version 25s: a read-only `bytes` of those
+    numbers, indexed as the list was; memoised; built by jumping from one quote or backslash to the next)"""
+    v = _CTX_MEMO.d.get(text)
+    if v is not None:
+        return v
+    n, out, q, esc, i = len(text), [], 0, False, 0
+    if n >= _BIG:                           # take the beginning from a recent text that begins the same way, from a place where the state is plain
+        best = 0
+        for t0, v0 in _CTX_BIG:
+            p = _lcp(text, t0) - 1
+            lim = max(0, p - 300)
+            while p >= lim and not (v0[p] == 0 and t0[p] not in "'\"\\"):
+                p -= 1
+            if p >= lim and p + 1 > best:
+                best, bv = p + 1, v0
+        if best:
+            out, i = [bv[:best]], best
+    while i < n:
         if esc:
-            st.append(3)
+            out.append(b"\x03")
             esc = False
-        elif q == 1:
-            st.append(1)
-            if c == "'":
-                q = 0
-        elif c == "\\":
-            st.append(q)
+            i += 1
+            continue
+        if q == 1:
+            j = text.find("'", i)
+            if j < 0:
+                out.append(b"\x01" * (n - i))
+                break
+            out.append(b"\x01" * (j - i + 1))
+            q = 0
+            i = j + 1
+            continue
+        m = _CTX_SPECIALS[q].search(text, i)
+        if m is None:
+            out.append(bytes((q,)) * (n - i))
+            break
+        j = m.start()
+        if j > i:
+            out.append(bytes((q,)) * (j - i))
+        c = text[j]
+        if c == "\\":
+            out.append(bytes((q,)))
             esc = True
-        elif c == "'" and q == 0:
-            st.append(0)
-            q = 1
-        elif c == '"':
-            st.append(0)
-            q = 2 if q == 0 else 0
+        elif c == "'":
+            if q == 0:
+                out.append(b"\x00")
+                q = 1
+            else:
+                out.append(bytes((q,)))
         else:
-            st.append(q)
-    return st
+            out.append(b"\x00")
+            q = 2 if q == 0 else 0
+        i = j + 1
+    v = b"".join(out)
+    _CTX_MEMO.put(text, v, len(text) + 64)
+    if n >= _BIG:
+        _CTX_BIG.append((text, v))
+        del _CTX_BIG[:-4]
+    return v
 
 
 def _unescape(s, zero=False):
@@ -2620,9 +2812,51 @@ def _unq(text):
 
 
 _CLOSE = {}
+_CLOSE_SPECIAL = {}
+_CLOSE_CHARS = [0]          # version 25s: characters held by the table cache, so it can be bounded by size and not by a count of 16
 
 
 def _close_table(text, op, cl):
+    """Version 25s: the same table as v25's, filled in runs. A character that is not a quote, a backslash or one of the two brackets copies
+    the three answers of the character after it, so a whole run of them is one slice; only the others are computed."""
+    n = len(text)
+    tab = [-1] * (3 * (n + 2))
+    special = _CLOSE_SPECIAL.get((op, cl))
+    if special is None:
+        special = _CLOSE_SPECIAL[(op, cl)] = re.compile("[\\\\'\"" + re.escape(op) + re.escape(cl) + "]")
+    nxt = n                                 # the next special position above the run being filled; n: none
+    for k in reversed([m.start() for m in special.finditer(text)]):
+        if k + 1 < nxt:                     # the ordinary characters k+1 .. nxt-1 each copy the three answers at nxt
+            tab[3 * (k + 1):3 * nxt] = tab[3 * nxt:3 * nxt + 3] * (nxt - k - 1)
+        c, b = text[k], 3 * k
+        n1, n2 = 3 * (k + 1), 3 * (k + 2)
+        if c == "\\":
+            tab[b] = tab[n2]
+            tab[b + 1] = tab[n1 + 1]
+            tab[b + 2] = tab[n2 + 2]
+        elif c == "'":
+            tab[b] = tab[n1 + 1]
+            tab[b + 1] = tab[n1]
+            tab[b + 2] = tab[n1 + 2]
+        elif c == '"':
+            tab[b] = tab[n1 + 2]
+            tab[b + 1] = tab[n1 + 1]
+            tab[b + 2] = tab[n1]
+        else:                               # op or cl
+            tab[b + 1] = tab[n1 + 1]
+            tab[b + 2] = tab[n1 + 2]
+            if c == op:
+                m = tab[n1]
+                tab[b] = tab[3 * (m + 1)] if m >= 0 else -1
+            else:
+                tab[b] = k
+        nxt = k
+    if nxt > 0:
+        tab[0:3 * nxt] = tab[3 * nxt:3 * nxt + 3] * nxt
+    return tab
+
+
+def _close_table_v25(text, op, cl):
     """Every answer a bracket scan could give for this text, in one backward pass (linear in len(text)).
     The scan reads one character at a time in one of three quote states (0 none, 1 single, 2 double), so each
     (position, state) has one successor and a depth change of 0, +1 or -1. tab[3 * k + q] is the index of the
@@ -2664,8 +2898,10 @@ def _close_long(text, j, op, cl, scan):
     key = (op, text)
     ent = _CLOSE.get(key)
     if ent is None:
-        if len(_CLOSE) >= 16:
+        if len(_CLOSE) >= 4096 or _CLOSE_CHARS[0] > (1 << 23):      # version 25s: was 16 entries; a long script rebuilt its tables again and again
             _CLOSE.clear()
+            _CLOSE_CHARS[0] = 0
+        _CLOSE_CHARS[0] += len(text)
         ent = _CLOSE[key] = [0, None]
     if ent[1] is None:
         ent[0] += 1
@@ -2718,11 +2954,36 @@ def _skip_construct(text, i):
     return None
 
 
+_DQ_PLAIN = re.compile('"[^"\\\\$`]*"')
+_SEG_MEMO = _Memo()
+# version 25s: what the loop below does something with, by quote state: unquoted, inside single quotes, inside double quotes
+_SEG_SPECIALS = (re.compile("[\\\\'\"$<>`;&|\n]"), re.compile("'"), re.compile("[\\\\\"$`]"))
+
+
 def _segments3(text):
     """[(segment, separator)] at top-level ; & | && || and newline, outside quotes and outside
-    $( ), ${ }, <( ), backticks. `2>&1` and `&>` are redirections, not separators."""
+    $( ), ${ }, <( ), backticks. `2>&1` and `&>` are redirections, not separators. (version 25s: memoised, a fresh list each call; the loop
+    jumps over the characters it only stepped over)"""
+    v = _SEG_MEMO.d.get(text)
+    if v is not None:
+        return list(v)
     out, last, i, n, q = [], 0, 0, len(text), 0
+    unclosed = False                        # version 25s: did a `$(`, `${`, `<(`, `>(` or backtick open and never close? (then the whole rest of the text was read to find out)
+    if n >= _BIG:                           # take the first segments from a recent text that begins the same way (a segment's scan reads nothing past its end + 1)
+        best = 0
+        for t0, segs0, ends0 in _SEG_BIG:
+            lim = _lcp(text, t0) - 2
+            k = bisect.bisect_right(ends0, lim) - 1
+            if k >= 0 and k < len(segs0) - 1 and ends0[k] > best:
+                best, bsegs, bk = ends0[k], segs0, k
+        if best:
+            out, last, i = list(bsegs[:bk + 1]), best, best
+    specials = _SEG_SPECIALS
     while i < n:
+        m = specials[q].search(text, i)
+        if m is None:
+            break
+        i = m.start()
         c = text[i]
         if q == 1:
             q = 0 if c == "'" else 1
@@ -2732,15 +2993,25 @@ def _segments3(text):
             i += 2
             continue
         if c == "'" and q == 0:
-            q = 1
+            i = text.find("'", i + 1)       # version 25s: a single-quoted string holds nothing this loop acts on; to its end in one step (none: to the end of the text)
+            if i < 0:
+                i = n
+                break
             i += 1
             continue
         if c == '"':
+            if q == 0:
+                m = _DQ_PLAIN.match(text, i)     # version 25s: a double-quoted string with no $, backtick or backslash in it, likewise
+                if m:
+                    i = m.end()
+                    continue
             q = 2 if q == 0 else 0
             i += 1
             continue
         if c in "$<>`":
             j = _skip_construct(text, i) if (q == 0 or c in "$`") else None
+            if not j and (q == 0 or c in "$`") and (c == "`" or text.startswith(("$(", "${", "<(", ">("), i)):
+                unclosed = True
             if j:
                 i = j
                 continue
@@ -2756,6 +3027,10 @@ def _segments3(text):
             continue
         i += 1
     out.append((text[last:], ""))
+    _SEG_MEMO.put(text, tuple(out), 2 * len(text) + 64)
+    if n >= _BIG and not unclosed:
+        _SEG_BIG.append((text, tuple(out), list(itertools.accumulate(len(a) + len(b) for a, b in out))))
+        del _SEG_BIG[:-4]
     return out
 
 
@@ -2783,6 +3058,15 @@ def _glob_re(pat, anchor_start=False, anchor_end=False):
     return ("^" if anchor_start else "") + "".join(rx) + ("$" if anchor_end else "")
 
 
+_CMDSUB_MEMO = {}
+_MEMO_W = [0, 0]            # version 25s: what the cmdsub memo holds (items) and what the name table holds (characters)
+_SUB_NAMES = {}
+_WORDS_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_POS_USE = re.compile(r"\$\{?[#!]?[0-9@*]|\b(?:shift|set|eval|source|alias|argv|builtin|command|exec)\b|(?:^|[\s;&|(){}])\.(?:\s|$)")
+_NEST = [0, 0]              # version 25s: levels of `$( )` open now; the deepest level reached since the last reset
+_NEST_MAX = 40
+
+
 class _R(object):
     """Resolves one command string: variables assigned literally earlier in the SAME string,
     parameter operators, arrays, read and printf -v, literal for-loops, aliases and functions,
@@ -2805,6 +3089,15 @@ class _R(object):
         self.child_env = {}         # version 19: sh -c TEXT -> the exported names and values that child shell sees
         self.pwd = _root()          # version 20: the shell's working directory as far as a literal cd says (None: unknown)
         self.pos_touched = False    # version 24: did a resolved segment hold a command that can set the positionals in a way effects() does not model?
+        self.is_sub = False         # version 25: a $( ) or <( ) sub-resolver has no views of its own
+        self._plain = True          # version 25: is the segment effects() looks at sure to run, in this shell?
+        self._shifted = False       # version 25: did effects() handle a shift in this segment?
+        self._arith = False         # version 25: does the segment hold an arithmetic expansion (the resolver reads it as 0)?
+        self._i = -1                # version 25: index of the segment resolve() is on
+        self._ctl, self._regions, self._lstack = [], [], []     # version 25: open constructs, loop regions [first, last, holds a setter], open loops
+        self._un, self._tn = 0, None    # version 25: uncertain-list events seen, and the number of the loop-setter event
+        self.taint = None           # version 25 (iii): segment indexes of loops that hold a setter (read the list as unknown in view 1)
+        self._rerun = False         # version 25
 
     # ---- values ----
     def ifs(self):
@@ -2921,6 +3214,9 @@ class _R(object):
                 return self.ins_list(val, q, idx == "[@]" or name == "@")
             if whole and val and op not in (":+", "+"):        # version 24 A2: slice, trim, replace, case act on each word: unknown
                 return self.sentinel(q, multi)
+            if _V25[0] and val and op not in (":-", ":=", "-", "=", "?", ":?", ":+", "+"):        # version 25 (iv): inside an assignment or a longer word
+                _V25_FIRED[0] = True
+                return self.list_inside(val, op, word, rest, q, multi, name)
             val = " ".join(val)
         if op is None:
             return self.ins(val, q)
@@ -2980,26 +3276,213 @@ class _R(object):
             return self.ins(res, q)
         return self.sentinel(q, multi)
 
+    def alt_pos(self, new):
+        """Version 25. The list may or may not become `new` here (a shift that may not run, a loop's setter): two views, as for a literal
+        for loop. One entry in `loops` carries every such event of this text (at most 3), numbered in order of occurrence; the choice is a
+        bit mask over them, so every subset of the events is a view: choice 0 keeps the list (v24's own reading), bit n-1 set has the n-th
+        event applied (`new` is a list, or None for unknown). Where no view can be had (a $( ) sub-resolver, a fourth event, or four views
+        already taken) the list is unknown outright. -> the event's number, or None."""
+        _V25_FIRED[0] = True
+        if self.pos is None:
+            return None
+        key = ("u",)
+        slot = next((j for j, (k, _) in enumerate(self.loops) if k == key), None)
+        if self.is_sub or self._un >= 3 or (slot is None and len(self.loops) >= 4):
+            self.pos = None
+            return None
+        self._un += 1
+        entry = (key, [str(j) for j in range(2 ** self._un)])
+        if slot is None:
+            self.loops.append(entry)
+        else:
+            self.loops[slot] = entry
+        if (self.choice.get(key, 0) >> (self._un - 1)) & 1:
+            self.pos = new
+        return self._un
+
+    def shift_pos(self, cmd, args):
+        """Version 25 (ii). shift / shift N on a known list, exactly (bash 3.2: N past the list leaves it unchanged). Not sure to run, or N unreadable: two views."""
+        self._shifted = True
+        if self.pos is None:
+            return
+        if cmd != "shift":
+            args = args[args.index("shift") + 1:]
+        words = []
+        for a in args:
+            if re.match(r"^\d*[<>&]", a) or a in (";", "&", "|", "&&", "||", ")", "}"):
+                break
+            words.append(a)
+        n = 1 if not words else (int(words[0]) if len(words) == 1 and re.match(r"^[0-9]+$", words[0]) and not self._arith else None)
+        if n is None:
+            self.alt_pos(None)
+            return
+        new = self.pos[n:] if n <= len(self.pos) else self.pos
+        if new == self.pos:
+            return
+        if self._plain:
+            self.pos = new
+        else:
+            self.alt_pos(new)
+
+    def list_inside(self, val, op, word, rest, q, multi, name):
+        """Version 25 (iv). An operator on a non-empty list that is not the whole of one word (an assignment value, a longer word)."""
+        if q == 0 and _PREV[0] == "=":              # y=${@:2}: an assignment value is not split into words; read it as y="${@:2}"
+            return '"' + self.list_inside(val, op, word, rest, 2, multi, name) + '"'
+        if op == ":":
+            mm = re.match(r"^\s*(\d+)\s*(?::\s*(\d+)\s*)?$", word)
+            base = 1 if name in ("@", "*") else 0
+            if not mm or int(mm.group(1)) < base:
+                return self.sentinel(q, multi)
+            off = int(mm.group(1)) - base
+            res = val[off:] if mm.group(2) is None else val[off:off + int(mm.group(2))]
+            return self.ins(" ".join(res), q)
+        if op in ("#", "##", "%", "%%", "/", "//", "/#", "/%", "^", "^^", ",", ",,"):
+            had = "_v25w" in self.known
+            saved, out = self.known.get("_v25w"), []
+            try:
+                for w in val:
+                    self.known["_v25w"] = w
+                    out.append(self.param("_v25w" + rest, q, True))
+            finally:
+                if had:
+                    self.known["_v25w"] = saved
+                else:
+                    self.known.pop("_v25w", None)
+            return " ".join(out)
+        return self.sentinel(q, multi)
+
+    def after_seg(self, r):
+        """Version 25. After a segment: a shift in a place effects() does not model; the open loops, subshells and groups; whether a loop holds a setter."""
+        if not _V25[0]:
+            return
+        toks = _tokens(r)
+        if self.pos is not None and not self._shifted and toks and "shift" in toks:
+            self.alt_pos(None)
+        if toks is None:
+            self._ctl.append("c")                   # unreadable: nothing after it is plain
+        else:
+            i = 0
+            while i < len(toks) and (toks[i] in KEYWORDS or toks[i] in _CTL_LEAD):
+                t = toks[i]
+                if t in ("if", "case"):
+                    self._ctl.append("c")
+                elif t in ("while", "until", "for", "select"):
+                    self._ctl.append("l")
+                    self._regions.append([self._i, None, False])
+                    self._lstack.append(len(self._regions) - 1)
+                elif t == "(":
+                    self._ctl.append("s")
+                elif t == "{":
+                    self._ctl.append("g")
+                i += 1
+            if i < len(toks) and toks[i] in ("fi", "esac", "done", "}"):
+                kind = {"fi": "c", "esac": "c", "done": "l", "}": "g"}[toks[i]]
+                for j in range(len(self._ctl) - 1, -1, -1):
+                    if self._ctl[j].startswith(kind):
+                        if kind == "l" and self._lstack:
+                            self._regions[self._lstack.pop()][1] = self._i
+                        del self._ctl[j]
+                        break
+            ld = 0
+            for t in toks[i:]:
+                if t == "(":
+                    ld += 1                         # an array assignment x=(a b) closes its own parenthesis
+                elif t == ")":
+                    if ld:
+                        ld -= 1
+                    elif self._ctl and self._ctl[-1] == "s":
+                        self._ctl.pop()
+        if self._lstack and _is_setter_seg(r, toks):
+            for ri in self._lstack:
+                self._regions[ri][2] = True
+
     def cmdsub(self, inner, q, whole=False):
-        sub = _R(self.known, self.pos, self.mode, None, self.funcs)
-        sub.cd_seen = self.cd_seen              # version 16: a cd before it moves $PWD inside the substitution too
-        sub.pwd = self.pwd                      # version 20
-        if self.cd_seen and self.pwd is not None and re.match(r"^\s*pwd(?:\s+-[LP])?\s*$", inner):
-            return self.ins(self.pwd, q)        # version 20 (blind_v19 BV190638): $(pwd) after a literal cd
-        inner_r = sub.resolve(inner)
-        self.payloads.extend(sub.payloads)
-        self.alt = self.alt or sub.alt
-        self.pos_touched = self.pos_touched or sub.pos_touched      # version 24
-        lit = _eval_pipeline(inner_r) if _lit3(inner_r) else None
-        if lit is not None:
-            return self.ins(lit.rstrip("\n"), q)
-        self.payloads.append((inner_r, None, None))
-        if whole and _lit3(inner_r) and not self.cd_seen:     # version 15: a listing the guard can place by its scope
-            kind = _enum_scope(inner_r, _root())
-            if kind:
-                return {"whole": LISTED_ALL, "pwd": LISTED_ALL, "toplevel": LISTED_ALL,
-                        "scoped": LISTED_SCOPED}[kind] + self.sentinel(q)
-        return self.sentinel(q)
+        # version 25s: the body below is v25's, unchanged, between a memo lookup and a memo store. What it reads: its arguments, this resolver's
+        # known variables, function table, list of positionals, mode, cd_seen and pwd, and the globals in the key. What it writes: this resolver's
+        # payloads, alt and pos_touched, and _PREV / _FRESH_N (counted). A call that wrote _FRESH_N is not stored.
+        key = None
+        if _NEST[0] < _NEST_MAX:
+            rel = _SUB_NAMES.get(inner, _MISS)      # the names `inner` can read: every word in it, and IFS; None where it could read any (indirection, eval)
+            if rel is _MISS:
+                rel = None if ("${!" in inner or "eval" in inner or "declare" in inner or "typeset" in inner or "local" in inner)                     else tuple(sorted(set(_WORDS_RE.findall(inner)) | {"IFS"}))
+                if len(_SUB_NAMES) >= 20000 or _MEMO_W[1] > (1 << 24):
+                    _SUB_NAMES.clear()
+                    _MEMO_W[1] = 0
+                _MEMO_W[1] += len(inner) + 64
+                _SUB_NAMES[inner] = rel
+            posk = None if self.pos is None else (tuple(self.pos) if _POS_USE.search(inner) else ())
+            key = (inner, q, whole, self.mode, self.cd_seen, self.pwd, self.pos is None, posk, _V25[0], _root(),
+                   tuple(_BODIES[0]) if _BODIES[0] else None, _PREV[0], _DEL[0] is not None)
+            kn_now = self.known
+            for e in _CMDSUB_MEMO.get(key, ()):
+                if e[10] == self.funcs and _NEST[0] + e[8] <= _NEST_MAX and (
+                        e[0] == kn_now if e[11] is None else
+                        all(kn_now.get(nm, _MISS) == v for nm, v in e[11])):
+                    self.payloads.extend(e[3])
+                    self.alt = self.alt or e[4]
+                    self.pos_touched = self.pos_touched or e[5]
+                    if e[6]:
+                        _PREV[0] = e[7]
+                    if e[9]:
+                        _V25_FIRED[0] = True
+                    if _NEST[1] < _NEST[0] + e[8]:
+                        _NEST[1] = _NEST[0] + e[8]
+                    return e[2]
+            ksnap = dict(self.known)
+            for k_, v_ in ksnap.items():
+                if isinstance(v_, list):
+                    ksnap[k_] = list(v_)
+            fsnap = dict(self.funcs)
+            a0, p0, n0, f0 = self.alt, self.pos_touched, len(self.payloads), _V25_FIRED[0]
+            prev0, fresh0, sets0 = _PREV[0], _FRESH_N.sets, _PREV.sets
+            self.alt, self.pos_touched, _V25_FIRED[0] = False, False, False
+            outer_max, _NEST[1] = _NEST[1], _NEST[0] + 1
+        _NEST[0] += 1
+        res, sub_alt, sub_pt = None, False, False
+        try:
+            sub = _R(self.known, self.pos, self.mode, None, self.funcs)
+            sub.cd_seen = self.cd_seen              # version 16: a cd before it moves $PWD inside the substitution too
+            sub.pwd = self.pwd                      # version 20
+            sub.is_sub = True                       # version 25
+            if self.cd_seen and self.pwd is not None and re.match(r"^\s*pwd(?:\s+-[LP])?\s*$", inner):
+                res = self.ins(self.pwd, q)         # version 20 (blind_v19 BV190638): $(pwd) after a literal cd
+            else:
+                inner_r = sub.resolve(inner)
+                self.payloads.extend(sub.payloads)
+                self.alt = self.alt or sub.alt
+                self.pos_touched = self.pos_touched or sub.pos_touched      # version 24
+                lit = _eval_pipeline(inner_r) if _lit3(inner_r) else None
+                if lit is not None:
+                    res = self.ins(lit.rstrip("\n"), q)
+                else:
+                    self.payloads.append((inner_r, None, None))
+                    if whole and _lit3(inner_r) and not self.cd_seen:     # version 15: a listing the guard can place by its scope
+                        kind = _enum_scope(inner_r, _root())
+                        if kind:
+                            res = {"whole": LISTED_ALL, "pwd": LISTED_ALL, "toplevel": LISTED_ALL,
+                                   "scoped": LISTED_SCOPED}[kind] + self.sentinel(q)
+                    if res is None:
+                        res = self.sentinel(q)
+        finally:
+            _NEST[0] -= 1
+            if key is not None:
+                sub_alt, sub_pt, fired = self.alt, self.pos_touched, _V25_FIRED[0]
+                self.alt, self.pos_touched = a0 or sub_alt, p0 or sub_pt
+                _V25_FIRED[0] = f0 or fired
+                height = _NEST[1] - _NEST[0]
+                _NEST[1] = max(outer_max, _NEST[1])
+        if key is not None and _FRESH_N.sets == fresh0 and self.known == ksnap and self.funcs == fsnap:
+            if len(_CMDSUB_MEMO) >= 20000 or _MEMO_W[0] > (1 << 22):          # bounded by entries and by the items held
+                _CMDSUB_MEMO.clear()
+                _MEMO_W[0] = 0
+            _MEMO_W[0] += len(inner) // 8 + len(ksnap) + len(fsnap) + 16
+            lst = _CMDSUB_MEMO.setdefault(key, [])
+            if len(lst) >= 4:
+                del lst[0]
+            pl = tuple(self.payloads[n0:])
+            part = None if (rel is None or any(p_[1] is not None for p_ in pl)) else                 tuple((nm, (list(ksnap[nm]) if isinstance(ksnap[nm], list) else ksnap[nm]) if nm in ksnap else _MISS) for nm in rel)
+            lst.append((ksnap if part is None else None, None, res, pl, sub_alt, sub_pt, _PREV.sets != sets0, _PREV[0], height, fired, fsnap, part))
+        return res
 
     def dollar(self, text, i, q):
         nxt = text[i + 1]
@@ -3036,7 +3519,16 @@ class _R(object):
 
     def expand(self, text, q=0):
         out, i, n = [], 0, len(text)
+        search = _EXP_SPECIAL.search
         while i < n:
+            if q != 1:                  # version 25s: the characters this loop only copies are copied in one slice
+                m = search(text, i)
+                if m is None:
+                    out.append(text[i:])
+                    break
+                if m.start() > i:
+                    out.append(text[i:m.start()])
+                    i = m.start()
             c = text[i]
             if q == 1:
                 out.append(c)
@@ -3052,6 +3544,10 @@ class _R(object):
                 q = 1
                 out.append(c)
                 i += 1
+                continue
+            if c == '"' and q == 0 and _V25[0] and self.pos == [] and (text.startswith('"$@"', i) or text.startswith('"${@}"', i)):
+                _V25_FIRED[0] = True
+                i += 4 if text.startswith('"$@"', i) else 6     # version 25 (i): "$@" with a known empty list is no word at all
                 continue
             if c == '"':
                 q = 2 if q == 0 else 0
@@ -3084,6 +3580,7 @@ class _R(object):
                     sub = _R(self.known, self.pos, self.mode, None, self.funcs)
                     sub.cd_seen = self.cd_seen      # version 16, as in cmdsub
                     sub.pwd = self.pwd              # version 20
+                    sub.is_sub = True               # version 25
                     inner = sub.resolve(text[i + 2:j])
                     self.payloads.extend(sub.payloads)
                     self.pos_touched = self.pos_touched or sub.pos_touched      # version 24
@@ -3101,6 +3598,13 @@ class _R(object):
         """Shell function definitions are recorded and replaced by ':'. A call runs the body."""
         if "(" not in text and "function" not in text:
             return text
+        orig, rec = text, []
+        if len(orig) >= 1000:                # version 25s: what this does is a function of the text alone (it only writes the function table, name by name)
+            got = _STRIP_MEMO.d.get(orig)
+            if got is not None:
+                for nm, body in got[0]:
+                    self.funcs[nm] = body
+                return got[1]
         head = re.compile(r"(?:^|(?<=[;&|\n(){}]))\s*(?:function\s+([A-Za-z_][\w:.-]*)\s*(?:\(\s*\))?"
                           r"|([A-Za-z_][\w:.-]*)\s*\(\s*\))\s*\{")
         for _ in range(8):
@@ -3132,10 +3636,15 @@ class _R(object):
             if k >= len(text):
                 break
             self.funcs[m.group(1) or m.group(2)] = text[m.end():k]
+            rec.append((m.group(1) or m.group(2), text[m.end():k]))
             text = text[:m.start()] + " :" + text[k + 1:]
+        if len(orig) >= 1000:
+            _STRIP_MEMO.put(orig, (tuple(rec), text), len(orig) + len(text) + 64)
         return text
 
     def apply_alias(self, seg):
+        if not self.aliases:                # version 25s: with no alias set, the loop below returns seg whatever it matches
+            return seg
         for _ in range(3):
             m = re.match(r"^(\s*(?:(?:then|do|else|elif|if|while|until|!|\{|\()\s+)*)([^\s;|&<>()=]+)(.*)$",
                          seg, re.S)
@@ -3219,7 +3728,12 @@ class _R(object):
                     break
                 if not a.startswith(("-", "+")):
                     break
+        if _V25[0] and (cmd == "shift" or (cmd in ("builtin", "command") and "shift" in args)):      # version 25 (ii)
+            _V25_FIRED[0] = True
+            self.shift_pos(cmd, args)
+            return
         if cmd == "set" and "--" in args:
+            _POSN[0] = 1                    # version 25s: counted, so resolve() can tell that a list of positionals was set
             self.pos = list(args[args.index("--") + 1:])
         elif cmd == "unset":
             for t in args:
@@ -3257,7 +3771,7 @@ class _R(object):
         && and newline; in a pipeline or in the background it runs in a subshell and moves nothing; any other cd,
         pushd or popd (in a subshell, behind if, to a target the reader cannot resolve, or back with cd -) makes it
         unknown, which is version 19's reading."""
-        if not re.search(r"(?:^|[\s;&|({])(?:cd|pushd|popd)(?:\s|$)", seg):
+        if ("cd" not in seg and "pushd" not in seg and "popd" not in seg) or not re.search(r"(?:^|[\s;&|({])(?:cd|pushd|popd)(?:\s|$)", seg):      # version 25s: substrings first
             return
         if "|" in prev_sep.replace("||", "") or sep in ("|", "|&") or (sep.endswith("&") and not sep.endswith("&&")):
             return                              # a subshell of its own
@@ -3338,11 +3852,23 @@ class _R(object):
 
     def resolve(self, text):
         text = self.strip_funcs(text)
+        self._i, self._ctl, self._regions, self._lstack = -1, [], [], []        # version 25
+        self._un, self._tn = 0, None            # version 25
+        snap = _copymod.deepcopy(self.__dict__) if (_V25[0] and not self._rerun and _LOOPY.search(text)) else None      # version 25 (iii)
+        n0 = (_POSN.sets, _FRESH_N.sets)
         out = []
         piped = None
         prev_sep, chain = "", self.pwd
         for seg, sep in _segments3(text):
-            if re.search(r"(?:^|[\s;&|(])(?:cd|pushd)(?:\s|$)|\s-C(?:\s|$)|--work-tree|--git-dir", seg):
+            self._i += 1                            # version 25
+            psep = prev_sep                         # version 25
+            if self.taint is not None and self._i in self.taint:        # version 25 (iii): in one view this loop reads the list as unknown
+                if not self._tn:
+                    self._tn = self.alt_pos(None)
+                elif (self.choice.get(("u",), 0) >> (self._tn - 1)) & 1:
+                    self.pos = None
+            if ("cd" in seg or "pushd" in seg or "-C" in seg or "--work-tree" in seg or "--git-dir" in seg) and \
+                    re.search(r"(?:^|[\s;&|(])(?:cd|pushd)(?:\s|$)|\s-C(?:\s|$)|--work-tree|--git-dir", seg):      # version 25s: the substrings that regular expression needs, tested first
                 self.cd_seen = True                 # version 15: from here a listing's scope depends on where it runs
             if "||" in prev_sep and self.pwd != chain:
                 self.pwd = None                     # version 20: after || the directory may be either one
@@ -3353,9 +3879,14 @@ class _R(object):
             self.follow_cd(r, prev_sep, sep)        # version 20
             prev_sep = sep
             self.piped_find = piped
+            self._plain = (not self._ctl and "&&" not in psep and "|" not in psep and "|" not in sep.replace("||", "")
+                           and not (sep.endswith("&") and not sep.endswith("&&")) and not (("(" in seg or "{" in seg) and _SUBLEAD.match(seg)))      # version 25 (25s: the two characters that expression needs, tested first)
+            self._arith = "$((" in seg or "$[" in seg
+            self._shifted = False                   # version 25
             self.effects(r)
             if not self.pos_touched and _sets_pos_unmodelled(r):
                 self.pos_touched = True             # version 24
+            self.after_seg(r)                       # version 25
             self.piped_find = None
             piped = None
             toks = _tokens(r) if sep == "|" else []
@@ -3363,6 +3894,23 @@ class _R(object):
                 piped = _find_hook_target(toks[1:], _root()) or _find_gitdir_target(toks[1:], _root()) or \
                     _find_stub(toks[1:])
             out.append(r + sep)
+        if snap is not None:                        # version 25 (iii): a loop holds a setter: resolve again with that loop marked
+            taint = set()
+            for first, last, hit in self._regions:
+                if hit:
+                    taint.update(range(first, (self._i if last is None else last) + 1))
+            if taint:
+                _V25_FIRED[0] = True
+                if snap["pos"] is None and (_POSN.sets, _FRESH_N.sets) == n0 and self.strip_funcs(text) == text:
+                    # version 25s: the list of positionals was unknown at the start, no `set --` made one, no mktemp numbered anything, and the text (already
+                    # stripped of its functions: strip_funcs gives up after 8 definitions, and the second pass would strip more) has no function left to strip,
+                    # so the second pass below would run this pass again step for step (alt_pos does nothing on an unknown list): its answer is this pass's
+                    self.taint, self._rerun = taint, True
+                    return "".join(out)
+                self.__dict__.clear()
+                self.__dict__.update(snap)
+                self.taint, self._rerun = taint, True
+                return self.resolve(text)
         return "".join(out)
 
 
@@ -3457,16 +4005,20 @@ def _newlines_to_seps(text):
     """Unquoted newlines (a run of them) become ` ; `; a newline inside single or double quotes stays in its word."""
     if "\n" not in text and "\r" not in text:
         return text
-    ctx, out, i, n = _ctx(text), [], 0, len(text)
-    while i < n:
-        ch = text[i]
-        if ch in "\r\n" and ctx[i] == 0:
-            while i < n and text[i] in "\r\n" and ctx[i] == 0:
+    ctx, out, last = _ctx(text), [], 0
+    for m in _NL_RUN.finditer(text):         # version 25s: only the runs of line ends are visited, not every character
+        i, b = m.span()
+        while i < b:
+            if ctx[i] == 0:
+                j = i + 1
+                while j < b and ctx[j] == 0:
+                    j += 1
+                out.append(text[last:i])
+                out.append(" ; ")
+                last = i = j
+            else:
                 i += 1
-            out.append(" ; ")
-            continue
-        out.append(ch)
-        i += 1
+    out.append(text[last:])
     return "".join(out)
 
 
@@ -5908,11 +6460,30 @@ def _quiet_check(cmd, root, depth, pos):
     """_check3 on text from a file on disk, without adding its commands to this decision's trace: what the file
     could do is judged here, by its blocks, not by version 8's reach rules."""
     global _TRACE
+    key = None
+    if _IN_DEC[0]:                          # version 25s: one decision reads one disk, so one text is judged once per decision per reading
+        key = ("q", cmd, root, depth, None if pos is None else tuple(pos), _V25[0], _DISK[0], _COUNT_SEEN[0], _OBJ_WRITE[0], _ALLEXPORT[0], _root(),
+               _PREV[0])
+        e = _DEC_MEMO.get(key)
+        if e is not None:
+            if e[1]:
+                _PREV[0] = e[2]
+            if e[3]:
+                _V25_FIRED[0] = True
+            return e[0]
+        fresh0, sets0, f0 = _FRESH_N.sets, _PREV.sets, _V25_FIRED[0]
+        _V25_FIRED[0] = False
     saved, _TRACE = _TRACE, None
     try:
-        return _check3(cmd, root, depth, None, pos)
+        res = _check3(cmd, root, depth, None, pos)
     finally:
         _TRACE = saved
+        if key is not None:
+            fired = _V25_FIRED[0]
+            _V25_FIRED[0] = f0 or fired
+    if key is not None and _FRESH_N.sets == fresh0:
+        _DEC_MEMO[key] = (res, _PREV.sets != sets0, _PREV[0], fired)
+    return res
 
 
 def _disk_script(st, path, by_shell, sargs):
@@ -6754,6 +7325,15 @@ def _worktree_dirs():
     start = _DISK[0]                        # only the hook's own cwd: with none, nothing is read from disk (version 12)
     if not start:
         return []
+    if _IN_DEC[0]:                          # version 25s: the disk does not change inside one decision
+        got = _DEC_MEMO.get(("w", start))
+        if got is None:
+            got = _DEC_MEMO[("w", start)] = (_worktree_dirs_read(start),)
+        return list(got[0])
+    return _worktree_dirs_read(start)
+
+
+def _worktree_dirs_read(start):
     try:
         d, common = start, None
         for _ in range(64):
@@ -8511,6 +9091,7 @@ _SET_OPT = re.compile(r"^[-+][A-Za-z]+$")
 def _whole_word(text, a, b, q):
     """Version 24. Is text[a:b], a ${...}, the whole of one shell word: bare, or the whole of a double-quoted word? Only there is
     "${@:-}" the separate words of the list; inside a longer word or an assignment value (y="${@:-}") bash joins them, as v22 does."""
+    _PREV[0] = text[a - 1] if a > 0 else " "        # version 25: the character before the ${...}
     lo, hi = a, b
     if q == 2:
         if not (a >= 1 and text[a - 1] == '"' and b < len(text) and text[b] == '"'):
@@ -8558,25 +9139,142 @@ def _sets_pos_unmodelled(seg):
     return False
 
 
+_LOOPY = re.compile(r"\b(?:for|while|until|select)\b")
+_PREV = _CountList([" "])
+_POSN = _CountList([0])      # version 25s: written by every `set --` the resolver models
+_V25 = [True]
+_V25_FIRED = [False]        # version 25s: did a v25 rule change a reading in this pass? (set at each place the rules act)
+_V25_RELEVANT = re.compile(r"\$[@*0-9]|\$\{[@*0-9#!]|\[[@*]\]|\bfor\s+[A-Za-z_]\w*\s*[;\n]")
+_CTL_LEAD = {"for", "select", "case"}
+_SUBLEAD = re.compile(r"\s*(?:(?:if|then|do|else|elif|while|until|time|!)\s+)*[({]")
+
+
+def _is_setter_seg(r, toks):
+    """Version 25. Does this resolved segment set the positionals: `shift`, `set` with `--` (the modelled case), or anything _sets_pos_unmodelled flags?"""
+    if toks is None or "shift" in toks:
+        return True
+    if "set" in toks and "--" in toks[toks.index("set"):]:
+        return True
+    return _sets_pos_unmodelled(r)
+
+
+_RES_MEMO = {}
+
+
+def _copy_state(x):
+    """A copy of a resolver's state (dicts, lists, tuples of strings, numbers, None), sharing nothing mutable with the original, except that a payload (a tuple that
+    _check3 reads and never changes: its text, the known variables it was made with, its arguments) is shared. copy.deepcopy did the same job 20 times slower."""
+    t = type(x)
+    if t is dict:
+        return {k: _copy_state(v) for k, v in x.items()}
+    if t is list:
+        return [_copy_state(v) for v in x]
+    if t is tuple:
+        return tuple(_copy_state(v) for v in x)
+    if t is set:
+        return set(x)
+    return x
+
+
+def _copy_resolver(d):
+    """_copy_state of a resolver's __dict__, its payload list copied one level (the payload tuples are shared)."""
+    out = {k: _copy_state(v) for k, v in d.items() if k != "payloads"}
+    out["payloads"] = list(d["payloads"])
+    return out
+
+
+def _resolve_top(r, text):
+    """Version 25s: r.resolve(text) for a resolver nothing has run on yet and a text of 4,000 characters or more, remembered on everything the call
+    reads (the text, the known variables, the function table, the list of positionals, mode, the loop choice, and the globals in the key) and replayed
+    with everything it wrote (the resolver's whole state, in a private copy, and the globals). _check3_inner and _pos_unmodelled resolve the same text
+    in the same state more than once whenever the list of positionals is unknown; a replay is one copy instead of one more pass."""
+    if len(text) < 4000 or _NEST[0] or not _IN_DEC[0] or not (
+            not r.loops and not r.payloads and not r.psubs and not r.alt and not r.aliases and not r.assigned and r.nloop == 0
+            and r.piped_find is None and not r.cd_seen and not r.exported and not r.child_env and not r.pos_touched and not r.is_sub
+            and r._plain and not r._shifted and not r._arith and r._i == -1 and not r._ctl and not r._regions and not r._lstack
+            and r._un == 0 and r._tn is None and r.taint is None and not r._rerun and r.pwd == _root()):
+        return r.resolve(text)
+    key = (text, r.mode, None if r.pos is None else tuple(r.pos), tuple(sorted(r.choice.items())), _V25[0], _root(),
+           tuple(_BODIES[0]) if _BODIES[0] else None, _PREV[0])
+    for e in _RES_MEMO.get(key, ()):
+        if e[1] == r.known and e[2] == r.funcs:
+            r.__dict__.clear()
+            r.__dict__.update(_copy_resolver(e[3]))
+            if e[4]:
+                _PREV[0] = e[5]
+            if e[6]:
+                _V25_FIRED[0] = True
+            return e[0]
+    ksnap = _copy_state(r.known)
+    fsnap = dict(r.funcs)
+    f0, fresh0, sets0 = _V25_FIRED[0], _FRESH_N.sets, _PREV.sets
+    _V25_FIRED[0] = False
+    try:
+        out = r.resolve(text)
+    finally:
+        fired = _V25_FIRED[0]
+        _V25_FIRED[0] = f0 or fired
+    if _FRESH_N.sets == fresh0:
+        if len(_RES_MEMO) >= 64:
+            _RES_MEMO.clear()
+        lst = _RES_MEMO.setdefault(key, [])
+        if len(lst) >= 2:
+            del lst[0]
+        lst.append((out, ksnap, fsnap, _copy_resolver(r.__dict__), _PREV.sets != sets0, _PREV[0], fired))
+    return out
+
+
+_POSUN_MEMO = {}
+
+
 def _pos_unmodelled(base, known, funcs):
     """Version 24. Probe: does any view of this text set the positionals in a way _R.effects does not model? Every view
-    _check3_inner will build is probed (the text, every loop view, the default-mode view), with pos unknown so nothing hides."""
+    _check3_inner will build is probed (the text, every loop view, the default-mode view), with pos unknown so nothing hides.
+    (version 25s: remembered on the text, the known variables and the function table, with the globals the probe reads; a probe that wrote _FRESH_N,
+    that failed, or that ran inside a deep `$( )` is not stored.)"""
+    key = (base, _V25[0], _root(), tuple(_BODIES[0]) if _BODIES[0] else None, _PREV[0])
+    kn, fn = known or {}, funcs or {}
+    if _NEST[0] < _NEST_MAX:
+        for e in _POSUN_MEMO.get(key, ()):
+            if e[0] == kn and e[1] == fn:
+                if e[3]:
+                    _PREV[0] = e[4]
+                if e[5]:
+                    _V25_FIRED[0] = True
+                return e[2]
+    ksnap = {k: (list(v) if isinstance(v, list) else v) for k, v in kn.items()}
+    fsnap = dict(fn)
+    f0, fresh0, sets0 = _V25_FIRED[0], _FRESH_N.sets, _PREV.sets
+    _V25_FIRED[0] = False
+    ok = False
     try:
         probe = _R(known, None, "main", None, funcs)
-        probe.resolve(base)
+        _resolve_top(probe, base)
         touched = probe.pos_touched
         for k, vals in probe.loops[:4]:
             for vi in range(1, min(len(vals), 8)):
                 p2 = _R(known, None, "main", {k: vi}, funcs)
-                p2.resolve(base)
+                _resolve_top(p2, base)
                 touched = touched or p2.pos_touched
         if probe.alt:
             p3 = _R(known, None, "default", None, funcs)
-            p3.resolve(base)
+            _resolve_top(p3, base)
             touched = touched or p3.pos_touched
-        return touched
+        ok = True
     except Exception:
-        return True
+        touched = True
+        _V25_FIRED[0] = True
+    finally:
+        fired = _V25_FIRED[0]
+        _V25_FIRED[0] = f0 or fired
+    if ok and _FRESH_N.sets == fresh0 and kn == ksnap and fn == fsnap and _NEST[0] < _NEST_MAX:
+        if len(_POSUN_MEMO) >= 2000 or len(ksnap) > 2000:
+            _POSUN_MEMO.clear()
+        lst = _POSUN_MEMO.setdefault(key, [])
+        if len(lst) >= 4:
+            del lst[0]
+        lst.append((ksnap, fsnap, touched, _PREV.sets != sets0, _PREV[0], fired))
+    return touched
 
 
 def _check3(cmd, root, depth, known=None, pos=None, funcs=None):
@@ -8602,14 +9300,14 @@ def _check3_inner(cmd, nohd, root, depth, known, pos, funcs):
     if pos is not None and _pos_unmodelled(base, known, funcs):
         pos = None                                      # version 24: the list the resolver holds is not the list the shell holds
     r = _R(known, pos, "main", None, funcs)
-    views = [(_brace_pass(r.resolve(base)), True, r)]
+    views = [(_brace_pass(_resolve_top(r, base)), True, r)]
     for k, vals in r.loops[:4]:
         for vi in range(1, min(len(vals), 8)):
             r2 = _R(known, pos, "main", {k: vi}, funcs)
-            views.append((_brace_pass(r2.resolve(base)), True, r2))
+            views.append((_brace_pass(_resolve_top(r2, base)), True, r2))
     if r.alt:
         r3 = _R(known, pos, "default", None, funcs)
-        views.append((_brace_pass(r3.resolve(base)), False, r3))
+        views.append((_brace_pass(_resolve_top(r3, base)), False, r3))
     asks, payloads = [], []
     for d, body, quoted in bodies:
         if not quoted and ("$" in body or "`" in body):
@@ -8671,6 +9369,43 @@ def _decide3(command):
         return _check3(command, _root(), 0)
     except Exception as exc:
         return "ask", "fail_closed: guard error %s: %s. A human decides." % (type(exc).__name__, str(exc)[:160])
+
+
+_decide3_v24 = _decide3         # version 25: the function above; the v25 rules are on while _V25[0] is true
+
+
+def _decide3(command):
+    """Version 25. ("block" | "ask" | "allow", reason). A command that mentions a positional parameter is judged with the v25 rules on and, unless
+    that already blocks, again with them off (v24's own reading); the stricter verdict is returned. v25 can therefore never be weaker than v24."""
+    _V25[0] = True
+    _V25_FIRED[0] = False
+    _NEST[0], _NEST[1] = 0, 0
+    try:
+        _ROOT_NOW[0] = _root()              # version 25s: the same answer every call for the length of the decision
+    except Exception:
+        _ROOT_NOW[0] = None
+    _IN_DEC[0] = True
+    _DEC_MEMO.clear()
+    try:
+        v, why = _decide3_v24(command)
+        # version 25s: v25 ran the second pass whenever the command mentions a positional parameter. The first pass differs from the second
+        # only where a v25 rule acted (_V25_FIRED), or where it failed with an error the second pass might not have had; where neither, the two
+        # passes are the same computation and the answer is the first pass's.
+        second = (v != "block" and _V25_RELEVANT.search(command or "") is not None
+                  and (_V25_FIRED[0] or why.startswith("fail_closed: guard error")))
+        if not second:
+            return v, why
+        _V25[0] = False
+        try:
+            v0, why0 = _decide3_v24(command)
+        finally:
+            _V25[0] = True
+    finally:
+        _IN_DEC[0] = False
+        _ROOT_NOW[0] = None
+        _DEC_MEMO.clear()
+    rank = {"allow": 0, "ask": 1, "block": 2}
+    return (v0, why0) if rank[v0] > rank[v] else (v, why)
 
 
 # =====================================================================================
@@ -8987,7 +9722,7 @@ def _echo_words(command):
 # judges, every redirection, every piece of inline interpreter code, every unknown it asks about. _irreversible
 # reads that record. Nothing is executed.
 # =====================================================================================
-_FRESH_N = [0]
+_FRESH_N = _CountList([0])
 _TRACE = None
 SCRATCH_KEEP = {"push", "send-pack", "http-push", "remote", "config", "submodule", "worktree", "svn", "p4",
                 "send-email", "imap-send"}
@@ -10439,6 +11174,426 @@ def main(stdin=None):
     if err and not err.startswith(("AGENT_GUARD_UNDO=0", "the hook input")):
         print(json.dumps({"systemMessage": err}))
     return 0
+
+
+# =====================================================================================
+# ===== DEL (del-candidate): CATASTROPHIC DELETE. One block of NEW functions, added after v24 and before __main__ (PREREG_DEL.md).
+# Policy: a recursive or forced delete of $HOME or ~, an ancestor of the repo or of $HOME, /, a top-level system folder, a credential or config
+# folder, a broad glob at the top of one of those, or a target whose LEADING path component the resolver cannot read, is a deny. Everything else
+# is v24's answer, byte for byte. The mechanism is wrappers by rebinding, so no line of v24 is touched:
+#   _judge       pass 1 only sets a flag when the resolved command word is a delete (rm srm find rsync, or sed/tar/awk/an interpreter naming a delete
+#                word); pass 2 records the argv the walk judges and reads shell text carried in sed/tar/awk arguments.
+#   _R.expand    pass 2 only: a word-initial unquoted ~ becomes the real home path (v24 turns it into an unknown marker).
+#   _check3      pass 2 only: $HOME and $TMPDIR are known variables (v24 cannot see the environment).
+#   _decide_full after v24's answer, if it is an ALLOW and pass 1 saw a delete: pass 2 walks the command again and classifies what it recorded.
+# Pass 2 never runs for a command with no delete in it, and never overrides a v24 deny.
+# =====================================================================================
+_DEL = [None]               # None: pass 1 (v24 as it was). A list: pass 2 is collecting the delete operations the walk judges.
+_DEL_SEEN = [False]         # pass 1 saw a delete by the resolved command word
+_DEL_FAMILY = frozenset(("rm", "srm", "find", "rsync"))
+_DEL_CARRY = frozenset(("sed", "gsed", "tar", "gtar", "bsdtar", "awk", "gawk", "mawk", "nawk"))
+_DEL_INTERP = re.compile(r"^(?:python[0-9.]*|pypy[0-9.]*|node|nodejs|bun|deno|tsx|ruby[0-9.]*|perl[0-9.]*)$")
+_DEL_WORD = re.compile(r"\brm\b|\bsrm\b|\bunlink\b|rmtree|remove_tree|rm_rf|\brm_r\b|rmSync|removeSync|rimraf|FileUtils|-delete\b")
+_DEL_FOLD = sys.platform == "darwin"        # macOS volumes fold case (`/system` is `/System`); on Linux a path is compared as written
+_DEL_SYS = frozenset((x.casefold() if _DEL_FOLD else x) for x in (
+    "/", "/usr", "/etc", "/bin", "/sbin", "/System", "/Library", "/Users", "/home", "/var", "/opt", "/private", "/Applications", "/Volumes",
+    "/root", "/boot", "/lib", "/lib64", "/srv", "/mnt", "/dev", "/private/etc", "/private/var"))
+_DEL_CREDS = (".ssh", ".aws", ".gnupg", ".config", ".kube", ".docker")
+_DEL_PROBES = ("a", "bcd", "ab", ".a", ".ab", ".bcd", ".abc", "a.b", "A1", "1x")
+_DEL_HOMEX = (r"(?:os\.path\.expanduser\(\s*['\"]~['\"]\s*\)|(?:pathlib\.)?Path\.home\(\)|os\.environ\[\s*['\"]HOME['\"]\s*\]|"
+              r"os\.getenv\(\s*['\"]HOME['\"]\s*\)|os\.environ\.get\(\s*['\"]HOME['\"][^)]*\)|(?:require\(\s*['\"]os['\"]\s*\)\s*\.\s*|os\.)homedir\(\)|"
+              r"process\.env\.HOME|ENV\[\s*['\"]HOME['\"]\s*\]|Dir\.home|\$ENV\{\s*HOME\s*\})")       # a quoted '~' is NOT home to python, node, ruby or perl (no tilde expansion)
+_DEL_S = r"""(?:'[^'\\\n]*'|"[^"\\\n]*")"""
+_DEL_LIST_PY = re.compile(r"\b(?:run|call|check_call|check_output|Popen)\(\s*\[\s*(" + _DEL_S + r"(?:\s*,\s*" + _DEL_S + r")*)\s*\]")
+_DEL_LIST_RB = re.compile(r"\b(?:system|exec|spawn)\s*\(?\s*(" + _DEL_S + r"(?:\s*,\s*" + _DEL_S + r")+)\s*\)?")
+_DEL_CODE_HOME = re.compile(r"(?:rmtree|remove_tree|rm_rf|rm_r|rmSync|removeSync|rimraf)\s*\(\s*" + _DEL_HOMEX + r"\s*[,)]")     # the home expression is the WHOLE first argument
+_DEL_REDIRECTS = [
+    ("D-fail", r"^catastrophic_delete: the check failed",
+     "Split the command into plain steps. Print any variable first with `echo \"$DIR\"`, then delete the exact folder by its full path: "
+     "`rm -r /full/path/to/old-folder`."),
+    ("D-find", r"^catastrophic_delete: (?:find|xargs|rsync) ",
+     "Limit the command to the folder you mean and to named files: look with `find ./build -name '*.o' -print`, then run `find ./build -name '*.o' -delete`. "
+     "To clear a whole folder, delete it by its full path: `rm -r /full/path/to/old-folder`."),
+    ("D-glob", r"^catastrophic_delete: the glob ",
+     "Do not delete by a glob at the top of a protected folder. List what is there with `ls ~`, then delete the exact folders you mean by full path, one "
+     "`rm -r ~/path/to/old-folder` per folder, or move them with `mv ~/path/to/old-folder ~/.Trash/`."),
+    ("D-cred", r"^catastrophic_delete: .*credential or config folder",
+     "Keep the folder. List it with `ls -la ~/.ssh` (or the folder you mean), then remove only the one file you mean by its full name, for example "
+     "`rm ~/.ssh/old_key`, or move it with `mv ~/.ssh/old_key ~/.Trash/`."),
+    ("D-unresolved", r"^catastrophic_delete: .*cannot read",
+     "Print the value first with `echo \"$DIR\"` (use your variable's name), check that it is the exact folder you mean, then delete it by its full path, "
+     "for example `rm -r /full/path/to/old-folder`, or move it with `mv /full/path/to/old-folder ~/.Trash/`."),
+    ("D-home", r"^catastrophic_delete: ",
+     "Look at what is there first with `ls ~`. Then move the one folder you mean to the Trash with `mv ~/path/to/old-folder ~/.Trash/` (on Linux, "
+     "`gio trash ~/path/to/old-folder`), or delete only that exact subfolder by its full path, for example `rm -r ~/path/to/old-folder`."),
+]
+REDIRECTS[0:0] = _DEL_REDIRECTS
+_REDIRECTS_RE[0:0] = [(sid, re.compile(rx), text) for sid, rx, text in _DEL_REDIRECTS]
+
+
+def _del_tmpdir():
+    t = os.environ.get("TMPDIR") or ""
+    return posixpath.normpath(t) if t.startswith("/") else "/tmp"
+
+
+def _del_tilde(text, q):
+    """Pass 2: v24's own reading of a word-initial unquoted ~ (the same condition), but as the real home path."""
+    h = _homes()
+    if not h:
+        return text
+    rep = _esc_word(h[0])
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if q == 1:
+            out.append(c)
+            q = 0 if c == "'" else 1
+            i += 1
+        elif c == "\\" and i + 1 < n:
+            out.append(text[i:i + 2])
+            i += 2
+        elif c == "'" and q == 0:
+            q = 1
+            out.append(c)
+            i += 1
+        elif c == '"':
+            q = 2 if q == 0 else 0
+            out.append(c)
+            i += 1
+        elif c == "~" and q == 0 and (i == 0 or text[i - 1] in " \t\n=:;&|(") and (i + 1 == n or text[i + 1] in "/ \t\n;&|)"):
+            out.append(rep)
+            i += 1
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
+_R_expand_v24 = _R.expand
+
+
+def _del_expand(self, text, q=0):
+    if _DEL[0] is not None and "~" in text:
+        text = _del_tilde(text, q)  # DEL-M15
+    if _DEL[0] is not None and "pwd" in text:
+        text = text.replace("$(pwd)", "${PWD}").replace("`pwd`", "${PWD}")  # DEL-M18
+    return _R_expand_v24(self, text, q)
+
+
+_R.expand = _del_expand
+
+
+def _del_run(self, text):
+    """Pass 2: a payload (trap, eval, flock -c, sh -c ...) runs with the variables this string has set; v24 hands it none, so `trap 'rm -rf "$d"' EXIT` read `$d` as unknown."""
+    kn = None
+    if _DEL[0] is not None:
+        kn = dict(self.r.known)  # DEL-M19
+    self.payloads.append((text, kn, None))
+
+
+_St.run = _del_run
+_check3_v24 = _check3
+
+
+def _check3(cmd, root, depth, known=None, pos=None, funcs=None):
+    if _DEL[0] is not None:
+        known = dict(known or {})
+        known.setdefault("HOME", _homes()[0] if _homes() else "/nonexistent-home")  # DEL-M16
+        known.setdefault("TMPDIR", _del_tmpdir())  # DEL-M8
+    return _check3_v24(cmd, root, depth, known, pos, funcs)
+
+
+def _del_carried(b, rest):
+    """Shell text a sed, tar or awk argument carries and runs: sed `e CMD`, tar --checkpoint-action=exec=CMD / --to-command / --use-compress-program / -I, awk system("CMD")."""
+    out = []
+    if b in ("sed", "gsed"):
+        for a in rest:
+            if a.startswith("-") and not a.startswith("-e"):
+                continue
+            for m in re.finditer(r"(?:^|[\n;{}]|\d|\$)\s*e[ \t]+([^\n]+)", a):
+                out.append(m.group(1))
+    elif b in ("tar", "gtar", "bsdtar"):
+        for k, a in enumerate(rest):
+            nxt = rest[k + 1] if k + 1 < len(rest) else ""
+            for opt in ("--checkpoint-action=exec=", "--to-command=", "--use-compress-program=", "--rsh-command="):
+                if a.startswith(opt):
+                    out.append(a[len(opt):])
+            if a == "--checkpoint-action" and nxt.startswith("exec="):
+                out.append(nxt[5:])
+            if a in ("--to-command", "--use-compress-program", "-I"):
+                out.append(nxt)
+    else:
+        for a in rest:
+            for m in re.finditer(r"""system\(\s*(?:"([^"\n]*)"|'([^'\n]*)')\s*\)""", a):
+                out.append(m.group(1) if m.group(1) is not None else m.group(2))
+    return [t for t in out if t and t.strip()][:MAX_PAYLOADS]
+
+
+def _del_note(env, argv, stage, upstream, st):
+    if not argv or not isinstance(argv[0], str) or not _lit3(argv[0]):
+        return
+    b = posixpath.basename(argv[0])
+    rest = argv[1:]
+    if _DEL[0] is None:
+        if b in _DEL_FAMILY or ((b in _DEL_CARRY or _DEL_INTERP.match(b)) and _DEL_WORD.search(" ".join(rest))):
+            _DEL_SEEN[0] = True
+        return
+    if b in _DEL_FAMILY:
+        own = set(stage.get("argv") or [])
+        _DEL[0].append({"b": b, "args": list(rest), "cwd": st.cwd, "pipe_in": bool(stage.get("pipe_in")),
+                        "up": [list(x.get("argv") or []) for x in (upstream or [])], "fed": [w for w in rest if w not in own]})
+    if b in _DEL_CARRY:  # DEL-M12
+        for text in _del_carried(b, rest):
+            st.run(text)
+    if _DEL_INTERP.match(b):
+        code = next((rest[k + 1] for k, a in enumerate(rest[:-1]) if a in ("-c", "-e", "-E", "-p", "--eval", "--print")), "")     # the code argument; a script's own arguments are data
+        if _DEL_CODE_HOME.search(code):  # DEL-M13
+            _DEL[0].append({"b": "rm", "args": ["-r", "--", (_homes() or ["/nonexistent-home"])[0]], "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+        if _DEL_LIST_PY.search(code) or _DEL_LIST_RB.search(code):  # DEL-M17
+            for rx in (_DEL_LIST_PY, _DEL_LIST_RB):
+                for m in rx.finditer(code):
+                    items = [x[1:-1] for x in re.findall(_DEL_S, m.group(1))]
+                    if items and posixpath.basename(items[0]) in ("rm", "srm") and all(_lit3(w) for w in items):
+                        _DEL[0].append({"b": "rm", "args": items[1:], "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+
+
+_judge_v24 = _judge
+
+
+def _judge(env, argv, stage, upstream, st):
+    _del_note(env, argv, stage, upstream, st)
+    return _judge_v24(env, argv, stage, upstream, st)
+
+
+def _del_above(k, y):
+    """k (casefolded, normalised) is a directory strictly above y."""
+    return k != y and y.startswith(k.rstrip("/") + "/")
+
+
+def _del_prot(a):
+    """A normalised absolute path -> "home" (the home folder, a folder above it or above the repo, / or a system folder), "cred" (a credential or config folder), or None.
+    The protected sets are EXACT paths: a child of a protected folder is not protected."""
+    fold = (lambda s: s.casefold()) if _DEL_FOLD else (lambda s: s)
+    k = fold(a)
+    hs = [fold(h) for h in _homes()]
+    rt = fold(posixpath.normpath(_root()))
+    if k in hs:  # DEL-M1
+        return "home"
+    if any(_del_above(k, y) for y in hs + [rt]):  # DEL-M2
+        return "home"
+    if k in _DEL_SYS:  # DEL-M3
+        return "home"
+    if any(k == h + "/" + n for h in hs for n in _DEL_CREDS) or any(posixpath.dirname(k) == h and posixpath.basename(k).startswith(".claude") for h in hs):  # DEL-M4
+        return "cred"
+    return None
+
+
+def _del_broad(base):
+    """A glob that matches at least two of ten probe names (`*`, `.*`, `.[!.]*`, `.??*`, `*.*`, `[a-z]*` are broad; `*.log` and `id_*` are not)."""
+    import fnmatch
+    return bool(re.search(r"[*?\[]", base)) and sum(1 for n in _DEL_PROBES if fnmatch.fnmatchcase(n, base)) >= 2
+
+
+def _del_first_unknown(x):
+    first = next((c for c in x.split("/") if c), "")
+    return U in first or Q in first or PSUB in first
+
+
+def _del_target(x, cwd, rec, unres=None):
+    """One delete operand as the walk resolved it -> (shape, operand) or None. `rec`: the delete is recursive or forced (the protected-exact test fires). `unres`: the delete is
+    RECURSIVE (round 2, C1): only then does an unreadable leading component stop; it defaults to `rec`."""
+    if unres is None:
+        unres = rec
+    if not x or FOUND in x:
+        return None
+    if not (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd and FOUND not in cwd):
+        cwd = None
+    if unres and _del_first_unknown(x):  # DEL-M6 DEL-M7 DEL-M22
+        return ("D-unresolved", x)
+    t = x.rstrip("/") if len(x) > 1 else x
+    base = t.rsplit("/", 1)[-1] if t else ""
+    if re.search(r"[*?\[]", base):
+        par = posixpath.dirname(t)
+        pa = _abs(par if par else ".", cwd) if (par or cwd) else None
+        if pa is None or not pa.startswith("/"):
+            return ("D-unresolved", x) if unres and _del_broad(base) and par in ("", ".", "..") else None
+        if _del_broad(base) and _del_prot(pa):  # DEL-M5
+            return ("D-glob", x)
+        return None
+    a = _abs(x, cwd)
+    if a is None:
+        return None
+    if not a.startswith("/"):
+        return ("D-unresolved", x) if unres and a in (".", "..") else None
+    if not rec:
+        return None
+    s = _del_prot(a)
+    return (("D-cred" if s == "cred" else "D-home"), x) if s else None
+
+
+def _del_split(args):
+    flags, pos, end = [], [], False
+    for a in args:
+        if end:
+            pos.append(a)
+        elif a == "--":
+            end = True
+        elif a.startswith("-") and a != "-":
+            flags.append(a)
+        else:
+            pos.append(a)
+    return flags, pos
+
+
+def _del_producer(up, cwd):
+    """The delete targets a pipeline hands xargs: a list of operands, [] when the producer only names files it filtered (or git/grep output), None when it cannot be read."""
+    stages = [s for s in up if s]
+    if not stages or not _lit3(stages[0][0]):
+        return None
+    for s in stages[1:]:
+        if not _lit3(s[0]) or posixpath.basename(s[0]) not in LIST_FILTERS:
+            return None
+    b, a = posixpath.basename(stages[0][0]), stages[0][1:]
+    if b == "find":
+        starts = []
+        for w in a:
+            if w.startswith("-") or w in ("(", "!", ")"):
+                break
+            starts.append(w)
+        return [] if _find_filtered(a[len(starts):]) else (starts or ["."])
+    if b in ("echo", "printf"):  # DEL-M21
+        w = list(a)
+        if b == "echo":
+            while w and re.match(r"^-[neE]+$", w[0]):
+                w.pop(0)
+        else:
+            w = w[1:]                       # the format word is not an operand
+        return w                            # round 2, C2: each WORD gets the leading-component test, as any rm operand does
+    if b == "ls":
+        pos = [w for w in a if not w.startswith("-")]
+        if pos and any(w.startswith("-") and not w.startswith("--") and "d" in w for w in a):
+            return pos
+        return [(cwd.rstrip("/") + "/*") if isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd else "*"]
+    if b in ("git", "grep", "egrep", "fgrep", "rg", "ag"):
+        return []
+    return None
+
+
+def _del_markerish(x):
+    """A word v24's xargs reading made up for what stdin hands rm: an unknown marker, a find stub, or one of its listing words."""
+    return any(c in x for c in (U, Q, PSUB, FOUND, LISTED_ALL, LISTED_FIND_ALL, LISTED_GIT_RM)) or x == "listed-file"
+
+
+def _del_find_acts(args):
+    if "-delete" in args:
+        return "-delete"
+    for k, a in enumerate(args):
+        if a in ("-exec", "-execdir", "-ok", "-okdir") and k + 1 < len(args) and posixpath.basename(args[k + 1]) in ("rm", "srm"):
+            return a + " " + posixpath.basename(args[k + 1])
+    return None
+
+
+def _del_op(op):
+    """One recorded operation -> (shape, reason) or None."""
+    b, args, cwd = op["b"], op["args"], op["cwd"]
+    if b in ("rm", "srm"):
+        flags, pos = _del_split(args)
+        rec = any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in flags)
+        frc = any(re.match(r"^-[A-Za-z]*f", a) or a == "--force" for a in flags)
+        for x in pos:
+            if op["pipe_in"] and op["up"] and x in op.get("fed", ()) and _del_markerish(x):
+                tg = _del_producer(op["up"], cwd)
+                if tg is None and not (rec or frc):
+                    continue                # round 2, C1: a plain `xargs rm` (neither -r nor -f) of an unreadable producer is v24's verdict
+                if tg is None:  # DEL-M10
+                    return ("D-find", "catastrophic_delete: xargs %s takes its targets from a producer the guard cannot read, so it could delete the home folder or /. "
+                                      "That cannot be taken back." % b)
+                for y in (tg or []):
+                    r = _del_target(y, cwd, rec or frc, rec or frc)
+                    if r:
+                        return ("D-find", "catastrophic_delete: xargs %s over %s removes a protected folder or a part the guard cannot read. That cannot be taken back." % (b, y))
+                continue
+            r = _del_target(x, cwd, rec or frc, rec or frc)  # DEL-M23
+            if r:
+                return _del_say(r, b + (" -r" if rec else ""), r[1])
+    if b == "find":  # DEL-M9
+        starts = []
+        for w in args:
+            if w.startswith("-") or w in ("(", "!", ")"):
+                break
+            starts.append(w)
+        act = _del_find_acts(args)
+        if act and not _find_filtered(args[len(starts):]):
+            for s in (starts or ["."]):
+                r = _del_target(s, cwd, True)
+                if r:
+                    return ("D-find", "catastrophic_delete: find %s %s removes everything under a protected folder (the home folder, a folder above it or above the repo, a "
+                                      "system folder, a credential folder) or under a part the guard cannot read. That cannot be taken back." % (s, act))
+    if b == "rsync":  # DEL-M11
+        if any(a == "--del" or a.startswith("--delete") for a in args):
+            pos = [a for a in args if not a.startswith("-")]
+            dest = pos[-1] if pos else ""
+            if dest and ":" not in dest.split("/")[0]:
+                r = _del_target(dest, cwd, True)
+                if r:
+                    return ("D-find", "catastrophic_delete: rsync --delete into %s empties a protected folder (the home folder, a folder above it, a system folder, a credential "
+                                      "folder) or a part the guard cannot read. That cannot be taken back." % dest)
+    return None
+
+
+def _del_say(r, what, x):
+    shape = r[0]
+    if shape == "D-glob":
+        return (shape, "catastrophic_delete: the glob %s expands to every entry of a protected folder (the home folder, a folder above it or above the repo, a system folder or a "
+                       "credential folder), and %s would delete them all. That cannot be taken back." % (x, what))
+    if shape == "D-cred":
+        return (shape, "catastrophic_delete: %s of %s removes a credential or config folder. That cannot be taken back." % (what, x))
+    if shape == "D-unresolved":
+        return (shape, "catastrophic_delete: %s of %s starts with a part the guard cannot read, so a variable that is empty or wrong makes it the home folder or /. "
+                       "That cannot be taken back." % (what, x.replace(U, "?").replace(Q, "?")))
+    return (shape, "catastrophic_delete: %s of %s deletes the home folder, a folder above it or above the repo, or a system folder. That cannot be taken back." % (what, x))
+
+
+def _del_hook(command):
+    """Pass 2. -> (shape, reason) or None."""
+    global _TRACE
+    ops, saved, disk = [], _TRACE, _DISK[0]
+    _DEL[0], _TRACE = ops, None
+    _DISK[0] = None  # DEL-M20
+    try:
+        _check3(_strip_comments(command), _root(), 0)
+        seen, hit = set(), None
+        for op in ops:
+            key = (op["b"], tuple(op["args"]), op["cwd"], op["pipe_in"], tuple(tuple(u) for u in op["up"]))
+            if key in seen:
+                continue
+            seen.add(key)
+            hit = _del_op(op)
+            if hit:
+                break
+        return hit
+    except Exception as exc:
+        return ("D-fail", "catastrophic_delete: the check failed (%s), and the guard never allows a delete it could not read to the end." % type(exc).__name__)
+    finally:
+        _DEL[0], _TRACE = None, saved
+        _DISK[0] = disk
+
+
+_decide_full_v24 = _decide_full
+
+
+def _decide_full(command):
+    _DEL_SEEN[0] = False
+    d = _decide_full_v24(command)
+    if d.get("verdict") == "allow" and _DEL_SEEN[0]:  # DEL-M14
+        hit = _del_hook(_echo_words(command))
+        if hit:
+            core = re.sub("[\x01-\x08\x0e\x0f]", "?", hit[1]).rstrip()      # the resolver's markers are never printed
+            shape, text = redirect_for(core)
+            return {"verdict": "deny", "origin": "block", "v3": "block", "shape": shape, "redirect": text, "alternatives": alternatives(text),
+                    "reason": core + REDIRECT_MARK + text, "note": ""}
+    return d
+# ===== end of DEL =====
 
 
 if __name__ == "__main__":
