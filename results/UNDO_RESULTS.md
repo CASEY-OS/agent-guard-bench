@@ -157,7 +157,7 @@ A read-only command through pre_tool_use: 68 commands, 0 subprocess calls (git o
 
 - Over the entry bound (AGENT_GUARD_FILES_MAX=10, a 30-file dir): skipped and said on stderr: True; the small target beside it still copied: True.
 - Over the byte bound (AGENT_GUARD_FILES_MAX_BYTES=100, a 4 KB file): skipped: True.
-- /, $HOME and an ancestor of $HOME, each refused without a walk: True (0 ms for all three).
+- /, $HOME and an ancestor of $HOME, each refused without a walk: True (1 ms for all three).
 - rm -rf of a dir holding a symlink that points out of it: no manifest entry outside the target: True.
 - cp of two files into a directory outside the repo copies those two names, not the directory: True.
 
@@ -169,17 +169,17 @@ Made 55 snapshots with the default bound: 50 kept, the newest ones (ok). Same st
 
 | measure | value |
 |---|---:|
-| first snapshot, clean tree (one run) | 291 ms, 56264 bytes added to .git/objects |
-| snapshot, nothing changed (dedupe) | 83 ms median |
-| snapshot, 10 files changed and 1 new | 155 ms median, 5561 bytes median |
-| plan() for a read-only command, in-process | 16 us |
-| whole hook, read-only command (Python start-up included) | 114 ms median |
-| whole hook, command that gets a snapshot | 309 ms median |
-| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 295 ms median |
-| whole hook, in a repo, command naming one ignored file (.env) | 295 ms median |
-| whole hook, outside any repo, files-only | 114 ms median |
-| files restore --last, CLI, one file | 37 ms |
-| restore --last, CLI | 539 ms |
+| first snapshot, clean tree (one run) | 465 ms, 56316 bytes added to .git/objects |
+| snapshot, nothing changed (dedupe) | 78 ms median |
+| snapshot, 10 files changed and 1 new | 196 ms median, 5561 bytes median |
+| plan() for a read-only command, in-process | 17 us |
+| whole hook, read-only command (Python start-up included) | 112 ms median |
+| whole hook, command that gets a snapshot | 306 ms median |
+| whole hook, in a repo, command naming one file outside it (repo snapshot plus files copy) | 313 ms median |
+| whole hook, in a repo, command naming one ignored file (.env) | 328 ms median |
+| whole hook, outside any repo, files-only | 116 ms median |
+| files restore --last, CLI, one file | 47 ms |
+| restore --last, CLI | 752 ms |
 | .git/objects before any snapshot | 899860 bytes |
 
 Blind to: ignored files and files outside the repo that the command does not name (git clean -X, a script that deletes them), a target over the files bound, empty directories inside the repo, owner, ACLs, xattrs and mtimes, submodule contents and nested repos, skip-worktree and sparse paths, branch reflogs other than the stash, an in-progress rebase directory, remote state the local repo never fetched, and any change made by a command the hook never saw (a tool other than Bash, a process started earlier that keeps writing). Proven on this machine's OS and git only.
@@ -202,6 +202,6 @@ Blind to: ignored files and files outside the repo that the command does not nam
 - PASS: the printed repair push put every pushed remote back (2 push scenarios)
 - PASS: every destructive command ran under the bench root (122 runs, 0 outside)
 
-Runtime 161 s.
+Runtime 177 s.
 
 OVERALL: PASS

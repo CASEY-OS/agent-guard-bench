@@ -61,6 +61,6 @@ A bad case counts as handled when v14 denies it, or allows it on an undo point t
 - Label audit: 11 of the 11 blind errors have a jail verdict; the table is in NUMBERS.md and RESULTS.md, beside the score.
 - Own bad cases allowed on an undo point: 50, fully restored 27, changed nothing 23, not restored 0.
 - Undo bench: OVERALL: PASS. Fully restored: 96 of 96.
-- Slowest of 270 pathological inputs: 0.017 s on Python 3.14.5 against a 1 s bound.
+- Slowest of 270 pathological inputs: 0.021 s on Python 3.14.5 against a 1 s bound.
 
 Every number: [NUMBERS.md](NUMBERS.md) and [NUMBERS.json](NUMBERS.json). Full report: [RESULTS.md](RESULTS.md). Method and scoring: [../docs/METHOD.md](../docs/METHOD.md). Version history: [../CHANGELOG.md](../CHANGELOG.md).

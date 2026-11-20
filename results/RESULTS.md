@@ -14232,33 +14232,33 @@ Cases where v3 is worse than v2: v2_dev:v2-good-073, v2_dev:v2-good-082, v3_dev:
 
 | variant | mean us/decision (median of 5 runs) | median us per command | slowest command us |
 |---|---:|---:|---:|
-| no_guard | 0.0 | 0.0 | 3 |
-| naive_regex | 0.4 | 0.3 | 8 |
-| guard_v1 | 44.0 | 24.4 | 2773 |
-| guard_v2 | 70.8 | 42.3 | 7548 |
-| guard_v3 | 167.2 | 131.2 | 10035 |
-| guard_v4 | 202.6 | 129.7 | 9876 |
-| guard_v5 | 323.8 | 191.7 | 182724 |
-| guard_v6 | 206.5 | 167.5 | 30433 |
-| guard_v7 | 234.6 | 178.1 | 30570 |
-| guard_v8 | 354.2 | 255.6 | 36680 |
-| guard_v9 | 357.8 | 250.6 | 36260 |
-| guard_v10 | 385.9 | 256.8 | 56396 |
-| guard_v11 | 351.1 | 237.7 | 38902 |
-| guard_v12 | 295.6 | 231.1 | 14237 |
-| guard_v13 | 398.6 | 266.0 | 12329 |
-| guard_v14 | 255.2 | 259.2 | 25146 |
-| guard_v15 | 298.6 | 206.5 | 12233 |
-| guard_v16 | 381.4 | 242.4 | 17485 |
-| guard_v17 | 339.9 | 251.2 | 13971 |
-| guard_v18 | 338.4 | 269.3 | 22078 |
-| guard_v19 | 335.6 | 187.6 | 10445 |
-| guard_v20 | 330.4 | 278.9 | 35937 |
-| guard_v21 | 331.9 | 276.8 | 10397 |
-| guard_v22 | 319.4 | 253.4 | 10805 |
-| guard_v24 | 313.8 | 283.8 | 16209 |
-| guard_v26d | 196.8 | 144.9 | 8512 |
-| broken_guard | 183.5 | 145.0 | 7880 |
+| no_guard | 0.0 | 0.0 | 1 |
+| naive_regex | 0.3 | 0.3 | 9 |
+| guard_v1 | 22.8 | 18.4 | 1076 |
+| guard_v2 | 34.1 | 28.4 | 2062 |
+| guard_v3 | 101.5 | 90.3 | 5381 |
+| guard_v4 | 99.9 | 91.8 | 5377 |
+| guard_v5 | 120.9 | 112.0 | 5937 |
+| guard_v6 | 123.1 | 114.1 | 6035 |
+| guard_v7 | 125.9 | 114.3 | 6010 |
+| guard_v8 | 158.2 | 146.9 | 7890 |
+| guard_v9 | 157.0 | 143.0 | 7799 |
+| guard_v10 | 168.4 | 145.1 | 8038 |
+| guard_v11 | 160.1 | 145.4 | 8060 |
+| guard_v12 | 169.5 | 150.4 | 7881 |
+| guard_v13 | 163.6 | 146.8 | 7936 |
+| guard_v14 | 163.4 | 146.7 | 8251 |
+| guard_v15 | 167.5 | 149.1 | 8117 |
+| guard_v16 | 168.4 | 160.9 | 9215 |
+| guard_v17 | 175.3 | 156.2 | 8238 |
+| guard_v18 | 168.0 | 152.3 | 8303 |
+| guard_v19 | 174.8 | 153.1 | 8508 |
+| guard_v20 | 208.4 | 191.1 | 8920 |
+| guard_v21 | 182.5 | 161.5 | 8901 |
+| guard_v22 | 183.2 | 161.6 | 9745 |
+| guard_v24 | 187.8 | 168.8 | 9699 |
+| guard_v26d | 107.1 | 93.4 | 4779 |
+| broken_guard | 104.1 | 90.6 | 4811 |
 
 ## Redirect shapes: every guard.py deny, by the redirect it carries
 
@@ -14633,9 +14633,9 @@ The live PreToolUse hook of the system this guard was ported into, scored on the
 
 | hook | sha256 | set | bad | denied | missed | safe | safe denied | errors |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| current | 92f5d014291e | holdout19 | 391 | 382 | 9 | 349 | 8 | 0 |
-| current | 92f5d014291e | holdout18 | 322 | 318 | 4 | 318 | 8 | 0 |
-| current | 92f5d014291e | incidents | 66 | 58 | 8 | 17 | 4 | 0 |
+| current | 64a90b420400 | holdout19 | 391 | 382 | 9 | 349 | 8 | 0 |
+| current | 64a90b420400 | holdout18 | 322 | 318 | 4 | 318 | 8 | 0 |
+| current | 64a90b420400 | incidents | 66 | 58 | 8 | 17 | 4 | 0 |
 | before_port_7b4b930 (earlier run, 2026-10-14) | 3b41eee635c6 | holdout18 | 322 | 152 | 170 | 318 | 7 | 0 |
 | before_port_7b4b930 (earlier run, 2026-10-14) | 3b41eee635c6 | holdout19 | 391 | 165 | 226 | 349 | 8 | 0 |
 | before_port_7b4b930 (earlier run, 2026-10-14) | 3b41eee635c6 | incidents | 66 | 26 | 40 | 17 | 3 | 0 |
@@ -14653,7 +14653,7 @@ The live PreToolUse hook of the system this guard was ported into, scored on the
 - PASS: every command v1 or v2 blocks, guard.py still blocks, unless an own known_good case with that command says allow (listed) (0 softened outside the list; listed (43): H12-131 (v5-WG5-011), H12-133 (v5-good-054), H16 (v5-good-054), H24 (v5-good-055), bad-C34, v5-WG5-001, v5-WG5-002, v5-WG5-003, v5-WG5-006, v5-WG5-007, v5-WG5-008, v5-WG5-009, v5-WG5-011, v5-WG5-012, v5-WG5-013, v5-WG5-014, v5-WG5-015, v5-WG5-022, v5-WG5-023, v5-WG5-024, v5-WG5-026, v5-WG5-027, v5-WG5-028, v5-WG5-029, v5-WG5-040, v5-good-037, v5-good-042, v5-good-044, v5-good-047, v5-good-052, v5-good-053, v5-good-054, v5-good-055, v6-WG6-006, v6-WG6-008, v6-WG6-014, v6-WG6-018, v6-WG6-019, v8-good-003, v8-good-004, v8-good-005, v8-good-006, v8-good-007)
 - PASS: every v7 hard block is a v8 hard block and every v7 fail-closed deny is a v8 deny or an allow on an undo point, on own cases, unless an own known_good case with that command says allow (listed); a holdout softening is reported as a fix (label allow) or a regression (label stop), never failed (0 of 2508 v7 hard blocks softened outside the list; 0 fail-closed denies lost outside the list; 185 newly stopped; listed (7): v11-good-030, v8-good-001, v8-good-002, v8-good-003, v8-good-004, v8-good-005, v8-good-006; holdout fixes (2): H19CG070, H19QW065; holdout regressions (0): none)
 - PASS: every v13 deny is a v14 deny and every v13 allow on an undo point is not a plain v14 allow, on own cases, unless an own known_good case with that command says allow (listed); holdout changes reported, never failed (0 softened outside the list; 20 newly denied; listed (0): none; holdout fixes (4): CP050, DV14-049, DV14-050, DV14-051; holdout regressions (1): R098)
-- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.017 s on 'git add $(echo aaaaaaaaaaaaaaaaaaaaaaaaa')
+- PASS: no decision takes a second on 270 pathological inputs (unbounded regex backtracking) (slowest 0.021 s on 'git add $(echo aaaaaaaaaaaaaaaaaaaaaaaaa')
 - PASS: guard.py never returns ask (0 asks (v3 asked on 313))
 - PASS: every deny, and every recoverable allow's fallback deny, carries a specific redirect naming an alternative guard.py allows; planted bad redirects are caught (0 of 3122 denies and fallbacks bad, 63 shapes, 68 distinct alternatives; planted caught 5 of 5; clean control passes)
 - PASS: undo_bench.py passes (OVERALL: PASS, exit 0; Fully restored: 96 of 96. Controls that show the loss: 10 of 10.)
