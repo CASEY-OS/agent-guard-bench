@@ -4,7 +4,7 @@ This page is for a person, or for a coding agent following [llms.txt](../llms.tx
 
 ## What it is
 
-agent-guard is a Claude Code hook. Before each Bash tool call it reads the command and denies the ones that stage the whole git tree, switch off git hooks or destroy uncommitted work. Every deny ends with `DO THIS INSTEAD:` and a safe command that finishes the same task. It covers that one class. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It reads the command text and runs nothing. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
+agent-guard is a Claude Code hook. Before each Bash tool call it reads the command and denies the ones that stage the whole git tree, switch off git hooks or destroy uncommitted work. Every deny ends with `DO THIS INSTEAD:` and a safe command that finishes the same task. It covers that one class. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It reads the command text and runs nothing. It needs `python3` installed (the `python3` command works in your terminal). If the hook cannot run, Claude Code lets the command through.
 
 The result is in the [README](../README.md). It denied 98.5% of 1,124 dangerous commands and wrongly denied 2.8% of 1,305 safe ones on a blind set (blind_v31), with the misses listed.
 
@@ -42,7 +42,7 @@ claude plugin marketplace add CASEY-OS/agent-guard-bench
 claude plugin install agent-guard@agent-guard-bench
 ```
 
-The plugin is the whole repository, about 40 MB, because the guard, its undo layer and its tests live together. These commands change two things in your Claude Code settings file (`~/.claude/settings.json` for the user scope): `enabledPlugins` gains `agent-guard@agent-guard-bench`, and `extraKnownMarketplaces` gains `agent-guard-bench`. The hook above is not copied into your settings; it stays in the plugin.
+The plugin is the whole repository, about 30 MB, because the guard, its undo layer and its tests live together. These commands change two things in your Claude Code settings file (`~/.claude/settings.json` for the user scope): `enabledPlugins` gains `agent-guard@agent-guard-bench`, and `extraKnownMarketplaces` gains `agent-guard-bench`. The hook above is not copied into your settings; it stays in the plugin.
 
 Check what was installed with `claude plugin list` (it names the version and says enabled) and `claude plugin details agent-guard@agent-guard-bench` (it reports one PreToolUse hook).
 
@@ -69,6 +69,8 @@ claude plugin marketplace remove agent-guard-bench
 ```
 
 Then `claude plugin list` no longer names it, and `enabledPlugins` and `extraKnownMarketplaces` no longer hold its entries.
+
+Claude Code may keep a copy in `~/.claude/plugins/cache/agent-guard-bench/`; delete it if you want the space back.
 
 When the guard allows a command that could change a repo, it first takes an undo point, a snapshot under `~/.local/state/agent-guard` (or the folder in `AGENT_GUARD_STORE`). Uninstalling does not delete those snapshots. Delete that folder yourself once you no longer want them. `AGENT_GUARD_UNDO=0` turns undo points off.
 

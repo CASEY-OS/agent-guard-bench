@@ -11,11 +11,25 @@ claude plugin install agent-guard@agent-guard-bench
 
 That picture is a real run, not a mock-up. [tools/render_hero.py](tools/render_hero.py) builds a throwaway repo, feeds each command to `python3 guard.py` the way the hook does, and draws what the guard printed. The commands are not run.
 
-**Try it without installing.** `git clone https://github.com/CASEY-OS/agent-guard-bench && cd agent-guard-bench && python3 demo.py` puts five planted bad commands and one clean one to the real `guard.py` in a throwaway repo, and runs none of them. It ends with 5 of 5 planted commands BLOCKED and 1 of 1 clean command ALLOWED, or it prints DEMO FAILED and exits 1.
+## Install (2 minutes)
 
-**Paste to Claude Code.** `Install agent-guard by reading https://raw.githubusercontent.com/CASEY-OS/agent-guard-bench/master/llms.txt`. Claude Code is told to show you the hook before it changes any setting. The same steps, with how to prove a block and how to remove it, are in [docs/install.md](docs/install.md).
+You need: Claude Code (the `claude` command works in your terminal), git, and Python 3.9 or newer (`python3 --version` to check; macOS already has it).
+
+Open a terminal (not a Claude chat) and run the two commands.
+
+Check it: `claude plugin list` should show agent-guard, enabled.
+
+Prove it: start Claude Code in a test folder and ask it to run `git add -A`. It should refuse and tell you what to do instead.
+
+Remove it: `claude plugin uninstall agent-guard@agent-guard-bench`, then `claude plugin marketplace remove agent-guard-bench`. Claude Code may keep a copy in `~/.claude/plugins/cache/agent-guard-bench/`; delete it if you want the space back.
+
+Prefer not to type commands? **Paste to Claude Code.** `Install agent-guard by reading https://raw.githubusercontent.com/CASEY-OS/agent-guard-bench/master/llms.txt`. Claude Code is told to show you the hook before it changes any setting. The same steps, with how to prove a block and how to remove it, are in [docs/install.md](docs/install.md).
+
+Want to see it first? **Try it without installing.** `git clone https://github.com/CASEY-OS/agent-guard-bench && cd agent-guard-bench && python3 demo.py` puts five planted bad commands and one clean one to the real `guard.py` in a throwaway repo, and runs none of them. It ends with 5 of 5 planted commands BLOCKED and 1 of 1 clean command ALLOWED, or it prints DEMO FAILED and exits 1.
 
 agent-guard is a Claude Code hook that reads each shell command before it runs. It covers one class of harm: staging the whole tree, turning off git hooks, and destroying work. Since v26d that includes a delete aimed at your home folder, and v30 widens that rule (below). It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
+
+## The numbers
 
 The result on `blind_v31`, 2,429 commands that AI models from eight other companies wrote. Both guards in the table were sealed before any case was written. The seal text is in this repo; the seal commit is in a private repo, so there is no public seal for this set (below).
 
