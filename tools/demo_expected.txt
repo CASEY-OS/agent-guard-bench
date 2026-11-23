@@ -18,8 +18,8 @@ BLOCKED  git clean -fdx
   DO THIS INSTEAD: Do not delete untracked files in bulk. Preview with `git clean -n`, then remove the files you mean by name with `rm path/to/file`, or add them to .gitignore.
 
 BLOCKED  rm -rf .
-  rule: fail_closed
-  DO THIS INSTEAD: Delete named paths only: `rm -r path/to/dir`. Check what is there first with `git status --short`.
+  rule: data_loss_guard
+  DO THIS INSTEAD: Check each worktree for unsaved work first: `git worktree list`, then `git status --short` inside it. Commit or stash that work, then remove a finished worktree with git itself: `git worktree remove path/to/worktree`, which refuses while work is unsaved.
 
 ALLOWED  git status
 

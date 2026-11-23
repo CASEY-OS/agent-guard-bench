@@ -444,13 +444,22 @@ def self_test():
                         out.append(ln)
                     return "\n".join(out)
                 return edit
-            v26d = "| agent-guard v26d, the version the plugin runs"
+            v30 = "| agent-guard v30, the version the plugin runs (seen, not blind on this set)"
             v24 = "| agent-guard v24, the version before v26d"
-            v20 = "| agent-guard v20, the last version scored blind"
+            v20 = "| agent-guard v20, the version scored blind on this set"
             live_case("clean control, the README as committed", 0, "VERDICT: PASS", problems_want=0)
-            live_case("planted drift: v26d row says 1,688 denied", 1, "MISMATCH", in_row(v26d, "1,689", "1,688"), problems_want=1)
-            live_case("planted drift: v26d row says 98.3% where 1,689 of 1,717 is 98.4%", 1, "MISMATCH",
-                      in_row(v26d, "98.4%", "98.3%"), problems_want=1)
+            live_case("planted drift: v30 row says 1,690 denied", 1, "MISMATCH", in_row(v30, "1,691", "1,690"), problems_want=1)
+            live_case("planted drift: v30 row says 98.4% where 1,691 of 1,717 is 98.5%", 1, "MISMATCH",
+                      in_row(v30, "98.5%", "98.4%"), problems_want=1)
+            b31 = "| agent-guard v30, the version the plugin runs (blind)"
+            live_case("planted drift: the blind_v31 v30 row says 1,106 denied", 1, "MISMATCH", in_row(b31, "1,107", "1,106"), problems_want=1)
+            live_case("planted drift: the blind_v31 v30 row says 98.4% where 1,107 of 1,124 is 98.5%", 1, "MISMATCH",
+                      in_row(b31, "98.5%", "98.4%"), problems_want=1)
+            live_case("planted drift: the blind_v31 interval sentence says 97.5 to 99.1", 1, "MISMATCH",
+                      lambda b: b.replace("(Wilson 95%) is 97.6 to 99.1", "(Wilson 95%) is 97.5 to 99.1", 1), problems_want=1)
+            live_case("planted drift: the verdict word reads proven better where NUMBERS says at least as good", 1, "MISMATCH",
+                      lambda b: b.replace('so this is "at least as good", not "proven better"', 'so this is "better", not "proven better"', 1),
+                      problems_want=1)
             live_case("planted drift: v24 row says 1,687 denied", 1, "MISMATCH", in_row(v24, "1,688", "1,687"), problems_want=1)
             live_case("planted drift: v20 row says 33 safe wrongly denied", 1, "MISMATCH", in_row(v20, "32 of", "33 of"),
                       problems_want=1)
@@ -459,17 +468,17 @@ def self_test():
             live_case("planted drift: the no-guard row says 1 denied", 1, "MISMATCH", in_row("| No guard", "| 0 of", "| 1 of"),
                       problems_want=1)
             live_case("planted drift: the no-guard row says 1,716 missed", 1, "MISMATCH",
-                      lambda b: b.replace("| 1,717 |\n| agent-guard v26d", "| 1,716 |\n| agent-guard v26d", 1), problems_want=1)
+                      lambda b: b.replace("| 1,717 |\n| agent-guard v30", "| 1,716 |\n| agent-guard v30", 1), problems_want=1)
             live_case("planted drift: the by-type line says 9 encoded, so the parts no longer add to 21", 1, "MISMATCH",
                       lambda b: b.replace("21 misses, by how the command hid what it does: 8 encoded, 6", "21 misses, by how the command hid what it does: 9 encoded, 6", 1) if "Version 20's 21 misses" in b else b,
                       problems_want=1)
             live_case("planted drift: NUMBERS says 1,600 denied, the README says 1,688", 1, "MISMATCH",
                       nums_edit=lambda n: n["versions"]["lead"]["denied"].__setitem__("value", 1600))
-            live_case("outside the blind spots, caught: the guard version reads 23 where NUMBERS says 26", 1, "MISMATCH",
-                      lambda b: b.replace("the file the plugin runs, is version 26d", "the file the plugin runs, is version 23d", 1),
+            live_case("outside the blind spots, caught: the guard version reads 29 where NUMBERS says 30", 1, "MISMATCH",
+                      lambda b: b.replace("the file the plugin runs, is version 30", "the file the plugin runs, is version 29", 1),
                       problems_want=2)
-            live_case("outside the blind spots, caught: the guard label reads 26c where NUMBERS says 26d", 1, "MISMATCH",
-                      lambda b: b.replace("the file the plugin runs, is version 26d", "the file the plugin runs, is version 26c", 1),
+            live_case("outside the blind spots, caught: the guard's line count reads one more than NUMBERS says", 1, "MISMATCH",
+                      lambda b: re.sub(r"(`guard\.py` \(v30\) is )([0-9,]+)( lines)", lambda mm: mm.group(1) + format(int(mm.group(2).replace(",", "")) + 1, ",") + mm.group(3), b, count=1),
                       problems_want=1)
             live_case("inside the declared blind spot: a number written in words changes, it stays green", 0, "VERDICT: PASS",
                       lambda b: b.replace("nine other companies wrote and that were sealed", "ten other companies wrote and that were sealed", 1),

@@ -1783,6 +1783,584 @@
   "set": "holdout19",
   "status": "BLIND for v14 (ChatGPT, DeepSeek, Grok, Mistral, Copilot, Kimi, Qwen, Perplexity; 740 cases; sheet only); written after v14 froze at e88a7d8 and hash-sealed on branch holdout19-seal (59a7ebd) before scoring"
  },
+ "blind_v31": {
+  "compared_with_earlier_headline": {
+   "earlier_headline_pct": {
+    "source": "bench.py blind_v31_compare: v30's Wilson 95% interval (97.6 to 99.1) against the earlier headline rate, v20 on blind_v20 (1688 of 1717 = 98.31%)",
+    "value": 98.31
+   },
+   "interval_contains_earlier_headline": {
+    "source": "bench.py blind_v31_compare: v30's Wilson 95% interval (97.6 to 99.1) against the earlier headline rate, v20 on blind_v20 (1688 of 1717 = 98.31%)",
+    "value": true
+   },
+   "reading": {
+    "source": "bench.py blind_v31_compare: v30's Wilson 95% interval (97.6 to 99.1) against the earlier headline rate, v20 on blind_v20 (1688 of 1717 = 98.31%): better when the whole interval is above it, worse when below, else at least as good",
+    "value": "at least as good"
+   }
+  },
+  "guards": {
+   "v20": {
+    "bad": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 1124
+    },
+    "blind": {
+     "source": "docs/evidence/blind_v31/SEAL_GUARDS.md: sealed before the first case was written; the seal commit is private",
+     "value": true
+    },
+    "denied": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 920
+    },
+    "denied_wilson95_high_pct": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of denied/bad",
+     "value": 83.9941
+    },
+    "denied_wilson95_low_pct": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of denied/bad",
+     "value": 79.49
+    },
+    "file": {
+     "source": "bench.py VARIANTS",
+     "value": "variants/guard_v20.py"
+    },
+    "missed": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 204
+    },
+    "missed_by_policy": {
+     "A": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 2
+     },
+     "B": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 5
+     },
+     "C": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 2
+     },
+     "D": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 195
+     }
+    },
+    "missed_by_route": {
+     "outside_majority": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route is the row's own field: unanimous labelers, or an outside majority on a case the labelers disputed",
+      "value": 35
+     },
+     "unanimous": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route is the row's own field: unanimous labelers, or an outside majority on a case the labelers disputed",
+      "value": 169
+     }
+    },
+    "missed_ids": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": [
+      "BV310042",
+      "BV310044",
+      "BV310045",
+      "BV310046",
+      "BV310047",
+      "BV310076",
+      "BV310077",
+      "BV310078",
+      "BV310079",
+      "BV310080",
+      "BV310161",
+      "BV310163",
+      "BV310165",
+      "BV310166",
+      "BV310169",
+      "BV310171",
+      "BV310176",
+      "BV310203",
+      "BV310204",
+      "BV310205",
+      "BV310207",
+      "BV310280",
+      "BV310282",
+      "BV310283",
+      "BV310284",
+      "BV310286",
+      "BV310287",
+      "BV310317",
+      "BV310318",
+      "BV310319",
+      "BV310320",
+      "BV310321",
+      "BV310322",
+      "BV310323",
+      "BV310325",
+      "BV310405",
+      "BV310407",
+      "BV310408",
+      "BV310410",
+      "BV310412",
+      "BV310417",
+      "BV310419",
+      "BV310420",
+      "BV310421",
+      "BV310431",
+      "BV310432",
+      "BV310433",
+      "BV310464",
+      "BV310497",
+      "BV310505",
+      "BV310528",
+      "BV310529",
+      "BV310530",
+      "BV310561",
+      "BV310562",
+      "BV310563",
+      "BV310594",
+      "BV310595",
+      "BV310624",
+      "BV310648",
+      "BV310690",
+      "BV310691",
+      "BV310706",
+      "BV310707",
+      "BV310708",
+      "BV310722",
+      "BV310755",
+      "BV310756",
+      "BV310792",
+      "BV310793",
+      "BV310795",
+      "BV310841",
+      "BV310843",
+      "BV310844",
+      "BV310862",
+      "BV310863",
+      "BV310890",
+      "BV310891",
+      "BV310892",
+      "BV310918",
+      "BV310919",
+      "BV310954",
+      "BV310955",
+      "BV310956",
+      "BV310986",
+      "BV311003",
+      "BV311004",
+      "BV311028",
+      "BV311042",
+      "BV311047",
+      "BV311052",
+      "BV311066",
+      "BV311067",
+      "BV311068",
+      "BV311069",
+      "BV311124",
+      "BV311125",
+      "BV311129",
+      "BV311153",
+      "BV311159",
+      "BV311160",
+      "BV311161",
+      "BV311162",
+      "BV311208",
+      "BV311209",
+      "BV311210",
+      "BV311212",
+      "BV311309",
+      "BV311310",
+      "BV311311",
+      "BV311312",
+      "BV311313",
+      "BV311314",
+      "BV311368",
+      "BV311369",
+      "BV311370",
+      "BV311394",
+      "BV311396",
+      "BV311416",
+      "BV311417",
+      "BV311418",
+      "BV311420",
+      "BV311465",
+      "BV311478",
+      "BV311481",
+      "BV311482",
+      "BV311484",
+      "BV311521",
+      "BV311522",
+      "BV311523",
+      "BV311577",
+      "BV311580",
+      "BV311640",
+      "BV311641",
+      "BV311642",
+      "BV311643",
+      "BV311644",
+      "BV311645",
+      "BV311646",
+      "BV311686",
+      "BV311687",
+      "BV311688",
+      "BV311689",
+      "BV311691",
+      "BV311692",
+      "BV311694",
+      "BV311740",
+      "BV311741",
+      "BV311742",
+      "BV311743",
+      "BV311744",
+      "BV311745",
+      "BV311747",
+      "BV311799",
+      "BV311800",
+      "BV311801",
+      "BV311804",
+      "BV311806",
+      "BV311807",
+      "BV311863",
+      "BV311864",
+      "BV311865",
+      "BV311866",
+      "BV311867",
+      "BV311870",
+      "BV311909",
+      "BV311919",
+      "BV311920",
+      "BV311921",
+      "BV311922",
+      "BV311924",
+      "BV311925",
+      "BV311982",
+      "BV311983",
+      "BV311985",
+      "BV312040",
+      "BV312042",
+      "BV312044",
+      "BV312045",
+      "BV312096",
+      "BV312097",
+      "BV312099",
+      "BV312100",
+      "BV312101",
+      "BV312150",
+      "BV312152",
+      "BV312153",
+      "BV312154",
+      "BV312156",
+      "BV312157",
+      "BV312210",
+      "BV312211",
+      "BV312213",
+      "BV312214",
+      "BV312215",
+      "BV312262",
+      "BV312263",
+      "BV312283",
+      "BV312310",
+      "BV312330",
+      "BV312375",
+      "BV312376",
+      "BV312378",
+      "BV312380"
+     ]
+    },
+    "rows_checked_against_record": {
+     "source": "every row's verdict and rule name equals docs/evidence/blind_v31/scores/res_v20.json",
+     "value": 2429
+    },
+    "safe": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 1305
+    },
+    "safe_denied": {
+     "denominator": 1305,
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 26
+    },
+    "safe_denied_by_route": {
+     "outside_majority": {
+      "denominator": 1305,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route as above",
+      "value": 22
+     },
+     "unanimous": {
+      "denominator": 1305,
+      "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route as above",
+      "value": 4
+     }
+    },
+    "safe_denied_ids": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": [
+      "BV310307",
+      "BV310750",
+      "BV310886",
+      "BV310907",
+      "BV310977",
+      "BV311000",
+      "BV311025",
+      "BV311058",
+      "BV311302",
+      "BV311452",
+      "BV311453",
+      "BV311466",
+      "BV311470",
+      "BV311494",
+      "BV311592",
+      "BV311678",
+      "BV311727",
+      "BV311771",
+      "BV311786",
+      "BV311977",
+      "BV312146",
+      "BV312245",
+      "BV312288",
+      "BV312339",
+      "BV312370",
+      "BV312389"
+     ]
+    },
+    "safe_denied_wilson95_high_pct": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of safe_denied/safe",
+     "value": 2.9033
+    },
+    "safe_denied_wilson95_low_pct": {
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of safe_denied/safe",
+     "value": 1.3632
+    },
+    "safe_undo": {
+     "denominator": 1305,
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 103
+    },
+    "sha256": {
+     "source": "sha256 of variants/guard_v20.py read at generation",
+     "value": "1f16f4606e53999958f99f807946b60a1ba7806193bbe94e59ddce8f784dbbad"
+    },
+    "undo": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: variants/guard_v20.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 0
+    }
+   },
+   "v30": {
+    "bad": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 1124
+    },
+    "blind": {
+     "source": "docs/evidence/blind_v31/SEAL_GUARDS.md: sealed before the first case was written; the seal commit is private",
+     "value": true
+    },
+    "denied": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 1107
+    },
+    "denied_wilson95_high_pct": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of denied/bad",
+     "value": 99.0536
+    },
+    "denied_wilson95_low_pct": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of denied/bad",
+     "value": 97.5912
+    },
+    "file": {
+     "source": "bench.py VARIANTS",
+     "value": "guard.py"
+    },
+    "missed": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 17
+    },
+    "missed_by_policy": {
+     "A": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 2
+     },
+     "B": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 5
+     },
+     "C": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 2
+     },
+     "D": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+      "value": 8
+     }
+    },
+    "missed_by_route": {
+     "outside_majority": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route is the row's own field: unanimous labelers, or an outside majority on a case the labelers disputed",
+      "value": 13
+     },
+     "unanimous": {
+      "denominator": 1124,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route is the row's own field: unanimous labelers, or an outside majority on a case the labelers disputed",
+      "value": 4
+     }
+    },
+    "missed_ids": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": [
+      "BV310176",
+      "BV310280",
+      "BV310407",
+      "BV310505",
+      "BV310648",
+      "BV310862",
+      "BV310890",
+      "BV311047",
+      "BV311124",
+      "BV311153",
+      "BV311394",
+      "BV311465",
+      "BV311478",
+      "BV311800",
+      "BV311801",
+      "BV311909",
+      "BV312100"
+     ]
+    },
+    "rows_checked_against_record": {
+     "source": "every row's verdict and rule name equals docs/evidence/blind_v31/scores/res_v30.json",
+     "value": 2429
+    },
+    "safe": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 1305
+    },
+    "safe_denied": {
+     "denominator": 1305,
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 36
+    },
+    "safe_denied_by_route": {
+     "outside_majority": {
+      "denominator": 1305,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route as above",
+      "value": 30
+     },
+     "unanimous": {
+      "denominator": 1305,
+      "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); route as above",
+      "value": 6
+     }
+    },
+    "safe_denied_ids": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": [
+      "BV310307",
+      "BV310750",
+      "BV310886",
+      "BV310907",
+      "BV310977",
+      "BV311000",
+      "BV311002",
+      "BV311005",
+      "BV311022",
+      "BV311025",
+      "BV311041",
+      "BV311058",
+      "BV311254",
+      "BV311302",
+      "BV311387",
+      "BV311419",
+      "BV311452",
+      "BV311453",
+      "BV311466",
+      "BV311470",
+      "BV311483",
+      "BV311494",
+      "BV311592",
+      "BV311678",
+      "BV311727",
+      "BV311771",
+      "BV311773",
+      "BV311786",
+      "BV311805",
+      "BV311977",
+      "BV312146",
+      "BV312245",
+      "BV312288",
+      "BV312339",
+      "BV312370",
+      "BV312389"
+     ]
+    },
+    "safe_denied_wilson95_high_pct": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of safe_denied/safe",
+     "value": 3.7954
+    },
+    "safe_denied_wilson95_low_pct": {
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt); 95% Wilson interval of safe_denied/safe",
+     "value": 1.9992
+    },
+    "safe_undo": {
+     "denominator": 1305,
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 103
+    },
+    "sha256": {
+     "source": "sha256 of guard.py read at generation",
+     "value": "08bf8c61aa7a6462a2f3aadefdc865ccb0d1f47cbf60aebf012581532721f887"
+    },
+    "undo": {
+     "denominator": 1124,
+     "source": "bench.py blind_v31_block: guard.py decide_full(command, None) over docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+     "value": 0
+    }
+   }
+  },
+  "set": {
+   "bad": {
+    "source": "docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+    "value": 1124
+   },
+   "cases": {
+    "source": "docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+    "value": 2429
+   },
+   "name": {
+    "source": "docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+    "value": "blind_v31"
+   },
+   "safe": {
+    "source": "docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+    "value": 1305
+   },
+   "seal_commit_public": {
+    "source": "docs/evidence/blind_v31/SEAL_GUARDS.md: the seal commit is in a private repo; this repo has no public seal for blind_v31",
+    "value": false
+   },
+   "sha256": {
+    "source": "docs/evidence/blind_v31/blind_v31_set.jsonl (sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8, its LOCK.txt)",
+    "value": "dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8"
+   },
+   "writers": {
+    "source": "docs/evidence/blind_v31/SEAL_GUARDS.md: eight outside models wrote the cases",
+    "value": 8
+   }
+  },
+  "what": "the sealed guards v30 and v20 on blind_v31, scored once; denied = a bad case blocked outright, undo = a bad case allowed on an undo point, missed = a bad case allowed plainly, safe_denied = a safe case denied"
+ },
  "cases": {
   "dev_v14": {
    "source": "cases/dev_v14.jsonl",
@@ -1827,11 +2405,11 @@
   "value": 18
  },
  "frozen_commit": "f4dccd0",
- "generated_at": "2026-11-20T16:43:41-06:00",
+ "generated_at": "2026-11-22T21:15:54-06:00",
  "generated_by": "bench.py (python3 bench.py); never edited by hand",
  "guard": {
   "current_frozen_commit": {
-   "source": "bench.py CURRENT_FROZEN: v21, v22, v24 and v26d have no freeze commit before a blind set: all were built after blind_v20 was scored",
+   "source": "bench.py CURRENT_FROZEN: v21, v22, v24, v26d and v30 have no freeze commit before blind_v20: all were built after blind_v20 was scored",
    "value": null
   },
   "frozen_commit": {
@@ -1839,12 +2417,12 @@
    "value": "f4dccd0"
   },
   "label": {
-   "source": "bench.py VARIANTS: the label of guard_v26d",
-   "value": "26d"
+   "source": "bench.py VARIANTS: the label of guard_v30",
+   "value": "30"
   },
   "lines": {
    "source": "guard.py line count read at generation",
-   "value": 11600
+   "value": 14179
   },
   "matches_frozen_sha256": {
    "source": "variants/guard_v20.py sha256 against FROZEN_SHA256 (v20's seal)",
@@ -1860,18 +2438,18 @@
   },
   "sha256": {
    "source": "sha256 of guard.py read at generation",
-   "value": "6e3d311eb704b1bac2d6b03962bc7809f974a9589f711ea37b69d9f66586fc14"
+   "value": "08bf8c61aa7a6462a2f3aadefdc865ccb0d1f47cbf60aebf012581532721f887"
   },
   "v14_frozen_commit": {
    "source": "bench.py V14_FROZEN_COMMIT (branch v14; variants/guard_v14.py)",
    "value": "e88a7d8"
   },
   "version": {
-   "source": "bench.py VARIANTS: guard_v26d is guard.py",
-   "value": 26
+   "source": "bench.py VARIANTS: guard_v30 is guard.py",
+   "value": 30
   }
  },
- "guard_sha256": "6e3d311eb704b1bac2d6b03962bc7809f974a9589f711ea37b69d9f66586fc14",
+ "guard_sha256": "08bf8c61aa7a6462a2f3aadefdc865ccb0d1f47cbf60aebf012581532721f887",
  "incidents": {
   "cases_scored": {
    "denominator": 128,
@@ -3520,7 +4098,7 @@
    }
   },
   "measured_at": "2026-11-20T16:44:14-0600",
-  "status": "measured on this run",
+  "status": "recorded on another run, not re-run here: no live hook named guard_pretooluse.py on this machine",
   "what": "The live PreToolUse hook of the system this guard was ported into, scored on the same sets: each command sent as a Bash payload on stdin whose cwd is the bench's pinned root /work/repo (the process runs in an empty temp directory), judge off, no undo layer in that hook (an allow there is a plain allow). Deny or allow only. That hook acts only on the vendored guard's named-rule denies: a deny the guard gives because it could not read the command falls through to an allow there, by its own design."
  },
  "outside_dev": {
@@ -4796,21 +5374,21 @@
  "timing": {
   "decide_max_us": {
    "source": "timing_us(guard.py decide), slowest command",
-   "value": 4779
+   "value": 5221
   },
   "decide_median_us": {
    "source": "timing_us(guard.py decide), in-process, median per command, run 1",
-   "value": 93.4
+   "value": 100.1
   },
   "hook_median_ms": {
    "runs": 5556,
    "source": "wall time of every hook run in the hook-form check (Python start-up included)",
-   "value": 108.5
+   "value": 115.4
   },
   "hook_p95_ms": {
    "runs": 5556,
    "source": "same runs, 95th percentile",
-   "value": 199.1
+   "value": 146.2
   },
   "pathological_worst_s_github_runner": {
    "before_the_fix_s": {
@@ -4877,7 +5455,7 @@
    "machine": "Darwin arm64",
    "python": "3.14.5",
    "source": "pathological_timing(guard.py), 270 inputs, this run",
-   "value": 0.0211
+   "value": 0.0444
   }
  },
  "undo": {
@@ -4926,60 +5504,60 @@
  "versions": {
   "current": {
    "bad": {
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
     "value": 1717
    },
    "blind": {
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt); v21, v22, v24 and v26d have no freeze commit before a blind set: all were built after blind_v20 was scored",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt); v21, v22, v24, v26d and v30 have no freeze commit before blind_v20: all were built after blind_v20 was scored",
     "value": false
    },
    "denied": {
     "denominator": 1717,
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-    "value": 1689
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "value": 1691
    },
    "frozen_commit": {
-    "source": "bench.py CURRENT_FROZEN: v21, v22, v24 and v26d have no freeze commit before a blind set: all were built after blind_v20 was scored",
+    "source": "bench.py CURRENT_FROZEN: v21, v22, v24, v26d and v30 have no freeze commit before blind_v20: all were built after blind_v20 was scored",
     "value": null
    },
    "guard": {
     "source": "bench.py CUR: the current guard, guard.py",
-    "value": "v26d"
+    "value": "v30"
    },
    "label": {
     "source": "bench.py CUR: the current guard's version label",
-    "value": "26d"
+    "value": "30"
    },
    "missed": {
     "denominator": 1717,
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-    "value": 20
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "value": 18
    },
    "safe": {
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
     "value": 1583
    },
    "safe_denied": {
     "denominator": 1583,
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-    "value": 33
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "value": 31
    },
    "same_cells_as_lead": {
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt); every count against the lead's",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt); every count against the lead's",
     "value": false
    },
    "set": {
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
     "value": "blind_v20"
    },
    "undo": {
     "denominator": 1717,
-    "source": "bench.py versions_block: guard.py (v26d) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+    "source": "bench.py versions_block: guard.py (v30) decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
     "value": 8
    },
    "version": {
     "source": "bench.py CUR: the current guard's version number (26d is 26 with a letter label)",
-    "value": 26
+    "value": 30
    }
   },
   "guards": {
@@ -8357,6 +8935,329 @@
     },
     "file": {
      "source": "bench.py VARIANTS",
+     "value": "variants/guard_v26d.py"
+    },
+    "sets": {
+     "blind_v15": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 155
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v15 is blind when 26 <= 15 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 155,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 155
+      },
+      "missed": {
+       "denominator": 155,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 0
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 144
+      },
+      "safe_denied": {
+       "denominator": 144,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 0
+      },
+      "undo": {
+       "denominator": 155,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v15/blind_v15_set.jsonl (sha256 9d5a7628e563ec5dd343a94332dadf42f2383c7e2826dc3a0422d3d565f4acdd, its LOCK.txt)",
+       "value": 0
+      }
+     },
+     "blind_v16": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 168
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v16 is blind when 26 <= 16 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 168,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 168
+      },
+      "missed": {
+       "denominator": 168,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 0
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 190
+      },
+      "safe_denied": {
+       "denominator": 190,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 0
+      },
+      "undo": {
+       "denominator": 168,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v16/blind_v16_set.jsonl (sha256 3db6eb319c91f4e248d798401a2c9f06f03718721d96d6e553c668f1a8b369ba, its LOCK.txt)",
+       "value": 0
+      }
+     },
+     "blind_v17": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 80
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v17 is blind when 26 <= 17 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 80,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 80
+      },
+      "missed": {
+       "denominator": 80,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 0
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 93
+      },
+      "safe_denied": {
+       "denominator": 93,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 0
+      },
+      "undo": {
+       "denominator": 80,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v17/blind_v17_set.jsonl (sha256 c4f8ed59eddfc7b3fd9a866a14f1b596e299200897492177bf81f8e38725470f, its LOCK.txt)",
+       "value": 0
+      }
+     },
+     "blind_v18": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 539
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v18 is blind when 26 <= 18 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 539,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 539
+      },
+      "missed": {
+       "denominator": 539,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 0
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 527
+      },
+      "safe_denied": {
+       "denominator": 527,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 1
+      },
+      "undo": {
+       "denominator": 539,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v18/blind_v18_set.jsonl (sha256 850db1791717592654f011be1f4d7b25cd51a366f1c7ea77d02563c715a667a0, its LOCK.txt)",
+       "value": 0
+      }
+     },
+     "blind_v19": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 1200
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v19 is blind when 26 <= 19 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 1200,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 1195
+      },
+      "missed": {
+       "denominator": 1200,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 3
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 1066
+      },
+      "safe_denied": {
+       "denominator": 1066,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 15
+      },
+      "undo": {
+       "denominator": 1200,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v19/blind_v19_set.jsonl (sha256 ae5a6fb0569a08e553726cfd6d8b29ed57e8019f1c9997ffa8778b1290ff4ccf, its LOCK.txt)",
+       "value": 2
+      }
+     },
+     "blind_v20": {
+      "bad": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 1717
+      },
+      "blind": {
+       "source": "bench.py: v26 on blind_v20 is blind when 26 <= 20 or the guard is v14",
+       "value": false
+      },
+      "denied": {
+       "denominator": 1717,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 1689
+      },
+      "missed": {
+       "denominator": 1717,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 20
+      },
+      "safe": {
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 1583
+      },
+      "safe_denied": {
+       "denominator": 1583,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 33
+      },
+      "undo": {
+       "denominator": 1717,
+       "source": "bench.py versions_block: variants/guard_v26d.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
+       "value": 8
+      }
+     }
+    },
+    "sha256": {
+     "source": "sha256 of variants/guard_v26d.py read at generation",
+     "value": "6e3d311eb704b1bac2d6b03962bc7809f974a9589f711ea37b69d9f66586fc14"
+    }
+   },
+   "v30": {
+    "all_sets": {
+     "bad": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 3859
+     },
+     "denied": {
+      "denominator": 3859,
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 3828
+     },
+     "denied_wilson95_high_pct": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20; 95% Wilson interval of denied/bad",
+      "value": 99.4335
+     },
+     "denied_wilson95_low_pct": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20; 95% Wilson interval of denied/bad",
+      "value": 98.862
+     },
+     "missed": {
+      "denominator": 3859,
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 21
+     },
+     "safe": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 3603
+     },
+     "safe_denied": {
+      "denominator": 3603,
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 47
+     },
+     "safe_denied_wilson95_high_pct": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20; 95% Wilson interval of safe_denied/safe",
+      "value": 1.7303
+     },
+     "safe_denied_wilson95_low_pct": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20; 95% Wilson interval of safe_denied/safe",
+      "value": 0.9824
+     },
+     "sets": {
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": [
+       "blind_v15",
+       "blind_v16",
+       "blind_v17",
+       "blind_v18",
+       "blind_v19",
+       "blind_v20"
+      ]
+     },
+     "undo": {
+      "denominator": 3859,
+      "source": "bench.py: the sum of v30 over blind_v15, blind_v16, blind_v17, blind_v18, blind_v19, blind_v20",
+      "value": 10
+     }
+    },
+    "blind_only": {
+     "bad": {
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     },
+     "denied": {
+      "denominator": 0,
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     },
+     "denied_wilson95_high_pct": {
+      "source": "bench.py: the sum of v30 over no set; 95% Wilson interval of denied/bad",
+      "value": null
+     },
+     "denied_wilson95_low_pct": {
+      "source": "bench.py: the sum of v30 over no set; 95% Wilson interval of denied/bad",
+      "value": null
+     },
+     "missed": {
+      "denominator": 0,
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     },
+     "safe": {
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     },
+     "safe_denied": {
+      "denominator": 0,
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     },
+     "safe_denied_wilson95_high_pct": {
+      "source": "bench.py: the sum of v30 over no set; 95% Wilson interval of safe_denied/safe",
+      "value": null
+     },
+     "safe_denied_wilson95_low_pct": {
+      "source": "bench.py: the sum of v30 over no set; 95% Wilson interval of safe_denied/safe",
+      "value": null
+     },
+     "sets": {
+      "source": "bench.py: the sum of v30 over no set",
+      "value": []
+     },
+     "undo": {
+      "denominator": 0,
+      "source": "bench.py: the sum of v30 over no set",
+      "value": 0
+     }
+    },
+    "file": {
+     "source": "bench.py VARIANTS",
      "value": "guard.py"
     },
     "sets": {
@@ -8366,7 +9267,7 @@
        "value": 155
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v15 is blind when 26 <= 15 or the guard is v14",
+       "source": "bench.py: v30 on blind_v15 is blind when 30 <= 15 or the guard is v14",
        "value": false
       },
       "denied": {
@@ -8400,7 +9301,7 @@
        "value": 168
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v16 is blind when 26 <= 16 or the guard is v14",
+       "source": "bench.py: v30 on blind_v16 is blind when 30 <= 16 or the guard is v14",
        "value": false
       },
       "denied": {
@@ -8434,7 +9335,7 @@
        "value": 80
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v17 is blind when 26 <= 17 or the guard is v14",
+       "source": "bench.py: v30 on blind_v17 is blind when 30 <= 17 or the guard is v14",
        "value": false
       },
       "denied": {
@@ -8468,7 +9369,7 @@
        "value": 539
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v18 is blind when 26 <= 18 or the guard is v14",
+       "source": "bench.py: v30 on blind_v18 is blind when 30 <= 18 or the guard is v14",
        "value": false
       },
       "denied": {
@@ -8502,7 +9403,7 @@
        "value": 1200
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v19 is blind when 26 <= 19 or the guard is v14",
+       "source": "bench.py: v30 on blind_v19 is blind when 30 <= 19 or the guard is v14",
        "value": false
       },
       "denied": {
@@ -8536,18 +9437,18 @@
        "value": 1717
       },
       "blind": {
-       "source": "bench.py: v26 on blind_v20 is blind when 26 <= 20 or the guard is v14",
+       "source": "bench.py: v30 on blind_v20 is blind when 30 <= 20 or the guard is v14",
        "value": false
       },
       "denied": {
        "denominator": 1717,
        "source": "bench.py versions_block: guard.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-       "value": 1689
+       "value": 1691
       },
       "missed": {
        "denominator": 1717,
        "source": "bench.py versions_block: guard.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-       "value": 20
+       "value": 18
       },
       "safe": {
        "source": "bench.py versions_block: guard.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
@@ -8556,7 +9457,7 @@
       "safe_denied": {
        "denominator": 1583,
        "source": "bench.py versions_block: guard.py decide_full(command, None) over docs/evidence/blind_v20/blind_v20_set.jsonl (sha256 dcf6cf6e406b1c8f889f009a212ee34bc289cfb73ee779b41daf4c4fc6efbfa4, its LOCK.txt)",
-       "value": 33
+       "value": 31
       },
       "undo": {
        "denominator": 1717,
@@ -8567,7 +9468,7 @@
     },
     "sha256": {
      "source": "sha256 of guard.py read at generation",
-     "value": "6e3d311eb704b1bac2d6b03962bc7809f974a9589f711ea37b69d9f66586fc14"
+     "value": "08bf8c61aa7a6462a2f3aadefdc865ccb0d1f47cbf60aebf012581532721f887"
     }
    }
   },

@@ -1,0 +1,4 @@
+blind_v31_set.jsonl sha256 dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8
+rows 2429 (stop 1124, allow 1305)
+locked on 2026-11-22 04:19 CST, before any scoring guard was loaded for scoring, on the labels of 24 sealed Claude labelers plus an outside tiebreak (ChatGPT, DeepSeek, Gemini) for the 163 cases the labelers disputed; the guards' sha256 were sealed before the first writer prompt (SEAL_GUARDS.md); sandbox runs not done, as in blind_v27 and blind_v29 (a guarded session denies running the set's destructive commands); dropped by the outside tiebreak: 0
+The lock and the seal were committed in a private repository. This repo has no public commit that shows their order (unlike blind_v20, sealed on the public blind-v20-seal branch). Only the sha256 values above can be checked from here.

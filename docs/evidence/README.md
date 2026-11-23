@@ -8,6 +8,7 @@ The files that `results/recorded/*.json` and `results/NUMBERS.json` cite as sour
 | `baselines_2026-10-14/` | The 2026-10-14 baselines on the development sets (holdout17, holdout18's seven round 1 and 2 files, the public incidents), with the same scripts. `RESULTS_BASELINES.md` is that run's write-up. The commands are the public cases in `cases/`. The Claude Code permissions page the rules were written from is cited by URL in the scripts and not copied here. |
 | `scores_2026-10-14/` | The score outputs the bench reproduces: `h19_v14.txt` and `h19_v13.txt` (holdout19), and `outside_out.txt` (holdout18 and the incidents). |
 | `h19verify/` | The scripts and raw JSON behind `VERIFY_H19.md`: the classification of the 11 holdout19 errors, the write-jail runs and the undo runs. They expect a scratch copy of this repo next to them. |
+| `blind_v31/` | blind_v31: the set (2,429 commands), its lock, the seal text (the seal commit is in a private repo), the writer sheet and labeling rules, and each guard's verdict on every row (`scores/`). `python3 tools/score_blind_v31.py` re-scores them. |
 | `VERIFY_H19.md`, `JAIL_LABELS.md` | The label audits, as written. |
 | `real_traffic_labels/` | Rater 2's method: `r2labels.py` holds the 87 rows it named by hand, each with a short reason, and `r2write.py` is the script that marked every other row safe. The rows are indexes into a private sample. The commands are one person's real agent traffic and are not published, so only these files and the counts in `results/recorded/real_traffic_labels.json` are here. |
 

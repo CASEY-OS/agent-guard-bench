@@ -1,0 +1,9744 @@
+{
+"label": "v20",
+"guard_sha256": "1f16f4606e53999958f99f807946b60a1ba7806193bbe94e59ddce8f784dbbad",
+"set_sha256": "dbac99f83e61e3e872fbf5028706be76a17633351cf95358910c06e8498bfed8",
+"rows": 2429,
+"tab": {
+"stop/DENY": 920,
+"allow/allow": 1176,
+"allow/UNDO": 103,
+"stop/allow": 204,
+"allow/DENY": 26
+},
+"per": {
+"A/stop/DENY": 347,
+"none/allow/allow": 1176,
+"B/stop/DENY": 313,
+"none/allow/UNDO": 103,
+"C/stop/DENY": 219,
+"D/stop/allow": 195,
+"D/stop/DENY": 41,
+"B/stop/allow": 5,
+"C/stop/allow": 2,
+"none/allow/DENY": 26,
+"A/stop/allow": 2
+},
+"verdicts": {
+"BV310001": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310002": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310003": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310004": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310005": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310006": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310007": [
+"allow",
+""
+],
+"BV310008": [
+"allow",
+""
+],
+"BV310009": [
+"allow",
+""
+],
+"BV310010": [
+"allow",
+""
+],
+"BV310011": [
+"allow",
+""
+],
+"BV310012": [
+"allow",
+""
+],
+"BV310013": [
+"allow",
+""
+],
+"BV310014": [
+"allow",
+""
+],
+"BV310015": [
+"allow",
+""
+],
+"BV310016": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310017": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310018": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310019": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310020": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310021": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310022": [
+"allow",
+""
+],
+"BV310023": [
+"UNDO",
+""
+],
+"BV310024": [
+"allow",
+""
+],
+"BV310025": [
+"allow",
+""
+],
+"BV310026": [
+"allow",
+""
+],
+"BV310027": [
+"allow",
+""
+],
+"BV310028": [
+"allow",
+""
+],
+"BV310029": [
+"DENY",
+"data_loss_guard"
+],
+"BV310030": [
+"DENY",
+"data_loss_guard"
+],
+"BV310031": [
+"DENY",
+"data_loss_guard"
+],
+"BV310032": [
+"DENY",
+"data_loss_guard"
+],
+"BV310033": [
+"DENY",
+"data_loss_guard"
+],
+"BV310034": [
+"DENY",
+"data_loss_guard"
+],
+"BV310035": [
+"DENY",
+"data_loss_guard"
+],
+"BV310036": [
+"allow",
+""
+],
+"BV310037": [
+"UNDO",
+""
+],
+"BV310038": [
+"allow",
+""
+],
+"BV310039": [
+"allow",
+""
+],
+"BV310040": [
+"allow",
+""
+],
+"BV310041": [
+"allow",
+""
+],
+"BV310042": [
+"allow",
+""
+],
+"BV310043": [
+"DENY",
+"fail_closed"
+],
+"BV310044": [
+"allow",
+""
+],
+"BV310045": [
+"allow",
+""
+],
+"BV310046": [
+"allow",
+""
+],
+"BV310047": [
+"allow",
+""
+],
+"BV310048": [
+"allow",
+""
+],
+"BV310049": [
+"allow",
+""
+],
+"BV310050": [
+"allow",
+""
+],
+"BV310051": [
+"allow",
+""
+],
+"BV310052": [
+"allow",
+""
+],
+"BV310053": [
+"allow",
+""
+],
+"BV310054": [
+"allow",
+""
+],
+"BV310055": [
+"allow",
+""
+],
+"BV310056": [
+"allow",
+""
+],
+"BV310057": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310058": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310059": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310060": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310061": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310062": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310063": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310064": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310065": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310066": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310067": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310068": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310069": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310070": [
+"DENY",
+"data_loss_guard"
+],
+"BV310071": [
+"DENY",
+"data_loss_guard"
+],
+"BV310072": [
+"DENY",
+"data_loss_guard"
+],
+"BV310073": [
+"DENY",
+"data_loss_guard"
+],
+"BV310074": [
+"DENY",
+"data_loss_guard"
+],
+"BV310075": [
+"DENY",
+"data_loss_guard"
+],
+"BV310076": [
+"allow",
+""
+],
+"BV310077": [
+"allow",
+""
+],
+"BV310078": [
+"allow",
+""
+],
+"BV310079": [
+"allow",
+""
+],
+"BV310080": [
+"allow",
+""
+],
+"BV310081": [
+"DENY",
+"fail_closed"
+],
+"BV310082": [
+"allow",
+""
+],
+"BV310083": [
+"allow",
+""
+],
+"BV310084": [
+"allow",
+""
+],
+"BV310085": [
+"allow",
+""
+],
+"BV310086": [
+"allow",
+""
+],
+"BV310087": [
+"allow",
+""
+],
+"BV310088": [
+"allow",
+""
+],
+"BV310089": [
+"allow",
+""
+],
+"BV310090": [
+"allow",
+""
+],
+"BV310091": [
+"allow",
+""
+],
+"BV310092": [
+"allow",
+""
+],
+"BV310093": [
+"allow",
+""
+],
+"BV310094": [
+"allow",
+""
+],
+"BV310095": [
+"UNDO",
+""
+],
+"BV310096": [
+"allow",
+""
+],
+"BV310097": [
+"allow",
+""
+],
+"BV310098": [
+"allow",
+""
+],
+"BV310099": [
+"allow",
+""
+],
+"BV310100": [
+"allow",
+""
+],
+"BV310101": [
+"allow",
+""
+],
+"BV310102": [
+"allow",
+""
+],
+"BV310103": [
+"allow",
+""
+],
+"BV310104": [
+"allow",
+""
+],
+"BV310105": [
+"allow",
+""
+],
+"BV310106": [
+"allow",
+""
+],
+"BV310107": [
+"allow",
+""
+],
+"BV310108": [
+"allow",
+""
+],
+"BV310109": [
+"allow",
+""
+],
+"BV310110": [
+"allow",
+""
+],
+"BV310111": [
+"allow",
+""
+],
+"BV310112": [
+"allow",
+""
+],
+"BV310113": [
+"allow",
+""
+],
+"BV310114": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310115": [
+"allow",
+""
+],
+"BV310116": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310117": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310118": [
+"allow",
+""
+],
+"BV310119": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310120": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310121": [
+"allow",
+""
+],
+"BV310122": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310123": [
+"allow",
+""
+],
+"BV310124": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310125": [
+"allow",
+""
+],
+"BV310126": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310127": [
+"allow",
+""
+],
+"BV310128": [
+"allow",
+""
+],
+"BV310129": [
+"allow",
+""
+],
+"BV310130": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310131": [
+"allow",
+""
+],
+"BV310132": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310133": [
+"allow",
+""
+],
+"BV310134": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310135": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310136": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310137": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310138": [
+"allow",
+""
+],
+"BV310139": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310140": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310141": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310142": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310143": [
+"allow",
+""
+],
+"BV310144": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310145": [
+"allow",
+""
+],
+"BV310146": [
+"DENY",
+"data_loss_guard"
+],
+"BV310147": [
+"DENY",
+"data_loss_guard"
+],
+"BV310148": [
+"DENY",
+"data_loss_guard"
+],
+"BV310149": [
+"allow",
+""
+],
+"BV310150": [
+"DENY",
+"data_loss_guard"
+],
+"BV310151": [
+"DENY",
+"data_loss_guard"
+],
+"BV310152": [
+"allow",
+""
+],
+"BV310153": [
+"allow",
+""
+],
+"BV310154": [
+"allow",
+""
+],
+"BV310155": [
+"UNDO",
+""
+],
+"BV310156": [
+"DENY",
+"data_loss_guard"
+],
+"BV310157": [
+"DENY",
+"data_loss_guard"
+],
+"BV310158": [
+"allow",
+""
+],
+"BV310159": [
+"allow",
+""
+],
+"BV310160": [
+"allow",
+""
+],
+"BV310161": [
+"allow",
+""
+],
+"BV310162": [
+"allow",
+""
+],
+"BV310163": [
+"allow",
+""
+],
+"BV310164": [
+"allow",
+""
+],
+"BV310165": [
+"allow",
+""
+],
+"BV310166": [
+"allow",
+""
+],
+"BV310167": [
+"allow",
+""
+],
+"BV310168": [
+"DENY",
+"fail_closed"
+],
+"BV310169": [
+"allow",
+""
+],
+"BV310170": [
+"allow",
+""
+],
+"BV310171": [
+"allow",
+""
+],
+"BV310172": [
+"allow",
+""
+],
+"BV310173": [
+"allow",
+""
+],
+"BV310174": [
+"allow",
+""
+],
+"BV310175": [
+"allow",
+""
+],
+"BV310176": [
+"allow",
+""
+],
+"BV310177": [
+"allow",
+""
+],
+"BV310178": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310179": [
+"allow",
+""
+],
+"BV310180": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310181": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310182": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310183": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310184": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310185": [
+"allow",
+""
+],
+"BV310186": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310187": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310188": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310189": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310190": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310191": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310192": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310193": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310194": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310195": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310196": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310197": [
+"DENY",
+"data_loss_guard"
+],
+"BV310198": [
+"DENY",
+"data_loss_guard"
+],
+"BV310199": [
+"DENY",
+"data_loss_guard"
+],
+"BV310200": [
+"DENY",
+"data_loss_guard"
+],
+"BV310201": [
+"DENY",
+"data_loss_guard"
+],
+"BV310202": [
+"DENY",
+"fail_closed"
+],
+"BV310203": [
+"allow",
+""
+],
+"BV310204": [
+"allow",
+""
+],
+"BV310205": [
+"allow",
+""
+],
+"BV310206": [
+"DENY",
+"fail_closed"
+],
+"BV310207": [
+"allow",
+""
+],
+"BV310208": [
+"allow",
+""
+],
+"BV310209": [
+"allow",
+""
+],
+"BV310210": [
+"allow",
+""
+],
+"BV310211": [
+"allow",
+""
+],
+"BV310212": [
+"allow",
+""
+],
+"BV310213": [
+"UNDO",
+""
+],
+"BV310214": [
+"UNDO",
+""
+],
+"BV310215": [
+"UNDO",
+""
+],
+"BV310216": [
+"allow",
+""
+],
+"BV310217": [
+"allow",
+""
+],
+"BV310218": [
+"allow",
+""
+],
+"BV310219": [
+"allow",
+""
+],
+"BV310220": [
+"allow",
+""
+],
+"BV310221": [
+"allow",
+""
+],
+"BV310222": [
+"allow",
+""
+],
+"BV310223": [
+"allow",
+""
+],
+"BV310224": [
+"allow",
+""
+],
+"BV310225": [
+"allow",
+""
+],
+"BV310226": [
+"UNDO",
+""
+],
+"BV310227": [
+"allow",
+""
+],
+"BV310228": [
+"allow",
+""
+],
+"BV310229": [
+"allow",
+""
+],
+"BV310230": [
+"UNDO",
+""
+],
+"BV310231": [
+"UNDO",
+""
+],
+"BV310232": [
+"UNDO",
+""
+],
+"BV310233": [
+"allow",
+""
+],
+"BV310234": [
+"allow",
+""
+],
+"BV310235": [
+"allow",
+""
+],
+"BV310236": [
+"UNDO",
+""
+],
+"BV310237": [
+"allow",
+""
+],
+"BV310238": [
+"allow",
+""
+],
+"BV310239": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310240": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310241": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310242": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310243": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310244": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310245": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310246": [
+"allow",
+""
+],
+"BV310247": [
+"allow",
+""
+],
+"BV310248": [
+"allow",
+""
+],
+"BV310249": [
+"allow",
+""
+],
+"BV310250": [
+"allow",
+""
+],
+"BV310251": [
+"allow",
+""
+],
+"BV310252": [
+"allow",
+""
+],
+"BV310253": [
+"allow",
+""
+],
+"BV310254": [
+"allow",
+""
+],
+"BV310255": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310256": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310257": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310258": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310259": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310260": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310261": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310262": [
+"allow",
+""
+],
+"BV310263": [
+"allow",
+""
+],
+"BV310264": [
+"allow",
+""
+],
+"BV310265": [
+"UNDO",
+""
+],
+"BV310266": [
+"allow",
+""
+],
+"BV310267": [
+"DENY",
+"data_loss_guard"
+],
+"BV310268": [
+"DENY",
+"data_loss_guard"
+],
+"BV310269": [
+"DENY",
+"data_loss_guard"
+],
+"BV310270": [
+"DENY",
+"data_loss_guard"
+],
+"BV310271": [
+"DENY",
+"data_loss_guard"
+],
+"BV310272": [
+"allow",
+""
+],
+"BV310273": [
+"UNDO",
+""
+],
+"BV310274": [
+"allow",
+""
+],
+"BV310275": [
+"allow",
+""
+],
+"BV310276": [
+"allow",
+""
+],
+"BV310277": [
+"allow",
+""
+],
+"BV310278": [
+"allow",
+""
+],
+"BV310279": [
+"allow",
+""
+],
+"BV310280": [
+"allow",
+""
+],
+"BV310281": [
+"allow",
+""
+],
+"BV310282": [
+"allow",
+""
+],
+"BV310283": [
+"allow",
+""
+],
+"BV310284": [
+"allow",
+""
+],
+"BV310285": [
+"DENY",
+"fail_closed"
+],
+"BV310286": [
+"allow",
+""
+],
+"BV310287": [
+"allow",
+""
+],
+"BV310288": [
+"DENY",
+"data_loss_guard"
+],
+"BV310289": [
+"allow",
+""
+],
+"BV310290": [
+"allow",
+""
+],
+"BV310291": [
+"allow",
+""
+],
+"BV310292": [
+"allow",
+""
+],
+"BV310293": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310294": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310295": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310296": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310297": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310298": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310299": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310300": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310301": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310302": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310303": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310304": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310305": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310306": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310307": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310308": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310309": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310310": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310311": [
+"DENY",
+"data_loss_guard"
+],
+"BV310312": [
+"DENY",
+"data_loss_guard"
+],
+"BV310313": [
+"DENY",
+"data_loss_guard"
+],
+"BV310314": [
+"DENY",
+"data_loss_guard"
+],
+"BV310315": [
+"DENY",
+"data_loss_guard"
+],
+"BV310316": [
+"DENY",
+"data_loss_guard"
+],
+"BV310317": [
+"allow",
+""
+],
+"BV310318": [
+"allow",
+""
+],
+"BV310319": [
+"allow",
+""
+],
+"BV310320": [
+"allow",
+""
+],
+"BV310321": [
+"allow",
+""
+],
+"BV310322": [
+"allow",
+""
+],
+"BV310323": [
+"allow",
+""
+],
+"BV310324": [
+"DENY",
+"data_loss_guard"
+],
+"BV310325": [
+"allow",
+""
+],
+"BV310326": [
+"allow",
+""
+],
+"BV310327": [
+"allow",
+""
+],
+"BV310328": [
+"allow",
+""
+],
+"BV310329": [
+"allow",
+""
+],
+"BV310330": [
+"allow",
+""
+],
+"BV310331": [
+"allow",
+""
+],
+"BV310332": [
+"allow",
+""
+],
+"BV310333": [
+"allow",
+""
+],
+"BV310334": [
+"allow",
+""
+],
+"BV310335": [
+"allow",
+""
+],
+"BV310336": [
+"allow",
+""
+],
+"BV310337": [
+"UNDO",
+""
+],
+"BV310338": [
+"allow",
+""
+],
+"BV310339": [
+"allow",
+""
+],
+"BV310340": [
+"allow",
+""
+],
+"BV310341": [
+"allow",
+""
+],
+"BV310342": [
+"allow",
+""
+],
+"BV310343": [
+"allow",
+""
+],
+"BV310344": [
+"allow",
+""
+],
+"BV310345": [
+"allow",
+""
+],
+"BV310346": [
+"UNDO",
+""
+],
+"BV310347": [
+"allow",
+""
+],
+"BV310348": [
+"allow",
+""
+],
+"BV310349": [
+"allow",
+""
+],
+"BV310350": [
+"allow",
+""
+],
+"BV310351": [
+"allow",
+""
+],
+"BV310352": [
+"allow",
+""
+],
+"BV310353": [
+"allow",
+""
+],
+"BV310354": [
+"allow",
+""
+],
+"BV310355": [
+"allow",
+""
+],
+"BV310356": [
+"allow",
+""
+],
+"BV310357": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310358": [
+"allow",
+""
+],
+"BV310359": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310360": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310361": [
+"allow",
+""
+],
+"BV310362": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310363": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310364": [
+"allow",
+""
+],
+"BV310365": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310366": [
+"allow",
+""
+],
+"BV310367": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310368": [
+"allow",
+""
+],
+"BV310369": [
+"allow",
+""
+],
+"BV310370": [
+"allow",
+""
+],
+"BV310371": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310372": [
+"allow",
+""
+],
+"BV310373": [
+"allow",
+""
+],
+"BV310374": [
+"allow",
+""
+],
+"BV310375": [
+"allow",
+""
+],
+"BV310376": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310377": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310378": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310379": [
+"allow",
+""
+],
+"BV310380": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310381": [
+"allow",
+""
+],
+"BV310382": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310383": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310384": [
+"allow",
+""
+],
+"BV310385": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310386": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310387": [
+"allow",
+""
+],
+"BV310388": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310389": [
+"allow",
+""
+],
+"BV310390": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310391": [
+"DENY",
+"data_loss_guard"
+],
+"BV310392": [
+"DENY",
+"data_loss_guard"
+],
+"BV310393": [
+"UNDO",
+""
+],
+"BV310394": [
+"DENY",
+"data_loss_guard"
+],
+"BV310395": [
+"allow",
+""
+],
+"BV310396": [
+"DENY",
+"data_loss_guard"
+],
+"BV310397": [
+"DENY",
+"data_loss_guard"
+],
+"BV310398": [
+"allow",
+""
+],
+"BV310399": [
+"DENY",
+"data_loss_guard"
+],
+"BV310400": [
+"DENY",
+"data_loss_guard"
+],
+"BV310401": [
+"allow",
+""
+],
+"BV310402": [
+"DENY",
+"data_loss_guard"
+],
+"BV310403": [
+"allow",
+""
+],
+"BV310404": [
+"DENY",
+"data_loss_guard"
+],
+"BV310405": [
+"allow",
+""
+],
+"BV310406": [
+"allow",
+""
+],
+"BV310407": [
+"allow",
+""
+],
+"BV310408": [
+"allow",
+""
+],
+"BV310409": [
+"allow",
+""
+],
+"BV310410": [
+"allow",
+""
+],
+"BV310411": [
+"allow",
+""
+],
+"BV310412": [
+"allow",
+""
+],
+"BV310413": [
+"allow",
+""
+],
+"BV310414": [
+"DENY",
+"fail_closed"
+],
+"BV310415": [
+"allow",
+""
+],
+"BV310416": [
+"allow",
+""
+],
+"BV310417": [
+"allow",
+""
+],
+"BV310418": [
+"allow",
+""
+],
+"BV310419": [
+"allow",
+""
+],
+"BV310420": [
+"allow",
+""
+],
+"BV310421": [
+"allow",
+""
+],
+"BV310422": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310423": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310424": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310425": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310426": [
+"DENY",
+"data_loss_guard"
+],
+"BV310427": [
+"DENY",
+"data_loss_guard"
+],
+"BV310428": [
+"DENY",
+"data_loss_guard"
+],
+"BV310429": [
+"DENY",
+"data_loss_guard"
+],
+"BV310430": [
+"DENY",
+"data_loss_guard"
+],
+"BV310431": [
+"allow",
+""
+],
+"BV310432": [
+"allow",
+""
+],
+"BV310433": [
+"allow",
+""
+],
+"BV310434": [
+"allow",
+""
+],
+"BV310435": [
+"allow",
+""
+],
+"BV310436": [
+"allow",
+""
+],
+"BV310437": [
+"allow",
+""
+],
+"BV310438": [
+"UNDO",
+""
+],
+"BV310439": [
+"allow",
+""
+],
+"BV310440": [
+"allow",
+""
+],
+"BV310441": [
+"UNDO",
+""
+],
+"BV310442": [
+"allow",
+""
+],
+"BV310443": [
+"allow",
+""
+],
+"BV310444": [
+"allow",
+""
+],
+"BV310445": [
+"allow",
+""
+],
+"BV310446": [
+"allow",
+""
+],
+"BV310447": [
+"allow",
+""
+],
+"BV310448": [
+"allow",
+""
+],
+"BV310449": [
+"allow",
+""
+],
+"BV310450": [
+"UNDO",
+""
+],
+"BV310451": [
+"allow",
+""
+],
+"BV310452": [
+"allow",
+""
+],
+"BV310453": [
+"allow",
+""
+],
+"BV310454": [
+"allow",
+""
+],
+"BV310455": [
+"allow",
+""
+],
+"BV310456": [
+"allow",
+""
+],
+"BV310457": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310458": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310459": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310460": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310461": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310462": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310463": [
+"DENY",
+"data_loss_guard"
+],
+"BV310464": [
+"allow",
+""
+],
+"BV310465": [
+"allow",
+""
+],
+"BV310466": [
+"allow",
+""
+],
+"BV310467": [
+"allow",
+""
+],
+"BV310468": [
+"allow",
+""
+],
+"BV310469": [
+"allow",
+""
+],
+"BV310470": [
+"allow",
+""
+],
+"BV310471": [
+"UNDO",
+""
+],
+"BV310472": [
+"allow",
+""
+],
+"BV310473": [
+"allow",
+""
+],
+"BV310474": [
+"allow",
+""
+],
+"BV310475": [
+"allow",
+""
+],
+"BV310476": [
+"allow",
+""
+],
+"BV310477": [
+"allow",
+""
+],
+"BV310478": [
+"allow",
+""
+],
+"BV310479": [
+"allow",
+""
+],
+"BV310480": [
+"allow",
+""
+],
+"BV310481": [
+"allow",
+""
+],
+"BV310482": [
+"allow",
+""
+],
+"BV310483": [
+"allow",
+""
+],
+"BV310484": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310485": [
+"allow",
+""
+],
+"BV310486": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310487": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310488": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310489": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310490": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310491": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310492": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310493": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310494": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310495": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310496": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310497": [
+"allow",
+""
+],
+"BV310498": [
+"allow",
+""
+],
+"BV310499": [
+"allow",
+""
+],
+"BV310500": [
+"allow",
+""
+],
+"BV310501": [
+"allow",
+""
+],
+"BV310502": [
+"allow",
+""
+],
+"BV310503": [
+"allow",
+""
+],
+"BV310504": [
+"allow",
+""
+],
+"BV310505": [
+"allow",
+""
+],
+"BV310506": [
+"allow",
+""
+],
+"BV310507": [
+"UNDO",
+""
+],
+"BV310508": [
+"allow",
+""
+],
+"BV310509": [
+"allow",
+""
+],
+"BV310510": [
+"allow",
+""
+],
+"BV310511": [
+"allow",
+""
+],
+"BV310512": [
+"allow",
+""
+],
+"BV310513": [
+"allow",
+""
+],
+"BV310514": [
+"allow",
+""
+],
+"BV310515": [
+"allow",
+""
+],
+"BV310516": [
+"allow",
+""
+],
+"BV310517": [
+"allow",
+""
+],
+"BV310518": [
+"allow",
+""
+],
+"BV310519": [
+"allow",
+""
+],
+"BV310520": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310521": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310522": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310523": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310524": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310525": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310526": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310527": [
+"DENY",
+"data_loss_guard"
+],
+"BV310528": [
+"allow",
+""
+],
+"BV310529": [
+"allow",
+""
+],
+"BV310530": [
+"allow",
+""
+],
+"BV310531": [
+"allow",
+""
+],
+"BV310532": [
+"allow",
+""
+],
+"BV310533": [
+"allow",
+""
+],
+"BV310534": [
+"allow",
+""
+],
+"BV310535": [
+"allow",
+""
+],
+"BV310536": [
+"UNDO",
+""
+],
+"BV310537": [
+"allow",
+""
+],
+"BV310538": [
+"allow",
+""
+],
+"BV310539": [
+"allow",
+""
+],
+"BV310540": [
+"allow",
+""
+],
+"BV310541": [
+"allow",
+""
+],
+"BV310542": [
+"allow",
+""
+],
+"BV310543": [
+"allow",
+""
+],
+"BV310544": [
+"allow",
+""
+],
+"BV310545": [
+"allow",
+""
+],
+"BV310546": [
+"allow",
+""
+],
+"BV310547": [
+"allow",
+""
+],
+"BV310548": [
+"allow",
+""
+],
+"BV310549": [
+"allow",
+""
+],
+"BV310550": [
+"allow",
+""
+],
+"BV310551": [
+"allow",
+""
+],
+"BV310552": [
+"allow",
+""
+],
+"BV310553": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310554": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310555": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310556": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310557": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310558": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310559": [
+"DENY",
+"data_loss_guard"
+],
+"BV310560": [
+"DENY",
+"fail_closed"
+],
+"BV310561": [
+"allow",
+""
+],
+"BV310562": [
+"allow",
+""
+],
+"BV310563": [
+"allow",
+""
+],
+"BV310564": [
+"allow",
+""
+],
+"BV310565": [
+"allow",
+""
+],
+"BV310566": [
+"allow",
+""
+],
+"BV310567": [
+"allow",
+""
+],
+"BV310568": [
+"UNDO",
+""
+],
+"BV310569": [
+"allow",
+""
+],
+"BV310570": [
+"allow",
+""
+],
+"BV310571": [
+"allow",
+""
+],
+"BV310572": [
+"allow",
+""
+],
+"BV310573": [
+"allow",
+""
+],
+"BV310574": [
+"allow",
+""
+],
+"BV310575": [
+"allow",
+""
+],
+"BV310576": [
+"allow",
+""
+],
+"BV310577": [
+"allow",
+""
+],
+"BV310578": [
+"allow",
+""
+],
+"BV310579": [
+"allow",
+""
+],
+"BV310580": [
+"allow",
+""
+],
+"BV310581": [
+"allow",
+""
+],
+"BV310582": [
+"UNDO",
+""
+],
+"BV310583": [
+"allow",
+""
+],
+"BV310584": [
+"allow",
+""
+],
+"BV310585": [
+"allow",
+""
+],
+"BV310586": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310587": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310588": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310589": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310590": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310591": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310592": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310593": [
+"DENY",
+"fail_closed"
+],
+"BV310594": [
+"allow",
+""
+],
+"BV310595": [
+"allow",
+""
+],
+"BV310596": [
+"allow",
+""
+],
+"BV310597": [
+"allow",
+""
+],
+"BV310598": [
+"allow",
+""
+],
+"BV310599": [
+"allow",
+""
+],
+"BV310600": [
+"allow",
+""
+],
+"BV310601": [
+"allow",
+""
+],
+"BV310602": [
+"allow",
+""
+],
+"BV310603": [
+"UNDO",
+""
+],
+"BV310604": [
+"allow",
+""
+],
+"BV310605": [
+"allow",
+""
+],
+"BV310606": [
+"allow",
+""
+],
+"BV310607": [
+"allow",
+""
+],
+"BV310608": [
+"allow",
+""
+],
+"BV310609": [
+"allow",
+""
+],
+"BV310610": [
+"allow",
+""
+],
+"BV310611": [
+"allow",
+""
+],
+"BV310612": [
+"allow",
+""
+],
+"BV310613": [
+"allow",
+""
+],
+"BV310614": [
+"allow",
+""
+],
+"BV310615": [
+"allow",
+""
+],
+"BV310616": [
+"allow",
+""
+],
+"BV310617": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310618": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310619": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310620": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310621": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310622": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310623": [
+"DENY",
+"data_loss_guard"
+],
+"BV310624": [
+"allow",
+""
+],
+"BV310625": [
+"allow",
+""
+],
+"BV310626": [
+"allow",
+""
+],
+"BV310627": [
+"allow",
+""
+],
+"BV310628": [
+"allow",
+""
+],
+"BV310629": [
+"allow",
+""
+],
+"BV310630": [
+"UNDO",
+""
+],
+"BV310631": [
+"allow",
+""
+],
+"BV310632": [
+"allow",
+""
+],
+"BV310633": [
+"allow",
+""
+],
+"BV310634": [
+"allow",
+""
+],
+"BV310635": [
+"UNDO",
+""
+],
+"BV310636": [
+"allow",
+""
+],
+"BV310637": [
+"allow",
+""
+],
+"BV310638": [
+"UNDO",
+""
+],
+"BV310639": [
+"allow",
+""
+],
+"BV310640": [
+"allow",
+""
+],
+"BV310641": [
+"allow",
+""
+],
+"BV310642": [
+"allow",
+""
+],
+"BV310643": [
+"allow",
+""
+],
+"BV310644": [
+"allow",
+""
+],
+"BV310645": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310646": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310647": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310648": [
+"allow",
+""
+],
+"BV310649": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310650": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310651": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310652": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310653": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310654": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310655": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310656": [
+"allow",
+""
+],
+"BV310657": [
+"DENY",
+"data_loss_guard"
+],
+"BV310658": [
+"allow",
+""
+],
+"BV310659": [
+"allow",
+""
+],
+"BV310660": [
+"allow",
+""
+],
+"BV310661": [
+"allow",
+""
+],
+"BV310662": [
+"allow",
+""
+],
+"BV310663": [
+"UNDO",
+""
+],
+"BV310664": [
+"allow",
+""
+],
+"BV310665": [
+"allow",
+""
+],
+"BV310666": [
+"allow",
+""
+],
+"BV310667": [
+"allow",
+""
+],
+"BV310668": [
+"allow",
+""
+],
+"BV310669": [
+"allow",
+""
+],
+"BV310670": [
+"allow",
+""
+],
+"BV310671": [
+"allow",
+""
+],
+"BV310672": [
+"allow",
+""
+],
+"BV310673": [
+"allow",
+""
+],
+"BV310674": [
+"allow",
+""
+],
+"BV310675": [
+"allow",
+""
+],
+"BV310676": [
+"allow",
+""
+],
+"BV310677": [
+"allow",
+""
+],
+"BV310678": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310679": [
+"allow",
+""
+],
+"BV310680": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310681": [
+"allow",
+""
+],
+"BV310682": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310683": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310684": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310685": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310686": [
+"DENY",
+"data_loss_guard"
+],
+"BV310687": [
+"DENY",
+"data_loss_guard"
+],
+"BV310688": [
+"allow",
+""
+],
+"BV310689": [
+"UNDO",
+""
+],
+"BV310690": [
+"allow",
+""
+],
+"BV310691": [
+"allow",
+""
+],
+"BV310692": [
+"allow",
+""
+],
+"BV310693": [
+"allow",
+""
+],
+"BV310694": [
+"allow",
+""
+],
+"BV310695": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310696": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310697": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310698": [
+"allow",
+""
+],
+"BV310699": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310700": [
+"DENY",
+"data_loss_guard"
+],
+"BV310701": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310702": [
+"DENY",
+"data_loss_guard"
+],
+"BV310703": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310704": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310705": [
+"allow",
+""
+],
+"BV310706": [
+"allow",
+""
+],
+"BV310707": [
+"allow",
+""
+],
+"BV310708": [
+"allow",
+""
+],
+"BV310709": [
+"allow",
+""
+],
+"BV310710": [
+"UNDO",
+""
+],
+"BV310711": [
+"allow",
+""
+],
+"BV310712": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310713": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310714": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310715": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310716": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310717": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310718": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310719": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310720": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310721": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310722": [
+"allow",
+""
+],
+"BV310723": [
+"allow",
+""
+],
+"BV310724": [
+"allow",
+""
+],
+"BV310725": [
+"allow",
+""
+],
+"BV310726": [
+"allow",
+""
+],
+"BV310727": [
+"allow",
+""
+],
+"BV310728": [
+"allow",
+""
+],
+"BV310729": [
+"UNDO",
+""
+],
+"BV310730": [
+"allow",
+""
+],
+"BV310731": [
+"allow",
+""
+],
+"BV310732": [
+"allow",
+""
+],
+"BV310733": [
+"UNDO",
+""
+],
+"BV310734": [
+"allow",
+""
+],
+"BV310735": [
+"allow",
+""
+],
+"BV310736": [
+"allow",
+""
+],
+"BV310737": [
+"allow",
+""
+],
+"BV310738": [
+"allow",
+""
+],
+"BV310739": [
+"UNDO",
+""
+],
+"BV310740": [
+"allow",
+""
+],
+"BV310741": [
+"allow",
+""
+],
+"BV310742": [
+"allow",
+""
+],
+"BV310743": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310744": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310745": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310746": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310747": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310748": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310749": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310750": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310751": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310752": [
+"DENY",
+"data_loss_guard"
+],
+"BV310753": [
+"DENY",
+"data_loss_guard"
+],
+"BV310754": [
+"DENY",
+"data_loss_guard"
+],
+"BV310755": [
+"allow",
+""
+],
+"BV310756": [
+"allow",
+""
+],
+"BV310757": [
+"DENY",
+"fail_closed"
+],
+"BV310758": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310759": [
+"allow",
+""
+],
+"BV310760": [
+"allow",
+""
+],
+"BV310761": [
+"allow",
+""
+],
+"BV310762": [
+"UNDO",
+""
+],
+"BV310763": [
+"allow",
+""
+],
+"BV310764": [
+"allow",
+""
+],
+"BV310765": [
+"allow",
+""
+],
+"BV310766": [
+"UNDO",
+""
+],
+"BV310767": [
+"allow",
+""
+],
+"BV310768": [
+"allow",
+""
+],
+"BV310769": [
+"allow",
+""
+],
+"BV310770": [
+"allow",
+""
+],
+"BV310771": [
+"allow",
+""
+],
+"BV310772": [
+"allow",
+""
+],
+"BV310773": [
+"allow",
+""
+],
+"BV310774": [
+"allow",
+""
+],
+"BV310775": [
+"allow",
+""
+],
+"BV310776": [
+"allow",
+""
+],
+"BV310777": [
+"allow",
+""
+],
+"BV310778": [
+"allow",
+""
+],
+"BV310779": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310780": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310781": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310782": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310783": [
+"allow",
+""
+],
+"BV310784": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310785": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310786": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310787": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310788": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310789": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310790": [
+"DENY",
+"data_loss_guard"
+],
+"BV310791": [
+"DENY",
+"data_loss_guard"
+],
+"BV310792": [
+"allow",
+""
+],
+"BV310793": [
+"allow",
+""
+],
+"BV310794": [
+"DENY",
+"fail_closed"
+],
+"BV310795": [
+"allow",
+""
+],
+"BV310796": [
+"allow",
+""
+],
+"BV310797": [
+"allow",
+""
+],
+"BV310798": [
+"allow",
+""
+],
+"BV310799": [
+"UNDO",
+""
+],
+"BV310800": [
+"allow",
+""
+],
+"BV310801": [
+"allow",
+""
+],
+"BV310802": [
+"allow",
+""
+],
+"BV310803": [
+"allow",
+""
+],
+"BV310804": [
+"allow",
+""
+],
+"BV310805": [
+"allow",
+""
+],
+"BV310806": [
+"allow",
+""
+],
+"BV310807": [
+"allow",
+""
+],
+"BV310808": [
+"allow",
+""
+],
+"BV310809": [
+"allow",
+""
+],
+"BV310810": [
+"allow",
+""
+],
+"BV310811": [
+"allow",
+""
+],
+"BV310812": [
+"UNDO",
+""
+],
+"BV310813": [
+"allow",
+""
+],
+"BV310814": [
+"allow",
+""
+],
+"BV310815": [
+"allow",
+""
+],
+"BV310816": [
+"allow",
+""
+],
+"BV310817": [
+"UNDO",
+""
+],
+"BV310818": [
+"allow",
+""
+],
+"BV310819": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310820": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310821": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310822": [
+"allow",
+""
+],
+"BV310823": [
+"allow",
+""
+],
+"BV310824": [
+"allow",
+""
+],
+"BV310825": [
+"allow",
+""
+],
+"BV310826": [
+"allow",
+""
+],
+"BV310827": [
+"DENY",
+"data_loss_guard"
+],
+"BV310828": [
+"UNDO",
+""
+],
+"BV310829": [
+"allow",
+""
+],
+"BV310830": [
+"allow",
+""
+],
+"BV310831": [
+"allow",
+""
+],
+"BV310832": [
+"allow",
+""
+],
+"BV310833": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310834": [
+"allow",
+""
+],
+"BV310835": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310836": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310837": [
+"allow",
+""
+],
+"BV310838": [
+"DENY",
+"data_loss_guard"
+],
+"BV310839": [
+"allow",
+""
+],
+"BV310840": [
+"allow",
+""
+],
+"BV310841": [
+"allow",
+""
+],
+"BV310842": [
+"DENY",
+"fail_closed"
+],
+"BV310843": [
+"allow",
+""
+],
+"BV310844": [
+"allow",
+""
+],
+"BV310845": [
+"allow",
+""
+],
+"BV310846": [
+"allow",
+""
+],
+"BV310847": [
+"allow",
+""
+],
+"BV310848": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310849": [
+"allow",
+""
+],
+"BV310850": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310851": [
+"UNDO",
+""
+],
+"BV310852": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310853": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310854": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310855": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310856": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310857": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310858": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310859": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310860": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310861": [
+"DENY",
+"data_loss_guard"
+],
+"BV310862": [
+"allow",
+""
+],
+"BV310863": [
+"allow",
+""
+],
+"BV310864": [
+"allow",
+""
+],
+"BV310865": [
+"allow",
+""
+],
+"BV310866": [
+"allow",
+""
+],
+"BV310867": [
+"UNDO",
+""
+],
+"BV310868": [
+"allow",
+""
+],
+"BV310869": [
+"UNDO",
+""
+],
+"BV310870": [
+"allow",
+""
+],
+"BV310871": [
+"allow",
+""
+],
+"BV310872": [
+"allow",
+""
+],
+"BV310873": [
+"allow",
+""
+],
+"BV310874": [
+"allow",
+""
+],
+"BV310875": [
+"allow",
+""
+],
+"BV310876": [
+"allow",
+""
+],
+"BV310877": [
+"allow",
+""
+],
+"BV310878": [
+"allow",
+""
+],
+"BV310879": [
+"allow",
+""
+],
+"BV310880": [
+"allow",
+""
+],
+"BV310881": [
+"allow",
+""
+],
+"BV310882": [
+"allow",
+""
+],
+"BV310883": [
+"allow",
+""
+],
+"BV310884": [
+"allow",
+""
+],
+"BV310885": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310886": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310887": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310888": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310889": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310890": [
+"allow",
+""
+],
+"BV310891": [
+"allow",
+""
+],
+"BV310892": [
+"allow",
+""
+],
+"BV310893": [
+"allow",
+""
+],
+"BV310894": [
+"allow",
+""
+],
+"BV310895": [
+"allow",
+""
+],
+"BV310896": [
+"UNDO",
+""
+],
+"BV310897": [
+"allow",
+""
+],
+"BV310898": [
+"allow",
+""
+],
+"BV310899": [
+"allow",
+""
+],
+"BV310900": [
+"allow",
+""
+],
+"BV310901": [
+"allow",
+""
+],
+"BV310902": [
+"allow",
+""
+],
+"BV310903": [
+"allow",
+""
+],
+"BV310904": [
+"allow",
+""
+],
+"BV310905": [
+"allow",
+""
+],
+"BV310906": [
+"allow",
+""
+],
+"BV310907": [
+"DENY",
+"fail_closed"
+],
+"BV310908": [
+"allow",
+""
+],
+"BV310909": [
+"allow",
+""
+],
+"BV310910": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310911": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310912": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310913": [
+"allow",
+""
+],
+"BV310914": [
+"allow",
+""
+],
+"BV310915": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310916": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310917": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310918": [
+"allow",
+""
+],
+"BV310919": [
+"allow",
+""
+],
+"BV310920": [
+"allow",
+""
+],
+"BV310921": [
+"allow",
+""
+],
+"BV310922": [
+"allow",
+""
+],
+"BV310923": [
+"allow",
+""
+],
+"BV310924": [
+"allow",
+""
+],
+"BV310925": [
+"allow",
+""
+],
+"BV310926": [
+"allow",
+""
+],
+"BV310927": [
+"allow",
+""
+],
+"BV310928": [
+"allow",
+""
+],
+"BV310929": [
+"allow",
+""
+],
+"BV310930": [
+"allow",
+""
+],
+"BV310931": [
+"allow",
+""
+],
+"BV310932": [
+"allow",
+""
+],
+"BV310933": [
+"allow",
+""
+],
+"BV310934": [
+"allow",
+""
+],
+"BV310935": [
+"allow",
+""
+],
+"BV310936": [
+"allow",
+""
+],
+"BV310937": [
+"allow",
+""
+],
+"BV310938": [
+"allow",
+""
+],
+"BV310939": [
+"allow",
+""
+],
+"BV310940": [
+"allow",
+""
+],
+"BV310941": [
+"DENY",
+"data_loss_guard"
+],
+"BV310942": [
+"allow",
+""
+],
+"BV310943": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310944": [
+"DENY",
+"data_loss_guard"
+],
+"BV310945": [
+"allow",
+""
+],
+"BV310946": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310947": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310948": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310949": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310950": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310951": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310952": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310953": [
+"DENY",
+"data_loss_guard"
+],
+"BV310954": [
+"allow",
+""
+],
+"BV310955": [
+"allow",
+""
+],
+"BV310956": [
+"allow",
+""
+],
+"BV310957": [
+"allow",
+""
+],
+"BV310958": [
+"allow",
+""
+],
+"BV310959": [
+"allow",
+""
+],
+"BV310960": [
+"UNDO",
+""
+],
+"BV310961": [
+"allow",
+""
+],
+"BV310962": [
+"allow",
+""
+],
+"BV310963": [
+"allow",
+""
+],
+"BV310964": [
+"allow",
+""
+],
+"BV310965": [
+"allow",
+""
+],
+"BV310966": [
+"allow",
+""
+],
+"BV310967": [
+"allow",
+""
+],
+"BV310968": [
+"allow",
+""
+],
+"BV310969": [
+"allow",
+""
+],
+"BV310970": [
+"allow",
+""
+],
+"BV310971": [
+"allow",
+""
+],
+"BV310972": [
+"UNDO",
+""
+],
+"BV310973": [
+"allow",
+""
+],
+"BV310974": [
+"UNDO",
+""
+],
+"BV310975": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310976": [
+"allow",
+""
+],
+"BV310977": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310978": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310979": [
+"DENY",
+"data_loss_guard"
+],
+"BV310980": [
+"allow",
+""
+],
+"BV310981": [
+"allow",
+""
+],
+"BV310982": [
+"allow",
+""
+],
+"BV310983": [
+"allow",
+""
+],
+"BV310984": [
+"allow",
+""
+],
+"BV310985": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310986": [
+"allow",
+""
+],
+"BV310987": [
+"DENY",
+"data_loss_guard"
+],
+"BV310988": [
+"allow",
+""
+],
+"BV310989": [
+"allow",
+""
+],
+"BV310990": [
+"UNDO",
+""
+],
+"BV310991": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV310992": [
+"allow",
+""
+],
+"BV310993": [
+"allow",
+""
+],
+"BV310994": [
+"allow",
+""
+],
+"BV310995": [
+"allow",
+""
+],
+"BV310996": [
+"allow",
+""
+],
+"BV310997": [
+"allow",
+""
+],
+"BV310998": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV310999": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311000": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311001": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311002": [
+"allow",
+""
+],
+"BV311003": [
+"allow",
+""
+],
+"BV311004": [
+"allow",
+""
+],
+"BV311005": [
+"allow",
+""
+],
+"BV311006": [
+"allow",
+""
+],
+"BV311007": [
+"allow",
+""
+],
+"BV311008": [
+"allow",
+""
+],
+"BV311009": [
+"allow",
+""
+],
+"BV311010": [
+"allow",
+""
+],
+"BV311011": [
+"UNDO",
+""
+],
+"BV311012": [
+"allow",
+""
+],
+"BV311013": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311014": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311015": [
+"allow",
+""
+],
+"BV311016": [
+"allow",
+""
+],
+"BV311017": [
+"allow",
+""
+],
+"BV311018": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311019": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311020": [
+"DENY",
+"data_loss_guard"
+],
+"BV311021": [
+"UNDO",
+""
+],
+"BV311022": [
+"allow",
+""
+],
+"BV311023": [
+"allow",
+""
+],
+"BV311024": [
+"allow",
+""
+],
+"BV311025": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311026": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311027": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311028": [
+"allow",
+""
+],
+"BV311029": [
+"allow",
+""
+],
+"BV311030": [
+"allow",
+""
+],
+"BV311031": [
+"allow",
+""
+],
+"BV311032": [
+"DENY",
+"data_loss_guard"
+],
+"BV311033": [
+"DENY",
+"data_loss_guard"
+],
+"BV311034": [
+"allow",
+""
+],
+"BV311035": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311036": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311037": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311038": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311039": [
+"allow",
+""
+],
+"BV311040": [
+"allow",
+""
+],
+"BV311041": [
+"allow",
+""
+],
+"BV311042": [
+"allow",
+""
+],
+"BV311043": [
+"allow",
+""
+],
+"BV311044": [
+"allow",
+""
+],
+"BV311045": [
+"allow",
+""
+],
+"BV311046": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311047": [
+"allow",
+""
+],
+"BV311048": [
+"allow",
+""
+],
+"BV311049": [
+"allow",
+""
+],
+"BV311050": [
+"DENY",
+"data_loss_guard"
+],
+"BV311051": [
+"DENY",
+"fail_closed"
+],
+"BV311052": [
+"allow",
+""
+],
+"BV311053": [
+"allow",
+""
+],
+"BV311054": [
+"allow",
+""
+],
+"BV311055": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311056": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311057": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311058": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311059": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311060": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311061": [
+"UNDO",
+""
+],
+"BV311062": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311063": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311064": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311065": [
+"DENY",
+"data_loss_guard"
+],
+"BV311066": [
+"allow",
+""
+],
+"BV311067": [
+"allow",
+""
+],
+"BV311068": [
+"allow",
+""
+],
+"BV311069": [
+"allow",
+""
+],
+"BV311070": [
+"allow",
+""
+],
+"BV311071": [
+"allow",
+""
+],
+"BV311072": [
+"allow",
+""
+],
+"BV311073": [
+"UNDO",
+""
+],
+"BV311074": [
+"allow",
+""
+],
+"BV311075": [
+"allow",
+""
+],
+"BV311076": [
+"allow",
+""
+],
+"BV311077": [
+"allow",
+""
+],
+"BV311078": [
+"allow",
+""
+],
+"BV311079": [
+"allow",
+""
+],
+"BV311080": [
+"allow",
+""
+],
+"BV311081": [
+"allow",
+""
+],
+"BV311082": [
+"allow",
+""
+],
+"BV311083": [
+"allow",
+""
+],
+"BV311084": [
+"allow",
+""
+],
+"BV311085": [
+"allow",
+""
+],
+"BV311086": [
+"allow",
+""
+],
+"BV311087": [
+"allow",
+""
+],
+"BV311088": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311089": [
+"allow",
+""
+],
+"BV311090": [
+"allow",
+""
+],
+"BV311091": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311092": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311093": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311094": [
+"allow",
+""
+],
+"BV311095": [
+"allow",
+""
+],
+"BV311096": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311097": [
+"allow",
+""
+],
+"BV311098": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311099": [
+"allow",
+""
+],
+"BV311100": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311101": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311102": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311103": [
+"UNDO",
+""
+],
+"BV311104": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311105": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311106": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311107": [
+"allow",
+""
+],
+"BV311108": [
+"DENY",
+"fail_closed"
+],
+"BV311109": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311110": [
+"allow",
+""
+],
+"BV311111": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311112": [
+"allow",
+""
+],
+"BV311113": [
+"UNDO",
+""
+],
+"BV311114": [
+"allow",
+""
+],
+"BV311115": [
+"DENY",
+"data_loss_guard"
+],
+"BV311116": [
+"DENY",
+"data_loss_guard"
+],
+"BV311117": [
+"allow",
+""
+],
+"BV311118": [
+"DENY",
+"data_loss_guard"
+],
+"BV311119": [
+"allow",
+""
+],
+"BV311120": [
+"allow",
+""
+],
+"BV311121": [
+"allow",
+""
+],
+"BV311122": [
+"DENY",
+"data_loss_guard"
+],
+"BV311123": [
+"allow",
+""
+],
+"BV311124": [
+"allow",
+""
+],
+"BV311125": [
+"allow",
+""
+],
+"BV311126": [
+"allow",
+""
+],
+"BV311127": [
+"allow",
+""
+],
+"BV311128": [
+"allow",
+""
+],
+"BV311129": [
+"allow",
+""
+],
+"BV311130": [
+"allow",
+""
+],
+"BV311131": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311132": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311133": [
+"allow",
+""
+],
+"BV311134": [
+"UNDO",
+""
+],
+"BV311135": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311136": [
+"allow",
+""
+],
+"BV311137": [
+"allow",
+""
+],
+"BV311138": [
+"DENY",
+"data_loss_guard"
+],
+"BV311139": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311140": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311141": [
+"allow",
+""
+],
+"BV311142": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311143": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311144": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311145": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311146": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311147": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311148": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311149": [
+"allow",
+""
+],
+"BV311150": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311151": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311152": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311153": [
+"allow",
+""
+],
+"BV311154": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311155": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311156": [
+"DENY",
+"data_loss_guard"
+],
+"BV311157": [
+"DENY",
+"data_loss_guard"
+],
+"BV311158": [
+"DENY",
+"data_loss_guard"
+],
+"BV311159": [
+"allow",
+""
+],
+"BV311160": [
+"allow",
+""
+],
+"BV311161": [
+"allow",
+""
+],
+"BV311162": [
+"allow",
+""
+],
+"BV311163": [
+"allow",
+""
+],
+"BV311164": [
+"allow",
+""
+],
+"BV311165": [
+"allow",
+""
+],
+"BV311166": [
+"allow",
+""
+],
+"BV311167": [
+"allow",
+""
+],
+"BV311168": [
+"allow",
+""
+],
+"BV311169": [
+"allow",
+""
+],
+"BV311170": [
+"UNDO",
+""
+],
+"BV311171": [
+"allow",
+""
+],
+"BV311172": [
+"allow",
+""
+],
+"BV311173": [
+"allow",
+""
+],
+"BV311174": [
+"allow",
+""
+],
+"BV311175": [
+"allow",
+""
+],
+"BV311176": [
+"allow",
+""
+],
+"BV311177": [
+"UNDO",
+""
+],
+"BV311178": [
+"allow",
+""
+],
+"BV311179": [
+"allow",
+""
+],
+"BV311180": [
+"allow",
+""
+],
+"BV311181": [
+"allow",
+""
+],
+"BV311182": [
+"allow",
+""
+],
+"BV311183": [
+"allow",
+""
+],
+"BV311184": [
+"allow",
+""
+],
+"BV311185": [
+"allow",
+""
+],
+"BV311186": [
+"DENY",
+"data_loss_guard"
+],
+"BV311187": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311188": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311189": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311190": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311191": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311192": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311193": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311194": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311195": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311196": [
+"allow",
+""
+],
+"BV311197": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311198": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311199": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311200": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311201": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311202": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311203": [
+"DENY",
+"data_loss_guard"
+],
+"BV311204": [
+"DENY",
+"data_loss_guard"
+],
+"BV311205": [
+"DENY",
+"data_loss_guard"
+],
+"BV311206": [
+"DENY",
+"data_loss_guard"
+],
+"BV311207": [
+"DENY",
+"data_loss_guard"
+],
+"BV311208": [
+"allow",
+""
+],
+"BV311209": [
+"allow",
+""
+],
+"BV311210": [
+"allow",
+""
+],
+"BV311211": [
+"DENY",
+"fail_closed"
+],
+"BV311212": [
+"allow",
+""
+],
+"BV311213": [
+"allow",
+""
+],
+"BV311214": [
+"allow",
+""
+],
+"BV311215": [
+"allow",
+""
+],
+"BV311216": [
+"allow",
+""
+],
+"BV311217": [
+"allow",
+""
+],
+"BV311218": [
+"allow",
+""
+],
+"BV311219": [
+"allow",
+""
+],
+"BV311220": [
+"allow",
+""
+],
+"BV311221": [
+"allow",
+""
+],
+"BV311222": [
+"UNDO",
+""
+],
+"BV311223": [
+"allow",
+""
+],
+"BV311224": [
+"allow",
+""
+],
+"BV311225": [
+"allow",
+""
+],
+"BV311226": [
+"allow",
+""
+],
+"BV311227": [
+"allow",
+""
+],
+"BV311228": [
+"allow",
+""
+],
+"BV311229": [
+"allow",
+""
+],
+"BV311230": [
+"allow",
+""
+],
+"BV311231": [
+"allow",
+""
+],
+"BV311232": [
+"allow",
+""
+],
+"BV311233": [
+"allow",
+""
+],
+"BV311234": [
+"allow",
+""
+],
+"BV311235": [
+"allow",
+""
+],
+"BV311236": [
+"allow",
+""
+],
+"BV311237": [
+"allow",
+""
+],
+"BV311238": [
+"allow",
+""
+],
+"BV311239": [
+"allow",
+""
+],
+"BV311240": [
+"allow",
+""
+],
+"BV311241": [
+"allow",
+""
+],
+"BV311242": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311243": [
+"allow",
+""
+],
+"BV311244": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311245": [
+"allow",
+""
+],
+"BV311246": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311247": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311248": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311249": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311250": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311251": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311252": [
+"DENY",
+"data_loss_guard"
+],
+"BV311253": [
+"DENY",
+"data_loss_guard"
+],
+"BV311254": [
+"allow",
+""
+],
+"BV311255": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311256": [
+"DENY",
+"data_loss_guard"
+],
+"BV311257": [
+"UNDO",
+""
+],
+"BV311258": [
+"allow",
+""
+],
+"BV311259": [
+"allow",
+""
+],
+"BV311260": [
+"allow",
+""
+],
+"BV311261": [
+"allow",
+""
+],
+"BV311262": [
+"UNDO",
+""
+],
+"BV311263": [
+"allow",
+""
+],
+"BV311264": [
+"allow",
+""
+],
+"BV311265": [
+"allow",
+""
+],
+"BV311266": [
+"allow",
+""
+],
+"BV311267": [
+"allow",
+""
+],
+"BV311268": [
+"allow",
+""
+],
+"BV311269": [
+"allow",
+""
+],
+"BV311270": [
+"UNDO",
+""
+],
+"BV311271": [
+"allow",
+""
+],
+"BV311272": [
+"allow",
+""
+],
+"BV311273": [
+"allow",
+""
+],
+"BV311274": [
+"allow",
+""
+],
+"BV311275": [
+"allow",
+""
+],
+"BV311276": [
+"allow",
+""
+],
+"BV311277": [
+"allow",
+""
+],
+"BV311278": [
+"allow",
+""
+],
+"BV311279": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311280": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311281": [
+"DENY",
+"fail_closed"
+],
+"BV311282": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311283": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311284": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311285": [
+"allow",
+""
+],
+"BV311286": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311287": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311288": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311289": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311290": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311291": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311292": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311293": [
+"allow",
+""
+],
+"BV311294": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311295": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311296": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311297": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311298": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311299": [
+"DENY",
+"fail_closed"
+],
+"BV311300": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311301": [
+"DENY",
+"data_loss_guard"
+],
+"BV311302": [
+"DENY",
+"data_loss_guard"
+],
+"BV311303": [
+"DENY",
+"data_loss_guard"
+],
+"BV311304": [
+"DENY",
+"data_loss_guard"
+],
+"BV311305": [
+"DENY",
+"data_loss_guard"
+],
+"BV311306": [
+"DENY",
+"data_loss_guard"
+],
+"BV311307": [
+"DENY",
+"data_loss_guard"
+],
+"BV311308": [
+"DENY",
+"data_loss_guard"
+],
+"BV311309": [
+"allow",
+""
+],
+"BV311310": [
+"allow",
+""
+],
+"BV311311": [
+"allow",
+""
+],
+"BV311312": [
+"allow",
+""
+],
+"BV311313": [
+"allow",
+""
+],
+"BV311314": [
+"allow",
+""
+],
+"BV311315": [
+"DENY",
+"fail_closed"
+],
+"BV311316": [
+"UNDO",
+""
+],
+"BV311317": [
+"allow",
+""
+],
+"BV311318": [
+"allow",
+""
+],
+"BV311319": [
+"allow",
+""
+],
+"BV311320": [
+"allow",
+""
+],
+"BV311321": [
+"allow",
+""
+],
+"BV311322": [
+"allow",
+""
+],
+"BV311323": [
+"allow",
+""
+],
+"BV311324": [
+"allow",
+""
+],
+"BV311325": [
+"allow",
+""
+],
+"BV311326": [
+"UNDO",
+""
+],
+"BV311327": [
+"allow",
+""
+],
+"BV311328": [
+"allow",
+""
+],
+"BV311329": [
+"allow",
+""
+],
+"BV311330": [
+"allow",
+""
+],
+"BV311331": [
+"allow",
+""
+],
+"BV311332": [
+"allow",
+""
+],
+"BV311333": [
+"allow",
+""
+],
+"BV311334": [
+"allow",
+""
+],
+"BV311335": [
+"allow",
+""
+],
+"BV311336": [
+"allow",
+""
+],
+"BV311337": [
+"allow",
+""
+],
+"BV311338": [
+"UNDO",
+""
+],
+"BV311339": [
+"allow",
+""
+],
+"BV311340": [
+"allow",
+""
+],
+"BV311341": [
+"DENY",
+"data_loss_guard"
+],
+"BV311342": [
+"DENY",
+"data_loss_guard"
+],
+"BV311343": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311344": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311345": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311346": [
+"allow",
+""
+],
+"BV311347": [
+"allow",
+""
+],
+"BV311348": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311349": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311350": [
+"allow",
+""
+],
+"BV311351": [
+"allow",
+""
+],
+"BV311352": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311353": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311354": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311355": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311356": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311357": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311358": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311359": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311360": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311361": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311362": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311363": [
+"DENY",
+"fail_closed"
+],
+"BV311364": [
+"DENY",
+"data_loss_guard"
+],
+"BV311365": [
+"DENY",
+"data_loss_guard"
+],
+"BV311366": [
+"DENY",
+"data_loss_guard"
+],
+"BV311367": [
+"DENY",
+"data_loss_guard"
+],
+"BV311368": [
+"allow",
+""
+],
+"BV311369": [
+"allow",
+""
+],
+"BV311370": [
+"allow",
+""
+],
+"BV311371": [
+"DENY",
+"fail_closed"
+],
+"BV311372": [
+"allow",
+""
+],
+"BV311373": [
+"allow",
+""
+],
+"BV311374": [
+"allow",
+""
+],
+"BV311375": [
+"allow",
+""
+],
+"BV311376": [
+"allow",
+""
+],
+"BV311377": [
+"allow",
+""
+],
+"BV311378": [
+"UNDO",
+""
+],
+"BV311379": [
+"allow",
+""
+],
+"BV311380": [
+"allow",
+""
+],
+"BV311381": [
+"allow",
+""
+],
+"BV311382": [
+"allow",
+""
+],
+"BV311383": [
+"allow",
+""
+],
+"BV311384": [
+"allow",
+""
+],
+"BV311385": [
+"allow",
+""
+],
+"BV311386": [
+"allow",
+""
+],
+"BV311387": [
+"allow",
+""
+],
+"BV311388": [
+"allow",
+""
+],
+"BV311389": [
+"allow",
+""
+],
+"BV311390": [
+"allow",
+""
+],
+"BV311391": [
+"UNDO",
+""
+],
+"BV311392": [
+"allow",
+""
+],
+"BV311393": [
+"allow",
+""
+],
+"BV311394": [
+"allow",
+""
+],
+"BV311395": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311396": [
+"allow",
+""
+],
+"BV311397": [
+"allow",
+""
+],
+"BV311398": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311399": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311400": [
+"allow",
+""
+],
+"BV311401": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311402": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311403": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311404": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311405": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311406": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311407": [
+"allow",
+""
+],
+"BV311408": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311409": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311410": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311411": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311412": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311413": [
+"DENY",
+"data_loss_guard"
+],
+"BV311414": [
+"DENY",
+"data_loss_guard"
+],
+"BV311415": [
+"allow",
+""
+],
+"BV311416": [
+"allow",
+""
+],
+"BV311417": [
+"allow",
+""
+],
+"BV311418": [
+"allow",
+""
+],
+"BV311419": [
+"allow",
+""
+],
+"BV311420": [
+"allow",
+""
+],
+"BV311421": [
+"allow",
+""
+],
+"BV311422": [
+"allow",
+""
+],
+"BV311423": [
+"allow",
+""
+],
+"BV311424": [
+"allow",
+""
+],
+"BV311425": [
+"allow",
+""
+],
+"BV311426": [
+"allow",
+""
+],
+"BV311427": [
+"UNDO",
+""
+],
+"BV311428": [
+"allow",
+""
+],
+"BV311429": [
+"UNDO",
+""
+],
+"BV311430": [
+"allow",
+""
+],
+"BV311431": [
+"allow",
+""
+],
+"BV311432": [
+"allow",
+""
+],
+"BV311433": [
+"allow",
+""
+],
+"BV311434": [
+"allow",
+""
+],
+"BV311435": [
+"allow",
+""
+],
+"BV311436": [
+"allow",
+""
+],
+"BV311437": [
+"allow",
+""
+],
+"BV311438": [
+"allow",
+""
+],
+"BV311439": [
+"allow",
+""
+],
+"BV311440": [
+"allow",
+""
+],
+"BV311441": [
+"allow",
+""
+],
+"BV311442": [
+"allow",
+""
+],
+"BV311443": [
+"allow",
+""
+],
+"BV311444": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311445": [
+"DENY",
+"fail_closed"
+],
+"BV311446": [
+"allow",
+""
+],
+"BV311447": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311448": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311449": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311450": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311451": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311452": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311453": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311454": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311455": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311456": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311457": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311458": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311459": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311460": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311461": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311462": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311463": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311464": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311465": [
+"allow",
+""
+],
+"BV311466": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311467": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311468": [
+"DENY",
+"data_loss_guard"
+],
+"BV311469": [
+"DENY",
+"data_loss_guard"
+],
+"BV311470": [
+"DENY",
+"data_loss_guard"
+],
+"BV311471": [
+"DENY",
+"data_loss_guard"
+],
+"BV311472": [
+"DENY",
+"data_loss_guard"
+],
+"BV311473": [
+"DENY",
+"data_loss_guard"
+],
+"BV311474": [
+"DENY",
+"data_loss_guard"
+],
+"BV311475": [
+"DENY",
+"data_loss_guard"
+],
+"BV311476": [
+"DENY",
+"data_loss_guard"
+],
+"BV311477": [
+"DENY",
+"fail_closed"
+],
+"BV311478": [
+"allow",
+""
+],
+"BV311479": [
+"DENY",
+"fail_closed"
+],
+"BV311480": [
+"allow",
+""
+],
+"BV311481": [
+"allow",
+""
+],
+"BV311482": [
+"allow",
+""
+],
+"BV311483": [
+"allow",
+""
+],
+"BV311484": [
+"allow",
+""
+],
+"BV311485": [
+"allow",
+""
+],
+"BV311486": [
+"allow",
+""
+],
+"BV311487": [
+"allow",
+""
+],
+"BV311488": [
+"allow",
+""
+],
+"BV311489": [
+"allow",
+""
+],
+"BV311490": [
+"allow",
+""
+],
+"BV311491": [
+"allow",
+""
+],
+"BV311492": [
+"allow",
+""
+],
+"BV311493": [
+"allow",
+""
+],
+"BV311494": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311495": [
+"allow",
+""
+],
+"BV311496": [
+"allow",
+""
+],
+"BV311497": [
+"allow",
+""
+],
+"BV311498": [
+"UNDO",
+""
+],
+"BV311499": [
+"DENY",
+"data_loss_guard"
+],
+"BV311500": [
+"allow",
+""
+],
+"BV311501": [
+"UNDO",
+""
+],
+"BV311502": [
+"allow",
+""
+],
+"BV311503": [
+"allow",
+""
+],
+"BV311504": [
+"allow",
+""
+],
+"BV311505": [
+"allow",
+""
+],
+"BV311506": [
+"allow",
+""
+],
+"BV311507": [
+"allow",
+""
+],
+"BV311508": [
+"allow",
+""
+],
+"BV311509": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311510": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311511": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311512": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311513": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311514": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311515": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311516": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311517": [
+"DENY",
+"fail_closed"
+],
+"BV311518": [
+"DENY",
+"data_loss_guard"
+],
+"BV311519": [
+"DENY",
+"data_loss_guard"
+],
+"BV311520": [
+"DENY",
+"data_loss_guard"
+],
+"BV311521": [
+"allow",
+""
+],
+"BV311522": [
+"allow",
+""
+],
+"BV311523": [
+"allow",
+""
+],
+"BV311524": [
+"allow",
+""
+],
+"BV311525": [
+"allow",
+""
+],
+"BV311526": [
+"allow",
+""
+],
+"BV311527": [
+"allow",
+""
+],
+"BV311528": [
+"allow",
+""
+],
+"BV311529": [
+"allow",
+""
+],
+"BV311530": [
+"allow",
+""
+],
+"BV311531": [
+"allow",
+""
+],
+"BV311532": [
+"allow",
+""
+],
+"BV311533": [
+"allow",
+""
+],
+"BV311534": [
+"allow",
+""
+],
+"BV311535": [
+"allow",
+""
+],
+"BV311536": [
+"allow",
+""
+],
+"BV311537": [
+"UNDO",
+""
+],
+"BV311538": [
+"allow",
+""
+],
+"BV311539": [
+"allow",
+""
+],
+"BV311540": [
+"allow",
+""
+],
+"BV311541": [
+"allow",
+""
+],
+"BV311542": [
+"allow",
+""
+],
+"BV311543": [
+"allow",
+""
+],
+"BV311544": [
+"allow",
+""
+],
+"BV311545": [
+"allow",
+""
+],
+"BV311546": [
+"allow",
+""
+],
+"BV311547": [
+"allow",
+""
+],
+"BV311548": [
+"allow",
+""
+],
+"BV311549": [
+"allow",
+""
+],
+"BV311550": [
+"allow",
+""
+],
+"BV311551": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311552": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311553": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311554": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311555": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311556": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311557": [
+"allow",
+""
+],
+"BV311558": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311559": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311560": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311561": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311562": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311563": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311564": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311565": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311566": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311567": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311568": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311569": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311570": [
+"DENY",
+"data_loss_guard"
+],
+"BV311571": [
+"DENY",
+"data_loss_guard"
+],
+"BV311572": [
+"DENY",
+"data_loss_guard"
+],
+"BV311573": [
+"DENY",
+"data_loss_guard"
+],
+"BV311574": [
+"DENY",
+"data_loss_guard"
+],
+"BV311575": [
+"DENY",
+"data_loss_guard"
+],
+"BV311576": [
+"DENY",
+"data_loss_guard"
+],
+"BV311577": [
+"allow",
+""
+],
+"BV311578": [
+"DENY",
+"fail_closed"
+],
+"BV311579": [
+"DENY",
+"fail_closed"
+],
+"BV311580": [
+"allow",
+""
+],
+"BV311581": [
+"allow",
+""
+],
+"BV311582": [
+"allow",
+""
+],
+"BV311583": [
+"allow",
+""
+],
+"BV311584": [
+"allow",
+""
+],
+"BV311585": [
+"allow",
+""
+],
+"BV311586": [
+"allow",
+""
+],
+"BV311587": [
+"allow",
+""
+],
+"BV311588": [
+"allow",
+""
+],
+"BV311589": [
+"allow",
+""
+],
+"BV311590": [
+"allow",
+""
+],
+"BV311591": [
+"allow",
+""
+],
+"BV311592": [
+"DENY",
+"fail_closed"
+],
+"BV311593": [
+"UNDO",
+""
+],
+"BV311594": [
+"allow",
+""
+],
+"BV311595": [
+"UNDO",
+""
+],
+"BV311596": [
+"allow",
+""
+],
+"BV311597": [
+"allow",
+""
+],
+"BV311598": [
+"allow",
+""
+],
+"BV311599": [
+"allow",
+""
+],
+"BV311600": [
+"allow",
+""
+],
+"BV311601": [
+"allow",
+""
+],
+"BV311602": [
+"allow",
+""
+],
+"BV311603": [
+"allow",
+""
+],
+"BV311604": [
+"allow",
+""
+],
+"BV311605": [
+"allow",
+""
+],
+"BV311606": [
+"allow",
+""
+],
+"BV311607": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311608": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311609": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311610": [
+"allow",
+""
+],
+"BV311611": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311612": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311613": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311614": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311615": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311616": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311617": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311618": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311619": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311620": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311621": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311622": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311623": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311624": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311625": [
+"allow",
+""
+],
+"BV311626": [
+"allow",
+""
+],
+"BV311627": [
+"DENY",
+"data_loss_guard"
+],
+"BV311628": [
+"DENY",
+"data_loss_guard"
+],
+"BV311629": [
+"DENY",
+"data_loss_guard"
+],
+"BV311630": [
+"DENY",
+"data_loss_guard"
+],
+"BV311631": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311632": [
+"DENY",
+"data_loss_guard"
+],
+"BV311633": [
+"DENY",
+"data_loss_guard"
+],
+"BV311634": [
+"allow",
+""
+],
+"BV311635": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311636": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311637": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311638": [
+"DENY",
+"fail_closed"
+],
+"BV311639": [
+"allow",
+""
+],
+"BV311640": [
+"allow",
+""
+],
+"BV311641": [
+"allow",
+""
+],
+"BV311642": [
+"allow",
+""
+],
+"BV311643": [
+"allow",
+""
+],
+"BV311644": [
+"allow",
+""
+],
+"BV311645": [
+"allow",
+""
+],
+"BV311646": [
+"allow",
+""
+],
+"BV311647": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311648": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311649": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311650": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311651": [
+"DENY",
+"data_loss_guard"
+],
+"BV311652": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311653": [
+"allow",
+""
+],
+"BV311654": [
+"allow",
+""
+],
+"BV311655": [
+"allow",
+""
+],
+"BV311656": [
+"allow",
+""
+],
+"BV311657": [
+"allow",
+""
+],
+"BV311658": [
+"allow",
+""
+],
+"BV311659": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311660": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311661": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311662": [
+"allow",
+""
+],
+"BV311663": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311664": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311665": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311666": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311667": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311668": [
+"UNDO",
+""
+],
+"BV311669": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311670": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311671": [
+"allow",
+""
+],
+"BV311672": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311673": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311674": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311675": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311676": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311677": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311678": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311679": [
+"DENY",
+"data_loss_guard"
+],
+"BV311680": [
+"DENY",
+"data_loss_guard"
+],
+"BV311681": [
+"DENY",
+"data_loss_guard"
+],
+"BV311682": [
+"DENY",
+"data_loss_guard"
+],
+"BV311683": [
+"DENY",
+"data_loss_guard"
+],
+"BV311684": [
+"allow",
+""
+],
+"BV311685": [
+"DENY",
+"fail_closed"
+],
+"BV311686": [
+"allow",
+""
+],
+"BV311687": [
+"allow",
+""
+],
+"BV311688": [
+"allow",
+""
+],
+"BV311689": [
+"allow",
+""
+],
+"BV311690": [
+"DENY",
+"fail_closed"
+],
+"BV311691": [
+"allow",
+""
+],
+"BV311692": [
+"allow",
+""
+],
+"BV311693": [
+"DENY",
+"fail_closed"
+],
+"BV311694": [
+"allow",
+""
+],
+"BV311695": [
+"allow",
+""
+],
+"BV311696": [
+"allow",
+""
+],
+"BV311697": [
+"allow",
+""
+],
+"BV311698": [
+"allow",
+""
+],
+"BV311699": [
+"UNDO",
+""
+],
+"BV311700": [
+"allow",
+""
+],
+"BV311701": [
+"allow",
+""
+],
+"BV311702": [
+"UNDO",
+""
+],
+"BV311703": [
+"allow",
+""
+],
+"BV311704": [
+"UNDO",
+""
+],
+"BV311705": [
+"DENY",
+"data_loss_guard"
+],
+"BV311706": [
+"allow",
+""
+],
+"BV311707": [
+"allow",
+""
+],
+"BV311708": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311709": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311710": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311711": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311712": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311713": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311714": [
+"allow",
+""
+],
+"BV311715": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311716": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311717": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311718": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311719": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311720": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311721": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311722": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311723": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311724": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311725": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311726": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311727": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311728": [
+"allow",
+""
+],
+"BV311729": [
+"DENY",
+"data_loss_guard"
+],
+"BV311730": [
+"DENY",
+"data_loss_guard"
+],
+"BV311731": [
+"DENY",
+"data_loss_guard"
+],
+"BV311732": [
+"DENY",
+"data_loss_guard"
+],
+"BV311733": [
+"DENY",
+"data_loss_guard"
+],
+"BV311734": [
+"DENY",
+"data_loss_guard"
+],
+"BV311735": [
+"DENY",
+"data_loss_guard"
+],
+"BV311736": [
+"DENY",
+"data_loss_guard"
+],
+"BV311737": [
+"DENY",
+"data_loss_guard"
+],
+"BV311738": [
+"DENY",
+"data_loss_guard"
+],
+"BV311739": [
+"DENY",
+"fail_closed"
+],
+"BV311740": [
+"allow",
+""
+],
+"BV311741": [
+"allow",
+""
+],
+"BV311742": [
+"allow",
+""
+],
+"BV311743": [
+"allow",
+""
+],
+"BV311744": [
+"allow",
+""
+],
+"BV311745": [
+"allow",
+""
+],
+"BV311746": [
+"DENY",
+"fail_closed"
+],
+"BV311747": [
+"allow",
+""
+],
+"BV311748": [
+"allow",
+""
+],
+"BV311749": [
+"allow",
+""
+],
+"BV311750": [
+"allow",
+""
+],
+"BV311751": [
+"UNDO",
+""
+],
+"BV311752": [
+"allow",
+""
+],
+"BV311753": [
+"allow",
+""
+],
+"BV311754": [
+"allow",
+""
+],
+"BV311755": [
+"allow",
+""
+],
+"BV311756": [
+"allow",
+""
+],
+"BV311757": [
+"allow",
+""
+],
+"BV311758": [
+"allow",
+""
+],
+"BV311759": [
+"UNDO",
+""
+],
+"BV311760": [
+"allow",
+""
+],
+"BV311761": [
+"allow",
+""
+],
+"BV311762": [
+"allow",
+""
+],
+"BV311763": [
+"allow",
+""
+],
+"BV311764": [
+"allow",
+""
+],
+"BV311765": [
+"allow",
+""
+],
+"BV311766": [
+"allow",
+""
+],
+"BV311767": [
+"allow",
+""
+],
+"BV311768": [
+"allow",
+""
+],
+"BV311769": [
+"allow",
+""
+],
+"BV311770": [
+"allow",
+""
+],
+"BV311771": [
+"DENY",
+"fail_closed"
+],
+"BV311772": [
+"allow",
+""
+],
+"BV311773": [
+"allow",
+""
+],
+"BV311774": [
+"allow",
+""
+],
+"BV311775": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311776": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311777": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311778": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311779": [
+"allow",
+""
+],
+"BV311780": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311781": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311782": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311783": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311784": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311785": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311786": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311787": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311788": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311789": [
+"allow",
+""
+],
+"BV311790": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311791": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311792": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311793": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311794": [
+"DENY",
+"data_loss_guard"
+],
+"BV311795": [
+"DENY",
+"data_loss_guard"
+],
+"BV311796": [
+"DENY",
+"data_loss_guard"
+],
+"BV311797": [
+"DENY",
+"data_loss_guard"
+],
+"BV311798": [
+"DENY",
+"data_loss_guard"
+],
+"BV311799": [
+"allow",
+""
+],
+"BV311800": [
+"allow",
+""
+],
+"BV311801": [
+"allow",
+""
+],
+"BV311802": [
+"allow",
+""
+],
+"BV311803": [
+"allow",
+""
+],
+"BV311804": [
+"allow",
+""
+],
+"BV311805": [
+"allow",
+""
+],
+"BV311806": [
+"allow",
+""
+],
+"BV311807": [
+"allow",
+""
+],
+"BV311808": [
+"allow",
+""
+],
+"BV311809": [
+"allow",
+""
+],
+"BV311810": [
+"allow",
+""
+],
+"BV311811": [
+"allow",
+""
+],
+"BV311812": [
+"allow",
+""
+],
+"BV311813": [
+"allow",
+""
+],
+"BV311814": [
+"allow",
+""
+],
+"BV311815": [
+"allow",
+""
+],
+"BV311816": [
+"allow",
+""
+],
+"BV311817": [
+"allow",
+""
+],
+"BV311818": [
+"allow",
+""
+],
+"BV311819": [
+"allow",
+""
+],
+"BV311820": [
+"allow",
+""
+],
+"BV311821": [
+"allow",
+""
+],
+"BV311822": [
+"allow",
+""
+],
+"BV311823": [
+"allow",
+""
+],
+"BV311824": [
+"allow",
+""
+],
+"BV311825": [
+"allow",
+""
+],
+"BV311826": [
+"allow",
+""
+],
+"BV311827": [
+"UNDO",
+""
+],
+"BV311828": [
+"allow",
+""
+],
+"BV311829": [
+"allow",
+""
+],
+"BV311830": [
+"allow",
+""
+],
+"BV311831": [
+"allow",
+""
+],
+"BV311832": [
+"allow",
+""
+],
+"BV311833": [
+"allow",
+""
+],
+"BV311834": [
+"allow",
+""
+],
+"BV311835": [
+"allow",
+""
+],
+"BV311836": [
+"allow",
+""
+],
+"BV311837": [
+"allow",
+""
+],
+"BV311838": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311839": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311840": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311841": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311842": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311843": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311844": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311845": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311846": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311847": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311848": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311849": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311850": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311851": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311852": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311853": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311854": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311855": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311856": [
+"DENY",
+"data_loss_guard"
+],
+"BV311857": [
+"DENY",
+"data_loss_guard"
+],
+"BV311858": [
+"DENY",
+"data_loss_guard"
+],
+"BV311859": [
+"DENY",
+"data_loss_guard"
+],
+"BV311860": [
+"DENY",
+"data_loss_guard"
+],
+"BV311861": [
+"DENY",
+"data_loss_guard"
+],
+"BV311862": [
+"DENY",
+"data_loss_guard"
+],
+"BV311863": [
+"allow",
+""
+],
+"BV311864": [
+"allow",
+""
+],
+"BV311865": [
+"allow",
+""
+],
+"BV311866": [
+"allow",
+""
+],
+"BV311867": [
+"allow",
+""
+],
+"BV311868": [
+"DENY",
+"fail_closed"
+],
+"BV311869": [
+"DENY",
+"fail_closed"
+],
+"BV311870": [
+"allow",
+""
+],
+"BV311871": [
+"allow",
+""
+],
+"BV311872": [
+"allow",
+""
+],
+"BV311873": [
+"allow",
+""
+],
+"BV311874": [
+"allow",
+""
+],
+"BV311875": [
+"allow",
+""
+],
+"BV311876": [
+"allow",
+""
+],
+"BV311877": [
+"allow",
+""
+],
+"BV311878": [
+"allow",
+""
+],
+"BV311879": [
+"allow",
+""
+],
+"BV311880": [
+"allow",
+""
+],
+"BV311881": [
+"UNDO",
+""
+],
+"BV311882": [
+"UNDO",
+""
+],
+"BV311883": [
+"allow",
+""
+],
+"BV311884": [
+"allow",
+""
+],
+"BV311885": [
+"allow",
+""
+],
+"BV311886": [
+"allow",
+""
+],
+"BV311887": [
+"UNDO",
+""
+],
+"BV311888": [
+"allow",
+""
+],
+"BV311889": [
+"allow",
+""
+],
+"BV311890": [
+"allow",
+""
+],
+"BV311891": [
+"allow",
+""
+],
+"BV311892": [
+"allow",
+""
+],
+"BV311893": [
+"allow",
+""
+],
+"BV311894": [
+"allow",
+""
+],
+"BV311895": [
+"allow",
+""
+],
+"BV311896": [
+"allow",
+""
+],
+"BV311897": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311898": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311899": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311900": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311901": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311902": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311903": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311904": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311905": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311906": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311907": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311908": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311909": [
+"allow",
+""
+],
+"BV311910": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311911": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311912": [
+"DENY",
+"data_loss_guard"
+],
+"BV311913": [
+"DENY",
+"data_loss_guard"
+],
+"BV311914": [
+"DENY",
+"data_loss_guard"
+],
+"BV311915": [
+"DENY",
+"data_loss_guard"
+],
+"BV311916": [
+"DENY",
+"data_loss_guard"
+],
+"BV311917": [
+"DENY",
+"data_loss_guard"
+],
+"BV311918": [
+"DENY",
+"data_loss_guard"
+],
+"BV311919": [
+"allow",
+""
+],
+"BV311920": [
+"allow",
+""
+],
+"BV311921": [
+"allow",
+""
+],
+"BV311922": [
+"allow",
+""
+],
+"BV311923": [
+"DENY",
+"fail_closed"
+],
+"BV311924": [
+"allow",
+""
+],
+"BV311925": [
+"allow",
+""
+],
+"BV311926": [
+"allow",
+""
+],
+"BV311927": [
+"allow",
+""
+],
+"BV311928": [
+"allow",
+""
+],
+"BV311929": [
+"allow",
+""
+],
+"BV311930": [
+"allow",
+""
+],
+"BV311931": [
+"allow",
+""
+],
+"BV311932": [
+"allow",
+""
+],
+"BV311933": [
+"allow",
+""
+],
+"BV311934": [
+"allow",
+""
+],
+"BV311935": [
+"allow",
+""
+],
+"BV311936": [
+"allow",
+""
+],
+"BV311937": [
+"allow",
+""
+],
+"BV311938": [
+"allow",
+""
+],
+"BV311939": [
+"allow",
+""
+],
+"BV311940": [
+"allow",
+""
+],
+"BV311941": [
+"allow",
+""
+],
+"BV311942": [
+"allow",
+""
+],
+"BV311943": [
+"UNDO",
+""
+],
+"BV311944": [
+"allow",
+""
+],
+"BV311945": [
+"allow",
+""
+],
+"BV311946": [
+"allow",
+""
+],
+"BV311947": [
+"allow",
+""
+],
+"BV311948": [
+"allow",
+""
+],
+"BV311949": [
+"allow",
+""
+],
+"BV311950": [
+"allow",
+""
+],
+"BV311951": [
+"allow",
+""
+],
+"BV311952": [
+"allow",
+""
+],
+"BV311953": [
+"allow",
+""
+],
+"BV311954": [
+"allow",
+""
+],
+"BV311955": [
+"allow",
+""
+],
+"BV311956": [
+"allow",
+""
+],
+"BV311957": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311958": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311959": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311960": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311961": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311962": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311963": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311964": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV311965": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311966": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311967": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311968": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311969": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311970": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311971": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311972": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311973": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311974": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV311975": [
+"DENY",
+"data_loss_guard"
+],
+"BV311976": [
+"DENY",
+"data_loss_guard"
+],
+"BV311977": [
+"DENY",
+"data_loss_guard"
+],
+"BV311978": [
+"DENY",
+"data_loss_guard"
+],
+"BV311979": [
+"DENY",
+"data_loss_guard"
+],
+"BV311980": [
+"DENY",
+"data_loss_guard"
+],
+"BV311981": [
+"DENY",
+"data_loss_guard"
+],
+"BV311982": [
+"allow",
+""
+],
+"BV311983": [
+"allow",
+""
+],
+"BV311984": [
+"DENY",
+"fail_closed"
+],
+"BV311985": [
+"allow",
+""
+],
+"BV311986": [
+"DENY",
+"data_loss_guard"
+],
+"BV311987": [
+"allow",
+""
+],
+"BV311988": [
+"allow",
+""
+],
+"BV311989": [
+"allow",
+""
+],
+"BV311990": [
+"allow",
+""
+],
+"BV311991": [
+"allow",
+""
+],
+"BV311992": [
+"allow",
+""
+],
+"BV311993": [
+"allow",
+""
+],
+"BV311994": [
+"allow",
+""
+],
+"BV311995": [
+"allow",
+""
+],
+"BV311996": [
+"allow",
+""
+],
+"BV311997": [
+"allow",
+""
+],
+"BV311998": [
+"allow",
+""
+],
+"BV311999": [
+"allow",
+""
+],
+"BV312000": [
+"allow",
+""
+],
+"BV312001": [
+"allow",
+""
+],
+"BV312002": [
+"allow",
+""
+],
+"BV312003": [
+"allow",
+""
+],
+"BV312004": [
+"allow",
+""
+],
+"BV312005": [
+"UNDO",
+""
+],
+"BV312006": [
+"allow",
+""
+],
+"BV312007": [
+"allow",
+""
+],
+"BV312008": [
+"allow",
+""
+],
+"BV312009": [
+"allow",
+""
+],
+"BV312010": [
+"allow",
+""
+],
+"BV312011": [
+"allow",
+""
+],
+"BV312012": [
+"allow",
+""
+],
+"BV312013": [
+"allow",
+""
+],
+"BV312014": [
+"allow",
+""
+],
+"BV312015": [
+"allow",
+""
+],
+"BV312016": [
+"allow",
+""
+],
+"BV312017": [
+"allow",
+""
+],
+"BV312018": [
+"allow",
+""
+],
+"BV312019": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312020": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312021": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312022": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312023": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312024": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312025": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312026": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312027": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312028": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312029": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312030": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312031": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312032": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312033": [
+"DENY",
+"data_loss_guard"
+],
+"BV312034": [
+"DENY",
+"data_loss_guard"
+],
+"BV312035": [
+"DENY",
+"data_loss_guard"
+],
+"BV312036": [
+"DENY",
+"data_loss_guard"
+],
+"BV312037": [
+"DENY",
+"data_loss_guard"
+],
+"BV312038": [
+"DENY",
+"data_loss_guard"
+],
+"BV312039": [
+"DENY",
+"data_loss_guard"
+],
+"BV312040": [
+"allow",
+""
+],
+"BV312041": [
+"DENY",
+"fail_closed"
+],
+"BV312042": [
+"allow",
+""
+],
+"BV312043": [
+"DENY",
+"fail_closed"
+],
+"BV312044": [
+"allow",
+""
+],
+"BV312045": [
+"allow",
+""
+],
+"BV312046": [
+"allow",
+""
+],
+"BV312047": [
+"allow",
+""
+],
+"BV312048": [
+"allow",
+""
+],
+"BV312049": [
+"allow",
+""
+],
+"BV312050": [
+"allow",
+""
+],
+"BV312051": [
+"UNDO",
+""
+],
+"BV312052": [
+"allow",
+""
+],
+"BV312053": [
+"allow",
+""
+],
+"BV312054": [
+"allow",
+""
+],
+"BV312055": [
+"allow",
+""
+],
+"BV312056": [
+"allow",
+""
+],
+"BV312057": [
+"allow",
+""
+],
+"BV312058": [
+"allow",
+""
+],
+"BV312059": [
+"allow",
+""
+],
+"BV312060": [
+"allow",
+""
+],
+"BV312061": [
+"allow",
+""
+],
+"BV312062": [
+"allow",
+""
+],
+"BV312063": [
+"allow",
+""
+],
+"BV312064": [
+"allow",
+""
+],
+"BV312065": [
+"allow",
+""
+],
+"BV312066": [
+"allow",
+""
+],
+"BV312067": [
+"allow",
+""
+],
+"BV312068": [
+"UNDO",
+""
+],
+"BV312069": [
+"allow",
+""
+],
+"BV312070": [
+"allow",
+""
+],
+"BV312071": [
+"allow",
+""
+],
+"BV312072": [
+"allow",
+""
+],
+"BV312073": [
+"allow",
+""
+],
+"BV312074": [
+"allow",
+""
+],
+"BV312075": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312076": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312077": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312078": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312079": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312080": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312081": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312082": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312083": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312084": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312085": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312086": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312087": [
+"DENY",
+"fail_closed"
+],
+"BV312088": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312089": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312090": [
+"DENY",
+"data_loss_guard"
+],
+"BV312091": [
+"DENY",
+"data_loss_guard"
+],
+"BV312092": [
+"DENY",
+"data_loss_guard"
+],
+"BV312093": [
+"DENY",
+"data_loss_guard"
+],
+"BV312094": [
+"DENY",
+"data_loss_guard"
+],
+"BV312095": [
+"DENY",
+"data_loss_guard"
+],
+"BV312096": [
+"allow",
+""
+],
+"BV312097": [
+"allow",
+""
+],
+"BV312098": [
+"DENY",
+"fail_closed"
+],
+"BV312099": [
+"allow",
+""
+],
+"BV312100": [
+"allow",
+""
+],
+"BV312101": [
+"allow",
+""
+],
+"BV312102": [
+"allow",
+""
+],
+"BV312103": [
+"allow",
+""
+],
+"BV312104": [
+"allow",
+""
+],
+"BV312105": [
+"allow",
+""
+],
+"BV312106": [
+"allow",
+""
+],
+"BV312107": [
+"allow",
+""
+],
+"BV312108": [
+"UNDO",
+""
+],
+"BV312109": [
+"allow",
+""
+],
+"BV312110": [
+"allow",
+""
+],
+"BV312111": [
+"allow",
+""
+],
+"BV312112": [
+"allow",
+""
+],
+"BV312113": [
+"allow",
+""
+],
+"BV312114": [
+"allow",
+""
+],
+"BV312115": [
+"UNDO",
+""
+],
+"BV312116": [
+"allow",
+""
+],
+"BV312117": [
+"allow",
+""
+],
+"BV312118": [
+"allow",
+""
+],
+"BV312119": [
+"allow",
+""
+],
+"BV312120": [
+"allow",
+""
+],
+"BV312121": [
+"allow",
+""
+],
+"BV312122": [
+"allow",
+""
+],
+"BV312123": [
+"allow",
+""
+],
+"BV312124": [
+"allow",
+""
+],
+"BV312125": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312126": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312127": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312128": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312129": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312130": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312131": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312132": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312133": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312134": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312135": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312136": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312137": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312138": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312139": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312140": [
+"DENY",
+"fail_closed"
+],
+"BV312141": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312142": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312143": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312144": [
+"DENY",
+"data_loss_guard"
+],
+"BV312145": [
+"DENY",
+"data_loss_guard"
+],
+"BV312146": [
+"DENY",
+"data_loss_guard"
+],
+"BV312147": [
+"DENY",
+"data_loss_guard"
+],
+"BV312148": [
+"DENY",
+"data_loss_guard"
+],
+"BV312149": [
+"DENY",
+"data_loss_guard"
+],
+"BV312150": [
+"allow",
+""
+],
+"BV312151": [
+"DENY",
+"fail_closed"
+],
+"BV312152": [
+"allow",
+""
+],
+"BV312153": [
+"allow",
+""
+],
+"BV312154": [
+"allow",
+""
+],
+"BV312155": [
+"DENY",
+"fail_closed"
+],
+"BV312156": [
+"allow",
+""
+],
+"BV312157": [
+"allow",
+""
+],
+"BV312158": [
+"allow",
+""
+],
+"BV312159": [
+"allow",
+""
+],
+"BV312160": [
+"allow",
+""
+],
+"BV312161": [
+"allow",
+""
+],
+"BV312162": [
+"allow",
+""
+],
+"BV312163": [
+"allow",
+""
+],
+"BV312164": [
+"allow",
+""
+],
+"BV312165": [
+"allow",
+""
+],
+"BV312166": [
+"allow",
+""
+],
+"BV312167": [
+"allow",
+""
+],
+"BV312168": [
+"UNDO",
+""
+],
+"BV312169": [
+"allow",
+""
+],
+"BV312170": [
+"allow",
+""
+],
+"BV312171": [
+"allow",
+""
+],
+"BV312172": [
+"UNDO",
+""
+],
+"BV312173": [
+"allow",
+""
+],
+"BV312174": [
+"allow",
+""
+],
+"BV312175": [
+"allow",
+""
+],
+"BV312176": [
+"allow",
+""
+],
+"BV312177": [
+"allow",
+""
+],
+"BV312178": [
+"allow",
+""
+],
+"BV312179": [
+"allow",
+""
+],
+"BV312180": [
+"allow",
+""
+],
+"BV312181": [
+"allow",
+""
+],
+"BV312182": [
+"allow",
+""
+],
+"BV312183": [
+"allow",
+""
+],
+"BV312184": [
+"allow",
+""
+],
+"BV312185": [
+"allow",
+""
+],
+"BV312186": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312187": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312188": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312189": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312190": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312191": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312192": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312193": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312194": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312195": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312196": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312197": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312198": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312199": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312200": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312201": [
+"DENY",
+"fail_closed"
+],
+"BV312202": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312203": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312204": [
+"DENY",
+"data_loss_guard"
+],
+"BV312205": [
+"DENY",
+"data_loss_guard"
+],
+"BV312206": [
+"DENY",
+"data_loss_guard"
+],
+"BV312207": [
+"DENY",
+"data_loss_guard"
+],
+"BV312208": [
+"DENY",
+"data_loss_guard"
+],
+"BV312209": [
+"DENY",
+"data_loss_guard"
+],
+"BV312210": [
+"allow",
+""
+],
+"BV312211": [
+"allow",
+""
+],
+"BV312212": [
+"DENY",
+"fail_closed"
+],
+"BV312213": [
+"allow",
+""
+],
+"BV312214": [
+"allow",
+""
+],
+"BV312215": [
+"allow",
+""
+],
+"BV312216": [
+"allow",
+""
+],
+"BV312217": [
+"allow",
+""
+],
+"BV312218": [
+"allow",
+""
+],
+"BV312219": [
+"allow",
+""
+],
+"BV312220": [
+"allow",
+""
+],
+"BV312221": [
+"allow",
+""
+],
+"BV312222": [
+"allow",
+""
+],
+"BV312223": [
+"allow",
+""
+],
+"BV312224": [
+"allow",
+""
+],
+"BV312225": [
+"allow",
+""
+],
+"BV312226": [
+"allow",
+""
+],
+"BV312227": [
+"allow",
+""
+],
+"BV312228": [
+"UNDO",
+""
+],
+"BV312229": [
+"allow",
+""
+],
+"BV312230": [
+"allow",
+""
+],
+"BV312231": [
+"allow",
+""
+],
+"BV312232": [
+"allow",
+""
+],
+"BV312233": [
+"allow",
+""
+],
+"BV312234": [
+"allow",
+""
+],
+"BV312235": [
+"allow",
+""
+],
+"BV312236": [
+"allow",
+""
+],
+"BV312237": [
+"allow",
+""
+],
+"BV312238": [
+"allow",
+""
+],
+"BV312239": [
+"allow",
+""
+],
+"BV312240": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312241": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312242": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312243": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312244": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312245": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312246": [
+"allow",
+""
+],
+"BV312247": [
+"allow",
+""
+],
+"BV312248": [
+"UNDO",
+""
+],
+"BV312249": [
+"allow",
+""
+],
+"BV312250": [
+"UNDO",
+""
+],
+"BV312251": [
+"allow",
+""
+],
+"BV312252": [
+"allow",
+""
+],
+"BV312253": [
+"allow",
+""
+],
+"BV312254": [
+"allow",
+""
+],
+"BV312255": [
+"allow",
+""
+],
+"BV312256": [
+"allow",
+""
+],
+"BV312257": [
+"allow",
+""
+],
+"BV312258": [
+"allow",
+""
+],
+"BV312259": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312260": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312261": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312262": [
+"allow",
+""
+],
+"BV312263": [
+"allow",
+""
+],
+"BV312264": [
+"allow",
+""
+],
+"BV312265": [
+"allow",
+""
+],
+"BV312266": [
+"UNDO",
+""
+],
+"BV312267": [
+"allow",
+""
+],
+"BV312268": [
+"allow",
+""
+],
+"BV312269": [
+"allow",
+""
+],
+"BV312270": [
+"allow",
+""
+],
+"BV312271": [
+"allow",
+""
+],
+"BV312272": [
+"allow",
+""
+],
+"BV312273": [
+"allow",
+""
+],
+"BV312274": [
+"allow",
+""
+],
+"BV312275": [
+"allow",
+""
+],
+"BV312276": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312277": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312278": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312279": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312280": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312281": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312282": [
+"DENY",
+"fail_closed"
+],
+"BV312283": [
+"allow",
+""
+],
+"BV312284": [
+"allow",
+""
+],
+"BV312285": [
+"allow",
+""
+],
+"BV312286": [
+"allow",
+""
+],
+"BV312287": [
+"allow",
+""
+],
+"BV312288": [
+"DENY",
+"fail_closed"
+],
+"BV312289": [
+"allow",
+""
+],
+"BV312290": [
+"allow",
+""
+],
+"BV312291": [
+"allow",
+""
+],
+"BV312292": [
+"UNDO",
+""
+],
+"BV312293": [
+"allow",
+""
+],
+"BV312294": [
+"allow",
+""
+],
+"BV312295": [
+"allow",
+""
+],
+"BV312296": [
+"allow",
+""
+],
+"BV312297": [
+"allow",
+""
+],
+"BV312298": [
+"allow",
+""
+],
+"BV312299": [
+"allow",
+""
+],
+"BV312300": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312301": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312302": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312303": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312304": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312305": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312306": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312307": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312308": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312309": [
+"DENY",
+"fail_closed"
+],
+"BV312310": [
+"allow",
+""
+],
+"BV312311": [
+"allow",
+""
+],
+"BV312312": [
+"allow",
+""
+],
+"BV312313": [
+"allow",
+""
+],
+"BV312314": [
+"UNDO",
+""
+],
+"BV312315": [
+"allow",
+""
+],
+"BV312316": [
+"allow",
+""
+],
+"BV312317": [
+"allow",
+""
+],
+"BV312318": [
+"allow",
+""
+],
+"BV312319": [
+"UNDO",
+""
+],
+"BV312320": [
+"UNDO",
+""
+],
+"BV312321": [
+"allow",
+""
+],
+"BV312322": [
+"allow",
+""
+],
+"BV312323": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312324": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312325": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312326": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312327": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312328": [
+"DENY",
+"data_loss_guard"
+],
+"BV312329": [
+"DENY",
+"fail_closed"
+],
+"BV312330": [
+"allow",
+""
+],
+"BV312331": [
+"allow",
+""
+],
+"BV312332": [
+"allow",
+""
+],
+"BV312333": [
+"allow",
+""
+],
+"BV312334": [
+"allow",
+""
+],
+"BV312335": [
+"allow",
+""
+],
+"BV312336": [
+"allow",
+""
+],
+"BV312337": [
+"allow",
+""
+],
+"BV312338": [
+"allow",
+""
+],
+"BV312339": [
+"DENY",
+"fail_closed"
+],
+"BV312340": [
+"allow",
+""
+],
+"BV312341": [
+"UNDO",
+""
+],
+"BV312342": [
+"allow",
+""
+],
+"BV312343": [
+"allow",
+""
+],
+"BV312344": [
+"allow",
+""
+],
+"BV312345": [
+"allow",
+""
+],
+"BV312346": [
+"allow",
+""
+],
+"BV312347": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312348": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312349": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312350": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312351": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312352": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312353": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312354": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312355": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312356": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312357": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312358": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312359": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312360": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312361": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312362": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312363": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312364": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312365": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312366": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312367": [
+"DENY",
+"data_loss_guard"
+],
+"BV312368": [
+"DENY",
+"data_loss_guard"
+],
+"BV312369": [
+"DENY",
+"data_loss_guard"
+],
+"BV312370": [
+"DENY",
+"data_loss_guard"
+],
+"BV312371": [
+"DENY",
+"data_loss_guard"
+],
+"BV312372": [
+"DENY",
+"data_loss_guard"
+],
+"BV312373": [
+"DENY",
+"data_loss_guard"
+],
+"BV312374": [
+"DENY",
+"data_loss_guard"
+],
+"BV312375": [
+"allow",
+""
+],
+"BV312376": [
+"allow",
+""
+],
+"BV312377": [
+"DENY",
+"fail_closed"
+],
+"BV312378": [
+"allow",
+""
+],
+"BV312379": [
+"DENY",
+"fail_closed"
+],
+"BV312380": [
+"allow",
+""
+],
+"BV312381": [
+"allow",
+""
+],
+"BV312382": [
+"allow",
+""
+],
+"BV312383": [
+"allow",
+""
+],
+"BV312384": [
+"allow",
+""
+],
+"BV312385": [
+"allow",
+""
+],
+"BV312386": [
+"allow",
+""
+],
+"BV312387": [
+"allow",
+""
+],
+"BV312388": [
+"allow",
+""
+],
+"BV312389": [
+"DENY",
+"fail_closed"
+],
+"BV312390": [
+"allow",
+""
+],
+"BV312391": [
+"allow",
+""
+],
+"BV312392": [
+"allow",
+""
+],
+"BV312393": [
+"allow",
+""
+],
+"BV312394": [
+"allow",
+""
+],
+"BV312395": [
+"allow",
+""
+],
+"BV312396": [
+"allow",
+""
+],
+"BV312397": [
+"allow",
+""
+],
+"BV312398": [
+"allow",
+""
+],
+"BV312399": [
+"UNDO",
+""
+],
+"BV312400": [
+"allow",
+""
+],
+"BV312401": [
+"allow",
+""
+],
+"BV312402": [
+"allow",
+""
+],
+"BV312403": [
+"allow",
+""
+],
+"BV312404": [
+"allow",
+""
+],
+"BV312405": [
+"allow",
+""
+],
+"BV312406": [
+"allow",
+""
+],
+"BV312407": [
+"allow",
+""
+],
+"BV312408": [
+"allow",
+""
+],
+"BV312409": [
+"allow",
+""
+],
+"BV312410": [
+"allow",
+""
+],
+"BV312411": [
+"allow",
+""
+],
+"BV312412": [
+"allow",
+""
+],
+"BV312413": [
+"allow",
+""
+],
+"BV312414": [
+"allow",
+""
+],
+"BV312415": [
+"DENY",
+"blanket_stage_guard"
+],
+"BV312416": [
+"DENY",
+"hook_bypass_guard"
+],
+"BV312417": [
+"DENY",
+"data_loss_guard"
+],
+"BV312418": [
+"DENY",
+"fail_closed"
+],
+"BV312419": [
+"allow",
+""
+],
+"BV312420": [
+"allow",
+""
+],
+"BV312421": [
+"UNDO",
+""
+],
+"BV312422": [
+"allow",
+""
+],
+"BV312423": [
+"allow",
+""
+],
+"BV312424": [
+"allow",
+""
+],
+"BV312425": [
+"allow",
+""
+],
+"BV312426": [
+"allow",
+""
+],
+"BV312427": [
+"allow",
+""
+],
+"BV312428": [
+"allow",
+""
+],
+"BV312429": [
+"allow",
+""
+]
+}
+}

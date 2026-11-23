@@ -20,7 +20,7 @@ Nothing in it depends on the machine: no path, no timestamp, no version.
 Blind to: how the picture looks in a viewer whose monospace font is wider than 0.6 em (a line could run past the right
 edge; the canvas has margin for Menlo, Consolas, DejaVu Sans Mono and Courier); a guard answer this machine does not
 give (the proof is Python 3.14 on macOS; --check is the check on any other); the other commands the guard denies (it
-shows three and a control, not the 98.3%); and whether the picture reads well, which only a person looking at it can say.
+shows three and a control, not the headline rate); and whether the picture reads well, which only a person looking at it can say.
 """
 import json
 import os

@@ -8,24 +8,24 @@
 
 ## What each kind did on blind_v20
 
-The same 3,300 commands as the README's table (1,717 dangerous, 1,583 safe), run through `guard.py` (v26d, so seen, not blind; the page was written at v22, and its table was re-counted at v26d on 2026-11-20) with the undo layer off, the judge unset and the root pinned to `/work/repo`. `python3 tools/verdict_check.py --self-test` recomputes this table and fails if it drifts from this page or from `results/NUMBERS.json`.
+The same 3,300 commands as the README's table (1,717 dangerous, 1,583 safe), run through `guard.py` (v30, so seen, not blind; the page was written at v22, and its table was re-counted at v26d on 2026-11-20 and at v30 on 2026-11-22) with the undo layer off, the judge unset and the root pinned to `/work/repo`. `python3 tools/verdict_check.py --self-test` recomputes this table and fails if it drifts from this page or from `results/NUMBERS.json`.
 
 | Kind | Dangerous commands | Safe commands |
 |---|---:|---:|
-| Floor: denied | 1,638 | 20 |
-| Reflex: denied | 51 | 13 |
-| Finish: allowed on an undo point | 8 | 110 |
-| Plain allow | 20 | 1,440 |
+| Floor: denied | 1,667 | 18 |
+| Reflex: denied | 24 | 13 |
+| Finish: allowed on an undo point | 8 | 111 |
+| Plain allow | 18 | 1,441 |
 
-The deny rows add up to the README's 1,689 of 1,717 dangerous and 33 of 1,583 safe; the 20 plain allows are its misses.
+The deny rows add up to the README's 1,691 of 1,717 dangerous and 31 of 1,583 safe; the 18 plain allows are its misses.
 
 ## The three profiles the steal named, and what each would need
 
 **`standard` (the default).** Today's behaviour, byte for byte. It needs no code: it is the absence of the setting.
 
-**`strict`: deny Finish too.** This one maps onto existing code. When the hook cannot take an undo point it already denies with the `fallback` reason that `decide_full` carries on every recoverable allow. Strict would take that branch always. At the default nothing changes. The cost is on the table above: 8 more dangerous commands denied and 110 more safe ones wrongly denied, so safe commands wrongly denied would go from 33 to 143 of 1,583 (2.1% to 9.0%). That is the opposite of what the steal wanted the setting for.
+**`strict`: deny Finish too.** This one maps onto existing code. When the hook cannot take an undo point it already denies with the `fallback` reason that `decide_full` carries on every recoverable allow. Strict would take that branch always. At the default nothing changes. The cost is on the table above: 8 more dangerous commands denied and 111 more safe ones wrongly denied, so safe commands wrongly denied would go from 31 to 142 of 1,583 (2.0% to 9.0%). That is the opposite of what the steal wanted the setting for.
 
-**`minimal`: Floor only.** This is the setting that answers "it blocked me too often", and it is new behaviour. Reflex exists because an undo point cannot take the command back, so letting it through means letting through something that cannot be undone. Dropping Reflex would remove 13 of the 33 false blocks and let 51 more dangerous commands through, so the misses would go from 20 to 71. Whether that trade is right is a ruling, not a naming job. It also needs a guard version of its own, because `guard.py` v22 is checked against v21 plus one named change (`tools/v22_check.py`), and any new version has to be scored on a blind set that does not exist yet (v21 and v22 have none).
+**`minimal`: Floor only.** This is the setting that answers "it blocked me too often", and it is new behaviour. Reflex exists because an undo point cannot take the command back, so letting it through means letting through something that cannot be undone. Dropping Reflex would remove 13 of the 31 false blocks and let 24 more dangerous commands through, so the misses would go from 18 to 42. Whether that trade is right is a ruling, not a naming job. It also needs a guard version of its own, because `guard.py` v22 is checked against v21 plus one named change (`tools/v22_check.py`), and any new version has to be scored on a blind set that does not exist yet (v21 and v22 have none).
 
 ## What building it would take
 
@@ -36,4 +36,4 @@ The deny rows add up to the README's 1,689 of 1,717 dangerous and 33 of 1,583 sa
 
 ## Recommendation
 
-Do not build `minimal`. The 13 Reflex false blocks are the lever: each is a safe command the guard denied because part of it could not be read and an undo point cannot take that part back, and fixing a class at a time is what v14 to v22 did. A dial would hide those 13 behind a setting, and would let 51 dangerous commands through to do it. If a user-facing way to relax the guard is wanted anyway, it is a decision for the owner of the repo, made with the table above in front of him.
+Do not build `minimal`. The 13 Reflex false blocks are the lever: each is a safe command the guard denied because part of it could not be read and an undo point cannot take that part back, and fixing a class at a time is what v14 to v22 did. A dial would hide those 13 behind a setting, and would let 24 dangerous commands through to do it. If a user-facing way to relax the guard is wanted anyway, it is a decision for the owner of the repo, made with the table above in front of him.

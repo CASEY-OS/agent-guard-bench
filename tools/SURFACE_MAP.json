@@ -1026,6 +1026,10 @@
     "versions.lead.missed",
     "versions.lead.safe_denied",
     "versions.lead.safe"
+   ],
+   "scope": [
+    "## The blind result: blind_v20",
+    "## The sealed blind result: blind_v31"
    ]
   },
   {
@@ -1185,7 +1189,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v26d, the version the plugin runs \\(seen, not blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "pattern": "\\| agent-guard v30, the version the plugin runs \\(seen, not blind on this set\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
    "keys": [
     "versions.current.denied",
     "versions.current.denied@denominator",
@@ -1196,7 +1200,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v26d, the version the plugin runs \\(seen, not blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "pattern": "\\| agent-guard v30, the version the plugin runs \\(seen, not blind on this set\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
    "keys": [
     "versions.current.denied",
     "versions.current.safe_denied"
@@ -1225,7 +1229,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v20, the last version scored blind \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "pattern": "\\| agent-guard v20, the version scored blind on this set \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
    "keys": [
     "versions.lead.denied",
     "versions.lead.denied@denominator",
@@ -1236,7 +1240,7 @@
   },
   {
    "file": "README.md",
-   "pattern": "\\| agent-guard v20, the last version scored blind \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "pattern": "\\| agent-guard v20, the version scored blind on this set \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
    "keys": [
     "versions.lead.denied",
     "versions.lead.safe_denied"
@@ -1282,9 +1286,9 @@
   },
   {
    "file": "README.md",
-   "pattern": "agent-guard blocks ([0-9.]+)% of those commands before they run",
+   "pattern": "agent-guard blocks ([0-9.]+)% of those commands before they run \\(v30, scored blind on blind_v31\\)",
    "keys": [
-    "versions.lead.denied"
+    "blind_v31.guards.v30.denied"
    ],
    "type": "pct"
   },
@@ -1304,52 +1308,6 @@
     "1",
     "1"
    ]
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "on blind_v20, ([0-9,]+) commands that AI models",
-   "keys": [
-    "versions.lead.cases"
-   ]
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "version (\\d+) of the guard denied",
-   "keys": [
-    "versions.lead.version"
-   ]
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "denied ([0-9,]+) of ([0-9,]+) dangerous commands \\([0-9.]+%\\)",
-   "keys": [
-    "versions.lead.denied",
-    "versions.lead.denied@denominator"
-   ]
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "dangerous commands \\(([0-9.]+)%\\)",
-   "keys": [
-    "versions.lead.denied"
-   ],
-   "type": "pct"
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "wrongly denied ([0-9,]+) of ([0-9,]+) safe ones \\([0-9.]+%\\)",
-   "keys": [
-    "versions.lead.safe_denied",
-    "versions.lead.safe_denied@denominator"
-   ]
-  },
-  {
-   "file": "llms.txt",
-   "pattern": "safe ones \\(([0-9.]+)%\\)",
-   "keys": [
-    "versions.lead.safe_denied"
-   ],
-   "type": "pct"
   },
   {
    "file": "llms.txt",
@@ -1373,36 +1331,6 @@
     "5",
     "1",
     "1"
-   ]
-  },
-  {
-   "file": "docs/install.md",
-   "pattern": "denied ([0-9.]+)% of [0-9,]+ dangerous commands",
-   "keys": [
-    "versions.lead.denied"
-   ],
-   "type": "pct"
-  },
-  {
-   "file": "docs/install.md",
-   "pattern": "denied [0-9.]+% of ([0-9,]+) dangerous commands",
-   "keys": [
-    "versions.lead.bad"
-   ]
-  },
-  {
-   "file": "docs/install.md",
-   "pattern": "wrongly denied ([0-9.]+)% of [0-9,]+ safe ones",
-   "keys": [
-    "versions.lead.safe_denied"
-   ],
-   "type": "pct"
-  },
-  {
-   "file": "docs/install.md",
-   "pattern": "wrongly denied [0-9.]+% of ([0-9,]+) safe ones",
-   "keys": [
-    "versions.lead.safe"
    ]
   },
   {
@@ -1446,11 +1374,500 @@
    "type": "text"
   },
   {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v26d, the version before v30 \\(seen, not blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) \\|",
+   "keys": [
+    "versions.guards.v26d.sets.blind_v20.denied",
+    "versions.guards.v26d.sets.blind_v20.bad",
+    "versions.guards.v26d.sets.blind_v20.safe_denied",
+    "versions.guards.v26d.sets.blind_v20.safe",
+    "versions.guards.v26d.sets.blind_v20.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v26d, the version before v30 \\(seen, not blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "versions.guards.v26d.sets.blind_v20.denied",
+    "versions.guards.v26d.sets.blind_v20.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| No guard, blind_v31 \\| (\\d+) of [0-9,]+ \\| (\\d+) of [0-9,]+ \\|",
+   "keys": [
+    "no guard, dangerous denied: variants/no_guard.py allows every command, so 0 by construction",
+    "no guard, safe wrongly denied: variants/no_guard.py allows every command, so 0 by construction"
+   ],
+   "type": "const",
+   "expect": [
+    "0",
+    "0"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| No guard, blind_v31 \\| \\d+ of ([0-9,]+) \\| \\d+ of ([0-9,]+) \\| ([0-9,]+) \\|",
+   "keys": [
+    "blind_v31.set.bad",
+    "blind_v31.set.safe",
+    "blind_v31.set.bad"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v30, the version the plugin runs \\(blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\|",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.denied@denominator",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied@denominator",
+    "blind_v31.guards.v30.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v30, the version the plugin runs \\(blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v20, the version this README used to lead with \\(blind\\) \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| (\\d+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) \\|",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.denied@denominator",
+    "blind_v31.guards.v20.safe_denied",
+    "blind_v31.guards.v20.safe_denied@denominator",
+    "blind_v31.guards.v20.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| agent-guard v20, the version this README used to lead with \\(blind\\) \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) \\| \\d+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "The result on `blind_v31`, ([0-9,]+) commands that AI models from eight other companies wrote",
+   "keys": [
+    "blind_v31.set.cases"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v30's interval on the dangerous commands \\(Wilson 95%\\) is ([0-9.]+) to ([0-9.]+)\\.",
+   "keys": [
+    "blind_v31.guards.v30.denied_wilson95_low_pct",
+    "blind_v31.guards.v30.denied_wilson95_high_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "The interval contains ([0-9.]+), the rate v20 got on blind_v20",
+   "keys": [
+    "blind_v31.compared_with_earlier_headline.earlier_headline_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "so this is \"([a-z ]+)\", not \"proven better\"",
+   "keys": [
+    "blind_v31.compared_with_earlier_headline.reading"
+   ],
+   "type": "text"
+  },
+  {
+   "file": "README.md",
+   "pattern": "On fresh commands v20 falls to ([0-9.]+)%",
+   "keys": [
+    "blind_v31.guards.v20.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": ": ([0-9,]+) of its ([0-9,]+) misses are deletes of the home folder, keys or system folders",
+   "keys": [
+    "blind_v31.guards.v20.missed_by_policy.D",
+    "blind_v31.guards.v20.missed"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v30 misses (\\d+) and wrongly denies (\\d+) of ([0-9,]+) safe commands; v20 wrongly denies (\\d+)",
+   "keys": [
+    "blind_v31.guards.v30.missed",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied@denominator",
+    "blind_v31.guards.v20.safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "where v20's ([0-9.]+)% comes from:",
+   "keys": [
+    "versions.lead.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "on blind_v31: ([0-9,]+) commands \\(([0-9,]+) dangerous, ([0-9,]+) safe\\) that free models from eight",
+   "keys": [
+    "blind_v31.set.cases",
+    "blind_v31.set.bad",
+    "blind_v31.set.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\*\\*The result\\.\\*\\* v30 denied ([0-9,]+) of the ([0-9,]+) dangerous commands \\([0-9.]+%, Wilson 95% interval ([0-9.]+) to ([0-9.]+)\\) and wrongly denied (\\d+) of the ([0-9,]+) safe ones \\([0-9.]+%, interval ([0-9.]+) to ([0-9.]+)\\)",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.denied@denominator",
+    "blind_v31.guards.v30.denied_wilson95_low_pct",
+    "blind_v31.guards.v30.denied_wilson95_high_pct",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied@denominator",
+    "blind_v31.guards.v30.safe_denied_wilson95_low_pct",
+    "blind_v31.guards.v30.safe_denied_wilson95_high_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\*\\*The result\\.\\*\\* v30 denied [0-9,]+ of the [0-9,]+ dangerous commands \\(([0-9.]+)%, Wilson",
+   "keys": [
+    "blind_v31.guards.v30.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "safe ones \\(([0-9.]+)%, interval [0-9.]+ to [0-9.]+\\)\\. v20 denied",
+   "keys": [
+    "blind_v31.guards.v30.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "v20 denied ([0-9,]+) \\([0-9.]+%, interval ([0-9.]+) to ([0-9.]+)\\) and wrongly denied (\\d+) \\([0-9.]+%\\)\\. v30's interval",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.denied_wilson95_low_pct",
+    "blind_v31.guards.v20.denied_wilson95_high_pct",
+    "blind_v31.guards.v20.safe_denied"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "v20 denied [0-9,]+ \\(([0-9.]+)%, interval [0-9.]+ to [0-9.]+\\) and wrongly denied \\d+ \\(([0-9.]+)%\\)\\. v30's interval",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "v30's interval\\s+contains ([0-9.]+), the rate v20 got on blind_v20",
+   "keys": [
+    "blind_v31.compared_with_earlier_headline.earlier_headline_pct"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\*\\*Where v30 misses\\.\\*\\* (\\d+) dangerous commands ran with no undo point: (\\d+) in the delete policy \\([^)]*\\), (\\d+) in the hooks policy, (\\d+) in staging and (\\d+) in lost work\\. (\\d+) of the (\\d+) sit on cases the labelers disputed and the outside tiebreak decided; (\\d+) sit on unanimous labels\\. Of its (\\d+) false stops, (\\d+) sit on tiebreak cases and (\\d+) on unanimous labels",
+   "keys": [
+    "blind_v31.guards.v30.missed",
+    "blind_v31.guards.v30.missed_by_policy.D",
+    "blind_v31.guards.v30.missed_by_policy.B",
+    "blind_v31.guards.v30.missed_by_policy.A",
+    "blind_v31.guards.v30.missed_by_policy.C",
+    "blind_v31.guards.v30.missed_by_route.outside_majority",
+    "blind_v31.guards.v30.missed",
+    "blind_v31.guards.v30.missed_by_route.unanimous",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied_by_route.outside_majority",
+    "blind_v31.guards.v30.safe_denied_by_route.unanimous"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v30 \\| built 11-21 [^|]*\\| blind_v31 \\(([0-9,]+)\\), blind \\| ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) \\| ([0-9,]+) of ([0-9,]+) \\|",
+   "keys": [
+    "blind_v31.set.cases",
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.bad",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\| v30 \\| built 11-21 [^|]*\\| blind_v31 \\([0-9,]+\\), blind \\| [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v30.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "On blind_v31 v30 wrongly denies (\\d+) safe commands against v20's (\\d+)\\. On blind_v20, a set it was built after, it denies (\\d+) of ([0-9,]+) safe commands against v26d's (\\d+)",
+   "keys": [
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v20.safe_denied",
+    "versions.current.safe_denied",
+    "versions.current.safe_denied@denominator",
+    "versions.guards.v26d.sets.blind_v20.safe_denied"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "Result: on blind_v31, ([0-9,]+) commands that AI models",
+   "keys": [
+    "blind_v31.set.cases"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "version (\\d+) of the guard \\(the version the plugin runs\\) denied",
+   "keys": [
+    "guard.version"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "denied ([0-9,]+) of ([0-9,]+) dangerous commands \\([0-9.]+%\\)",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.denied@denominator"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "dangerous commands \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v30.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "wrongly denied ([0-9,]+) of ([0-9,]+) safe ones \\([0-9.]+%\\)",
+   "keys": [
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied@denominator"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "safe ones \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v30.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "[Vv]ersion 20, the version this README used to lead with, denied ([0-9.]+)% on the earlier set blind_v20",
+   "keys": [
+    "versions.lead.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "and ([0-9,]+) of ([0-9,]+) \\([0-9.]+%\\) on blind_v31",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.denied@denominator"
+   ]
+  },
+  {
+   "file": "llms.txt",
+   "pattern": "and [0-9,]+ of [0-9,]+ \\(([0-9.]+)%\\) on blind_v31",
+   "keys": [
+    "blind_v31.guards.v20.denied"
+   ],
+   "type": "pct"
+  },
+  {
    "file": "llms.txt",
    "pattern": "\\(([0-9,]+) dangerous denied, ([0-9,]+) safe wrongly denied\\)",
    "keys": [
     "versions.current.denied",
     "versions.current.safe_denied"
+   ]
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "denied ([0-9.]+)% of [0-9,]+ dangerous commands",
+   "keys": [
+    "blind_v31.guards.v30.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "denied [0-9.]+% of ([0-9,]+) dangerous commands",
+   "keys": [
+    "blind_v31.guards.v30.bad"
+   ]
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "wrongly denied ([0-9.]+)% of [0-9,]+ safe ones",
+   "keys": [
+    "blind_v31.guards.v30.safe_denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "docs/install.md",
+   "pattern": "wrongly denied [0-9.]+% of ([0-9,]+) safe ones",
+   "keys": [
+    "blind_v31.guards.v30.safe"
+   ]
+  },
+  {
+   "file": "results/SUMMARY.md",
+   "scope": [
+    "## The sealed blind result: blind_v31",
+    "## The earlier blind result"
+   ],
+   "pattern": "\\| v30 \\| (\\d+) of (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) of (\\d+) \\| ([0-9.]+) to ([0-9.]+) \\|",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.bad",
+    "blind_v31.guards.v30.undo",
+    "blind_v31.guards.v30.missed",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe",
+    "blind_v31.guards.v30.denied_wilson95_low_pct",
+    "blind_v31.guards.v30.denied_wilson95_high_pct"
+   ]
+  },
+  {
+   "file": "results/SUMMARY.md",
+   "scope": [
+    "## The sealed blind result: blind_v31",
+    "## The earlier blind result"
+   ],
+   "pattern": "\\| v20 \\| (\\d+) of (\\d+) \\| (\\d+) \\| (\\d+) \\| (\\d+) of (\\d+) \\| ([0-9.]+) to ([0-9.]+) \\|",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.bad",
+    "blind_v31.guards.v20.undo",
+    "blind_v31.guards.v20.missed",
+    "blind_v31.guards.v20.safe_denied",
+    "blind_v31.guards.v20.safe",
+    "blind_v31.guards.v20.denied_wilson95_low_pct",
+    "blind_v31.guards.v20.denied_wilson95_high_pct"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "v30 denied ([0-9,]+) of the ([0-9,]+) dangerous commands \\([0-9.]+%, Wilson 95% interval ([0-9.]+) to ([0-9.]+)\\) and wrongly denied (\\d+) of the ([0-9,]+) safe ones",
+   "keys": [
+    "blind_v31.guards.v30.denied",
+    "blind_v31.guards.v30.denied@denominator",
+    "blind_v31.guards.v30.denied_wilson95_low_pct",
+    "blind_v31.guards.v30.denied_wilson95_high_pct",
+    "blind_v31.guards.v30.safe_denied",
+    "blind_v31.guards.v30.safe_denied@denominator"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "v30 denied [0-9,]+ of the [0-9,]+ dangerous commands \\(([0-9.]+)%",
+   "keys": [
+    "blind_v31.guards.v30.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "v20 denied ([0-9,]+) of the ([0-9,]+) \\([0-9.]+%\\) and wrongly denied (\\d+)",
+   "keys": [
+    "blind_v31.guards.v20.denied",
+    "blind_v31.guards.v20.denied@denominator",
+    "blind_v31.guards.v20.safe_denied"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "v20 denied [0-9,]+ of the [0-9,]+ \\(([0-9.]+)%\\)",
+   "keys": [
+    "blind_v31.guards.v20.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "\\(sha256 08bf8c61, ([0-9,]+) lines\\)",
+   "keys": [
+    "guard.lines"
+   ]
+  },
+  {
+   "file": "CHANGELOG.md",
+   "scope": [
+    "## 2026-11-22: version 30",
+    "## 2026-11-20: version 26d"
+   ],
+   "pattern": "On blind_v20, where v30 is seen, not blind, it denies ([0-9,]+) of ([0-9,]+) dangerous commands and wrongly denies (\\d+) of ([0-9,]+) safe ones",
+   "keys": [
+    "versions.current.denied",
+    "versions.current.denied@denominator",
+    "versions.current.safe_denied",
+    "versions.current.safe_denied@denominator"
+   ]
+  },
+  {
+   "file": "README.md",
+   "pattern": "\\*\\*What v20's fall says\\.\\*\\* v20 denied ([0-9.]+)% on blind_v20 and ([0-9.]+)% on blind_v31\\.",
+   "keys": [
+    "versions.lead.denied",
+    "blind_v31.guards.v20.denied"
+   ],
+   "type": "pct"
+  },
+  {
+   "file": "README.md",
+   "pattern": "on blind_v31\\. (\\d+) of its (\\d+) misses on blind_v31 are the delete policy",
+   "keys": [
+    "blind_v31.guards.v20.missed_by_policy.D",
+    "blind_v31.guards.v20.missed"
    ]
   }
  ]

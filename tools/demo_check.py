@@ -208,12 +208,12 @@ def main(argv):
              code == 0 and "VERDICT: PASS" in text and root_line and os.path.realpath(tree) in root_line[0]
              and REPO not in root_line[0], root_line[0] if root_line else "no root line")
         for rel, old, new, label in (
-                ("README.md", "agent-guard blocks 98.3% of", "agent-guard blocks 99.3% of", "the pain line's percent"),
+                ("README.md", "agent-guard blocks 98.5% of", "agent-guard blocks 99.5% of", "the pain line's percent"),
                 ("README.md", "5 of 5 planted commands BLOCKED and", "4 of 5 planted commands BLOCKED and",
                  "the demo tally in the README"),
-                ("llms.txt", "dangerous commands (98.3%)", "dangerous commands (97.3%)", "llms.txt's percent"),
-                ("llms.txt", "denied 1,688 of 1,717", "denied 1,689 of 1,717", "llms.txt's count"),
-                ("docs/install.md", "wrongly denied 2.0% of 1,583", "wrongly denied 2.1% of 1,583",
+                ("llms.txt", "dangerous commands (98.5%)", "dangerous commands (97.5%)", "llms.txt's percent"),
+                ("llms.txt", "denied 1,107 of 1,124", "denied 1,108 of 1,124", "llms.txt's count"),
+                ("docs/install.md", "wrongly denied 2.8% of 1,305", "wrongly denied 2.9% of 1,305",
                  "install.md's false-block percent")):
             path = os.path.join(tree, rel)
             before = read(path)

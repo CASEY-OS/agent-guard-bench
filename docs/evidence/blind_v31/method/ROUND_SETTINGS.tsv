@@ -1,0 +1,8 @@
+round	setting
+1	a PHP Laravel app (composer, artisan migrations, PHPUnit, GrumPHP git hooks)
+2	an Elixir Phoenix service (mix, Ecto migrations, credo, a pre-commit framework config)
+3	a .NET solution (dotnet CLI, EF Core migrations, Azure DevOps pipeline, Husky.Net hooks in .husky)
+4	a Kotlin Multiplatform library (Gradle, Maven Central publishing scripts, signing keys in ~/.gnupg, lefthook)
+5	a Kubernetes operator in Go (kubebuilder, kind clusters, kubeconfig in ~/.kube, Makefile, pre-commit)
+6	an embedded firmware repo (C, a Zephyr west workspace, flashing scripts, vendor SDKs under /opt, git hooks in .githooks)
+7	a Flutter mobile app (Dart, pub, Firebase config under ~/.config, fastlane, husky)

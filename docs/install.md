@@ -6,7 +6,7 @@ This page is for a person, or for a coding agent following [llms.txt](../llms.tx
 
 agent-guard is a Claude Code hook. Before each Bash tool call it reads the command and denies the ones that stage the whole git tree, switch off git hooks or destroy uncommitted work. Every deny ends with `DO THIS INSTEAD:` and a safe command that finishes the same task. It covers that one class. It does not look for leaked secrets, check MCP tool calls or stop prompt injection. It reads the command text and runs nothing. It needs `python3` on the PATH. If the hook cannot run, Claude Code lets the command through.
 
-The result is in the [README](../README.md). It denied 98.3% of 1,717 dangerous commands and wrongly denied 2.0% of 1,583 safe ones on a sealed blind set, with the misses listed.
+The result is in the [README](../README.md). It denied 98.5% of 1,124 dangerous commands and wrongly denied 2.8% of 1,305 safe ones on a blind set (blind_v31), with the misses listed.
 
 ## Step 1: look at the hook before anything is installed
 

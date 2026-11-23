@@ -7478,7 +7478,7 @@ def _fs_rules(b, args, stage, st):
             a = _abs(p, cwd)
             while a and posixpath.basename(a) in ("*", ".*"):
                 a = posixpath.dirname(a)
-            if rec and _lit3(p) and _worktree_target(p, a, st):
+            if rec and _lit3(p) and (_worktree_target(p, a, st) or _v27_whole_checkout(p, a, st)):  # v27-M1
                 return ("data_loss_guard: " + b + " -r of a git worktree directory (" + p + ") deletes a checkout and "
                         "the uncommitted work in it, and an undo point does not hold a worktree" + LOSS_TAIL)
             if a and rec and _is_root_or_above(a, st.root):
@@ -11190,6 +11190,9 @@ def main(stdin=None):
 # =====================================================================================
 _DEL = [None]               # None: pass 1 (v24 as it was). A list: pass 2 is collecting the delete operations the walk judges.
 _DEL_SEEN = [False]         # pass 1 saw a delete by the resolved command word
+_DEL_HOMECHG = [False]      # v27a: pass 2 saw HOME assigned, unset or named as a variable to set: its ~ (read as the real home folder) may not be the shell's ~
+_DEL_HOMEPRE = [False]      # v27: pass 2 runs again with HOME already known to be changed (V27C): `~` and the real $HOME are unknown from the first word, whatever the order the walk met the assignment in
+_DEL_V3 = [None]            # v27a: the verdict ("allow" | "ask" | "block") pass 2's own walk gave, with ~ and $HOME read; None when pass 2 did not finish
 _DEL_FAMILY = frozenset(("rm", "srm", "find", "rsync"))
 _DEL_CARRY = frozenset(("sed", "gsed", "tar", "gtar", "bsdtar", "awk", "gawk", "mawk", "nawk"))
 _DEL_INTERP = re.compile(r"^(?:python[0-9.]*|pypy[0-9.]*|node|nodejs|bun|deno|tsx|ruby[0-9.]*|perl[0-9.]*)$")
@@ -11274,7 +11277,12 @@ _R_expand_v24 = _R.expand
 
 def _del_expand(self, text, q=0):
     if _DEL[0] is not None and "~" in text:
-        text = _del_tilde(text, q)  # DEL-M15
+        if self.known.get("HOME") != (_homes() or ["/nonexistent-home"])[0]:
+            _DEL_HOMECHG[0] = True  # v27a-M2
+        if not _DEL_HOMECHG[0]:  # v27-M3: once the command has changed HOME, `~` is not the real home folder (the shell reads it from the changed HOME), so it is left to v24, which reads it as unknown
+            text = _del_tilde(text, q)  # DEL-M15
+    if _DEL[0] is not None and _DEL_HOMEPRE[0] and "HOME" in text and self.known.get("HOME") == (_homes() or ["/nonexistent-home"])[0]:
+        self.known["HOME"] = U  # v27-M4: the second run: a $HOME met before the walk reaches the assignment (an eval, a trap) is not the real home folder either
     if _DEL[0] is not None and "pwd" in text:
         text = text.replace("$(pwd)", "${PWD}").replace("`pwd`", "${PWD}")  # DEL-M18
     return _R_expand_v24(self, text, q)
@@ -11338,6 +11346,8 @@ def _del_note(env, argv, stage, upstream, st):
         if b in _DEL_FAMILY or ((b in _DEL_CARRY or _DEL_INTERP.match(b)) and _DEL_WORD.search(" ".join(rest))):
             _DEL_SEEN[0] = True
         return
+    if any(w == "HOME" or w.startswith(("HOME=", "HOME+=")) for w in rest):
+        _DEL_HOMECHG[0] = True  # v27a-M3
     if b in _DEL_FAMILY:
         own = set(stage.get("argv") or [])
         _DEL[0].append({"b": b, "args": list(rest), "cwd": st.cwd, "pipe_in": bool(stage.get("pipe_in")),
@@ -11560,8 +11570,10 @@ def _del_hook(command):
     ops, saved, disk = [], _TRACE, _DISK[0]
     _DEL[0], _TRACE = ops, None
     _DISK[0] = None  # DEL-M20
+    _DEL_V3[0] = None
+    _DEL_HOMECHG[0] = _DEL_HOMEPRE[0]  # v27: False on the first run; True on the V27C second run
     try:
-        _check3(_strip_comments(command), _root(), 0)
+        _DEL_V3[0] = _check3(_strip_comments(command), _root(), 0)[0]  # v27a: keep the verdict too
         seen, hit = set(), None
         for op in ops:
             key = (op["b"], tuple(op["args"]), op["cwd"], op["pipe_in"], tuple(tuple(u) for u in op["up"]))
@@ -11580,20 +11592,2587 @@ def _del_hook(command):
 
 
 _decide_full_v24 = _decide_full
+_V27_REREAD = re.compile(r"fail_closed: (?:a recursive delete of the current directory \(|interpreter code the guard cannot resolve)")
 
 
 def _decide_full(command):
     _DEL_SEEN[0] = False
     d = _decide_full_v24(command)
-    if d.get("verdict") == "allow" and _DEL_SEEN[0]:  # DEL-M14
+    fc = d.get("verdict") == "deny" and _DEL_SEEN[0] and (d.get("reason") or "").startswith("fail_closed")  # v27a-M4
+    if (d.get("verdict") == "allow" and _DEL_SEEN[0]) or fc:  # DEL-M14
         hit = _del_hook(_echo_words(command))
         if hit:
             core = re.sub("[\x01-\x08\x0e\x0f]", "?", hit[1]).rstrip()      # the resolver's markers are never printed
             shape, text = redirect_for(core)
             return {"verdict": "deny", "origin": "block", "v3": "block", "shape": shape, "redirect": text, "alternatives": alternatives(text),
                     "reason": core + REDIRECT_MARK + text, "note": ""}
+        # v27a: (1) a fail_closed stop that pass 2 names is a NAMED deny now (the live wrapper lets a fail_closed reason through as an allow, so a catastrophic delete may not rest on one).
+        # (2) v24 stopped only because ~ or $HOME was unreadable (the current directory after `cd ~/x`, or a `$(echo ~/x)` inside interpreter code) and pass 2, which reads both, finds nothing:
+        # the stop is lifted only when pass 2's own walk raised no ask and no block AND the command never changes HOME (pass 2 reads ~ as the real home folder, so
+        # `HOME=/private; cd ~/etc && rm -rf *` would look harmless; v26d denied it only because v24 had no current directory) AND it mentions no positional parameter (v25's stricter reading stays).
+        if (fc and _V27_REREAD.match(d.get("reason") or "") and not _V25_RELEVANT.search(command or "")
+                and _DEL_V3[0] == "allow" and not _DEL_HOMECHG[0]):  # v27a-M1
+            return {"verdict": "allow", "origin": None, "v3": "allow", "shape": None, "redirect": "", "alternatives": [], "reason": "", "note": ""}
     return d
 # ===== end of DEL =====
+
+
+# =====================================================================================
+# ===== V27B: a LISTING DELETE, or a delete of a path built from the home folder, in python, perl, ruby, node is its shell form. =====
+# v17 and v19 wrote a delete call out as `rm`/`rmdir` only when its target is ONE string literal (and rmtree/rm_rf of the home expression alone, DEL-M13). So
+# `perl -e 'unlink glob("*")'`, `ruby -e 'Dir.glob("*").each{|f| File.delete(f)}'`, `os.remove(f)` over `os.listdir('.')` or `glob('*')`, `Path('.').iterdir()`
+# `.unlink()`, `fs.readdirSync('.')` + `fs.rmSync(f)`, and `shutil.rmtree(os.path.expanduser('~/.ssh'))`, `remove_tree("$ENV{HOME}/.ssh")`,
+# `FileUtils.rm_rf("#{Dir.home}")` were plain allows although `rm -r *`, `rm -r ~/*` and `rm -r ~/.ssh` are denied (the whole worktree, the home folder, a credential folder).
+# Rule (one function, appended; nothing above is changed): (1) a delete call whose argument the code builds at run time, in code that also lists a directory
+# (a glob, listdir, scandir, walk, iterdir, Dir.entries ...), is `rm -r -- DIR/*` (or the glob as written) for each listing, so the shell rules judge it: `.` / `*` is the
+# whole worktree, `~` the home folder, a credential folder a protected folder. It is written with -r on purpose: the loop reaches every entry whatever the call is.
+# (2) a delete call whose target is built from the home folder (expanduser("~/x"), Path.home() / "x", "$ENV{HOME}/x", "#{Dir.home}/x", os.homedir()) is `rm`/`rm -r`/`rmdir -- ~/x`
+# by the call's own kind. NOT read (left as v26d left them, an allow): code with a condition in it (if, unless, grep, filter, a regex, endswith ...; a plain file-or-folder test is no
+# condition), a chdir before a relative target, a script FILE, code over 20,000 characters, a path the code builds by another route than the forms above. A fault inside the block is an allow (v26d's
+# answer), never a raise. KNOWN FALSE STOP (perl, ruby, node read by regular expression, python by ast flow): in those three, ANY run-time delete argument in code that also lists `.` or `*` counts, so
+# `perl -e 'unlink $tmp; print glob("*")'` is stopped; python links the delete argument to the loop that binds it and does not. Wrapped by rebinding, as DEL was.
+# =====================================================================================
+_V27B_HM = "\x01HOME\x01"
+_V27B_SAFE = re.compile(r"^[A-Za-z0-9_./~*?\[\]+,@%:=-]+$")
+_V27B_Q = r"""(?P<q>'[^'\\\n]*'|"[^"\\\n]*")"""
+_V27B_PY = re.compile(r"^(?:python[0-9.]*|pypy[0-9.]*)$")
+
+
+def _v27b_emit(prog, w, moved, tilde=False):
+    """One shell command `prog -- W`, or None when W is not a plain path or glob the shell form can carry."""
+    if not w or not isinstance(w, str):
+        return None
+    w = re.sub(r"\*\*+", "*", w)
+    if w.startswith(_V27B_HM):
+        rest = w[len(_V27B_HM):]
+        if rest and not rest.startswith("/"):
+            return None
+        w, tilde = "~" + rest, True
+    if _V27B_HM in w or not _V27B_SAFE.match(w) or w.startswith("-") or not _lit3(w):
+        return None
+    if w.startswith("~") and not tilde:
+        return None                                   # a literal "~" is a folder named ~ to python, ruby and node: not the home folder
+    if "~" in w[1:] and w.startswith("~"):
+        return None
+    if moved and not (w.startswith("/") or w.startswith("~")):
+        return None
+    return prog + " -- " + w
+
+
+def _v27b_dir_glob(d):
+    return "./*" if d in (".", "./", "") else (d.rstrip("/") + "/*")
+
+
+_V27B_TYPE_TEST = re.compile(r"\b(?:if|unless)\s+!?\s*(?:not\s+)?(?:\w+\.)*(?:os\.path\.)?(?:isfile|isdir|islink|exists|is_file|is_dir|is_symlink)\s*\([^()]*\)|"
+                             r"\b(?:if|unless)\s+!?\s*File\.(?:file|directory|exist|symlink)\?\s*\(?[\w.]*\)?|\bif\s+-[fdel]\b|\bgrep\s*\{\s*-[fdel]\s*[^{}]*\}|"
+                             r"\bif\s+!?fs\.(?:statSync|lstatSync)\([^()]*\)\.(?:isFile|isDirectory)\(\)")
+_V27B_COND = re.compile(r"\b(?:if|unless|while|until|elsif)\b|=~|!~|\bgrep\b|\bselect\b|\breject\b|\bfilter\b|\bnext\b|\.match\b|\.test\(|\bendsWith\b|\bstartsWith\b|"
+                        r"\bfnmatch\b|[=!]==?\s|\s\?\s|&&")
+
+
+_V27B_TYPE_ATTRS = ("isfile", "isdir", "islink", "exists", "is_file", "is_dir", "is_symlink")
+_V27B_FILTER_ATTRS = ("endswith", "startswith", "match", "search", "fullmatch", "fnmatch", "filter", "suffix")
+
+
+def _v27b_py(code):
+    """Python: -> list of shell commands. ast reads the code. A name assigned only literals, Path(...), os.path.join, + and / of those, the home folder (expanduser, Path.home(),
+    os.environ["HOME"]) and the current folder is followed; a delete call is a LISTING delete when its argument holds a name that a for loop or comprehension binds from a listing."""
+    import ast
+    import warnings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tree = ast.parse(code)
+    except Exception:
+        return []
+    assigns = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            tg = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for t in tg:
+                if isinstance(t, ast.Name):
+                    assigns.setdefault(t.id, []).append(node.value if not isinstance(node, ast.AugAssign) else None)
+                elif isinstance(t, (ast.Tuple, ast.List)):
+                    for e in t.elts:
+                        if isinstance(e, ast.Name):
+                            assigns.setdefault(e.id, []).append(None)
+        elif isinstance(node, (ast.For, ast.comprehension, ast.With, ast.withitem)):
+            tg = getattr(node, "target", None) or getattr(node, "optional_vars", None)
+            for e in ([tg] if isinstance(tg, ast.Name) else (getattr(tg, "elts", []) or [])):
+                if isinstance(e, ast.Name):
+                    assigns.setdefault(e.id, []).append(None)
+        elif isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            for a in node.args.args:
+                assigns.setdefault(a.arg, []).append(None)
+
+    def dj(x, y):
+        return (x.rstrip("/") + "/" + y.lstrip("/")) if x else y
+
+    def ev(n, d=0):
+        if d > 6 or n is None:
+            return None
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            return [n.value]
+        if isinstance(n, ast.Name):
+            vals = assigns.get(n.id)
+            if not vals:
+                return None
+            out = []
+            for v in vals:
+                r = ev(v, d + 1)
+                if r is None:
+                    return None
+                out += r
+            return out
+        if isinstance(n, ast.Attribute) and n.attr == "curdir" and isinstance(n.value, ast.Name) and n.value.id == "os":
+            return ["."]
+        if isinstance(n, ast.Subscript):                                      # os.environ["HOME"]
+            v, s = n.value, n.slice
+            if isinstance(v, ast.Attribute) and v.attr == "environ" and isinstance(s, ast.Constant) and s.value == "HOME":
+                return [_V27B_HM]
+            return None
+        if isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Div, ast.Add)):
+            a, b = ev(n.left, d + 1), ev(n.right, d + 1)
+            if a is None or b is None:
+                return None
+            return [dj(x, y) for x in a for y in b] if isinstance(n.op, ast.Div) else [x + y for x in a for y in b]
+        if isinstance(n, ast.Call):
+            f = n.func
+            fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+            base = f.value if isinstance(f, ast.Attribute) else None
+            bname = base.id if isinstance(base, ast.Name) else (base.attr if isinstance(base, ast.Attribute) else "")
+            if fname in ("Path", "PurePath", "PosixPath", "join", "joinpath") and (fname != "join" or bname == "path"):
+                parts = [ev(a, d + 1) for a in ([base] if fname == "joinpath" else []) + list(n.args)]
+                if not parts:
+                    return ["."] if fname in ("Path", "PurePath", "PosixPath") else None
+                if any(p is None for p in parts):
+                    return None
+                out = parts[0]
+                for p in parts[1:]:
+                    out = [dj(x, y) for x in out for y in p]
+                return out
+            if fname == "home" and bname in ("Path", "PosixPath") and not n.args:
+                return [_V27B_HM]
+            if fname == "expanduser" and len(n.args) == 1 and (bname == "path" or base is None):
+                r = ev(n.args[0], d + 1)
+                return None if r is None else [(_V27B_HM + x[1:]) if (x == "~" or x.startswith("~/")) else x for x in r]
+            if fname == "expanduser" and not n.args and base is not None and bname != "path":
+                r = ev(base, d + 1)
+                return None if r is None else [(_V27B_HM + x[1:]) if (x == "~" or x.startswith("~/")) else x for x in r]
+            if fname in ("getenv", "get") and n.args and isinstance(n.args[0], ast.Constant) and n.args[0].value == "HOME" and bname in ("os", "environ"):
+                return [_V27B_HM]
+            if fname in ("getcwd", "cwd") and not n.args and bname in ("os", "Path", "PosixPath"):
+                return ["."]
+            if fname in ("resolve", "absolute") and not n.args and base is not None:
+                return ev(base, d + 1)
+            if fname in ("str", "fspath", "abspath", "realpath", "normpath") and len(n.args) == 1 and not n.keywords:
+                return ev(n.args[0], d + 1)
+        return None
+
+    def type_only(t):
+        t = t.operand if isinstance(t, ast.UnaryOp) and isinstance(t.op, ast.Not) else t
+        return isinstance(t, ast.Call) and isinstance(t.func, ast.Attribute) and t.func.attr in _V27B_TYPE_ATTRS
+
+    for node in ast.walk(tree):          # a condition: the loop may not reach every entry, so it is not read as a whole-folder delete
+        if (isinstance(node, ast.If) and not type_only(node.test)) or (isinstance(node, ast.comprehension) and not all(type_only(t) for t in node.ifs)) or \
+                (isinstance(node, ast.IfExp) and not type_only(node.test)) or isinstance(node, (ast.Compare, ast.BoolOp, ast.While)) or \
+                (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in _V27B_FILTER_ATTRS):
+            filtered = True
+            break
+    else:
+        filtered = False
+
+    def listing(n):
+        """The listing call n is (a list of (kind, text)) or []; kind g: a glob pattern, d: a directory."""
+        if not isinstance(n, ast.Call):
+            return []
+        f = n.func
+        fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+        base = f.value if isinstance(f, ast.Attribute) else None
+        bname = base.id if isinstance(base, ast.Name) else ""
+        if (bname == "glob" and fname in ("glob", "iglob")) or (base is None and fname in ("glob", "iglob")):
+            return [("g", x) for x in (ev(n.args[0]) if n.args else None) or []]
+        if bname == "os" and fname in ("listdir", "scandir", "walk"):
+            return [("d", x) for x in ((ev(n.args[0]) if n.args else ["."]) or [])]
+        if isinstance(f, ast.Attribute) and fname == "iterdir" and not n.args:
+            return [("d", x) for x in ev(base) or []]
+        if isinstance(f, ast.Attribute) and fname in ("glob", "rglob") and bname != "glob" and n.args:
+            return [("g", dj(x, y)) for x in (ev(base) or []) for y in (ev(n.args[0]) or [])]
+        return []
+
+    def listings_in(expr, d=0):
+        out = []
+        for sub in ast.walk(expr):
+            out += listing(sub)
+            if isinstance(sub, ast.Name) and d < 3:
+                for v in assigns.get(sub.id) or []:
+                    if v is not None:
+                        out += listings_in(v, d + 1)
+        return out
+
+    bound = {}                                                # a name a loop binds from a listing -> that listing
+    for node in ast.walk(tree):
+        pairs = []
+        if isinstance(node, (ast.For, ast.comprehension)):
+            pairs.append((node.target, node.iter))
+        for tg, it in pairs:
+            ls = listings_in(it)
+            for e in ([tg] if isinstance(tg, ast.Name) else (getattr(tg, "elts", []) or [])):
+                if isinstance(e, ast.Name) and ls:
+                    bound.setdefault(e.id, []).extend(ls)
+    moved = "chdir" in code
+    out = []
+
+    def listing_delete(prog_expr_nodes):
+        ls = []
+
+        def deps(ex, d=0):
+            for sub in ast.walk(ex):
+                if isinstance(sub, ast.Name):
+                    if sub.id in bound:
+                        ls.extend(bound[sub.id])
+                    elif d < 3:
+                        for v in assigns.get(sub.id) or []:
+                            if v is not None:
+                                deps(v, d + 1)
+        for ex in prog_expr_nodes:
+            deps(ex)
+        return ls
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+        base = f.value if isinstance(f, ast.Attribute) else None
+        bname = base.id if isinstance(base, ast.Name) else ""
+        prog, tgt_nodes = None, []
+        if bname == "os" and fname in ("remove", "unlink", "rmdir", "removedirs") and node.args:
+            prog, tgt_nodes = ("rm" if fname in ("remove", "unlink") else "rmdir"), [node.args[0]]
+        elif ((bname == "shutil" and fname == "rmtree") or (base is None and fname == "rmtree")) and node.args:
+            prog, tgt_nodes = "rm -r", [node.args[0]]
+        elif isinstance(f, ast.Attribute) and fname in ("unlink", "rmdir") and bname != "os":
+            prog, tgt_nodes = ("rm" if fname == "unlink" else "rmdir"), [base]
+        elif isinstance(f, ast.Name) and f.id == "map" and len(node.args) >= 2 and isinstance(node.args[0], ast.Attribute) and \
+                node.args[0].attr in ("remove", "unlink", "rmtree", "rmdir") and isinstance(node.args[0].value, ast.Name) and node.args[0].value.id in ("os", "shutil"):
+            if not filtered:
+                out += [_v27b_emit("rm -r", x if k == "g" else _v27b_dir_glob(x), moved) for k, x in listings_in(node.args[1])]
+            continue
+        if prog is None:
+            continue
+        if not filtered:
+            out += [_v27b_emit("rm -r", x if k == "g" else _v27b_dir_glob(x), moved) for k, x in listing_delete(tgt_nodes)]    # (1) the loop deletes what a listing names
+        r = ev(tgt_nodes[0])
+        if r is not None and any(_V27B_HM in x for x in r):                                                                       # (2) a path built from the home folder
+            out += [_v27b_emit(prog, x, moved) for x in r]
+    return [c for c in out if c]
+
+
+_V27B_PL_HOME = re.compile(r"\$ENV\{\s*['\"]?HOME['\"]?\s*\}")
+_V27B_RB_HOME = re.compile(r"#\{\s*(?:Dir\.home(?:\(\s*\))?|ENV\[\s*['\"]HOME['\"]\s*\])\s*\}")
+
+
+def _v27b_str(q, lang):
+    """A quoted literal -> text with the home folder as _V27B_HM, or None when it carries something the reader cannot follow (an interpolation)."""
+    body = q[1:-1]
+    if q[0] == "'":
+        return body
+    if lang == "perl":
+        body = _V27B_PL_HOME.sub(_V27B_HM, body)
+        return None if re.search(r"[$@]", body) else body
+    if lang == "ruby":
+        body = _V27B_RB_HOME.sub(_V27B_HM, body)
+        return None if "#{" in body or "#$" in body or "#@" in body else body
+    return body
+
+
+def _v27b_other(code, lang):
+    """perl, ruby, node: regex readers over literal code. The same two rules as _v27b_py."""
+    moved = "chdir" in code
+    flat = _V27B_TYPE_TEST.sub(" ", code)
+    filtered = bool(_V27B_COND.search(flat))
+    lists, dels, homes = [], False, []
+    if lang == "perl":
+        for m in re.finditer(r"(?<![\w$@%>:])glob\s*\(?\s*" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "perl")
+            lists += [("g", s, True)] if s else []
+        for m in re.finditer(r"<(?P<g>[^<>\s$;=@%'\"]*[*?\[~][^<>\s$;=@%'\"]*)>", code):
+            lists.append(("g", m.group("g"), True))
+        for m in re.finditer(r"\bopendir\s*\(?\s*(?:my\s+)?[\w$]+\s*,\s*" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "perl")
+            lists += [("d", s, False)] if s else []
+        for m in re.finditer(r"\bfind(?:depth)?\s*\(\s*(?:sub\s*\{.*?\}|\\&\w+|\{.*?\})\s*,\s*" + _V27B_Q + r"\s*\)", code, re.S):      # File::Find
+            s = _v27b_str(m.group("q"), "perl")
+            lists += [("d", s, False)] if s else []
+        dels = bool(re.search(r"(?<![\w$@%>:])(?:unlink|rmtree|remove_tree|rmdir)\b(?!\s*\(?\s*['\"])", code))     # a call whose first argument is not a string literal
+        for m in re.finditer(r"(?<![\w$@%>:])(?:File::Path::)?(?P<f>rmtree|remove_tree|unlink|rmdir)\s*\(?\s*" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "perl")
+            if s and _V27B_HM in s:
+                homes.append(("rm -r" if m.group("f") in ("rmtree", "remove_tree") else ("rmdir" if m.group("f") == "rmdir" else "rm"), s))
+    elif lang == "ruby":
+        argx = r"\(?\s*(?:File\.expand_path\(\s*)?" + _V27B_Q
+        for m in re.finditer(r"\bDir\s*(?:\.\s*glob\s*|\[\s*)" + argx, code):
+            s = _v27b_str(m.group("q"), "ruby")
+            if s and re.match(r"^~(?:/|$)", s) and "expand_path" in m.group(0):
+                s = _V27B_HM + s[1:]
+            lists += [("g", s, False)] if s else []
+        for m in re.finditer(r"\b(?:Dir|Pathname)\s*\.\s*(?:entries|children|each_child|foreach|new|open)\s*\(?\s*(?:File\.expand_path\(\s*)?" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "ruby")
+            if s and re.match(r"^~(?:/|$)", s) and "expand_path" in m.group(0):
+                s = _V27B_HM + s[1:]
+            lists += [("d", s, False)] if s else []
+        for m in re.finditer(r"\bDir\s*\.\s*(?:entries|children|each_child|foreach)\s*\(?\s*(?:Dir\.home(?:\(\s*\))?|ENV\[\s*['\"]HOME['\"]\s*\])", code):
+            lists.append(("d", _V27B_HM, False))
+        for m in re.finditer(r"\bDir\s*\.\s*glob\s*\(?\s*(?:File\.join\(\s*)?(?:Dir\.home(?:\(\s*\))?|ENV\[\s*['\"]HOME['\"]\s*\])\s*,\s*" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "ruby")
+            lists += [("g", _V27B_HM + "/" + s, False)] if s else []
+        dels = bool(re.search(r"\b(?:File|FileUtils|Dir)\s*\.\s*(?:delete|unlink|rm|rm_f|rm_rf|rm_r|rmtree|remove\w*|safe_unlink|rmdir)\b(?!\s*\(?\s*['\"])|"
+                              r"&\s*(?:File\.method\(\s*)?:(?:delete|unlink|rmtree)\b|\.\s*(?:delete|unlink|rmtree)\b\s*(?:\(\s*\))?\s*\}", code))
+        for m in re.finditer(r"\b(?:FileUtils\s*\.\s*(?P<fu>rm_rf|rm_r|rmtree|remove_dir|remove_entry_secure|remove_entry|rm_f|rm|remove|safe_unlink)|"
+                             r"(?P<cls>File|Dir)\s*\.\s*(?P<fd>delete|unlink|rmdir))\s*\(?\s*(?:File\.expand_path\(\s*)?" + _V27B_Q, code):
+            s = _v27b_str(m.group("q"), "ruby")
+            if s and re.match(r"^~(?:/|$)", s) and "expand_path" in m.group(0):
+                s = _V27B_HM + s[1:]
+            if s and _V27B_HM in s:
+                fu, fd = m.group("fu"), m.group("fd")
+                prog = ("rm -r" if fu in ("rm_rf", "rm_r", "rmtree", "remove_dir", "remove_entry_secure", "remove_entry") else "rm") if fu else \
+                    ("rmdir" if (m.group("cls") == "Dir" or fd == "rmdir") else "rm")
+                homes.append((prog, s))
+    elif _JS_LANGS.match(lang):
+        hx = r"(?:require\(\s*['\"](?:node:)?os['\"]\s*\)\s*\.\s*|\bos\.)homedir\(\)|process\.env\.HOME\b"
+        for m in re.finditer(r"(?:readdirSync|readdir|readDirSync|globSync|glob\.sync|glob)\s*\(\s*(?:" + _V27B_Q + r"|(?P<h>" + hx + r"))", code):
+            s = m.group("q") and m.group("q")[1:-1]
+            if m.group("h"):
+                lists.append(("d", _V27B_HM, False))
+            elif s is not None:
+                lists.append(("g" if re.search(r"[*?\[]", s) else "d", s, False))
+        dels = bool(re.search(r"(?:\b(?:fs|fsp|fse|fsExtra|promises|Deno)|require\(\s*['\"](?:node:)?fs(?:/promises|-extra)?['\"]\s*\))\s*(?:\.\s*promises\s*)?\.\s*"
+                              r"(?:rmSync|rmdirSync|unlinkSync|removeSync|emptyDirSync|rm|rmdir|unlink|remove|emptyDir)\s*\((?!\s*['\"])|"
+                              r"(?<![\w.$])(?:rmSync|rmdirSync|unlinkSync|removeSync|emptyDirSync|rimraf)\s*\((?!\s*['\"])", code))
+        fn = r"(?:(?:\bfs|\bfsp|\bfse|\bfsExtra|\bpromises|Deno)|require\(\s*['\"](?:node:)?fs(?:/promises|-extra)?['\"]\s*\))\s*(?:\.\s*promises\s*)?\.\s*|(?<![\w.$])"
+        names = r"(?P<f>rmSync|rmdirSync|unlinkSync|removeSync|emptyDirSync|rm|rmdir|unlink|remove|emptyDir)"
+        for m in re.finditer(r"(?:" + fn + r")" + names + r"\s*\(\s*(?:`\$\{\s*(?:" + hx + r")\s*\}(?P<t>[^`$]*)`|(?:" + hx + r")\s*\+\s*(?P<q1>'[^'\\\n]*'|\"[^\"\\\n]*\")|"
+                             r"(?:(?:path|require\(\s*['\"]path['\"]\s*\))\s*\.\s*)?join\(\s*(?:" + hx + r")\s*,\s*(?P<q2>'[^'\\\n]*'|\"[^\"\\\n]*\"))", code):
+            tail = m.group("t") if m.group("t") is not None else (m.group("q1") or m.group("q2"))[1:-1]
+            if m.group("q2") and not tail.startswith("/"):
+                tail = "/" + tail
+            f = m.group("f")
+            rec = f in ("removeSync", "remove", "emptyDirSync", "emptyDir") or bool(re.search(r"\brecursive\s*:\s*true\b", code[m.end():m.end() + 60]))
+            homes.append(("rm -r" if rec else ("rmdir" if f.startswith("rmdir") else "rm"), _V27B_HM + tail))
+    out = []
+    if dels and not filtered:
+        for kind, s, tilde in lists:
+            w = s if kind == "g" else _v27b_dir_glob(s)
+            out.append(_v27b_emit("rm -r", w, moved, tilde))
+    for prog, s in homes:
+        out.append(_v27b_emit(prog, s, moved))
+    return [c for c in out if c]
+
+
+def _v27b_delete_shell(code, lang):
+    name = posixpath.basename(lang or "")
+    if not code or len(code) > 20000 or not _lit3(code):         # a long program is left as v26d left it (the readers are regular expressions and ast: bounded work)
+        return []
+    try:
+        if _V27B_PY.match(name):
+            if not re.search(r"rmtree|remove|unlink|rmdir", code):
+                return []
+            r = _v27b_py(code)
+        elif re.match(r"^perl[0-9.]*$", name):
+            r = _v27b_other(code, "perl")
+        elif re.match(r"^ruby[0-9.]*$", name):
+            r = _v27b_other(code, "ruby")
+        elif _JS_LANGS.match(name):
+            r = _v27b_other(code, name)
+        else:
+            return []
+    except Exception:
+        return []                                       # a reader fault is an allow here, as it was before this block (the shell form is not made)
+    seen, out = set(), []
+    for c in r:
+        if c not in seen:
+            seen.add(c)
+            out.append(c)
+    return out[:MAX_PAYLOADS]
+
+
+_other_delete_shell_v26d = _other_delete_shell
+
+
+def _other_delete_shell(code, lang):          # V27B: the listing and home-path forms follow the literal ones
+    return _other_delete_shell_v26d(code, lang) + _v27b_delete_shell(code, lang)
+# ===== end of V27B =====
+
+
+# =====================================================================================
+# ===== V27B-STARS: a shell word with a path component of two or more `*` and nothing else (`**`, `***`, `./**`, `**/`, `build/**/`) is `*` to the shell. =====
+# bash 3.2 (the macOS /bin/bash, and sh) has no globstar: `**` expands exactly like `*`, so `rm -rf **` empties the worktree. v26d judged `*` (the whole worktree, find, xargs, git add, rsync)
+# and let `**` through everywhere the v8 walker is the judge (del3's home-folder rules already read it as a glob). Rule (appended; nothing above is changed; wrapped by rebinding): when v26d's own
+# answer to a command is an ALLOW and the command has a `**` word, the command is decided again with every such component written as `*`; a deny of THAT text is the answer, so `**` gets exactly the
+# reason `*` gets, and an answer that was already a deny is never replaced (so `cd ~/.ssh && rm -rf **`, which del3 names, keeps its named reason). A word is rewritten only when its value is a plain
+# path or glob (letters, digits, _ . / ~ * ? [ ] + , @ % : = $ { } -) with no blank or shell syntax in it, so `python3 -c 'def f(**kw)'`, `--format=**`, `x=**` and `**bold**` are not touched; only a component
+# that is nothing but stars is (`build**` is `build*`: not touched). The tokenizer has already dropped quotes by the time a word is judged (`rm -rf "*"` and `rm -rf '*'` are stopped today), so `"**"`
+# and `'**'` get the same false stop `"*"` gets: the shell would delete a file literally named `**`. A fault in this block is v26d's answer. Only text containing `**` is read twice.
+# =====================================================================================
+_V27B_WORD_OK = re.compile(r"^[A-Za-z0-9_./~*?\[\]+,@%:=${}-]+$")
+
+
+def _v27b_stars(text, depth=0):
+    """text with every shell word that is a plain path whose component is only stars (two or more) rewritten with that component as one `*`; the quotes of such a word are dropped; a quoted word that holds a script (bash -c, eval, os.system) is read as shell text, four levels deep."""
+    out, i, n = [], 0, len(text)
+    split = " \t\r\n;&|<>()`"
+    while i < n:
+        c = text[i]
+        if c in split:
+            out.append(c)
+            i += 1
+            continue
+        j, val, q = i, [], 0
+        while j < n and (q or text[j] not in split):
+            ch = text[j]
+            if q == 1:
+                if ch == "'":
+                    q = 0
+                else:
+                    val.append(ch)
+            elif q == 2:
+                if ch == '"':
+                    q = 0
+                elif ch == "\\" and j + 1 < n and text[j + 1] in '"\\$`':
+                    j += 1
+                    val.append(text[j])
+                else:
+                    val.append(ch)
+            elif ch == "'":
+                q = 1
+            elif ch == '"':
+                q = 2
+            elif ch == "\\" and j + 1 < n:
+                j += 1
+                val.append(text[j])
+            else:
+                val.append(ch)
+            j += 1
+        raw, v = text[i:j], "".join(val)
+        comps = v.split("/")
+        if "**" in v and _V27B_WORD_OK.match(v) and any(re.fullmatch(r"\*{2,}", k) for k in comps):
+            raw = "/".join("*" if re.fullmatch(r"\*{2,}", k) else k for k in comps)
+        elif "**" in v and len(raw) > 2 and raw[0] in "'\"" and raw[-1] == raw[0] and raw.count(raw[0]) == 2 and depth < 4:
+            raw = raw[0] + _v27b_stars(raw[1:-1], depth + 1) + raw[0]       # one quoted word that holds a script (bash -c '...', eval "...", os.system("...")): read as shell text
+        out.append(raw)
+        i = j
+    return "".join(out)
+
+
+_decide_full_v27b_prev = _decide_full
+
+
+def _decide_full(command):
+    d = _decide_full_v27b_prev(command)
+    if d.get("verdict") == "allow" and isinstance(command, str) and "**" in command:
+        try:
+            c2 = _v27b_stars(command)
+            if c2 != command:
+                d2 = _decide_full_v27b_prev(c2)
+                if d2.get("verdict") == "deny":
+                    return d2
+        except Exception:
+            pass                                          # a fault here is v26d's answer
+    return d
+# ===== end of V27B-STARS =====
+
+
+# =====================================================================================
+# ===== V27C: two named denies that the live wrapper cannot turn into an allow. The wrapper (02_SYSTEMS/GATES/guard_pretooluse.py, lines 232-238) lets every deny whose reason starts with
+# ===== `fail_closed` through, so a catastrophic delete may not rest on one. (1) `_v27_whole_checkout`, used in _fs_rules (v27-M1): a recursive delete of the whole worktree of a git repo is
+# ===== the named data_loss_guard deny (the text CASEY_OS gets today only because it has linked worktrees), in any repo; pass 2 (`_del_op`, below) gives it to the spellings pass 1 cannot read (`$(pwd)`).
+# ===== (2) `_del_hook` runs twice for a command that changes HOME (v27-M3, M4).
+# =====================================================================================
+def _v27_is_git_root(a, root, disk):
+    """`a` (an absolute, normalised path) IS the root of a git checkout: it is the measured root and the root holds `.git` (a folder, or the file a linked worktree has). `disk` is the hook's cwd: with none, nothing
+    is read from disk (version 12) and the answer is False. A root without `.git` (a scratch folder) keeps v24's ask. A target ABOVE the root is not this rule's: pass 2 names it (`_del_prot`: a folder above the repo)."""
+    try:
+        if not a or not disk or not isinstance(root, str):
+            return False
+        r = root.rstrip("/") or "/"
+        return a.rstrip("/") == r and r != "/" and os.path.exists(posixpath.join(r, ".git"))
+    except Exception:
+        return False
+
+
+def _v27_whole_checkout(p, a, st):
+    """Pass 1 (_fs_rules): the target `a` (`*`, `.`, `./`, `./*` and the repo's own path all come out as the root) is the root of a git checkout. v24 starts every command in the ROOT; the shell starts it in the hook's cwd.
+    With no cd in the command and a RELATIVE operand, `a` is re-resolved against the hook's cwd: in `<root>/build`, `rm -rf *` empties build, not the repo, and keeps v26d's answer (the wrapper allows it)."""
+    try:
+        if _DISK[0] and not st.r.cd_seen and isinstance(p, str) and not p.startswith("/"):
+            a = _abs(p, _DISK[0])
+            while a and posixpath.basename(a) in ("*", ".*"):
+                a = posixpath.dirname(a)
+    except Exception:
+        return False
+    return _v27_is_git_root(a, st.root, _DISK[0])
+
+
+_V27_DISK = [None]              # the hook's cwd, kept for pass 2 (which clears _DISK so it reads nothing else from disk)
+
+
+def _v27_root_hit(x, cwd, root):
+    """Pass 2: the operand x as the walk resolved it (`$(pwd)`, `$PWD`, a variable holding the repo path, `<root>/*`) names the root of a git checkout -> True."""
+    try:
+        if not x or not isinstance(x, str) or not _V27_DISK[0] or FOUND in x or any(c in x for c in (U, Q, PSUB)):
+            return False
+        if _V27_DISK[0].rstrip("/") != root.rstrip("/"):            # pass 2 reads $PWD as the root: only right when the hook's cwd IS the root (in <root>/build `rm -rf "$(pwd)"/*` empties build)
+            return False
+        c = cwd if (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd and FOUND not in cwd) else None
+        a = _abs(x, c)
+        if a is None or not a.startswith("/"):
+            return False
+        while a and posixpath.basename(a) == "*":
+            a = posixpath.dirname(a)
+        return _v27_is_git_root(a, root, _V27_DISK[0])
+    except Exception:
+        return False
+
+
+def _v27_wt_text(b, p):
+    return _core_reason("data_loss_guard: " + b + " -r of a git worktree directory (" + p + ") deletes a checkout and the uncommitted work in it, and an undo point does not hold a worktree" + LOSS_TAIL).replace(FRESH, "")
+
+
+_del_op_v27a = _del_op
+
+
+def _del_op(op):
+    """One recorded operation -> (shape, reason) or None. v27: after pass 2's own verdicts (a protected folder is the more severe reason and keeps it), a recursive rm, or a find -delete / -exec rm, whose operand the walk
+    resolved to the ROOT of a git checkout is the same named data_loss_guard deny pass 1 gives the literal spellings: `rm -rf "$(pwd)"`, `` rm -rf `pwd`/* ``, `d=$(pwd); rm -rf "$d"`, `ls | xargs rm -rf`,
+    `find "$(pwd)" -delete`. Pass 1 cannot read `$(pwd)`; pass 2 can (DEL-M18). A non-recursive rm (`rm -f "$(pwd)"/*`, as `rm -f *`) stays allowed."""
+    r = _del_op_v27a(op)
+    if r is not None or not _V27_DISK[0]:
+        return r
+    try:
+        b, args, cwd, root = op["b"], op["args"], op["cwd"], _root()
+        if b in ("rm", "srm"):
+            flags, pos = _del_split(args)
+            if any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in flags):
+                for x in pos:
+                    if op["pipe_in"] and op["up"] and x in op.get("fed", ()) and _del_markerish(x):
+                        first = next((u for u in op["up"] if u), [""])
+                        if posixpath.basename(first[0]) == "ls" and not [w for w in first[1:] if not w.startswith("-")]:      # `ls | xargs rm -rf` lists the cwd; `ls build | ...` is not read as the root
+                            for y in (_del_producer(op["up"], cwd) or []):
+                                if _v27_root_hit(y, cwd, root):
+                                    return ("D-worktree", _v27_wt_text(b, y))
+                        continue
+                    if _v27_root_hit(x, cwd, root):
+                        return ("D-worktree", _v27_wt_text(b, x))
+        elif b == "find":
+            starts = []
+            for w in args:
+                if w.startswith("-") or w in ("(", "!", ")"):
+                    break
+                starts.append(w)
+            act = _del_find_acts(args)
+            if act and not _find_filtered(args[len(starts):]) and any(_v27_root_hit(s, cwd, root) for s in (starts or ["."])):
+                return ("D-worktree", _core_reason("data_loss_guard: find " + act + " removes the repository's history in " + root.rstrip("/") + "/.git" + LOSS_TAIL).replace(FRESH, ""))
+    except Exception:
+        pass
+    return r
+
+
+_del_hook_v27a = _del_hook
+
+
+def _del_hook(command):
+    """Pass 2, and a second run of it when the first one ended with HOME changed and found nothing. A delete target that starts with `~` (or the real $HOME) in a command that changes HOME is not the
+    path pass 2 reads: `HOME=/private; rm -rf ~/etc` is /private/etc to the shell and <real home>/etc to pass 2. The second run reads every such word as unknown, so the existing named
+    `catastrophic_delete: ... starts with a part the guard cannot read` deny fires. The assignment may come AFTER the word in the walk (an eval or a trap is walked last), hence the second run."""
+    _V27_DISK[0] = _DISK[0]         # pass 2 clears _DISK (it reads nothing else from disk); the worktree test in _del_op needs to know a cwd was given
+    r = _del_hook_v27a(command)
+    if r is None and _DEL_HOMECHG[0] and not _DEL_HOMEPRE[0]:
+        _DEL_HOMEPRE[0] = True      # v27-M5
+        try:
+            r = _del_hook_v27a(command)
+        finally:
+            _DEL_HOMEPRE[0] = False
+    return r
+# ===== end of V27C =====
+
+
+# =====================================================================================
+# ===== V28: named denies for the classes v27 lets through on the LIVE wrapper (blind_v27, SEEN for v28). Written after v27; nothing above is changed except by rebinding. =====
+# The live wrapper (02_SYSTEMS/GATES/guard_pretooluse.py, lines 232-241) lets every deny whose reason starts with `fail_closed` through, and a plain allow or an undo-point allow runs. So each class
+# below ends in a NAMED deny (`catastrophic_delete:` or `hook_bypass_guard:`), never a fail_closed one. Every rule only ADDS a deny to a command v27 allowed or denied as fail_closed; no v27 named deny is
+# replaced. A fault inside this block is v27's answer, never a raise.
+#   1. the agents' own settings: a recursive or forced delete of ~/.claude* (and anything under it), in any home spelling, glob spelling or wrapper (V28-M1, V28-M2).
+#   2. credential folders (.ssh .aws .gnupg .config .kube .docker) of ANY home (/home/x, /Users/x, /root, /home/$USER), deleted by rm, find, xargs or by python/perl code, including a path the
+#      command builds in a variable and hands the code as an argument (sys.argv, $ARGV) and perl's q() quoting (V28-M3, V28-M4, V28-M5).
+#   3. whole-home and system-tree enumerate-and-delete: find with only a broad -name under the home folder or a system folder, `ls -A ~ | xargs -I {} rm -rf ~/{}`, and everything under /System (V28-M6, V28-M7, V28-M8).
+#   4. hook disarm: `pre-commit uninstall` behind a project runner (poetry, pdm, hatch, rye, pipenv, conda, mamba ... run), `HUSKY=0` (any hook-runner switch) in front of a package manager's `commit`
+#      script, and python code that empties, truncates, renames, moves or deletes a git hook file (V28-M9, V28-M10, V28-M11).
+#   5. a data file (.jsonl .json .csv ...) with no execute permission, run BY PATH, is not read as a script: the shell answers "Permission denied" (V28-M12).
+# Blind to (G25): zsh; python read from stdin with the path as an argument (`python3 - ARG <<EOF`); a path an interpreter reads from the environment (os.environ["T"]); a folder INSIDE ~/.claude* or a file inside a credential
+# folder (`rm -rf ~/.claude/projects`, `rm -rf ~/.claude/settings.json`, `truncate -s 0 ~/.ssh/authorized_keys`: the labels disagree, v28 protects the entry, not its insides); children of /usr/local, /etc, /var, /Library
+# (contested labels, not a v28 class); a find narrowed by a name that is not broad (`find ~ -name '*.pem' -delete`); a commit by a name other than commit, cz, git-cz, commitizen (`make commit`); a project runner other than
+# poetry, pdm, rye, pipenv, hatch, pixi, conda, mamba, micromamba, mise, rtx, asdf, direnv (uv, uvx, pipx, npx, python -m are v27's); python or perl delete code only (ruby, node read sys.argv-like arguments not at all);
+# a script FILE's contents; ls | xargs forms other than a plain `ls DIR | xargs -I X rm -rf DIR/X`.
+# =====================================================================================
+_V28_NAMES_CRED = (".ssh", ".aws", ".gnupg", ".config", ".kube", ".docker")
+_V28_RUN = [None]               # the wipe this decision's python code makes of a git hook file (None, or the named reason)
+_V28_CMD = [""]                 # the command being decided (read only by the lazy tests below: a regex over it is paid only when a rule needs it)
+_V28_CHMODISH = re.compile(r"chmod|\binstall\b|setfacl|chattr|\bcp\b|\bmv\b|\bln\b|\btar\b|\bunzip\b")      # the command may give a file an execute bit (V28-M12 stays off)
+
+
+def _v28_fold(s):
+    return s.casefold() if _DEL_FOLD else s
+
+
+def _v28_homeinfo(k):
+    """k: the folded components of an absolute path -> (how many leading components are a home folder, True if it is THIS machine's home (the longest match first)), or (None, False). Else /Users/x, /home/x, /root."""
+    try:
+        best = None
+        for h in _homes():
+            hc = [_v28_fold(c) for c in h.split("/") if c]
+            if hc and k[:len(hc)] == hc and (best is None or len(hc) > best):
+                best = len(hc)
+        if best is not None:
+            return best, True
+    except Exception:
+        pass
+    if len(k) >= 2 and k[0] in ("users", "home"):
+        return 2, False
+    if k and k[0] == "root":
+        return 1, False
+    return None, False
+
+
+def _v28_homelen(k):
+    return _v28_homeinfo(k)[0]
+
+
+def _v28_prot(a):
+    """A normalised absolute path -> "home" (anything under /System), "cred" (a credential folder or a ~/.claude* entry of ANY home: the entry itself, not what is inside it), or None."""
+    k = [_v28_fold(c) for c in a.split("/") if c]
+    if not k:
+        return None
+    if k[0] == _v28_fold("System"):
+        return "home"                                                   # V28-M8
+    n, real = _v28_homeinfo(k)
+    if n is None or len(k) <= n:
+        return None
+    rest = k[n:]
+    if len(rest) == 1 and (rest[0].startswith(_v28_fold(".claude")) or (not real and rest[0] in [_v28_fold(c) for c in _V28_NAMES_CRED])):
+        return "cred"                                                   # V28-M1, V28-M3: ~/.claude, ~/.claude.json, ~/.claude-x (the agents' settings and hook config) of ANY home, and the credential folder of every home but this machine's (v27's credential-folder rule holds that one). EXACT, as v27's rule is: a file inside (`~/.claude/settings.json`) stays a plain delete
+    return None
+
+
+_del_prot_v27 = _del_prot
+
+
+def _del_prot(a):
+    r = _del_prot_v27(a)
+    if r:
+        return r
+    try:
+        return _v28_prot(a)
+    except Exception:
+        return None
+
+
+def _v28_home_marker_path(x):
+    """x: an absolute word whose home-name component the resolver could not read (`/home/$USER/.gnupg`) -> the path with that one component made a name."""
+    if not isinstance(x, str) or not x.startswith("/"):
+        return None
+    comps = x.split("/")
+    if len(comps) >= 4 and comps[1] in ("home", "Users", "home".upper()) and any(c in comps[2] for c in (U, Q, PSUB)) and not any(c in "/".join(comps[3:]) for c in (U, Q, PSUB, FOUND)):
+        return "/".join([comps[0], comps[1], "u"] + comps[3:])
+    return None
+
+
+_del_target_v27 = _del_target
+
+
+def _del_target(x, cwd, rec, unres=None):
+    r = _del_target_v27(x, cwd, rec, unres)
+    if r is not None or not rec or not x:
+        return r
+    try:
+        if FOUND in x:
+            return None
+        t = x.rstrip("/") if len(x) > 1 else x
+        base = t.rsplit("/", 1)[-1] if t else ""
+        if re.search(r"[*?\[]", base):                                  # a glob at the top of a home folder that can match a protected name: `rm -rf ~/.claude*`, `rm -rf ~/.s*`
+            par = posixpath.dirname(t)
+            pa = _abs(par if par else ".", cwd if (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd and FOUND not in cwd) else None)
+            if pa is None:
+                pa = _v28_home_marker_path(par + "/x") and posixpath.dirname(_v28_home_marker_path(par + "/x"))     # /home/$USER/.claude*: the user-name component is any name
+            if pa is None or not pa.startswith("/"):
+                return None
+            kk = [_v28_fold(c) for c in pa.split("/") if c]
+            if _v28_homelen(kk) == len(kk):
+                import fnmatch
+                names = [".claude"] + list(_V28_NAMES_CRED)
+                if any(fnmatch.fnmatchcase(_v28_fold(n), _v28_fold(base)) for n in names):
+                    return ("D-cred", x)                                # V28-M2
+            return None
+        mp = _v28_home_marker_path(x)                                   # V28-M3: /home/$USER/.gnupg
+        if mp is not None and _v28_prot(mp):
+            return ("D-cred", x)
+    except Exception:
+        return None
+    return None
+
+
+def _v28_broad_find(rest):
+    """A find expression whose ONLY narrowing tests are -name/-iname patterns that match nearly every entry (`.*`, `*`, `*.*`): it narrows nothing a delete of a protected folder cares about."""
+    for k in range(len(rest) - 1, -1, -1):
+        if rest[k] in ("-o", "-or"):
+            rest = rest[k + 1:]
+            break
+    neg = False
+    narrowed = False
+    for k, t in enumerate(rest):
+        if t in ("!", "-not"):
+            neg = True
+            continue
+        if t in FIND_FILTERS and not neg:
+            v = rest[k + 1] if k + 1 < len(rest) else ""
+            if _find_matches_all(t, v):
+                neg = False
+                continue
+            if t in ("-name", "-iname") and _del_broad(v):
+                narrowed = True
+                neg = False
+                continue
+            return False
+        neg = False
+    return narrowed
+
+
+_del_op_v27 = _del_op
+
+
+def _v28_ls_dirs(up, cwd):
+    """The directories a plain `ls [flags] DIR...` stage lists, or None when the producer is anything else (a filter after it, a find, an echo)."""
+    stages = [s for s in up if s]
+    if len(stages) != 1 or not _lit3(stages[0][0]) or posixpath.basename(stages[0][0]) != "ls":
+        return None
+    pos = [w for w in stages[0][1:] if not w.startswith("-")]
+    if any(not _lit3(w) or _del_markerish(w) for w in pos):
+        return None
+    if not pos:
+        return [cwd] if isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd else None
+    return pos
+
+
+def _v28_op(op):
+    b, args, cwd = op["b"], op["args"], op["cwd"]
+    if b == "find":
+        starts = []
+        for w in args:
+            if w.startswith("-") or w in ("(", "!", ")"):
+                break
+            starts.append(w)
+        act = _del_find_acts(args)
+        rest = args[len(starts):]
+        if act and _find_filtered(rest) and _v28_broad_find(rest):      # V28-M6: `find ~ -maxdepth 1 -name '.*' -exec rm -rf {} +` keeps every dotfile and folder in the home folder
+            for s in (starts or ["."]):
+                r = _del_target(s, cwd, True)
+                if r:
+                    return ("D-find", "catastrophic_delete: find %s %s removes everything under a protected folder (the home folder, a folder above it or above the repo, a "
+                                      "system folder, a credential folder) or under a part the guard cannot read. That cannot be taken back." % (s, act))
+        if act:                                                         # V28-M1: `find ~ -maxdepth 1 -name '.claude*' -delete`: the name test keeps exactly the protected entries
+            import fnmatch
+            names = [".claude"] + list(_V28_NAMES_CRED)
+            pats = []
+            neg = False
+            for k, t in enumerate(rest):
+                if t in ("!", "-not"):
+                    neg = True
+                    continue
+                if t in ("-name", "-iname") and not neg and k + 1 < len(rest):
+                    pats.append(rest[k + 1])
+                neg = False
+            if pats and any(any(fnmatch.fnmatchcase(_v28_fold(n), _v28_fold(pt)) for n in names) for pt in pats):
+                for s in (starts or ["."]):
+                    if not s:
+                        continue
+                    sa = _abs(s, cwd if (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd and FOUND not in cwd) else None)
+                    if sa is not None and sa.startswith("/") and _v28_homelen([_v28_fold(c) for c in sa.split("/") if c]) == len([c for c in sa.split("/") if c]):
+                        return ("D-find", "catastrophic_delete: find %s %s removes a credential or config folder, or the agents' own settings (~/.claude*), by name. That cannot be taken back." % (s, act))
+        return None
+    if b in ("rm", "srm") and op.get("pipe_in") and op.get("up"):
+        flags, pos = _del_split(args)
+        rec = any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in flags)
+        frc = any(re.match(r"^-[A-Za-z]*f", a) or a == "--force" for a in flags)
+        if rec or frc:
+            dirs = _v28_ls_dirs(op["up"], cwd)
+            if dirs is not None:
+                for x in pos:
+                    y = None
+                    if x in op.get("fed", ()) and _del_markerish(x) and "/" in x.strip("/") and x.endswith(("/" + U, "/" + Q, "/" + PSUB)):      # the walk read the `{}` of xargs -I as an unknown word
+                        y = x[:-1] + "*"
+                    elif "{}" in x:
+                        y = x.replace("{}", "*")
+                    if y is not None:                                   # V28-M7: `ls -A ~ | xargs -I {} rm -rf ~/{}` is `rm -rf ~/*`
+                        try:
+                            same = [d2 for d2 in dirs if _abs(d2, cwd) is not None and _abs(d2, cwd) == _abs(posixpath.dirname(y), cwd)]
+                        except Exception:
+                            same = []
+                        if not same:
+                            continue
+                        r = _del_target(y, cwd, True, True)
+                        if r:
+                            return ("D-glob", "catastrophic_delete: the glob %s expands to every entry of a protected folder (the home folder, a folder above it or above the repo, a system folder or a "
+                                              "credential folder), and %s -r would delete them all. That cannot be taken back." % (y, b))
+    return None
+
+
+def _del_op(op):
+    r = _del_op_v27(op)
+    if r is not None:
+        return r
+    try:
+        return _v28_op(op)
+    except Exception:
+        return None
+
+
+# ---- interpreter code that deletes a path the command hands it: python shutil.rmtree(sys.argv[1]), perl rmtree($ARGV[0]) (V28-M4) ----
+def _v28_argv_ops(b, rest):
+    """-> list of ("rm", ["-r", "--", WORD]) for each recursive delete of one of the words after the -c / -e code, which the code reads as sys.argv[N] / $ARGV[N-1]."""
+    out = []
+    if not _DEL_INTERP.match(b):
+        return out
+    k = next((i for i, a in enumerate(rest[:-1]) if a in ("-c", "-e", "-E", "--eval")), None)
+    if k is None:
+        return out
+    code, words = rest[k + 1], rest[k + 2:]
+    if not words or not isinstance(code, str) or not _lit3(code) or len(code) > 20000:
+        return out
+    idx = []
+    if re.match(r"^(?:python[0-9.]*|pypy[0-9.]*)$", b):
+        try:
+            import ast
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tree = ast.parse(code)
+        except Exception:
+            return out
+        names = {}
+
+        def is_argv(n):
+            return isinstance(n, ast.Subscript) and isinstance(n.value, ast.Attribute) and n.value.attr == "argv" and isinstance(n.slice, ast.Constant) and isinstance(n.slice.value, int)
+
+        def argn(n):
+            if is_argv(n):
+                return n.slice.value
+            if isinstance(n, ast.Name):
+                return names.get(n.id)
+            if isinstance(n, ast.Call) and n.args and len(n.args) == 1 and isinstance(n.func, (ast.Name, ast.Attribute)) and \
+                    (getattr(n.func, "id", None) or getattr(n.func, "attr", "")) in ("Path", "PurePath", "PosixPath", "str", "abspath", "realpath", "expanduser"):
+                return argn(n.args[0])
+            if isinstance(n, ast.Call) and not n.args and isinstance(n.func, ast.Attribute) and n.func.attr in ("resolve", "absolute", "expanduser"):
+                return argn(n.func.value)
+            return None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                v = argn(node.value)
+                if v is not None:
+                    names[node.targets[0].id] = v
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                f = node.func
+                fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+                if fname == "rmtree" and node.args:
+                    n = argn(node.args[0])
+                    if n is not None:
+                        idx.append(n)
+    elif re.match(r"^perl[0-9.]*$", b):
+        for m in re.finditer(r"(?<![\w$@%>:])(?:File::Path::)?(?:rmtree|remove_tree)\s*\(?\s*\$ARGV\[\s*(\d+)\s*\]", code):
+            idx.append(int(m.group(1)) + 1)
+    for n in idx:
+        if 1 <= n <= len(words) and isinstance(words[n - 1], str):
+            out.append(("rm", ["-r", "--", words[n - 1]]))
+    return out
+
+
+_judge_v27 = _judge
+
+
+def _judge(env, argv, stage, upstream, st):
+    if _DEL[0] is not None:
+        try:
+            if argv and isinstance(argv[0], str) and _lit3(argv[0]):
+                for b2, a2 in _v28_argv_ops(posixpath.basename(argv[0]), argv[1:]):
+                    _DEL[0].append({"b": b2, "args": a2, "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+        except Exception:
+            pass
+    return _judge_v27(env, argv, stage, upstream, st)
+
+
+# ---- perl q() and qq() quoting: `unlink glob(q(~/.gnupg/*))` is `unlink glob('~/.gnupg/*')` (V28-M5) ----
+_V28_PERLQ = re.compile(r"(?<![\w$@%>:])(?P<k>qq?)\s*\(\s*(?P<b>[^()'\"\\\n]*)\)")
+_other_delete_shell_v27 = _other_delete_shell
+
+
+def _other_delete_shell(code, lang):
+    out = _other_delete_shell_v27(code, lang)
+    try:
+        if re.match(r"^perl[0-9.]*$", posixpath.basename(lang or "")) and isinstance(code, str) and _V28_PERLQ.search(code):
+            c2 = _V28_PERLQ.sub(lambda m: ("'" if m.group("k") == "q" else '"') + m.group("b") + ("'" if m.group("k") == "q" else '"'), code)
+            out = out + [c for c in _other_delete_shell_v27(c2, lang) if c not in out]
+    except Exception:
+        pass
+    return out
+
+
+# ---- a commit script behind a hook-runner switch: `env HUSKY=0 pnpm commit` (V28-M10) ----
+_runs_git_commit_v27 = _runs_git_commit
+
+
+def _runs_git_commit(b, args):
+    if _runs_git_commit_v27(b, args):
+        return True
+    if b in ("npm", "pnpm", "yarn", "bun"):
+        pos = [a for a in args if not a.startswith("-")]
+        if pos[:1] == ["commit"] or pos[:2] == ["run", "commit"] or pos[:2] == ["run-script", "commit"] or pos[:1] in (["cz"], ["git-cz"]) or \
+                (pos[:1] in (["exec"], ["dlx"], ["x"]) and pos[1:2] and pos[1] in ("cz", "git-cz", "commitizen")):
+            return True
+    if b in ("npx", "pnpx", "bunx"):
+        pos = [a for a in args if not a.startswith("-")]
+        if pos[:1] and pos[0] in ("cz", "git-cz", "commitizen"):
+            return True
+    return False
+
+
+# ---- python code that wipes a git hook file (V28-M11) ----
+def _v28_py_wipe(code, cwd):
+    """-> a path string when Python code `code` (literal, parsed with ast) empties, truncates, renames, moves or deletes a file the guard reads as a git hook; else None."""
+    import ast
+    import warnings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tree = ast.parse(code)
+    except Exception:
+        return None
+    assigns = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            assigns.setdefault(node.targets[0].id, []).append(node.value)
+
+    def ev(n, d=0):
+        if d > 6 or n is None:
+            return None
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            return [n.value]
+        if isinstance(n, ast.Name):
+            vals = assigns.get(n.id)
+            if not vals or len(vals) != 1:
+                return None
+            return ev(vals[0], d + 1)
+        if isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Div, ast.Add)):
+            a, b = ev(n.left, d + 1), ev(n.right, d + 1)
+            if a is None or b is None:
+                return None
+            return [(x.rstrip("/") + "/" + y.lstrip("/")) if isinstance(n.op, ast.Div) else x + y for x in a for y in b]
+        if isinstance(n, ast.Call):
+            f = n.func
+            fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+            if fname in ("Path", "PurePath", "PosixPath", "str", "fspath") and n.args:
+                parts = [ev(a, d + 1) for a in n.args]
+                if any(p is None for p in parts):
+                    return None
+                out = [""]
+                for p in parts:
+                    out = [posixpath.join(o, x) for o in out for x in p]
+                return out
+            if fname == "join" and isinstance(f, ast.Attribute) and n.args:
+                parts = [ev(a, d + 1) for a in n.args]
+                if any(p is None for p in parts):
+                    return None
+                out = [""]
+                for p in parts:
+                    out = [posixpath.join(o, x) for o in out for x in p]
+                return out
+            if fname in ("resolve", "absolute") and isinstance(f, ast.Attribute) and not n.args:
+                return ev(f.value, d + 1)
+        return None
+
+    def is_hook(p):
+        try:
+            return _pclass(p, cwd or _root()) == "hooks"
+        except Exception:
+            return False
+
+    def empty(n):
+        return isinstance(n, ast.Constant) and n.value in ("", b"")
+
+    def zero(n):
+        return isinstance(n, ast.Constant) and n.value == 0 and not isinstance(n.value, bool)
+
+    def first_hook(nodes):
+        for nd in nodes:
+            for p in (ev(nd) or []):
+                if is_hook(p):
+                    return p
+        return None
+
+    def open_w(n):
+        """open(P, 'w'...) -> P's text when mode truncates; else None."""
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open" and n.args:
+            mode = n.args[1] if len(n.args) > 1 else next((k.value for k in n.keywords if k.arg == "mode"), None)
+            if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and mode.value.startswith("w"):
+                return first_hook([n.args[0]])
+        return None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.With):
+            for it in node.items:
+                p = open_w(it.context_expr)
+                if p:
+                    nm = it.optional_vars.id if isinstance(it.optional_vars, ast.Name) else None
+                    if all(isinstance(s, ast.Pass) or (isinstance(s, ast.Expr) and isinstance(s.value, ast.Call) and isinstance(s.value.func, ast.Attribute) and
+                                                      isinstance(s.value.func.value, ast.Name) and s.value.func.value.id == nm and
+                                                      ((s.value.func.attr == "write" and s.value.args and empty(s.value.args[0])) or s.value.func.attr in ("truncate", "close")))
+                           for s in node.body):
+                        return p
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+        base = f.value if isinstance(f, ast.Attribute) else None
+        bname = base.id if isinstance(base, ast.Name) else ""
+        if fname in ("write_text", "write_bytes") and base is not None and node.args and empty(node.args[0]):
+            p = first_hook([base])
+            if p:
+                return p
+        if fname in ("unlink", "rename", "replace", "rmdir") and base is not None and bname not in ("os", "shutil"):
+            p = first_hook([base])
+            if p:
+                return p
+        if bname == "os" and fname in ("remove", "unlink", "rename", "replace", "rmdir", "removedirs") and node.args:
+            p = first_hook([node.args[0]])
+            if p:
+                return p
+        if bname == "os" and fname == "truncate" and len(node.args) >= 2 and zero(node.args[1]):
+            p = first_hook([node.args[0]])
+            if p:
+                return p
+        if bname == "shutil" and fname in ("rmtree", "move") and node.args:
+            p = first_hook([node.args[0]])
+            if p:
+                return p
+        if fname == "close" and base is not None and open_w(base):          # open(P, 'w').close()
+            return open_w(base)
+        if fname == "truncate" and base is not None and (not node.args or zero(node.args[0])) and isinstance(base, ast.Call) and isinstance(base.func, ast.Name) and base.func.id == "open" and base.args:
+            p = first_hook([base.args[0]])
+            if p:
+                return p
+    return None
+
+
+_interp_code_v27 = _interp_code
+
+
+def _interp_code(code, st, lang=None):
+    try:
+        if re.match(r"^(?:python[0-9.]*|pypy[0-9.]*)$", posixpath.basename(lang or "")) and isinstance(code, str) and _lit3(code) and \
+                re.search(r"\.git/hooks|\.githooks|\.husky|\.lefthook|\.git-hooks", code) and _V28_RUN[0] is None:
+            p = _v28_py_wipe(code, st.cwd)
+            if p:
+                _V28_RUN[0] = ("hook_bypass_guard: interpreter code empties, renames, moves or deletes the git hook file " + p + ", so the hook stops running" + BYPASS_TAIL)
+    except Exception:
+        pass
+    return _interp_code_v27(code, st, lang)
+
+
+# ---- a data file run by path with no execute bit (V28-M12) ----
+_V28_DATA_EXT = (".jsonl", ".ndjson", ".json", ".csv", ".tsv", ".log", ".txt", ".md", ".yaml", ".yml", ".xml", ".lock", ".sum")
+_disk_script_v27 = _disk_script
+
+
+def _disk_script(st, path, by_shell, sargs):
+    try:
+        if not by_shell and isinstance(path, str) and path.lower().endswith(_V28_DATA_EXT) and _DISK[0] and _lit3(path) and PSUB not in path and not _V28_CHMODISH.search(_V28_CMD[0]):
+            a = _abs(path, st.cwd)
+            if a is not None and a not in st.files:
+                real = _disk_path(a, st.root)
+                if real and os.path.isfile(real) and not os.access(real, os.X_OK):
+                    return None                                         # the shell answers "Permission denied": nothing runs
+    except Exception:
+        pass
+    return _disk_script_v27(st, path, by_shell, sargs)
+
+
+# ---- the runner that wraps a hook tool: `poetry run pre-commit uninstall` (V28-M9) ----
+_V28_RUNNER = re.compile(r"(?P<pre>(?:^|[;&|(\n])\s*(?:[A-Za-z_]\w*=\S*\s+)*)"
+                         r"(?:(?:poetry|pdm|rye|pipenv|hatch|pixi)\s+run|(?:mise|rtx|asdf|direnv)\s+exec|(?:conda|mamba|micromamba)\s+run(?:\s+(?:-n|-p|--name|--prefix)\s+\S+|\s+--no-capture-output)*)\s+(?:--\s+)?")
+
+
+def _v28_strip_runner(command):
+    out = _V28_RUNNER.sub(lambda m: m.group("pre"), command)
+    return out if out != command else None
+
+
+_V28_HOOKWORD = re.compile(r"pre-commit|pre_commit|prek|lefthook|husky|overcommit|HUSKY|LEFTHOOK|\.git/hooks|\.githooks|\.husky|core\.hooksPath|--no-verify|commit")
+
+
+def _v28_named(core):
+    shape, text = redirect_for(core)
+    return {"verdict": "deny", "origin": "block", "v3": "block", "shape": shape, "redirect": text, "alternatives": alternatives(text),
+            "reason": core + REDIRECT_MARK + text, "note": ""}
+
+
+_decide_full_v27_prev = _decide_full
+
+
+def _decide_full(command):
+    _V28_RUN[0] = None
+    _V28_CMD[0] = command if isinstance(command, str) else ""
+    d = _decide_full_v27_prev(command)
+    try:
+        weak = d.get("verdict") == "allow" or (d.get("reason") or "").startswith("fail_closed")
+        if weak and _V28_RUN[0]:
+            return _v28_named(_V28_RUN[0])
+        if weak and isinstance(command, str) and ("run " in command or "exec " in command) and _V28_HOOKWORD.search(command):
+            c2 = _v28_strip_runner(command)
+            if c2 is not None:
+                d2 = _decide_full_v27_prev(c2)
+                if d2.get("verdict") == "deny" and not (d2.get("reason") or "").startswith("fail_closed"):
+                    return d2
+    except Exception:
+        pass
+    return d
+# ===== end of V28 =====
+
+
+# ===== V29: named denies for the classes v28 lets through on the LIVE wrapper (blind_v27 + the older blind sets + public rival failure shapes, ALL SEEN for v29). Written after v28; nothing above is changed except by rebinding. =====
+# Same contract as V28: the live wrapper (02_SYSTEMS/GATES/guard_pretooluse.py) lets a deny whose reason starts `fail_closed` through, so each class ends in a NAMED deny; every rule only ADDS a deny to a command v28
+# allowed or denied as fail_closed (two lifts below only REMOVE a v28 deny); a fault inside this block is v28's answer, never a raise.
+#   1. system trees (V29-M1): a RECURSIVE delete (rm -r, find -delete / -exec rm, rmtree, rsync --delete) of anything INSIDE /usr /etc /var /opt /Library /bin /sbin /lib /boot (and /private/etc, /private/var) is the
+#      named delete of a system folder; v28 and earlier protected the exact folders only. Temp areas (/var/folders, /var/tmp, /private/var/folders, /private/var/tmp, /private/tmp, /tmp), the Homebrew prefixes (/usr/local/Cellar /usr/local/Homebrew /usr/local/opt /usr/local/Caskroom /usr/local/var/homebrew /opt/homebrew: user-owned, rebuilt by brew, and del3's own SYS controls), a forced delete of one
+#      named file (`rm -f /usr/local/bin/foo`), and a named file with a data extension (`/var/log/myapp.log`) stay open. V29-M1b: find rooted at / or at /etc /usr /bin /sbin /lib /boot with -delete or -exec rm is denied
+#      when it deletes by a key or config name (`*.pem` `*.key` `*.conf` `id_*` `passwd`...); a `-name '*.pyc'` / `*.log` / `x` cleanup, and /var, /opt, /System, /Library finds, stay v28's. V29-M1c: another account's home folder (/home/user, /Users/alex) is a home folder.
+#   2. (not in v29) no-cwd whole-worktree delete: with no hook cwd v27 keeps `rm -rf *` a fail_closed ask on purpose (tests/v27_test.py K row, item 2 probe c); the blind scorer calls with no cwd, so the live column of
+#      the scorer, not the deployed wrapper (which passes a cwd and gets v27's named deny when .git exists), would gain 1 row on blind_v27 and 15 on the older sets. Left as v27 pinned it; handed up.
+#   3. retries (V29-M3): a command v28 could not read is read again, and only a NAMED deny of the retry is kept: `"$HOME"` as `~` inside a printf/echo substitution; zsh `noglob`, `nocorrect`, `repeat N` stripped and
+#      `$~VAR` read as `$VAR`.
+#   4. a fail_closed deny that names its own destructive shape (V29-M4, M7): a write over a git hook by sed, cp, tee, rsync, install is a named hook_bypass_guard; an unterminated quote is closed and the text judged; base64,
+#      octal and hex text, and quoted command text, behind an eval, an unknown command word, a pipe into a shell or a -c text the guard cannot resolve, is judged as a command and a named deny of it is kept.
+#   5. interpreter code that disarms a hook without emptying it (V29-M10): it writes `exit 0` / `true` / only comments over it, takes its execute bit away, or moves or deletes it (python by ast; node, ruby, perl by text).
+#   6. declared-blind in v28, closed: `python3 - ARG <<EOF` heredoc deletes (V29-M9b), ruby ARGV[N] and node process.argv[N] deletes (V29-M9), `HUSKY=0 make|just|task|rake|invoke commit` (V29-M8).
+#   7. two lifts: `rm --version` / `rm --help` delete nothing (V29-M6a: `xargs -r rm -f --version`); a find under node_modules narrowed by an exact -name that names no hook manager (`-name .cache`) cannot reach one (V29-M6b).
+# Left open on purpose (labels disagree, K rows in tests/v29_test.py): `git config push.force true`, `DIR=""; rm -rf "$DIR/x"`, ~/.claude/<inside>, a file inside a credential folder, `find ~ -name '*.pem' -delete`,
+# GIT_HOOKS_PATH / PRE_COMMIT_ALLOW_NO_CONFIG (stop in holdout19 and blind_v27's older stops, allow in blind_v27), `git update-ref refs/heads/main HEAD`, git add $(git ls-files -m).
+# Blind to (G25): zsh syntax beyond noglob / nocorrect / repeat / $~VAR (foreach loops, glob qualifiers, `=()`, anonymous functions are v28's reading); a path an interpreter reads from the environment; a script FILE's contents;
+# base64 text that is not valid UTF-8 or does not start with a command word; a destructive word that only a variable holds; `ls HOOKDIR | grep ... | xargs chmod -x`; /Applications, /Volumes, /srv, /mnt children; a named FILE
+# deleted without -r (`rm /etc/passwd`); hook edits whose content is a real script; go/php/lua interpreters; node/ruby/perl hook writes by a path built at run time; the 3 allow rows blind_v27 labels unanimous
+# that v29 now stops (named app folders under /usr/local/share and /opt) are the price of the system-tree rule.
+# =====================================================================================
+_V29_SYSROOTS = frozenset(("usr", "etc", "var", "opt", "library", "bin", "sbin", "lib", "lib64", "boot", "system"))
+_V29_SOFTROOTS = frozenset(("etc", "usr", "bin", "sbin", "lib", "lib64", "boot"))
+_V29_TEMP = (("var", "folders"), ("var", "tmp"), ("usr", "local", "cellar"), ("usr", "local", "homebrew"), ("usr", "local", "opt"), ("usr", "local", "caskroom"), ("usr", "local", "var", "homebrew"), ("opt", "homebrew"))
+_V29_KEYCFG_EXT = (".pem", ".key", ".crt", ".cer", ".p12", ".pfx", ".conf", ".cfg", ".ini", ".keytab")
+_V29_KEYCFG_NAMES = ("authorized_keys", "known_hosts", "passwd", "shadow", "sudoers", "hosts", "id_*", "ssh_host_*", "*_rsa", "*_ed25519", "*_ecdsa")
+
+
+def _v29_keycfg(pat):
+    import fnmatch
+    q = pat.lower()
+    return q.endswith(_V29_KEYCFG_EXT) or any(fnmatch.fnmatchcase(q, n) for n in _V29_KEYCFG_NAMES)
+_V29_FILEEXT = frozenset(("log", "pid", "lock", "tmp", "bak", "old", "orig", "swp", "sock", "out", "err", "txt", "md", "json", "yml", "yaml", "csv", "db", "cache", "gz", "zip", "tar", "tgz", "png", "jpg", "pdf"))
+
+
+def _v29_sys_comps(a):
+    """A normalised absolute path -> its folded components with the macOS /private alias of /etc and /var removed, or None."""
+    if not isinstance(a, str) or not a.startswith("/"):
+        return None
+    k = [_v28_fold(c) for c in a.split("/") if c]
+    if len(k) >= 2 and k[0] == "private" and k[1] in ("etc", "var"):
+        k = k[1:]
+    return k
+
+
+_V29_SYS_CHILDREN = True        # THE ONE SWITCH of V29-M1, M1b and M1c. False restores v28's reading (exact system folders only, the OPEN controls of tests/del3_test.py: `rm -rf /etc/zz-conf.d` allowed). It was ruled by no one: the labels disagree, 27 stop vs 3 unanimous allow on blind_v27
+_V29_REC = [True]               # the operation being judged deletes RECURSIVELY (rm -r, find -delete, rmtree, rsync --delete); a forced delete of one named file (`rm -f /usr/local/bin/foo`) is not a system folder delete
+
+
+def _v29_sysprot(a):
+    """V29-M1: a path strictly inside a system tree (not a temp area) -> "home", else None."""
+    if not _V29_REC[0] or not _V29_SYS_CHILDREN:
+        return None
+    k = _v29_sys_comps(a)
+    if k and len(k) == 2 and k[0] in ("home", "users") and not any(c in k[1] for c in (U, Q, PSUB, FOUND)) and k[1] not in ("*", "shared"):
+        return "home"                                                   # V29-M1c: another account's home folder (/home/user, /Users/alex): the home folder of an account is the home folder
+    if not k or len(k) < 2 or k[0] not in _V29_SYSROOTS:
+        return None
+    if any(tuple(k[:len(t)]) == t for t in _V29_TEMP):
+        return None
+    if len(k) >= 3 and "." in k[-1] and not re.search(r"[*?\[]", k[-1]) and k[-1].rsplit(".", 1)[-1] in _V29_FILEEXT:
+        return None                                                     # a named log, pid, lock, backup or data FILE (`/var/log/myapp.log`), not a folder
+    return "home"
+
+
+_del_prot_v28 = _del_prot
+
+
+def _del_prot(a):
+    r = _del_prot_v28(a)
+    if r:
+        return r
+    try:
+        return _v29_sysprot(a)
+    except Exception:
+        return None
+
+
+def _v29_find_op(op):
+    """V29-M1b: find rooted at / or at a software or config root with a delete action is denied whatever its -name filters say."""
+    b, args, cwd = op["b"], op["args"], op["cwd"]
+    if b != "find" or not _V29_SYS_CHILDREN:
+        return None
+    starts = []
+    for w in args:
+        if w.startswith("-") or w in ("(", "!", ")"):
+            break
+        starts.append(w)
+    act = _del_find_acts(args)
+    if not act:
+        return None
+    pats, neg = [], False
+    for k2, t in enumerate(args):
+        if t in ("!", "-not"):
+            neg = True
+            continue
+        if t in ("-name", "-iname") and not neg and k2 + 1 < len(args):
+            pats.append(args[k2 + 1])
+        neg = False
+    if not any(_v29_keycfg(pt) for pt in pats):                         # a find that deletes by a name that is not key or config material (`*.pyc`, `*.log`, `x`) is a cleanup: v28's reading stands
+        return None
+    for s in (starts or ["."]):
+        if not s or FOUND in s:
+            continue
+        sa = _abs(s, cwd if (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd and FOUND not in cwd) else None)
+        if sa is None or not sa.startswith("/"):
+            continue
+        k = _v29_sys_comps(sa)
+        if k is None:
+            continue
+        if not k or (k[0] in _V29_SOFTROOTS and not any(tuple(k[:len(t)]) == t for t in _V29_TEMP)):
+            return ("D-find", "catastrophic_delete: find %s %s removes files from the filesystem root or a system folder (/etc, /usr, /bin, /sbin, /lib, /boot), whatever name it filters by. "
+                              "That cannot be taken back." % (s, act))
+    return None
+
+
+_del_op_v28 = _del_op
+
+
+def _del_op(op):
+    try:
+        if op["b"] in ("rm", "srm"):
+            _V29_REC[0] = any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in op["args"] if isinstance(a, str) and a.startswith("-") and a != "--" and not a.startswith("--no-"))
+        else:
+            _V29_REC[0] = True
+    except Exception:
+        _V29_REC[0] = True
+    try:
+        r = _del_op_v28(op)
+    finally:
+        _V29_REC[0] = True
+    if r is not None:
+        return r
+    try:
+        return _v29_find_op(op)
+    except Exception:
+        return None
+
+
+# ---- V29-M3: retries of a command v28 could not read ----
+_V29_SUBST = re.compile(r"(?P<pre>\beval\s+|\b(?:ba|z|da)?sh\s+-c\s+)(?P<q>\"?)(?P<sub>\$\(\s*(?:printf|echo)\b[^()`$]*(?:\$\{?HOME\}?[^()`$]*)*\))")        # only where the shell parses the printed text again: eval, sh -c
+
+
+def _v29_fold_subst(m, t=None):
+    """`$(printf 'rm -rf %s' "$HOME")` / `$(echo rm -rf "$HOME")` -> `$(printf 'rm -rf ~')`: the text the substitution prints, with the home variable as the tilde that expands to the same folder. Any other shape stays as written."""
+    import shlex
+    t = t if t is not None else m.group(0)
+    try:
+        ws = shlex.split(t[2:-1], posix=True)
+    except ValueError:
+        return t
+    if not ws:
+        return t
+    def home(w):
+        return "~" + w[len("$HOME"):] if w.startswith("$HOME") and (len(w) == 5 or w[5] == "/") else ("~" + w[len("${HOME}"):] if w.startswith("${HOME}") and (len(w) == 7 or w[7] == "/") else w)
+    if ws[0] == "echo":
+        a = [w for w in ws[1:]]
+        while a and re.fullmatch(r"-[neE]+", a[0]):
+            a = a[1:]
+        text = " ".join(home(w) for w in a)
+    elif ws[0] == "printf" and len(ws) >= 2:
+        fmt, args = ws[1], [home(w) for w in ws[2:]]
+        if re.search(r"%[^s%]", fmt):
+            return t
+        n = fmt.count("%s")
+        if n == 0 and args:
+            return t
+        out, i = [], 0
+        for part in re.split(r"(%s|%%)", fmt):
+            if part == "%s":
+                out.append(args[i] if i < len(args) else "")
+                i += 1
+            elif part == "%%":
+                out.append("%")
+            else:
+                out.append(part)
+        text = "".join(out)
+    else:
+        return t
+    if "'" in text or "\\" in text or "%" in text:
+        return t
+    return "$(printf '" + text + "')"
+
+
+_V29_ZSHPRE = re.compile(r"(?P<pre>(?:^|[;&|(\n'\"])\s*(?:[A-Za-z_]\w*=\S*\s+)*)(?:(?:noglob|nocorrect)\s+|repeat\s+\d+\s+(?:do\s+)?)+")
+
+
+def _v29_retries(command):
+    outs = []
+    if ("HOME" in command or "~" in command) and ("$(echo" in command or "$(printf" in command or "$( echo" in command or "$( printf" in command):
+        c2 = _V29_SUBST.sub(lambda m: m.group("pre") + m.group("q") + _v29_fold_subst(m, m.group("sub")), command)
+        if c2 != command:
+            outs.append(c2)
+    if "noglob" in command or "nocorrect" in command or "repeat" in command or "$~" in command or "${~" in command:       # V29-M3c: zsh words that run the next command unchanged
+        c4 = _V29_ZSHPRE.sub(lambda m: m.group("pre"), command)
+        c4 = re.sub(r"\$\{~(\w+)\}", r"${\1}", c4)
+        c4 = re.sub(r"\$~(\w+)", r"$\1", c4)
+        if c4 != command:
+            outs.append(c4)
+    return outs
+
+
+# ---- V29-M4..M7: promotions of a fail_closed deny that names its own destructive shape, and two lifts ----
+_V29_UNREAD = ("fail_closed: eval of text the guard cannot resolve", "fail_closed: the command word itself is unknown", "fail_closed: a shell runs a pipe from a program whose output",
+               "fail_closed: quoting the guard cannot parse", "fail_closed: a shell runs -c text the guard cannot resolve", "fail_closed: a shell runs a process substitution")
+_V29_B64 = re.compile(r"[A-Za-z0-9+/]{8,}={0,2}")
+_V29_OCT = re.compile(r"(?:\\[0-7]{3}){6,}")
+_V29_HEX = re.compile(r"(?:\\x[0-9a-fA-F]{2}){6,}")
+_V29_LIT = re.compile(r"""'([^'\n]{5,300})'|"([^"\n$`\\]{5,300})\"""")
+_V29_VERBS = re.compile(r"^\s*(?:sudo\s+)?(?:git|rm|srm|find|rsync|xargs|env|bash|sh)\b")
+_V29_NMFIND = re.compile(r"""\bfind\s+(\./)?node_modules/?(?=\s)([^|;&\n]*?)\s-i?name\s+(?:'([^'*?\[\]]+)'|"([^"*?\[\]]+)"|([^\s'"*?\[\]]+))""")
+_V29_MGRNAMES = ("husky", "lefthook", "pre-commit", "prek", "overcommit", "simple-git-hooks", "yorkie", "evilmartians", "arkweid", ".bin", "lint-staged", "git-hooks")
+
+
+def _v29_pieces(command):
+    out = []
+    try:
+        import base64
+        for m in _V29_B64.finditer(command):
+            try:
+                t = base64.b64decode(m.group(0) + "=" * (-len(m.group(0)) % 4)).decode("utf-8")
+                if t.isprintable() and len(t) > 5 and (_V29_VERBS.match(t) or re.match(r"\s*[A-Za-z_]\w*=", t)):
+                    out.append(t)
+            except Exception:
+                pass
+        for m in _V29_OCT.finditer(command):
+            out.append("".join(chr(int(x, 8)) for x in re.findall(r"\\([0-7]{3})", m.group(0))))
+        for m in _V29_HEX.finditer(command):
+            out.append("".join(chr(int(x, 16)) for x in re.findall(r"\\x([0-9a-fA-F]{2})", m.group(0))))
+        for m in _V29_LIT.finditer(command):
+            t = m.group(1) or m.group(2)
+            if t and _V29_VERBS.match(t):
+                out.append(t)
+    except Exception:
+        pass
+    return out[:12]
+
+
+def _v29_named_text(reason, core_prefix, tail):
+    return core_prefix + tail
+
+
+_decide_full_v28_prev = _decide_full
+
+
+def _decide_full(command):
+    d = _decide_full_v28_prev(command)
+    if not isinstance(command, str):
+        return d
+    try:
+        reason = d.get("reason") or ""
+        weak = d.get("verdict") == "allow" or reason.startswith("fail_closed")
+        if weak:
+            for c2 in _v29_retries(command):                                    # V29-M3
+                d2 = _decide_full_v28_prev(c2)
+                if d2.get("verdict") == "deny" and not (d2.get("reason") or "").startswith("fail_closed"):
+                    return d2
+        if reason.startswith("fail_closed: a write over a git hook ("):         # V29-M4
+            tgt = reason[len("fail_closed: a write over a git hook ("):].split(")", 1)[0]
+            return _v28_named("hook_bypass_guard: a write over a git hook (" + tgt + ") by sed, cp, tee, rsync or install that the guard cannot show leaves its checks in place" + BYPASS_TAIL)
+        if reason.startswith("fail_closed: quoting the guard cannot parse"):    # V29-M7a: an unterminated quote is closed, then the text is judged
+            for suf in ('"', "'"):
+                d2 = _decide_full_v28_prev(command + suf)
+                if d2.get("verdict") == "deny" and not (d2.get("reason") or "").startswith("fail_closed"):
+                    return d2
+        if reason.startswith(_V29_UNREAD):                                      # V29-M7: decode, then judge the decoded text as a command
+            for t in _v29_pieces(command):
+                d2 = _decide_full_v28_prev(t)
+                if d2.get("verdict") == "deny" and not (d2.get("reason") or "").startswith("fail_closed"):
+                    return d2
+        if d.get("verdict") == "deny" and "removes the hook manager" in reason and "node_modules" in command:     # V29-M6b
+            m = _V29_NMFIND.search(command)
+            if m:
+                nm = (m.group(3) or m.group(4) or m.group(5) or "").lower()
+                if nm and not any(x in nm for x in _V29_MGRNAMES) and not any(x in nm for x in ("lefthook",)):
+                    c2 = command[:m.start()] + command[m.start():].replace("node_modules", "cachedir_v29", 1)
+                    d2 = _decide_full_v28_prev(c2)
+                    if d2.get("verdict") == "allow":
+                        return d2
+    except Exception:
+        pass
+    return d
+
+
+_del_op_v29a = _del_op
+
+
+def _del_op(op):
+    """V29-M6a: `rm --version` and `rm --help` print and exit; they delete nothing, whatever feeds them operands."""
+    try:
+        if op["b"] in ("rm", "srm") and any(a in ("--version", "--help") for a in op["args"]):
+            return None
+    except Exception:
+        pass
+    return _del_op_v29a(op)
+
+# ---- V29-M8: `HUSKY=0 make commit` (make, gmake, just, task, rake, invoke: a target named commit) ----
+_runs_git_commit_v28 = _runs_git_commit
+
+
+def _runs_git_commit(b, args):
+    if _runs_git_commit_v28(b, args):
+        return True
+    if b in ("make", "gmake", "just", "task", "rake", "invoke", "inv"):
+        pos = [a for a in args if not a.startswith("-") and "=" not in a]
+        if pos[:1] == ["commit"]:
+            return True
+    return False
+
+
+# ---- V29-M9: ruby / node code that deletes a path the command hands it (ARGV[N], process.argv[N]), and python read from stdin with the path as an argument ----
+_V29_RB_DEL = re.compile(r"(?:FileUtils\.)?(?:rm_rf|rm_r|rm_f|rm|remove_dir|remove_entry|remove_entry_secure|rmtree)\s*\(?\s*ARGV\[\s*(\d+)\s*\]")
+_V29_NODE_DEL = re.compile(r"(?:rmSync|rmdirSync|rm|removeSync|remove|rimrafSync|rimraf|emptyDirSync|emptydirSync|unlinkSync)\s*\(\s*process\.argv\[\s*(\d+)\s*\]")
+_v28_argv_ops_v28 = _v28_argv_ops
+
+
+def _v28_argv_ops(b, rest):
+    out = _v28_argv_ops_v28(b, rest)
+    try:
+        if _DEL_INTERP.match(b) and (re.match(r"^ruby[0-9.]*$", b) or b in ("node", "nodejs", "bun", "deno", "tsx")):
+            k = next((i for i, a in enumerate(rest[:-1]) if a in ("-e", "-E", "--eval", "-p")), None)
+            if k is not None:
+                code, words = rest[k + 1], rest[k + 2:]
+                if words and isinstance(code, str) and _lit3(code) and len(code) <= 20000:
+                    idx = []
+                    if b.startswith("ruby"):
+                        idx = [int(m.group(1)) + 1 for m in _V29_RB_DEL.finditer(code)]
+                    else:
+                        idx = [int(m.group(1)) for m in _V29_NODE_DEL.finditer(code)]
+                    for n in idx:
+                        if 1 <= n <= len(words) and isinstance(words[n - 1], str):
+                            out.append(("rm", ["-r", "--", words[n - 1]]))
+    except Exception:
+        pass
+    return out
+
+
+_judge_v28 = _judge
+
+
+def _judge(env, argv, stage, upstream, st):
+    try:
+        if argv and isinstance(argv[0], str) and _lit3(argv[0]) and len(argv) >= 3 and argv[1] == "-" and _DEL_INTERP.match(posixpath.basename(argv[0])):
+            txt, _ = _stdin_code(stage, upstream, st)                   # python3 - "$HOME/.ssh" <<'PY' ... sys.argv[1] ... PY
+            if isinstance(txt, str) and _lit3(txt) and _DEL_WORD.search(txt):
+                if _DEL[0] is None:
+                    _DEL_SEEN[0] = True                                 # pass 1 saw a delete: pass 2 reads the command again
+                else:
+                    for b2, a2 in _v28_argv_ops(posixpath.basename(argv[0]), ["-c", txt] + argv[2:]):
+                        _DEL[0].append({"b": b2, "args": a2, "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+    except Exception:
+        pass
+    return _judge_v28(env, argv, stage, upstream, st)
+# ---- V29-M10: interpreter code that DISARMS a git hook without emptying it: it writes `exit 0` (or `true`, or only comments) over it, or takes its execute bit away, or moves/deletes it (python via ast; node, ruby, perl by text) ----
+_V29_TRIV_LINE = re.compile(r"^(?:exit(?:\s+0)?|true|:|return\s+0|exit\s+\$\{?\?\}?\s*)\s*;?$")
+
+
+def _v29_trivial_hook(text):
+    """A hook script that runs nothing: only a shebang, comments, `set` lines, `exit 0`, `true`, `:`. `echo` stays a script (a hook that only prints is a stop in v22's view, but an edit of one is normal)."""
+    if isinstance(text, bytes):
+        try:
+            text = text.decode("utf-8")
+        except Exception:
+            return False
+    if not isinstance(text, str):
+        return False
+    lines = [ln.strip() for ln in text.replace("\r", "").split("\n")]
+    body = [ln for ln in lines if ln and not ln.startswith("#") and not re.match(r"^set\s+[-+][A-Za-z]+(?:\s+\S+)?$", ln)]
+    return bool(body) and all(_V29_TRIV_LINE.match(ln) for ln in body) and any(re.match(r"^exit\b|^true$|^:$|^return\b", ln) for ln in body) or (not body and text.strip() == "")
+
+
+def _v29_py_transform(code):
+    """Python code with each write of a trivial hook text turned into a write of nothing, and each chmod without an execute bit turned into an unlink: the shapes _v28_py_wipe reads."""
+    import ast
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        tree = ast.parse(code)
+
+    def noexec(n):
+        if isinstance(n, ast.Constant) and isinstance(n.value, int) and not isinstance(n.value, bool):
+            return (n.value & 0o111) == 0
+        if isinstance(n, ast.BinOp) and isinstance(n.op, ast.BitAnd):
+            for side in (n.left, n.right):
+                if isinstance(side, ast.UnaryOp) and isinstance(side.op, ast.Invert) and isinstance(side.operand, ast.Constant) and isinstance(side.operand.value, int) and (side.operand.value & 0o111) == 0o111:
+                    return True
+        return False
+
+    class T(ast.NodeTransformer):
+        def visit_Call(self, node):
+            self.generic_visit(node)
+            f = node.func
+            fname = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+            bname = f.value.id if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) else ""
+            if fname in ("write_text", "write_bytes", "write") and node.args and isinstance(node.args[0], ast.Constant) and _v29_trivial_hook(node.args[0].value):
+                if fname == "write" and isinstance(f.value, ast.Call):
+                    return ast.Call(func=ast.Attribute(value=f.value, attr="close", ctx=ast.Load()), args=[], keywords=[])      # open(P, 'w').write(trivial) is open(P, 'w').close()
+                node.args[0] = ast.Constant(value="" if isinstance(node.args[0].value, str) else b"")
+            if fname == "chmod" and bname == "os" and len(node.args) >= 2 and noexec(node.args[1]):
+                return ast.Call(func=ast.Attribute(value=f.value, attr="remove", ctx=ast.Load()), args=[node.args[0]], keywords=[])
+            if fname == "chmod" and isinstance(f, ast.Attribute) and bname != "os" and node.args and noexec(node.args[0]):
+                return ast.Call(func=ast.Attribute(value=f.value, attr="unlink", ctx=ast.Load()), args=[], keywords=[])
+            return node
+    tree = T().visit(tree)
+    ast.fix_missing_locations(tree)
+    return ast.unparse(tree)
+
+
+_v28_py_wipe_v28 = _v28_py_wipe
+
+
+def _v28_py_wipe(code, cwd):
+    p = _v28_py_wipe_v28(code, cwd)
+    if p:
+        return p
+    try:
+        if isinstance(code, str) and re.search(r"write|chmod", code):
+            return _v28_py_wipe_v28(_v29_py_transform(code), cwd)
+    except Exception:
+        pass
+    return None
+
+
+_V29_HOOKLIT = r"""['"](?:[\w./-]*/)?(?:\.git/hooks|\.githooks|\.husky)/[\w.-]+['"]"""
+_V29_OTHER = (
+    re.compile(r"(?:renameSync|rename|unlinkSync|unlink|rmSync|rm|rmdirSync)\s*\(\s*" + _V29_HOOKLIT),                                   # node: move or delete
+    re.compile(r"(?:chmodSync|chmod)\s*\(\s*" + _V29_HOOKLIT + r"\s*,\s*0o?([0-7]{3,4})\b"),                                            # node: a mode (checked below)
+    re.compile(r"(?:writeFileSync|writeFile|truncateSync)\s*\(\s*(" + _V29_HOOKLIT + r")\s*(?:,\s*(['\"])((?:[^'\"\\]|\\.)*)\2\s*)?[,)]"),    # node: write (content checked below)
+    re.compile(r"File\.(?:delete|unlink|rename)\s*\(\s*" + _V29_HOOKLIT),                                                               # ruby
+    re.compile(r"FileUtils\.(?:rm|rm_f|rm_rf|mv)\s*\(?\s*" + _V29_HOOKLIT),
+    re.compile(r"File\.chmod\s*\(.*?~\s*0?111|File\.chmod\s*\(\s*0?[0-7]{3,4}\s*,\s*" + _V29_HOOKLIT),
+    re.compile(r"(?:^|[;\s])(?:rename|unlink)\s*\(?\s*(?:q|qq)?[({'\"][^)};'\"]*(?:\.git/hooks|\.githooks|\.husky)/"),                    # perl
+    re.compile(r"chmod\s*\(?\s*0?[0-7]{3,4}\s*,\s*(?:glob\s*\(\s*)?(?:q|qq)?[({'\"][^)};'\"]*(?:\.git/hooks|\.githooks|\.husky)/"),
+)
+_V29_OTHER_LANG = re.compile(r"^(?:node|nodejs|bun|deno|tsx|ruby[0-9.]*|perl[0-9.]*)$")
+
+
+def _v29_other_wipe(code):
+    """-> a path string when node / ruby / perl code moves, deletes, un-executes or blanks a git hook file; else None. Text, not a parse: a hook path as a literal next to the call."""
+    if not isinstance(code, str) or not re.search(r"\.git/hooks|\.githooks|\.husky", code):
+        return None
+    m0 = re.search(r"(?:\.git/hooks|\.githooks|\.husky)/[\w.-]+", code)
+    path = m0.group(0) if m0 else "a git hook"
+    for k, rx in enumerate(_V29_OTHER):
+        for m in rx.finditer(code):
+            if k == 1 and (int(m.group(1), 8) & 0o111) != 0:
+                continue
+            if k == 2:
+                body = m.group(3)
+                if body is not None:
+                    try:
+                        body = body.encode("utf-8").decode("unicode_escape")
+                    except Exception:
+                        pass
+                if body is not None and not _v29_trivial_hook(body):
+                    continue
+                if body is None and not re.search(r"truncateSync", m.group(0)):
+                    continue
+            if k == 5 and "~" not in m.group(0) and (int(re.search(r"0?([0-7]{3,4})", m.group(0)).group(1), 8) & 0o111) != 0:
+                continue
+            if k == 7 and (int(re.search(r"0?([0-7]{3,4})", m.group(0)).group(1), 8) & 0o111) != 0:
+                continue
+            return path
+    return None
+
+
+_interp_code_v28 = _interp_code
+
+
+def _interp_code(code, st, lang=None):
+    try:
+        if _V29_OTHER_LANG.match(posixpath.basename(lang or "")) and _V28_RUN[0] is None and isinstance(code, str) and _lit3(code):
+            p = _v29_other_wipe(code)
+            if p:
+                _V28_RUN[0] = ("hook_bypass_guard: interpreter code empties, renames, moves, un-executes or deletes the git hook file " + p + ", so the hook stops running" + BYPASS_TAIL)
+    except Exception:
+        pass
+    return _interp_code_v28(code, st, lang)
+# ===== end of V29 =====
+
+
+
+# =====================================================================================
+# ===== V30: named denies for the classes v29 lets through (blind_v29 + the older sets, ALL SEEN for v30), and lifts of false stops whose label is unanimous. Written after v29; nothing above is changed except by rebinding. =====
+# Same contract as V28 and V29: the live wrapper (02_SYSTEMS/GATES/guard_pretooluse.py) lets a deny whose reason starts `fail_closed` through, so each class ends in a NAMED deny; every deny rule only ADDS a deny to a command
+# v29 allowed or denied as fail_closed; the four lifts only REMOVE a v29 deny; a fault inside this block is v29's answer, never a raise.
+#   1. a retry that reads any variable (V30-M1): `eval "$(printf 'rm -rf %s' "$UNSET_DIR/")"` (v29 folded only $HOME): the printed text is judged with the variable left in it, and only a NAMED deny of the retry is kept.
+#   2. a hook overwritten with only comments (V30-M2): `echo "# off" > .husky/pre-commit` nothing in it runs; v22 named only an empty or `exit 0` text and left a comment-only text a fail_closed ask.
+#   3. python listing deletes behind a type test written with `or` / `and` (V30-M3): `[(x.unlink() if x.is_file() or x.is_symlink() else None) for x in Path.home().joinpath(".aws").iterdir()]` is `if x.is_file()` for each kind (v27b read a lone test).
+#   4. node code that aliases fs / path / os (V30-M4): `const p=require("path"); fs.rmSync(p.join(os.homedir(), ".kube"))`.
+#   5. `rmdir` of a protected folder (V30-M5): `rmdir ~/.claude`, `rmdir ~/.ssh`, python os.rmdir of a home folder: a folder the policy protects is gone when it is empty, by rmdir as by rm -r.
+#   6. a root glob written with POSIX classes (V30-M6): `rm -rf /[[:alpha:]]*` is `/[a-zA-Z]*`; python's fnmatch reads `[[:alpha:]` as a set of seven characters, so v29 read it as a name.
+#   7. a listing of the checkout root handed to xargs rm (V30-M7): `ls /work/repo | xargs rm -rf` with the cwd at that root (or, with no cwd, the pinned root) deletes the names of the whole tree.
+#   8. a script this command writes and runs by a bare name through PATH (V30-M8): `echo 'git commit --no-verify' > /tmp/gc && chmod +x /tmp/gc && PATH=/tmp:$PATH gc` is the file run by path, which v29 already read.
+#   9. an interpreter delete whose path comes from the environment the command gives it (V30-M9): `TARGET=~/.gnupg python3 -c 'import os,shutil; shutil.rmtree(os.environ["TARGET"])'`, `export X=...; node -e 'fs.rmSync(process.env.X)'`.
+#   LIFTS (every one on an UNANIMOUS allow label of blind_v29; policy B allows editing a hook's contents by name):
+#   L1 `sed -i 's/echo/printf/' HOOK` (V30-L1): one printing word for another cannot make a hook pass or fail.   L2 python `p.write_text(p.read_text() + "# comment")` on a hook (V30-L2): v14's rule for `>>` of comments, in python.
+#   L3 `printf -v cmd 'git add -- %q' "$file"; eval "$cmd"` (V30-L3): printf's %q is modelled, so the eval is read.
+#   NOT LIFTED, on purpose (written down, G31): (a) the three `npm run <script>` rows whose only ask is "the hook named no cwd, so no recipe file on disk was read": the wrapper allows them already and always passes a cwd, so
+#   a lift changes the scorer's bench column and nothing live, and would drop v12's no-cwd ask; (b) `cat <<EOF >> .githooks/pre-push` of a running command (unanimous allow label): v7 PROVED in a throwaway repo that a line appended after
+#   a failing check turns the hook into a pass (own cases v3-bad-218, v6-WG6-005); tests/v30_test.py repeats the proof in a real shell. A policy is not served by a label the shell disproves.
+#   NOT BUILT, handed up: `DIR=""; rm -rf "$DIR"/models` (blind_v29 BV291358 unanimous stop, BV291678 stop; BV270602 and BV291267 `"$DIR"/build`, `"$TARGET_DIR"/target` allow): the labels split on WHICH child of / is protected, as for /etc/nginx.
+# Blind to (G25): a named FILE inside a credential folder (`rm ~/.aws/credentials`, `unlink ~/.ssh/id_rsa`: contested, v28's K rows); `ls ~/.ssh | xargs rm -rf` (names are relative to the cwd); `rsync --delete` into a named folder below
+# home; `git add ..` / `':/.*'` / `**/*.rb` (a named folder or a glob that is not the whole tree); `SKIP=`, `LEFTHOOK=0` on a command that is not a git operation; a glob that names ONE system folder through a
+# class (`/[[:alpha:]]sr` is /usr); perl / go / php env reads; a script FILE whose name is found through a PATH the command did not write; an UPPERCASE variable set as a statement is read as exported (v20's rule: the real
+# shell deletes only if it already was); the no-cwd whole-worktree delete (`rm -rf .` with no hook cwd stays v27's fail_closed ask, v29's hand-up: with a cwd at a git root the wrapper names it); every blind spot of v29.
+# =====================================================================================
+
+
+def _v30_shq(a):
+    """bash's printf %q of one word: backslash before every character outside a safe set; an empty word is ''."""
+    if a == "":
+        return "''"
+    out = re.sub(r"([^A-Za-z0-9_@%+=:,./-])", lambda m: "\\" + m.group(1), a)
+    return ("\\" + out) if out.startswith("~") else out
+
+
+# ---- V30-M1: a retry that reads any variable ----
+_V30_SUBST = re.compile(r"(?P<pre>\beval\s+|\b(?:ba|z|da)?sh\s+-c\s+)(?P<q>\"?)(?P<sub>\$\(\s*(?:printf|echo)\b[^()`$]*(?:\$\{?[A-Za-z_]\w*\}?[^()`$]*)*\))(?P=q)")
+_v29_retries_v29 = _v29_retries
+
+
+def _v30_unwrap(m):
+    """`eval "$(printf 'rm -rf %s' "$DIR/")"` -> the text the substitution prints, `rm -rf $DIR/`: eval and sh -c parse it again, so it IS the command. Any other shape stays as written."""
+    t = m.group("sub")
+    r = _v29_fold_subst(m, t)
+    if r != t and r.startswith("$(printf '") and r.endswith("')"):
+        return r[len("$(printf '"):-2]
+    return m.group(0)
+
+
+def _v29_retries(command):
+    outs = list(_v29_retries_v29(command))
+    try:
+        if "$" in command and ("$(echo" in command or "$(printf" in command or "$( echo" in command or "$( printf" in command) and ("eval" in command or "sh -c" in command):
+            c2 = _V30_SUBST.sub(_v30_unwrap, command)
+            if c2 != command and c2 not in outs:
+                outs.append(c2)
+    except Exception:
+        pass
+    return outs
+
+
+# ---- V30-M2: a hook overwritten with only comments ----
+_redir_rules_v29 = _redir_rules
+
+
+def _v30_comment_only(txt):
+    lines = [l.strip() for l in txt.replace("\\n", "\n").replace("\r", "").split("\n")]
+    body = [l for l in lines if l]
+    return bool(body) and all(l.startswith("#") for l in body)
+
+
+def _redir_rules(b, args, stage, st):
+    r = _redir_rules_v29(b, args, stage, st)
+    if r:
+        return r                                                                # a hook v22 already names stays v22's answer, byte for byte
+    try:
+        for op, tgt in stage.get("redirs", []):
+            if op in (">", ">|", "&>") and _pclass(tgt, st.cwd) == "hooks":
+                txt = None
+                if b == "cat" and not args and stage.get("here") is not None:
+                    txt = stage["here"]
+                elif b in ("echo", "printf") and args and all(_lit3(a) and _lit(a) for a in args):
+                    txt = _stage([b] + args, None)
+                if txt is not None and _lit3(txt) and _v30_comment_only(txt):
+                    return ("hook_bypass_guard: overwrites a git hook with only comments, so nothing in it runs (" + tgt + ")" + BYPASS_TAIL)
+    except Exception:
+        pass
+    return None
+
+
+# ---- V30-M3: python listing deletes behind a type test written with `or` / `and` ----
+def _v30_py_typetests(code):
+    import ast
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        tree = ast.parse(code)
+
+    def type_only(t):
+        t = t.operand if isinstance(t, ast.UnaryOp) and isinstance(t.op, ast.Not) else t
+        return isinstance(t, ast.Call) and isinstance(t.func, ast.Attribute) and t.func.attr in _V27B_TYPE_ATTRS
+
+    class T(ast.NodeTransformer):
+        def visit_BoolOp(self, node):
+            self.generic_visit(node)
+            if node.values and all(type_only(v) for v in node.values):
+                return node.values[0]                               # `x.is_file() or x.is_symlink()` keeps what a lone type test keeps: the files, not every name
+            return node
+    tree = T().visit(tree)
+    ast.fix_missing_locations(tree)
+    return ast.unparse(tree)
+
+
+_v27b_py_v29 = _v27b_py
+
+
+def _v27b_py(code):
+    r = _v27b_py_v29(code)
+    if r:
+        return r
+    try:
+        if re.search(r"is_file|is_dir|isfile|isdir|is_symlink|islink", code) and re.search(r"\b(?:or|and)\b", code):
+            c2 = _v30_py_typetests(code)
+            if c2 != code:
+                return _v27b_py_v29(c2)
+    except Exception:
+        pass
+    return r
+
+
+# ---- V30-M4: node code that aliases fs / path / os ----
+_V30_JSREQ = re.compile(r"(?<![\w$.])([A-Za-z_$][\w$]*)\s*=\s*require\(\s*['\"](?:node:)?(fs|path|os)(?:/promises)?['\"]\s*\)")
+_V30_JSDES = re.compile(r"\{[^{}]*\bhomedir\b[^{}]*\}\s*=\s*require\(\s*['\"](?:node:)?os['\"]\s*\)")
+
+
+def _v30_js_alias(code):
+    c2 = code
+    for m in _V30_JSREQ.finditer(code):
+        al, canon = m.group(1), m.group(2)
+        if al != canon:
+            c2 = re.sub(r"(?<![\w$.])" + re.escape(al) + r"(?=\s*\.)", canon, c2)
+    if _V30_JSDES.search(code):
+        c2 = re.sub(r"(?<![\w$.])homedir\s*\(\s*\)", "os.homedir()", c2)
+    return c2
+
+
+_v27b_other_v29 = _v27b_other
+
+
+def _v27b_other(code, lang):
+    out = _v27b_other_v29(code, lang)
+    try:
+        if _JS_LANGS.match(posixpath.basename(lang or "")) and "require" in code:
+            c2 = _v30_js_alias(code)
+            if c2 != code:
+                out = list(out) + [x for x in _v27b_other_v29(c2, lang) if x not in out]
+    except Exception:
+        pass
+    return out
+
+
+# ---- V30-M6: a root glob written with POSIX classes ----
+_V30_CLASS = {"alpha": "a-zA-Z", "alnum": "a-zA-Z0-9", "lower": "a-z", "upper": "A-Z", "digit": "0-9", "word": "a-zA-Z0-9_", "xdigit": "0-9a-fA-F", "print": " -~", "graph": "!-~", "punct": "!-/:-@[-`{-~"}
+_del_broad_v29 = _del_broad
+
+
+def _del_broad(base):
+    try:
+        if "[:" in base:
+            base = re.sub(r"\[:(\w+):\]", lambda m: _V30_CLASS.get(m.group(1), m.group(0)), base)
+    except Exception:
+        pass
+    return _del_broad_v29(base)
+
+
+# ---- V30-M5, M8, M9: the judge ----
+_V30_PYENV = re.compile(r"(?:\b(?:shutil\.)?rmtree|\bos\.(?:remove|unlink|rmdir|removedirs)|\bshutil\.rmtree)\s*\(\s*(?:os\.environ\[\s*['\"]([A-Za-z_]\w*)['\"]\s*\]|os\.environ\.get\(\s*['\"]([A-Za-z_]\w*)['\"][^)]*\)|os\.getenv\(\s*['\"]([A-Za-z_]\w*)['\"][^)]*\))")
+_V30_NODEENV = re.compile(r"(?:rmSync|rmdirSync|removeSync|remove|rimrafSync|rimraf|emptyDirSync|unlinkSync|rm)\s*\(\s*process\.env(?:\.([A-Za-z_]\w*)|\[\s*['\"]([A-Za-z_]\w*)['\"]\s*\])")
+_V30_RBENV = re.compile(r"(?:FileUtils\.)?(?:rm_rf|rm_r|rm_f|rm|remove_dir|remove_entry|remove_entry_secure|rmtree)\s*\(?\s*ENV\[\s*['\"]([A-Za-z_]\w*)['\"]\s*\]")
+
+
+def _v30_env_value(name, env, st):
+    """The value a child process gets for NAME from this command's own words: a prefix assignment, or an exported variable set earlier in the command. None when the child would not see it (a shell-local variable: KeyError, not a delete)."""
+    val = None
+    for e in env or []:
+        k, _, v = e.partition("=")
+        if k.rstrip("+") == name:
+            val = v
+    if val is None:
+        v = st.r.assigned.get(name) if isinstance(getattr(st.r, "assigned", None), dict) else None
+        if isinstance(v, str) and not _shell_local(name, env, st):
+            val = v
+    return val if isinstance(val, str) and _lit3(val) and val else None
+
+
+_judge_v29 = _judge
+
+
+def _judge(env, argv, stage, upstream, st):
+    try:
+        if argv and isinstance(argv[0], str) and _lit3(argv[0]):
+            b = posixpath.basename(argv[0])
+            rest = argv[1:]
+            if b == "rmdir":                                                    # V30-M5: a protected folder is gone by rmdir as by rm -r
+                pos = [w for w in rest if isinstance(w, str) and not w.startswith("-") and w not in (".", "./")]
+                if pos:
+                    if _DEL[0] is None:
+                        _DEL_SEEN[0] = True
+                    else:
+                        _DEL[0].append({"b": "rm", "args": ["-r", "--"] + pos, "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+            elif "/" not in argv[0]:                                            # V30-M8: PATH=/tmp:$PATH name, where this command wrote /tmp/name
+                pv = None
+                for e in env or []:
+                    k, _, v = e.partition("=")
+                    if k == "PATH":
+                        pv = v
+                if pv is None and isinstance(getattr(st.r, "assigned", None), dict):
+                    pv = st.r.assigned.get("PATH")
+                for d in (pv.split(":") if isinstance(pv, str) else []):
+                    if d.startswith("/") and _lit3(d):
+                        a = _abs(d.rstrip("/") + "/" + argv[0], st.cwd)
+                        if a is not None and a in st.files and isinstance(st.files[a], str) and _lit3(st.files[a]) and st.depth + 1 <= MAX_DEPTH:
+                            pos = list(rest) if rest and all(_lit3(x) for x in rest) else None
+                            v, w = _quiet_check(st.files[a], st.root, st.depth + 1, pos)              # the file's own text, as by path: only a hard block of it is kept (an ask stays v29's silence)
+                            if v == "block":
+                                return w + " (in a file this command writes and then runs)"
+            if _DEL_INTERP.match(b):                                            # V30-M9: the path comes from the environment this command gives the interpreter
+                k = next((i for i, a in enumerate(rest[:-1]) if a in ("-c", "-e", "-E", "--eval")), None)
+                code = rest[k + 1] if k is not None else None
+                if isinstance(code, str) and _lit3(code) and len(code) <= 20000 and (env or getattr(st.r, "assigned", None)):
+                    names = []
+                    if re.match(r"^(?:python|pypy)[0-9.]*$", b):
+                        names = [next(g for g in m.groups() if g) for m in _V30_PYENV.finditer(code)]
+                    elif re.match(r"^ruby[0-9.]*$", b):
+                        names = [m.group(1) for m in _V30_RBENV.finditer(code)]
+                    elif b in ("node", "nodejs", "bun", "deno", "tsx"):
+                        names = [next(g for g in m.groups() if g) for m in _V30_NODEENV.finditer(code)]
+                    for nm in names[:4]:
+                        v = _v30_env_value(nm, env, st)
+                        if v is not None:
+                            if _DEL[0] is None:
+                                _DEL_SEEN[0] = True
+                            else:
+                                _DEL[0].append({"b": "rm", "args": ["-r", "--", v], "cwd": st.cwd, "pipe_in": False, "up": [], "fed": []})
+    except Exception:
+        pass
+    return _judge_v29(env, argv, stage, upstream, st)
+
+
+# ---- V30-M7: a listing of the checkout root handed to xargs rm ----
+_del_op_v29d = _del_op
+
+
+def _del_op(op):
+    r = _del_op_v29d(op)
+    if r is not None:
+        return r
+    try:
+        if op["b"] in ("rm", "srm") and op.get("pipe_in") and op.get("up"):
+            flags, pos = _del_split(op["args"])
+            if any(re.match(r"^-[A-Za-z]*[rR]", a) or a == "--recursive" for a in flags):
+                first = next((u for u in op["up"] if u), None)
+                if first and len([u for u in op["up"] if u]) == 1 and isinstance(first[0], str) and _lit3(first[0]) and posixpath.basename(first[0]) == "ls":
+                    lpos = [w for w in first[1:] if not w.startswith("-")]
+                    cwd, root = op["cwd"], _root()
+                    base = cwd if (isinstance(cwd, str) and cwd.startswith("/") and _lit3(cwd) and DEFER not in cwd) else None
+                    if lpos and all(_lit3(w) and not _del_markerish(w) for w in lpos) and any(x in op.get("fed", ()) and _del_markerish(x) for x in pos):
+                        hit = [_abs(w, base) for w in lpos]
+                        if base is not None and _V27_DISK[0] and all(h is not None and posixpath.normpath(h) == posixpath.normpath(base) for h in hit):
+                            op2 = dict(op, up=[[first[0]] + [w for w in first[1:] if w.startswith("-")]])      # `ls /work/repo | xargs rm -rf` at /work/repo is `ls | xargs rm -rf` (v27: with no cwd, nothing is read from disk, and the ask stays)
+                            return _del_op_v29d(op2)
+    except Exception:
+        pass
+    return None
+
+
+# ---- V30-L1: one printing word for another in a hook is an edit by name ----
+_message_swap_v29 = _message_swap
+
+
+def _message_swap(pat, rep):
+    if _message_swap_v29(pat, rep):
+        return True
+    try:
+        return pat.strip() in ("echo", "printf") and rep.strip() in ("echo", "printf")
+    except Exception:
+        return False
+
+
+# ---- V30-L3: printf's %q ----
+_printf_v29 = _printf
+
+
+def _printf(fmt, args):
+    try:
+        if isinstance(fmt, str) and "%q" in fmt:
+            parts = re.split(r"(%.)", fmt)
+            if any(p.startswith("%") and p not in ("%s", "%b", "%q", "%%") for p in parts):
+                return None
+            nconv = sum(1 for p in parts if p in ("%s", "%b", "%q"))
+            out, ai = [], 0
+            while True:
+                for p in parts:
+                    if p in ("%s", "%b", "%q"):
+                        a = args[ai] if ai < len(args) else ""
+                        out.append(_unescape(a, True) if p == "%b" else (_v30_shq(a) if p == "%q" else a))
+                        ai += 1
+                    elif p == "%%":
+                        out.append("%")
+                    else:
+                        out.append(_unescape(p))
+                if nconv == 0 or ai >= len(args) or sum(map(len, out)) > MAX_LITERAL:
+                    return "".join(out)
+    except Exception:
+        pass
+    return _printf_v29(fmt, args)
+
+
+# ---- V30-L2: python that writes a hook back with a comment appended ----
+_py_hook_edit_only_v29 = _py_hook_edit_only
+
+
+def _py_hook_edit_only(code, lang, cwd):
+    r = _py_hook_edit_only_v29(code, lang, cwd)
+    if r:
+        return r
+    try:
+        if "read_text" in code and "write_text" in code and "#" in code:
+            import ast
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tree = ast.parse(code)
+            assigns = {}
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                    assigns.setdefault(node.targets[0].id, []).append(node.value)
+                elif isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign, ast.For, ast.With, ast.comprehension, ast.NamedExpr)):
+                    for t in ([node.target] if hasattr(node, "target") else getattr(node, "targets", [])):
+                        for e in ast.walk(t):
+                            if isinstance(e, ast.Name):
+                                assigns.setdefault(e.id, []).append(None)
+
+            def once(n):
+                if isinstance(n, ast.Name):
+                    v = assigns.get(n.id) or []
+                    return v[0] if len(v) == 1 and v[0] is not None else None
+                return n
+
+            def same(a, b):
+                return ast.dump(once(a) or a) == ast.dump(once(b) or b)
+
+            def is_read(n, target):
+                n = once(n) if isinstance(n, ast.Name) else n
+                return isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "read_text" and not n.args and same(n.func.value, target)
+
+            class T(ast.NodeTransformer):
+                n = 0
+
+                def visit_Call(self, node):
+                    self.generic_visit(node)
+                    f = node.func
+                    if isinstance(f, ast.Attribute) and f.attr == "write_text" and len(node.args) == 1 and not node.keywords:
+                        a = node.args[0]
+                        if isinstance(a, ast.BinOp) and isinstance(a.op, ast.Add) and isinstance(a.right, ast.Constant) and isinstance(a.right.value, str) and \
+                                _v30_comment_only(a.right.value) and is_read(a.left, f.value):
+                            T.n += 1
+                            return ast.Constant(value=None)                      # appended comments change nothing that runs
+                    return node
+            tree2 = T().visit(tree)
+            if T.n:
+                ast.fix_missing_locations(tree2)
+                return _py_hook_edit_only_v29(ast.unparse(tree2), lang, cwd)
+    except Exception:
+        pass
+    return r
+
+
+# =====================================================================================
+# ===== V30-W: the wrapper family (an internal red team of v29, 74 commands that v29 and v28 let through on the live wrapper; the rules below are written from the SHAPES, the test rows are our own) =====
+# `_peel` strips the wrappers it knows and stops at the first head it does not. V30 wraps it: a PRE step for the four shapes v29 reads WRONG (script, a named coproc, xargs with several input lines or BSD -J, a changed working
+# directory by env -C / --chdir / sudo -D), and a POST step that opens a table of heads v29 stops at (runners, launchers, tracers and sandboxes) and judges what they run. Only the command a wrapper runs is judged, as if
+# it were written alone, so an inner command that is allowed alone stays allowed inside; a wrong entry in a table fails toward a miss, never a false stop. A fault in this block is v29's answer.
+#   W1 runners   poetry|pipenv|hatch|pdm|rye run, bundle exec, direnv exec DIR, dotenv, op run, mise exec, asdf exec, conda|mamba|micromamba run, nix-shell --run, nix develop|shell -c, cross-env, cross-env-shell
+#   W2 xargs     -I with several input lines is one command per line (v29 joined the lines into ONE word); BSD -J puts all words in place of REPL
+#   W3 cwd       bare `cd` goes home; env -C DIR / --chdir DIR and sudo -D DIR run the command in DIR (judged as `cd DIR && cmd`)
+#   W4 launchers tmux, byobu, screen, hyperfine, nodemon, concurrently, watchexec, entr, expect, ssh-agent, zellij
+#   W5 script    `script -q /dev/null git reset --hard`: only script's own options are skipped, the command keeps its flags; -qc 'cmd' (Linux) runs cmd
+#   W6 wrappers  strace ltrace valgrind gdb --args lldb taskset cpulimit unshare nsenter chrt numactl prlimit setpriv proxychains torsocks rlwrap systemd-run bwrap firejail xvfb-run ifne eatmydata fakeroot faketime
+#                sandbox-exec taskpolicy pkexec chroot / tini dumb-init
+#   W7 coproc    `coproc NAME { cmd; }`: the name is dropped (v29 read NAME as the command)
+#   W9 alias     an alias body is shell text read again at use: a `~` or $HOME in it (quoted at the definition) is the home folder (a retry of the command with the body written out; only a NAMED deny of it is kept)
+# NOT BUILT (written down, G31): W8 the backstop for an unknown wrapper (an UNKNOWN head followed by a bare `git` / `rm` / `sh` word, judged from that word): built and measured, then DROPPED. Against v29 it changed 324 of 8,784
+# oracle answers and 13,804 of 24,000 fuzz answers, 4,139 of them allow -> deny, on rows whose head (`a`, `ls`, a shell function, `x` from `$@`) is a program that is not a wrapper: a flood is a wrong rule (G29). blind_v20 and real traffic did not
+# move. Handed up with the numbers. W8(b) (ask on a whole shell string that blocks): the false-stop price is tickets and prompts and the live wrapper lets an ask through anyway; `xargs -J R` where R is not a whole
+# argument (real BSD xargs appends the words and leaves `~/R` alone: two red-team rows are not misses, proved in tests/v30_test.py); `cd -` and a bare `cd` inside a function body.
+# Blind to (G25): a wrapper not in the tables and not followed by a bare git / rm / sh word; a wrapper after another wrapper this block does not know; `env -C DIR` whose DIR the walk cannot read; tmux send-keys that spreads a
+# command over several send-keys calls; options of a table head spelled in a way the table does not list (it then judges the wrong word, which fails toward a miss).
+# =====================================================================================
+_V30_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\+?=")
+_V30_PRE_WRAP = frozenset(("nohup", "nice", "ionice", "time", "command", "exec", "setsid", "stdbuf", "caffeinate", "timeout", "doas", "sudo", "env", "chronic", "unbuffer", "builtin", "flock", "runuser"))
+_V30_SUDO_VAL = frozenset("CDghprRtTUu")
+
+
+def _v30_esc(w):
+    return re.sub(r"([\s;&|()<>`\"'\\*?\[\]{}!#])", r"\\\1", w.replace("\r", "").replace("\n", " "))
+
+
+def _v30_join(words):
+    return " ".join(_v30_esc(w) if _lit3(w) else w for w in words)
+
+
+def _v30_skip(rest, vals=(), vals2=(), none=(), n_pos=0, mark=None):
+    """The command words after a wrapper's own options. vals: options that take the next word; vals2: options that take two; none: an option that makes the wrapper run nothing (-> None); a `--` ends the options;
+    mark: the words after the first `mark` are the command (gdb --args). -> list of words, [] when nothing runs, None when it cannot be told."""
+    if mark is not None:
+        return rest[rest.index(mark) + 1:] if mark in rest else None
+    j = 0
+    while j < len(rest) and rest[j].startswith("-") and rest[j] != "-":
+        a = rest[j]
+        if a == "--":
+            j += 1
+            break
+        if a in none:
+            return []
+        if a in vals:
+            j += 2
+        elif a in vals2:
+            j += 3
+        else:
+            j += 1
+    j += n_pos
+    return rest[j:]
+
+
+def _v30_scan_chdir(words, kind):
+    """For env (kind "env") or sudo (kind "sudo") the words after the head: -> (dir, words without the chdir option) or (None, words)."""
+    out, d, k = [], None, 0
+    while k < len(words):
+        w = words[k]
+        if kind == "env" and (w == "-C" or w == "--chdir") and k + 1 < len(words):
+            d = words[k + 1]
+            k += 2
+            continue
+        if kind == "sudo" and (w == "-D" or w == "--chdir") and k + 1 < len(words):
+            d = words[k + 1]
+            k += 2
+            continue
+        if w.startswith("--chdir=") and kind in ("env", "sudo"):
+            d = w.split("=", 1)[1]
+            k += 1
+            continue
+        if kind == "env" and w.startswith("-C") and len(w) > 2 and not w.startswith("--"):
+            d = w[2:]
+            k += 1
+            continue
+        if kind == "sudo" and w.startswith("-D") and len(w) > 2 and not w.startswith("--"):
+            d = w[2:]
+            k += 1
+            continue
+        if kind == "env" and w in ("-u", "--unset", "-P", "-S", "--split-string") and k + 1 < len(words):
+            out += [w, words[k + 1]]
+            k += 2
+            continue
+        if kind == "sudo" and len(w) == 2 and w[0] == "-" and w[1] in _V30_SUDO_VAL and k + 1 < len(words):
+            out += [w, words[k + 1]]
+            k += 2
+            continue
+        if w == "--" or not (w.startswith("-") or _V30_ASSIGN.match(w)):
+            out += words[k:]
+            break
+        out.append(w)
+        k += 1
+    return d, out
+
+
+def _v30_xargs(argv, i, env_pre, stage, upstream, st):
+    """W2. -> a list of (env, argv) or None (v29 reads it)."""
+    rest = argv[i + 1:]
+    j, repl, mode, delim = 0, None, None, None
+    vals = {"-a", "-d", "-E", "-L", "-n", "-P", "-s", "-l", "--arg-file", "--delimiter", "--eof", "--max-lines", "--max-args", "--max-procs", "--max-chars", "-R", "-S"}
+    while j < len(rest) and rest[j].startswith("-"):
+        a = rest[j]
+        if a == "--":
+            j += 1
+            break
+        if a in ("-0", "--null") or a in ("-d", "--delimiter") or a.startswith(("--delimiter=", "-a", "--arg-file")):
+            return None
+        if a in ("-I", "--replace") and j + 1 < len(rest):
+            repl, mode = rest[j + 1], "I"
+            j += 2
+            continue
+        if a.startswith("-I") and len(a) > 2:
+            repl, mode = a[2:], "I"
+        elif a == "-J" and j + 1 < len(rest):
+            repl, mode = rest[j + 1], "J"
+            j += 2
+            continue
+        elif a.startswith("-J") and len(a) > 2:
+            repl, mode = a[2:], "J"
+        elif a.startswith("--replace="):
+            repl, mode = a.split("=", 1)[1], "I"
+        elif a.startswith("-i") and not a.startswith("--"):
+            repl, mode = (a[2:] or "{}"), "I"
+        j += 2 if a in vals else 1
+    inner = rest[j:]
+    if not repl or not inner:
+        return None
+    lit = None
+    if stage.get("pipe_in") and upstream:
+        lit = _eval_stages(upstream)
+    elif isinstance(stage.get("here"), str) and _lit3(stage["here"]) and not _here_expands(stage):
+        lit = stage["here"] + "\n"
+    if lit is None or not _lit3(lit):
+        if mode == "I":
+            return None                                         # v29's reading (an unknown list is one unknown word)
+        words = [U]                                             # -J: v29 does not read the option at all; an unknown list is one unknown word, and a delete of it is read (pass 2 resolves `~`)
+    else:
+        words = [w for w in (lit.split("\n") if mode == "I" else lit.split()) if w.strip()]
+        if mode == "I" and len(words) <= 1:
+            return None                                         # one line: v29's reading, byte for byte
+        if not words:
+            return None
+    if len(words) > 64:
+        words = words[:64] + [U]
+    outs = []
+    if mode == "I":
+        for w in words:
+            outs.extend(_peel([a.replace(repl, w) for a in inner], {"pipe_in": False}, [], st))
+    else:
+        new, hit = [], False
+        for a in inner:
+            if a == repl:
+                new.extend(words)
+                hit = True
+            else:
+                new.append(a)
+        if not hit:
+            new.extend(words)
+        outs.extend(_peel(new, {"pipe_in": False}, [], st))
+    return [(env_pre + e, a2) for e, a2 in outs]
+
+
+def _v30_pre(argv, stage, upstream, st):
+    i, env_pre = 0, []
+    argv = list(argv)
+    while i < len(argv) and _V30_ASSIGN.match(argv[i]):
+        env_pre.append(argv[i])
+        i += 1
+    if i >= len(argv) or not isinstance(argv[i], str) or not _lit3(argv[i]):
+        return None
+    b = posixpath.basename(argv[i])
+    rest = argv[i + 1:]
+    if b == "coproc" and len(rest) >= 2 and re.match(r"^[A-Za-z_]\w*$", rest[0]) and rest[1] in ("{", "("):       # W7
+        return _peel(argv[:i + 1] + rest[1:], stage, upstream, st)
+    if b == "script":                                                                                                # W5
+        j = 0
+        cmdstr = None
+        while j < len(rest) and rest[j].startswith("-") and rest[j] != "-":
+            a = rest[j]
+            if a == "--":
+                j += 1
+                break
+            if a == "--command" and j + 1 < len(rest):
+                cmdstr, j = rest[j + 1], j + 2
+                break
+            if a.startswith("--command="):
+                cmdstr, j = a.split("=", 1)[1], j + 1
+                break
+            if a.startswith("--"):
+                j += 1
+                continue
+            if "c" in a[1:] and not any(ch in a[1:] for ch in "tTIOBEmFa") and j + 1 < len(rest):
+                cmdstr, j = rest[j + 1], j + 2                  # util-linux: -c COMMAND (also in a cluster: -qc)
+                break
+            if "p" in a[1:] and len(a) <= 3:
+                return []                                       # BSD -p plays a typescript back: runs nothing
+            if a in ("-t", "-T", "-I", "-O", "-B", "-E", "-m"):
+                j += 2
+            else:
+                j += 1
+        if cmdstr is not None:
+            if _lit3(cmdstr):
+                st.run(cmdstr)
+            return []
+        pos = rest[j:]
+        if not pos:
+            return []
+        inner = pos[1:]                                         # the first word is the typescript FILE; the rest is the command, flags and all
+        if not inner:
+            return []
+        return [(env_pre + e, a2) for e, a2 in _peel(inner, {"pipe_in": False}, [], st)]
+    if b == "xargs":                                                                                                 # W2
+        return _v30_xargs(argv, i, env_pre, stage, upstream, st)
+    # W3: env -C DIR / --chdir DIR, sudo -D DIR / --chdir DIR, possibly behind nice / nohup / time ...
+    j = i
+    while j < len(argv) and j < i + 10:
+        bj = posixpath.basename(argv[j]) if _lit3(argv[j]) else ""
+        if bj in ("env", "sudo", "doas"):
+            kind = "sudo" if bj in ("sudo", "doas") else "env"
+            d, words = _v30_scan_chdir(argv[j + 1:], kind)
+            if d is not None and _lit3(d) and all(_lit3(w) for w in words) and words:
+                kept = argv[:j + 1] + words
+                text = "cd " + _v30_esc(d) + " && " + _v30_join([w for w in kept[i:] if True])
+                st.run(st.child_text(text))
+                return []
+            if d is None:
+                break
+        elif not (bj in _V30_PRE_WRAP or argv[j].startswith("-") or re.match(r"^[0-9.]+[smhd]?$", argv[j])):
+            break
+        j += 1
+    return None
+
+
+# ---- W1, W4, W6: heads v29 stops at ----
+_V30_RUN1 = frozenset(("poetry", "pipenv", "hatch", "pdm", "rye", "uv-run"))
+_V30_VAL = {
+    "strace": ("-o", "-e", "-p", "-s", "-u", "-E", "-P", "-a", "-b", "-I", "-O", "-S", "-X", "-U", "-z"), "ltrace": ("-o", "-e", "-p", "-s", "-u", "-a", "-A", "-n", "-w", "-F", "-l"),
+    "taskset": ("-c", "--cpu-list"), "cpulimit": ("-l", "--limit"), "proxychains": ("-f",), "proxychains4": ("-f",), "torsocks": ("-u", "-p", "-a", "-P", "-i"),
+    "rlwrap": ("-f", "-H", "-l", "-p", "-S", "-b", "-C", "-D", "-z", "-O", "-e", "-s", "-w"), "xvfb-run": ("-n", "--server-num", "-s", "--server-args", "-f", "--auth-file", "-e", "--error-file", "-w", "--wait", "-p", "--xauth-protocol"),
+    "ifne": (), "fakeroot": ("-l", "-s", "-i", "-b", "-u"), "faketime": ("-f", "-m"), "pkexec": ("--user",), "unshare": ("-S", "-G", "--setuid", "--setgid", "--map-user", "--map-group", "--propagation", "--wd", "--root", "--setgroups", "--kill-child"),
+    "nsenter": ("-t", "--target", "-S", "-G", "--wd", "--wdns", "-N", "-a"), "chrt": (), "numactl": ("-N", "-m", "-C", "-i", "-p", "-l"), "prlimit": ("--pid",), "setpriv": ("--reuid", "--regid", "--groups", "--inh-caps", "--bounding-set", "--ruid", "--euid", "--rgid", "--egid"),
+    "systemd-run": ("-p", "--property", "-E", "--setenv", "-u", "--unit", "--uid", "--gid", "--nice", "--working-directory", "-G", "-r", "--description", "--slice", "--service-type", "--on-active", "--on-calendar", "--on-boot", "--on-startup",
+                    "--on-unit-active", "--on-unit-inactive", "-M", "-H", "--machine", "--host", "--timer-property", "--send-sighup", "--pipe"),
+    "taskpolicy": ("-c", "-d", "-g", "-t", "-l"), "sandbox-exec": ("-p", "-f", "-n"), "firejail": ("--profile", "--net", "--netfilter", "--whitelist", "--private"), "tini": ("-e", "-p"), "valgrind": (), "dumb-init": (),
+    "eatmydata": (), "lldb": (),
+}
+_V30_VAL2 = {"bwrap": ("--bind", "--ro-bind", "--dev-bind", "--bind-try", "--ro-bind-try", "--dev-bind-try", "--setenv", "--symlink", "--file", "--bind-data", "--ro-bind-data", "--perms", "--size", "--chmod", "--remount-ro", "--overlay-src", "--tmp-overlay")}
+_V30_VAL1B = {"bwrap": ("--tmpfs", "--proc", "--dev", "--chdir", "--uid", "--gid", "--hostname", "--unsetenv", "--dir", "--lock-file", "--seccomp", "--args", "--userns", "--pidns", "--cap-add", "--cap-drop", "--sync-fd", "--block-fd",
+                        "--info-fd", "--json-status-fd", "--exec-label", "--file-label", "--mqueue", "--ro-overlay", "--overlay", "--userns2", "--disable-userns", "--assert-userns-disabled", "--new-session-x")}
+_V30_NPOS = {"faketime": 1, "chrt": 1, "numactl": 0, "prlimit": 0, "chroot": 1, "cpulimit": 0}
+_V30_NONE = {"taskset": ("-p", "--pid"), "cpulimit": ("-p", "--pid", "-e", "--exe", "-P", "--path"), "taskpolicy": ("-p",), "ifne": (), "script": ("-p",), "ltrace": ("-p",), "strace": ("-p",)}
+
+
+def _v30_tab_unwrap(b, args, st):
+    """-> None (not a table head), ("none",), ("str", text), ("cmd", [words]), or ("cd", dir, [words])."""
+    if b in _V30_RUN1 and args and args[0] == "run":                                                   # W1
+        r = args[1:]
+        while r and r[0] == "--":
+            r = r[1:]
+        return ("cmd", r)
+    if b == "bundle" and args[:1] == ["exec"] or b == "asdf" and args[:1] == ["exec"] or b == "direnv" and args[:1] == ["exec"]:
+        r = args[1:]
+        if b == "direnv" and r:
+            r = r[1:]                                                                                    # the directory
+        while r and r[0] == "--":
+            r = r[1:]
+        return ("cmd", r)
+    if b in ("dotenv", "dotenvx", "env-cmd"):
+        return ("cmd", _v30_skip(args, vals=("-e", "--env", "-f", "-p", "-o", "--file", "--path", "-x", "--expand-vars"))) if b != "env-cmd" else ("cmd", _v30_skip(args, vals=("-f", "--file", "-e", "--environments", "-r", "--rc-file")))
+    if b == "op" and args[:1] == ["run"]:
+        return ("cmd", _v30_skip(args[1:], vals=("--env-file", "--account", "--session", "--vault", "--config", "--cache", "--format", "--iconlocation")))
+    if b in ("mise", "rtx") and args[:1] in (["exec"], ["x"]):
+        r = args[1:]
+        if "--" in r:
+            return ("cmd", r[r.index("--") + 1:])
+        k = 0
+        while k < len(r) and (r[k].startswith("-") or "@" in r[k]):
+            k += 2 if r[k] in ("-C", "--cd") else 1
+        return ("cmd", r[k:])
+    if b in ("conda", "mamba", "micromamba") and args[:1] == ["run"]:
+        return ("cmd", _v30_skip(args[1:], vals=("-n", "--name", "-p", "--prefix", "--cwd", "-a", "--attach", "--root-prefix", "-r")))
+    if b == "nix-shell":
+        for k, a in enumerate(args):
+            if a in ("--run", "--command") and k + 1 < len(args):
+                return ("str", args[k + 1])
+        return None
+    if b == "nix" and args[:1] in (["develop"], ["shell"]):
+        for k, a in enumerate(args):
+            if a in ("-c", "--command") and k + 1 < len(args):
+                return ("cmd", args[k + 1:])
+        return None
+    if b == "cross-env":
+        k = 0
+        while k < len(args) and _V30_ASSIGN.match(args[k]):
+            k += 1
+        return ("cmd", args[:k] + args[k:]) if k < len(args) else ("none",)
+    if b in ("cross-env-shell", "run-s", "run-p") and args and b == "cross-env-shell":
+        k = 0
+        while k < len(args) and _V30_ASSIGN.match(args[k]):
+            k += 1
+        return ("str", " ".join(args[k:])) if k < len(args) else ("none",)
+    if b in ("tmux", "byobu", "byobu-tmux"):                                                               # W4
+        k = 0
+        while k < len(args) and args[k].startswith("-"):
+            k += 2 if args[k] in ("-L", "-S", "-f", "-c", "-T") else 1
+        sub = args[k] if k < len(args) else ""
+        r = args[k + 1:]
+        if sub in ("new-session", "new", "new-window", "neww", "split-window", "splitw", "respawn-pane", "respawnp", "respawn-window", "respawnw", "run-shell", "run", "display-popup", "popup", "if-shell", "if"):
+            pos, m = [], 0
+            while m < len(r):
+                a = r[m]
+                if a == "--":
+                    pos.extend(r[m + 1:])
+                    break
+                if a.startswith("-") and len(a) >= 2:
+                    m += 2 if len(a) == 2 and a[1] in "sntcxyeFl" else 1
+                    continue
+                pos.append(a)
+                m += 1
+            if sub in ("if-shell", "if"):
+                pos = pos[:3]
+                return ("multi", [("str", x) for x in pos])
+            return ("str", pos[0]) if len(pos) == 1 else (("cmd", pos) if pos else ("none",))
+        if sub in ("send-keys", "send"):
+            pos, m = [], 0
+            while m < len(r):
+                a = r[m]
+                if a.startswith("-") and len(a) == 2:
+                    m += 2 if a in ("-t", "-N", "-c") else 1
+                    continue
+                pos.append(a)
+                m += 1
+            if pos and pos[-1] in ("Enter", "C-m", "KPEnter", "C-j"):
+                return ("str", " ".join(pos[:-1])) if len(pos) > 1 else ("none",)
+            return ("none",)
+        return None
+    if b == "zellij":
+        if args[:1] == ["run"] and "--" in args:
+            return ("cmd", args[args.index("--") + 1:])
+        return None
+    if b == "screen":
+        k = 0
+        while k < len(args) and args[k].startswith("-"):
+            if args[k] in ("-ls", "-list", "-wipe", "-v", "-ls"):
+                return ("none",)
+            k += 2 if (args[k] in ("-S", "-c", "-t", "-T", "-p", "-e", "-h", "-s", "-X", "-Logfile") or (not args[k].startswith("--") and len(args[k]) > 2 and args[k][-1] in "SctTpehsX")) else 1
+        return ("cmd", args[k:])
+    if b == "hyperfine":
+        pos, m, out = [], 0, []
+        vv = ("-r", "--runs", "-w", "--warmup", "-m", "--min-runs", "-M", "--max-runs", "-L", "--parameter-list", "-P", "--parameter-scan", "-D", "--parameter-step-size", "-n", "--command-name", "-i", "-S", "--shell",
+              "-u", "--time-unit", "--export-asciidoc", "--export-csv", "--export-json", "--export-markdown", "--export-orgmode", "--output", "--input", "--style", "-s", "--sort", "--reference", "--reference-name")
+        strs = ("-p", "--prepare", "-s", "--setup", "-c", "--cleanup", "-C", "--conclude")
+        while m < len(args):
+            a = args[m]
+            if a in strs and m + 1 < len(args):
+                out.append(("str", args[m + 1]))
+                m += 2
+                continue
+            if a.startswith(("--prepare=", "--setup=", "--cleanup=", "--conclude=")):
+                out.append(("str", a.split("=", 1)[1]))
+            elif a.startswith("-") and len(a) > 1:
+                m += 3 if a in ("-L", "--parameter-list") else (2 if a in vv else 1)
+                continue
+            else:
+                pos.append(a)
+            m += 1
+        return ("multi", out + [("str", x) for x in pos])
+    if b == "nodemon":
+        for k, a in enumerate(args):
+            if a in ("--exec", "-x") and k + 1 < len(args):
+                return ("str", args[k + 1])
+            if a.startswith("--exec="):
+                return ("str", a.split("=", 1)[1])
+        return None
+    if b == "concurrently":
+        out, m = [], 0
+        vv = ("-n", "--names", "-c", "--prefix-colors", "-p", "--prefix", "-l", "--prefix-length", "-m", "--max-processes", "-k", "--kill-signal", "-s", "--success", "--restart-tries", "--restart-after", "--handle-input", "-t", "--timestamp-format", "--default-input-target")
+        while m < len(args):
+            a = args[m]
+            if a == "--":
+                out += [x for x in args[m + 1:]]
+                break
+            if a.startswith("-") and len(a) > 1:
+                m += 2 if a in vv else 1
+                continue
+            out.append(a)
+            m += 1
+        return ("multi", [("str", ("npm run " + x[4:]) if x.startswith("npm:") else x) for x in out])
+    if b == "watchexec":
+        if "--" in args:
+            return ("cmd", args[args.index("--") + 1:])
+        for k, a in enumerate(args):
+            if a in ("-s", "--shell") and k + 1 < len(args) and False:
+                pass
+        k = 0
+        vv = ("-w", "--watch", "-W", "--watch-non-recursive", "-e", "--exts", "-f", "--filter", "-i", "--ignore", "-E", "--env", "-d", "--debounce", "-s", "--signal", "--shell", "-n", "--poll", "--delay-run", "--stop-signal", "--stop-timeout", "-p", "--project-origin", "--workdir", "--filter-file", "--ignore-file", "--emit-events-to", "--wrap-process")
+        while k < len(args) and args[k].startswith("-"):
+            k += 2 if args[k] in vv else 1
+        return ("cmd", args[k:]) if k < len(args) else None
+    if b == "entr":
+        k, strs = 0, None
+        while k < len(args) and args[k].startswith("-"):
+            if args[k] == "-s" and k + 1 < len(args):
+                return ("str", args[k + 1])
+            k += 1
+        return ("cmd", args[k:]) if k < len(args) else None
+    if b == "expect":
+        for k, a in enumerate(args):
+            if a == "-c" and k + 1 < len(args):
+                outs = []
+                for m in re.finditer(r"(?:\bspawn(?:\s+-(?:noecho|console|pty|nottycopy|nottyinit))*(?:\s+-(?:ignore|open|leaveopen)\s+\S+)*|\bexec(?:\s+-\w+)*)\s+([^;\n]+)", args[k + 1]):
+                    t = m.group(1).strip()
+                    t = re.sub(r"^\{(.*)\}$", r"\1", t)
+                    outs.append(("str", t))
+                return ("multi", outs) if outs else ("none",)
+        return None
+    if b == "ssh-agent":
+        k = 0
+        while k < len(args) and args[k].startswith("-"):
+            if args[k] == "-k":
+                return ("none",)
+            k += 2 if args[k] in ("-a", "-E", "-t", "-P", "-O") else 1
+        return ("cmd", args[k:]) if k < len(args) else ("none",)
+    if b == "gdb":                                                                                         # W6
+        return ("cmd", args[args.index("--args") + 1:]) if "--args" in args else None
+    if b == "lldb":
+        return ("cmd", args[args.index("--") + 1:]) if "--" in args else None
+    if b == "chroot":
+        k = 0
+        while k < len(args) and args[k].startswith("-"):
+            k += 1
+        if k < len(args) and args[k] in ("/", "//") and k + 1 < len(args):
+            return ("cmd", args[k + 1:])
+        return None
+    if b == "sandbox-exec":
+        r = _v30_skip(args, vals=("-p", "-f", "-n", "-D"))
+        return ("cmd", r) if r is not None else None
+    if b == "bwrap":
+        k = 0
+        while k < len(args):
+            a = args[k]
+            if a == "--":
+                k += 1
+                break
+            if a in _V30_VAL2["bwrap"]:
+                k += 3
+            elif a in _V30_VAL1B["bwrap"]:
+                k += 2
+            elif a.startswith("-"):
+                k += 1
+            else:
+                break
+        return ("cmd", args[k:])
+    if b in _V30_VAL or b in ("taskset", "cpulimit", "chrt", "numactl", "prlimit"):
+        vals = _V30_VAL.get(b, ())
+        none = _V30_NONE.get(b, ())
+        r = _v30_skip(args, vals=vals, none=none, n_pos=0)
+        if r is None:
+            return None
+        if b == "taskset" and r and not any(a in ("-c", "--cpu-list") for a in args[:len(args) - len(r)]):
+            r = r[1:]                                                                                    # a leading MASK
+        elif b == "faketime" and r:
+            r = r[1:]
+        elif b == "chrt" and r:
+            r = r[1:]                                                                                    # the priority
+        return ("cmd", r)
+    return None
+
+
+def _v30_run_unwrapped(u, env, stage, upstream, st, depth_seen=None):
+    """-> a list of (env, argv) for a ("cmd", ...) result; strings go to st.run; [] otherwise."""
+    kind = u[0]
+    if kind == "none":
+        return []
+    if kind == "str":
+        if isinstance(u[1], str) and _lit3(u[1]) and u[1].strip():
+            st.run(u[1])
+        return []
+    if kind == "multi":
+        out = []
+        for sub in u[1][:32]:
+            out.extend(_v30_run_unwrapped(sub, env, stage, upstream, st))
+        return out
+    words = [w for w in u[1]]
+    if not words:
+        return []
+    return [(list(env) + e, a2) for e, a2 in _peel(words, {"pipe_in": False}, [], st)]
+
+
+_peel_v29 = _peel
+_V30_PEEL_DEPTH = [0]
+
+
+def _peel(argv, stage, upstream, st):
+    if _V30_PEEL_DEPTH[0] >= 5:
+        return _peel_v29(argv, stage, upstream, st)
+    _V30_PEEL_DEPTH[0] += 1
+    try:
+        try:
+            r = _v30_pre(argv, stage, upstream, st)
+        except Exception:
+            r = None
+        if r is not None:
+            return r
+        outs = _peel_v29(argv, stage, upstream, st)
+        try:
+            res = []
+            for env, av in outs:
+                if av and isinstance(av[0], str) and _lit3(av[0]):
+                    b = posixpath.basename(av[0])
+                    u = _v30_tab_unwrap(b, av[1:], st)
+                    if u is not None:
+                        res.extend(_v30_run_unwrapped(u, env, stage, upstream, st))
+                        continue
+                res.append((env, av))
+            return res
+        except Exception:
+            return outs
+    finally:
+        _V30_PEEL_DEPTH[0] -= 1
+
+
+# ---- W3: a bare `cd` goes home ----
+_judge_v30a = _judge
+
+
+def _judge(env, argv, stage, upstream, st):
+    r = _judge_v30a(env, argv, stage, upstream, st)
+    try:
+        if argv and isinstance(argv[0], str) and posixpath.basename(argv[0]) == "cd" and not r:
+            pos = [a for a in argv[1:] if a != "--"]
+            if not pos:
+                h = (_homes() or [None])[0]
+                st.cwd = h if isinstance(h, str) and h.startswith("/") else None
+    except Exception:
+        pass
+    return r
+
+# ---- W9: an alias body is shell text read again when the alias is used: its `~` and $HOME are the home folder (v29 stored the body after the quotes of the definition were gone and never expanded them) ----
+_V30_ALIASDEF = re.compile(r"(?P<head>\balias\s+[\w.-]+=)(?P<q>'(?P<b1>[^'\n]*)'|\"(?P<b2>[^\"\n]*)\")")
+_v29_retries_v30a = _v29_retries
+
+
+def _v29_retries(command):
+    outs = list(_v29_retries_v30a(command))
+    try:
+        if "alias" in command and ("~" in command or "HOME" in command):
+            hs = _homes()
+            if hs:
+                home = hs[0]
+
+                def fix(m):
+                    body = m.group("b1") if m.group("b1") is not None else m.group("b2")
+                    b2 = re.sub(r"\$\{HOME\}|\$HOME\b", home, body)
+                    b2 = re.sub(r"(?:(?<=^)|(?<=[\s=:;&|(]))~(?=/|\s|$)", home, b2)
+                    return m.group("head") + "'" + b2.replace("'", "") + "'" if b2 != body else m.group(0)
+                c2 = _V30_ALIASDEF.sub(fix, command)
+                if c2 != command and c2 not in outs:
+                    outs.append(c2)
+    except Exception:
+        pass
+    return outs
+# ===== end of V30 =====
 
 
 if __name__ == "__main__":

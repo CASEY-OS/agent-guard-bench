@@ -136,12 +136,12 @@ def main(argv):
     problems = counts_ok(design, sp, numbers)
     case("design page: the table equals this run's split and its deny rows equal NUMBERS.json", not problems,
          "; ".join(problems))
-    off = design.replace("| 1,638 | 20 |", "| 1,639 | 20 |", 1)
+    off = design.replace("| 1,667 | 18 |", "| 1,668 | 18 |", 1)
     case("planted: one count changed on the design page reads red", bool(counts_ok(off, sp, numbers)) and off != design)
     # the sums against NUMBERS must stand on their own: a split that does not add up must read red even if the page matches
     broken = {k: list(v) for k, v in sp.items()}
     broken[("deny", "block")][0] += 1
-    off2 = design.replace("| 1,637 | 19 |", "| 1,638 | 19 |", 1)
+    off2 = design.replace("| 1,667 | 18 |", "| 1,668 | 18 |", 1)
     case("planted: a split that no longer adds up to NUMBERS reads red though the page agrees with it",
          any("NUMBERS" in b for b in counts_ok(off2, broken, numbers)))
     case("the blind_v20 set read is the whole set (3,300 rows)", sum(sum(v) for v in sp.values()) == 3300,
