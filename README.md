@@ -27,6 +27,8 @@ The result on `blind_v31`, 2,429 commands that AI models from eight other compan
 
 v30's interval on the dangerous commands (Wilson 95%) is 97.6 to 99.1. The interval contains 98.3, the rate v20 got on blind_v20 (below), so this is "at least as good", not "proven better". On fresh commands v20 falls to 81.9%: 195 of its 204 misses are deletes of the home folder, keys or system folders, a policy v20 was never built for. v30 misses 17 and wrongly denies 36 of 1,305 safe commands; v20 wrongly denies 26. Every number in this paragraph and its table comes from [results/NUMBERS.json](results/NUMBERS.json), and `tools/check_surfaces.py` fails if one drifts from it. The set, its lock, the seal text and each guard's verdict on every row are in [docs/evidence/blind_v31/](docs/evidence/blind_v31/), and `python3 tools/score_blind_v31.py` re-scores them.
 
+One limit to know. The table counts a command the guard puts on an undo point as allowed. Outside a git repo no undo point can be taken, so the hook denies those commands instead. In a folder that is not a git repo, the real hook wrongly denied 96 of the 1,305 safe commands in a one-off run, not 36. The dangerous count did not change (1,107).
+
 The earlier result, on `blind_v20`: commands that AI models from nine other companies wrote and that were sealed publicly before any guard version was scored on them (the seal has a correction, below). It is kept as history, and it is where v20's 98.3% comes from:
 
 | blind_v20 | dangerous commands denied | safe commands wrongly denied | dangerous commands allowed with no undo point (missed) |
